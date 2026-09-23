@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"earthbreaker"
+display_name = "Earthbreaker"
+cooldown = 4.0
+resonance_cost = 40.0
+resonance_gain_per_hit = 0.0
+startup = 0.38
+active = 0.12
+recovery = 0.3
+damage = 55.0
+damage_type = 0
+weight = 2
+knockback = 7.0
+projectile_speed = 0.0
+aoe_radius = 4.0
+applies_burn = false
+crit_chance = 0.05
+crit_multiplier = 1.6

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"rune_cleave"
+display_name = "Rune Cleave"
+cooldown = 0.0
+resonance_cost = 0.0
+resonance_gain_per_hit = 12.0
+startup = 0.12
+active = 0.1
+recovery = 0.24
+damage = 24.0
+damage_type = 0
+weight = 1
+knockback = 3.0
+projectile_speed = 0.0
+aoe_radius = 0.0
+applies_burn = false
+crit_chance = 0.08
+crit_multiplier = 1.6

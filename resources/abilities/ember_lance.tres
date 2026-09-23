@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ember_lance"
+display_name = "Ember Lance"
+cooldown = 0.5
+resonance_cost = 0.0
+resonance_gain_per_hit = 4.0
+startup = 0.14
+active = 0.0
+recovery = 0.0
+damage = 18.0
+damage_type = 1
+weight = 0
+knockback = 1.5
+projectile_speed = 26.0
+aoe_radius = 0.0
+applies_burn = true
+crit_chance = 0.1
+crit_multiplier = 1.6

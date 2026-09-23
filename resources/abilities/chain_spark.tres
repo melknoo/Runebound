@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"chain_spark"
+display_name = "Chain Spark"
+cooldown = 3.0
+resonance_cost = 0.0
+resonance_gain_per_hit = 4.0
+startup = 0.0
+active = 0.0
+recovery = 0.15
+damage = 14.0
+damage_type = 3
+weight = 0
+knockback = 0.5
+projectile_speed = 0.0
+aoe_radius = 6.0
+applies_burn = false
+applies_chill = false
+applies_shock = true
+crit_chance = 0.12
+crit_multiplier = 1.6
