@@ -67,6 +67,8 @@ func _ready() -> void:
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position = Vector3(0, 3.0, 0)
 	UiTheme.label3d(_label)
+	_label.visibility_range_end = 90.0  # a guide nearby, not clutter across the zone
+	_label.visibility_range_end_margin = 10.0
 	add_child(_label)
 	_prompt = InteractPrompt.create(self, 2.6)
 

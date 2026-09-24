@@ -76,6 +76,7 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 	if shot.get("clear", true):
 		for child in _zone.enemies_root.get_children():
 			child.free()
+		_zone.hud.hide_boss_bar()  # a boss freed with the wave must not keep its bar (and hide the compass)
 	if shot.has("player"):
 		player.global_position = _pos(_zone, shot["player"])
 		player.velocity = Vector3.ZERO
@@ -143,6 +144,15 @@ func _do(action: Dictionary) -> void:
 	elif action.has("give_items"):  # M07b: straight into the inventory (no pickup walk)
 		for i in int(action["give_items"]):
 			player.equipment.add_item(ItemGenerator.generate(randi() % 3))
+	elif action.has("discover"):  # M08: map points / shrines known ("all" or ids)
+		if str(action["discover"]) == "all":
+			for poi in _zone.get(&"layout").pois:
+				player.discover_poi(String(poi["id"]))
+				if String(poi.get("type", "")) == "waypoint":
+					player.discover_waypoint(WaypointRegistry.key_for(_zone.scene_file_path, String(poi["id"])), String(poi.get("name", "")))
+		else:
+			for id: String in action["discover"]:
+				player.discover_poi(id)
 	elif action.has("learn_abilities"):  # M07b: ["earthbreaker", ...] or "all"
 		if str(action["learn_abilities"]) == "all":
 			player.debug_learn_all()
@@ -168,6 +178,17 @@ func _do(action: Dictionary) -> void:
 			"close":
 				_zone.hero_ui.close()
 				_zone.trainer_ui.close()
+				_zone.waypoint_ui.close()
+				_zone.map_ui.close()
+			"map": _zone.map_ui.toggle()  # M08
+			"waypoint":  # M08: the travel list of the nearest shrine
+				var nearest: Waypoint = null
+				for child in _zone.world.get_children():
+					if child is Waypoint and (nearest == null or (child as Node3D).global_position.distance_to(player.global_position)
+							< nearest.global_position.distance_to(player.global_position)):
+						nearest = child
+				if nearest != null:
+					_zone.open_waypoints(nearest)
 			"trainer":
 				for child in _zone.world.get_children():
 					if child is TrainerNpc:

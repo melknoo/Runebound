@@ -1847,6 +1847,52 @@ func _run() -> void:
 		"death respawns at the nearest attuned shrine")
 	await _wait_frames(2)
 
+	# --- M08 compass + map ---
+	_check(InputMap.has_action(&"map_toggle") and InputSetup.key_label(&"map_toggle") == "M", "the zone map is on M")
+	var compass := highlands.hud.compass
+	_check(compass != null and compass.visible, "the HUD shows the compass strip in a zone with a map")
+	highlands.camera_rig._yaw = 0.0
+	for i in 3:
+		await get_tree().process_frame  # the rig applies its yaw in _process
+	_check(absf(compass.heading()) < 0.02, "compass heading is north when the camera looks down -Z (%.3f)" % compass.heading())
+	highlands.camera_rig._yaw = -PI * 0.5
+	for i in 3:
+		await get_tree().process_frame
+	_check(absf(compass.heading() - PI * 0.5) < 0.02, "turning the camera east reads as 90 degrees (%.3f)" % compass.heading())
+	highlands.camera_rig._yaw = 0.0
+	var compass_ids: Array[String] = []
+	for m in compass.markers():
+		compass_ids.append(String(m["id"]))
+	_check(compass_ids.has("wp_ashford") and compass_ids.has("wp_crossroads") and compass_ids.has("gate_south")
+		and not compass_ids.has("chest_south"), "compass markers: attuned shrines and the gate, no chests (%s)" % str(compass_ids))
+	highlands.map_ui.toggle()
+	var spawn_px := highlands.map_ui.world_to_map(highlands.poi_position("spawn"))
+	_check(highlands.map_ui.visible and highlands.player.input_locked and highlands.map_ui.marker_count() >= 3
+		and absf(spawn_px.x - 300.0) < 12.0 and spawn_px.y > 520.0,
+		"M opens the map: input locked, markers drawn, the spawn projects to the bottom centre (%s)" % str(spawn_px))
+	highlands.map_ui.toggle()
+	_check(not highlands.map_ui.visible and not highlands.player.input_locked, "M again closes the map and frees the input")
+	highlands.hero_ui.open_tab(HeroUI.Tab.CHARACTER)
+	highlands.map_ui.open()
+	_check(highlands.map_ui.visible and not highlands.hero_ui.visible and highlands.player.input_locked,
+		"opening the map closes the hero window (one window at a time)")
+	highlands.map_ui.close()
+	var ruin_pos := highlands.poi_position("ruin_1")
+	_check(not highlands.player.map_discovered.has("ruin_1"), "a far ruin is not on the map yet")
+	highlands.player.global_position = highlands.ground_point(ruin_pos + Vector3(0, 0, 14), 0.3)
+	highlands.player.velocity = Vector3.ZERO
+	await _wait_frames(40)
+	var map_ids: Array[String] = []
+	for m in highlands.map_markers():
+		map_ids.append(String(m["id"]))
+	_check(highlands.player.map_discovered.has("ruin_1") and map_ids.has("ruin_1"),
+		"walking up to a ruin puts it on the map")
+	_check(highlands._area_seen.has("westreach") or highlands._area_seen.has("ashford"),
+		"entering a named area announces it (%s)" % str(highlands._area_seen.keys()))
+	SaveGame.save_now()
+	SaveGame.reload_from_disk()
+	_check((SaveGame.active_character().get("map_discovered", []) as Array).has("ruin_1"), "map discovery is saved with the character")
+
 	# Chest opens and pops loot; item level follows the band.
 	var chest := highlands.chests["chest_south"] as TreasureChest
 	_check(chest != null and highlands._enemy_level(null, chest.global_position) == 1

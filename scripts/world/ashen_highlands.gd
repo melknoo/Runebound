@@ -25,6 +25,14 @@ var _boss_spawn: Vector3 = Vector3.ZERO
 var _boss_started: bool = false
 var _boss_trigger: EncounterSpawner
 var _blockers: Array[StaticBody3D] = []
+## M08 map: POIs a hero sees within `pad + DISCOVER_MARGIN`; named areas
+## announce themselves once per visit.
+const DISCOVER_MARGIN := 15.0
+const DISCOVER_INTERVAL := 0.5
+const COMPASS_CAMP_RANGE := 120.0
+var _discover_left: float = 0.0
+var _area_seen: Dictionary = {}
+var _map_texture: Texture2D
 
 
 ## M06 gold-standard look (ember dusk). Palette from assets/art_spec.json;
@@ -122,6 +130,7 @@ func _build_zone() -> void:
 		load(LAYOUT_DIR + "/path_mask.png") as Texture2D, layout.bounds())
 	terrain = Terrain.load_from(LAYOUT_DIR, ground_mat)
 	world.add_child(terrain)
+	_map_texture = load(LAYOUT_DIR + "/map.png") as Texture2D
 
 	for poi in layout.pois:
 		var made := PoiBuilder.build(self, poi)
@@ -292,12 +301,123 @@ func _respawn_point(p: Player) -> Vector3:
 	return best
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
+	_discover_left -= delta
+	if _discover_left <= 0.0:
+		_discover_left = DISCOVER_INTERVAL
+		_discover_tick()
 	# Once beaten, the colossus stays beaten (world flag).
 	if _boss_started or _boss_trigger == null or players.is_empty() or SaveGame.has_flag(&"colossus_defeated"):
 		return
 	if not players_within(_boss_trigger.global_position, _boss_trigger.trigger_radius).is_empty():  # M07b: any hero
 		_start_boss_fight()
+
+
+# ---------------------------------------------------------------------------
+# M08 map + compass
+# ---------------------------------------------------------------------------
+
+func map_texture() -> Texture2D:
+	return _map_texture
+
+
+func map_bounds() -> Rect2:
+	return layout.bounds() if layout != null else Rect2(-192, -192, 384, 384)
+
+
+## Marker icon per POI type ("" = never shown: ambushes and patrols stay secret).
+static func marker_icon(poi: Dictionary) -> String:
+	match String(poi.get("type", "")):
+		"waypoint": return "waypoint"
+		"portal": return "portal"
+		"camp": return "camp"
+		"chest": return "chest"
+		"ruin": return "ruin"
+		"landmark": return "landmark"
+		"arena": return "boss"
+		"dungeon": return "dungeon"
+		_: return ""
+
+
+static func marker_label(poi: Dictionary) -> String:
+	match String(poi.get("type", "")):
+		"waypoint": return "Shrine: " + String(poi.get("name", "Waypoint"))
+		"portal": return "Gate: " + String(poi.get("label", "")).capitalize()
+		"camp": return "Raider camp"
+		"chest": return "Treasure"
+		"ruin": return "Ruin"
+		"landmark": return "Landmark"
+		"arena": return "Colossus arena"
+		"dungeon": return "Sealed gate: " + String(poi.get("label", "")).capitalize()
+		_: return ""
+
+
+## Everything the local hero has seen (shrines count once attuned); the
+## spawn gate is always known.
+func map_markers() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if layout == null or player == null or not is_instance_valid(player):
+		return out
+	for poi in layout.pois:
+		var icon := marker_icon(poi)
+		if icon == "":
+			continue
+		var id := String(poi.get("id", ""))
+		var type := String(poi.get("type", ""))
+		var known := player.map_discovered.has(id) or id == "gate_south"
+		if type == "waypoint":
+			known = known or player.knows_waypoint(WaypointRegistry.key_for(scene_file_path, id))
+		if not known:
+			continue
+		if type == "camp" and camps.has(id) and (camps[id] as EncounterSpawner).state == EncounterSpawner.State.CLEARED:
+			icon = "camp_cleared"
+		out.append({"id": id, "pos": ZoneLayout.pos_of(poi), "icon": icon, "label": marker_label(poi), "kind": type})
+		if type == "arena":
+			for sub in poi.get("portals", []):
+				out.append({"id": String(sub.get("id", "")), "pos": ZoneLayout.pos_of(sub), "icon": "portal",
+					"label": "Gate: " + String(sub.get("label", "")).capitalize(), "kind": "portal"})
+	return out
+
+
+## The compass shows what guides at range: shrines, gates, the arena, sealed
+## gates and armed camps within COMPASS_CAMP_RANGE.
+func compass_markers() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var origin := player.global_position if player != null and is_instance_valid(player) else Vector3.ZERO
+	for m in map_markers():
+		var kind := String(m["kind"])
+		if kind in ["chest", "landmark", "ruin"]:
+			continue
+		if kind == "camp":
+			if String(m["icon"]) == "camp_cleared" or (m["pos"] as Vector3).distance_to(origin) > COMPASS_CAMP_RANGE:
+				continue
+			m["max_dist"] = COMPASS_CAMP_RANGE
+		out.append(m)
+	return out
+
+
+func _discover_tick() -> void:
+	if layout == null or players.is_empty():
+		return
+	for poi in layout.pois:
+		if marker_icon(poi) == "":
+			continue
+		var id := String(poi.get("id", ""))
+		var reach := float(poi.get("pad", 0.0)) + DISCOVER_MARGIN
+		for p in players_within(ZoneLayout.pos_of(poi), reach):
+			if p.discover_poi(id) and p.is_local and String(poi.get("type", "")) == "dungeon" and hud != null:
+				hud.toast("A sealed gate: %s" % String(poi.get("label", "")), Color(0.7, 0.55, 1.0))
+	if player == null or not is_instance_valid(player):
+		return
+	for area in layout.areas:
+		var id := String(area.get("id", ""))
+		if _area_seen.has(id):
+			continue
+		var centre := ZoneLayout.pos_of(area)
+		if Vector2(player.global_position.x - centre.x, player.global_position.z - centre.z).length() <= float(area.get("radius", 50.0)):
+			_area_seen[id] = true
+			if hud != null:
+				hud.area_name(String(area.get("name", id)))
 
 
 func _start_boss_fight() -> void:

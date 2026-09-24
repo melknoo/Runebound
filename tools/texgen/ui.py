@@ -317,8 +317,107 @@ def icon_coin() -> Image.Image:
     return outlined(img)
 
 
+# ---------------------------------------------------------------------------
+# M08 map / compass icons: 12x12 art -> 24x24, one colour role each, ink outline.
+# ---------------------------------------------------------------------------
+
+def canvas12() -> tuple[Image.Image, ImageDraw.ImageDraw]:
+    img = Image.new("RGBA", (12, 12), (0, 0, 0, 0))
+    return img, ImageDraw.Draw(img)
+
+
+def mk_player() -> Image.Image:
+    img, d = canvas12()
+    d.polygon([(6, 1), (10, 10), (6, 8), (2, 10)], fill=ACCENT_HOT)
+    d.line([6, 3, 6, 8], fill=ACCENT)
+    return outlined(img)
+
+
+def mk_waypoint() -> Image.Image:
+    img, d = canvas12()
+    d.polygon([(6, 1), (10, 6), (6, 10), (2, 6)], fill=ACCENT)
+    d.polygon([(6, 3), (8, 6), (6, 8), (4, 6)], fill=ACCENT_HOT)
+    d.point((6, 6), fill=(255, 255, 255, 240))
+    return outlined(img)
+
+
+def mk_portal() -> Image.Image:
+    img, d = canvas12()
+    d.ellipse([1, 1, 10, 10], outline=ACCENT, width=2)
+    d.point((6, 1), fill=ACCENT_HOT)
+    d.point((6, 10), fill=ACCENT_HOT)
+    return outlined(img)
+
+
+def mk_camp() -> Image.Image:
+    img, d = canvas12()
+    fire, core = rgb(ROLES["fire"]["body"]), rgb(ROLES["fire"]["core"])
+    d.rectangle([2, 9, 9, 10], fill=rgb("#4A2A1C"))
+    d.polygon([(6, 1), (9, 6), (8, 9), (4, 9), (3, 6)], fill=fire)
+    d.polygon([(6, 4), (7, 7), (6, 9), (5, 7)], fill=core)
+    return outlined(img)
+
+
+def mk_camp_cleared() -> Image.Image:
+    img, d = canvas12()
+    grey = rgb("#6A6070")
+    d.rectangle([2, 9, 9, 10], fill=rgb("#3A3038"))
+    d.polygon([(6, 2), (9, 6), (8, 9), (4, 9), (3, 6)], outline=grey)
+    d.line([3, 3, 9, 9], fill=grey)
+    return outlined(img)
+
+
+def mk_chest() -> Image.Image:
+    img, d = canvas12()
+    d.rectangle([1, 4, 10, 10], fill=GOLD)
+    d.rectangle([1, 3, 10, 5], fill=rgb("#A67A22"))
+    d.rectangle([5, 6, 6, 8], fill=INK)
+    return outlined(img)
+
+
+def mk_ruin() -> Image.Image:
+    img, d = canvas12()
+    stone = rgb("#7A6F78")
+    d.rectangle([1, 3, 3, 10], fill=stone)
+    d.rectangle([8, 5, 10, 10], fill=stone)
+    d.rectangle([1, 2, 5, 3], fill=stone)
+    d.rectangle([5, 9, 6, 10], fill=stone)
+    return outlined(img)
+
+
+def mk_landmark() -> Image.Image:
+    img, d = canvas12()
+    d.polygon([(5, 1), (7, 1), (8, 10), (4, 10)], fill=rgb("#8A8290"))
+    d.line([6, 3, 6, 7], fill=ACCENT_DIM)
+    return outlined(img)
+
+
+def mk_boss() -> Image.Image:
+    img, d = canvas12()
+    red = rgb(ROLES["threat"]["body"])
+    d.rectangle([2, 1, 9, 8], fill=red)
+    d.rectangle([3, 8, 8, 10], fill=red)
+    d.rectangle([3, 3, 4, 5], fill=INK)
+    d.rectangle([7, 3, 8, 5], fill=INK)
+    d.point((6, 9), fill=INK)
+    return outlined(img)
+
+
+def mk_dungeon() -> Image.Image:
+    img, d = canvas12()
+    void = rgb(ROLES["void"]["body"]) if "void" in ROLES else rgb("#7A4FB0")
+    d.rectangle([2, 5, 9, 10], fill=void)
+    d.ellipse([2, 1, 9, 8], fill=void)
+    d.rectangle([5, 5, 6, 10], fill=INK)
+    return outlined(img)
+
+
 def main() -> None:
     print("UI kit:")
+    for name, fn in (("player", mk_player), ("waypoint", mk_waypoint), ("portal", mk_portal), ("camp", mk_camp),
+                     ("camp_cleared", mk_camp_cleared), ("chest", mk_chest), ("ruin", mk_ruin),
+                     ("landmark", mk_landmark), ("boss", mk_boss), ("dungeon", mk_dungeon)):
+        save(fn(), "map", name + ".png")
     save(frame(24, PANEL, ACCENT_DIM, ACCENT), "frame.png")
     save(frame(22, rgb("#100C18", 235), rgb("#2E2A3A"), rgb("#4A4458")), "slot.png")
     save(frame(12, rgb("#0E0A14", 230), rgb("#2E2A3A"), rgb("#4A4458"), corner=False), "bar.png")

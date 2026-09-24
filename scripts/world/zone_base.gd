@@ -25,6 +25,7 @@ var inventory_ui: InventoryUI  # the hero window's inventory tab
 var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
+var map_ui: MapUI            # M08 zone map (M)
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
 var look: ZoneLook = null
@@ -93,6 +94,10 @@ func _ready() -> void:
 	waypoint_ui = WaypointUI.new()  # M08: hidden until a Waypoint opens it
 	add_child(waypoint_ui)
 	waypoint_ui.setup(player)
+
+	map_ui = MapUI.new()  # M08: the zone map on M (zones without one say so)
+	add_child(map_ui)
+	map_ui.setup(player, self)
 
 	style_manager = StyleManager.new()
 	add_child(style_manager)
@@ -192,6 +197,26 @@ func zone_title() -> String:
 ## coordinates. Vector3.INF when the zone has no such POI.
 func poi_position(_id: String) -> Vector3:
 	return Vector3.INF
+
+
+## M08 map: the baked map image (null = this zone has no map).
+func map_texture() -> Texture2D:
+	return null
+
+
+## World rectangle (x, z, width, depth) the map image covers.
+func map_bounds() -> Rect2:
+	return Rect2(-50, -50, 100, 100)
+
+
+## Points the map shows: [{id, pos, icon, label, kind}] (known ones only).
+func map_markers() -> Array[Dictionary]:
+	return []
+
+
+## Points the compass strip shows (zones filter to what matters at range).
+func compass_markers() -> Array[Dictionary]:
+	return map_markers()
 
 
 const DISCOVERY_XP := 150

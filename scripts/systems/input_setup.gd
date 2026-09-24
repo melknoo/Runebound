@@ -16,6 +16,7 @@ const KEYS := {
 	&"interact": [KEY_E],                      # portals, chests, NPCs
 	&"talents_toggle": [KEY_N],
 	&"hero_character": [KEY_C],                # M07b character sheet tab
+	&"map_toggle": [KEY_M],                    # M08 zone map
 }
 
 

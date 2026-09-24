@@ -104,6 +104,12 @@ func open_tab(tab: Tab) -> void:
 	if zone != null and zone.trainer_ui != null and zone.trainer_ui.visible:
 		zone.trainer_ui.close()
 		player.input_locked = true
+	if zone != null and zone.map_ui != null and zone.map_ui.visible:  # M08
+		zone.map_ui.close()
+		player.input_locked = true
+	if zone != null and zone.waypoint_ui != null and zone.waypoint_ui.visible:
+		zone.waypoint_ui.close()
+		player.input_locked = true
 	_show_pages()
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

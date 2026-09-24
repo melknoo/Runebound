@@ -17,6 +17,8 @@ var _hurt_flash: ColorRect
 var _slots: Dictionary = {}  # id -> {overlay, slot, icon, key, name, desc, type, data}
 var _toast_box: VBoxContainer
 var _slot_row: HBoxContainer
+## M08 compass strip (top centre); hidden while a boss bar shows.
+var compass: Compass
 var _slots_built := false
 
 # Ability tooltip: names stay off the combat screen and only appear while the
@@ -186,6 +188,13 @@ func _build() -> void:
 	_toast_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_toast_box)
 
+	# M08 compass strip (zones without a map hide it).
+	compass = Compass.new()
+	var zone := get_parent() as ZoneBase
+	compass.setup(zone)
+	compass.visible = zone != null and zone.map_texture() != null
+	root.add_child(compass)
+
 	# Added last: the root Control must stay child 0 (show_boss_bar relies on it).
 	_build_tooltip()
 
@@ -218,6 +227,8 @@ func show_boss_bar(boss_name: String) -> void:
 	_boss_name.text = boss_name
 	_boss_fill.size.x = BOSS_BAR_WIDTH - BAR_INSET * 2.0
 	_boss_root.visible = true
+	if compass != null:
+		compass.visible = false
 
 
 func update_boss_bar(current: float, maximum: float) -> void:
@@ -228,6 +239,32 @@ func update_boss_bar(current: float, maximum: float) -> void:
 func hide_boss_bar() -> void:
 	if _boss_root != null:
 		_boss_root.visible = false
+	var zone := get_parent() as ZoneBase
+	if compass != null:
+		compass.visible = zone != null and zone.map_texture() != null
+
+
+## M08: a place name when the hero walks into a named area (smaller and
+## quicker than the zone title card).
+func area_name(text: String) -> void:
+	var label := Label.new()
+	label.text = text
+	label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	label.position = Vector2(-300, 104)
+	label.custom_minimum_size = Vector2(600, 0)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", UiTheme.BIG)
+	label.add_theme_constant_override("outline_size", UiTheme.OUTLINE)
+	label.add_theme_color_override("font_outline_color", UiTheme.INK)
+	label.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.modulate.a = 0.0
+	get_child(0).add_child(label)
+	var tw := label.create_tween()
+	tw.tween_property(label, "modulate:a", 1.0, 0.4)
+	tw.tween_interval(1.8)
+	tw.tween_property(label, "modulate:a", 0.0, 0.7)
+	tw.tween_callback(label.queue_free)
 
 
 func toast(text: String, color: Color = Color.WHITE) -> void:
