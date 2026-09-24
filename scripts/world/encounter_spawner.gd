@@ -31,7 +31,8 @@ func trigger(zone: ZoneBase) -> void:
 	triggered = true
 	for i in composition.size():
 		var angle := TAU * float(i) / float(composition.size()) + randf() * 0.5
-		var pos := global_position + Vector3(cos(angle) * randf_range(1.5, 4.0), 0.2, sin(angle) * randf_range(1.5, 4.0))
+		var pos := zone.ground_point(global_position + Vector3(cos(angle) * randf_range(1.5, 4.0), 0.0,
+			sin(angle) * randf_range(1.5, 4.0)), 0.2)
 		var enemy: EnemyBase
 		if composition[i] == "elite":
 			enemy = zone.spawn_elite(elite_kind, pos)

@@ -67,6 +67,88 @@ func _run() -> void:
 	_check(lab.look != null and lab_bodies.size() == 14,
 		"training grounds: Runehold look, dressing adds no collision (%d bodies, layout had 14)" % lab_bodies.size())
 
+	# --- M08 terrain spike: heightmap terrain + ground seam (built 1 km east of the lab) ---
+	var terrain := Terrain.load_from("res://assets/world/highlands", ArtKit.material(&"highlands_ground"))
+	lab.world.add_child(terrain)
+	terrain.position = Vector3(1000, 0, 0)
+	lab.terrain = terrain  # the lab borrows it: ground_y / ground_point read the heightmap
+	_check(terrain.res == 385, "terrain: 385 x 385 samples decoded")
+	_check(terrain.chunk_count() == 144, "terrain: 144 chunks x 3 LODs built in %d ms" % terrain.build_ms)
+	_check(terrain.build_ms < 2500, "terrain: build under 2.5 s (%d ms)" % terrain.build_ms)
+	await _wait_frames(3)
+	var layout := ZoneLayout.load_from("res://assets/world/highlands/layout.json")
+	_check(layout.pois.size() >= 26, "layout: %d POIs loaded" % layout.pois.size())
+	_check(layout.find("arena").get("type", "") == "arena" and layout.level_at(0.0, -150.0) == 3
+		and layout.level_at(0.0, 150.0) == 1, "layout: POI lookup and level bands (north 3, south 1)")
+	# Bake orientation: the SE test bump reads at its spot; north is higher than south.
+	var bump: Dictionary = layout.raw["test_bump"]
+	var bx := 1000.0 + float(bump["pos"][0])
+	var bz := float(bump["pos"][1])
+	_check(terrain.height_at(bx, bz) - terrain.height_at(bx, bz + 20.0) > 3.0,
+		"terrain: test bump rises where the bake put it (row 0 = north, x east)")
+	_check(terrain.height_at(1000.0, -150.0) > terrain.height_at(1000.0, 150.0) + 5.0, "terrain: north plateau above the south slopes")
+	var space := lab.world.get_world_3d().direct_space_state
+	var trng := RandomNumberGenerator.new()
+	trng.seed = 42
+	var worst := 0.0
+	for i in 50:
+		var tx := 1000.0 + trng.randf_range(-180.0, 180.0)
+		var tz := trng.randf_range(-180.0, 180.0)
+		var q := PhysicsRayQueryParameters3D.create(Vector3(tx, 150.0, tz), Vector3(tx, -10.0, tz), 1)
+		var hit := space.intersect_ray(q)
+		if hit.is_empty():
+			worst = INF
+			break
+		worst = maxf(worst, absf((hit["position"] as Vector3).y - terrain.height_at(tx, tz)))
+	_check(worst <= 0.05, "terrain: HeightMapShape3D matches height_at at 50 random points (worst %.3f m)" % worst)
+	var spawn_poi := layout.poi_pos("spawn")
+	_check(terrain.normal_at(1000.0 + spawn_poi.x, spawn_poi.z).y > 0.999, "terrain: the spawn pad is flat")
+	_check(absf(terrain.height_at(1000.0 + spawn_poi.x, spawn_poi.z) - spawn_poi.y) < 0.05, "layout: baked POI height matches the terrain")
+	# Ground seam: flat zones stay at 0; ground_point raycasts onto whatever is below.
+	var gp := lab.ground_point(Vector3(2.0, 1.5, 2.0))
+	_check(absf(gp.y) < 0.05, "ground seam: ground_point lands on the lab floor (y %.3f)" % gp.y)
+	var slope_pt := Vector3(1000.0 + 40.0, 0.0, 160.0)  # on the 25-degree test ramp
+	slope_pt.y = terrain.height_at(slope_pt.x, slope_pt.z) + 0.5  # callers pass feet positions
+	var gp2 := lab.ground_point(slope_pt, 0.2)
+	_check(absf(gp2.y - 0.2 - terrain.height_at(slope_pt.x, slope_pt.z)) < 0.05, "ground seam: ground_point finds the terrain 1 km away")
+	var slope_disc := VFX.telegraph_disc(lab.world, slope_pt, 2.0, 0.5)
+	_check(absf(slope_disc.global_position.y - terrain.height_at(slope_pt.x, slope_pt.z)) < 0.12
+		and slope_disc.global_transform.basis.y.dot(terrain.normal_at(slope_pt.x, slope_pt.z)) > 0.99,
+		"ground seam: a telegraph disc snaps onto the slope and tilts with it")
+	slope_disc.queue_free()
+	var flat_disc := VFX.telegraph_disc(lab.world, Vector3(2.0, 0.0, -2.0), 1.0, 0.5)
+	_check(absf(flat_disc.global_position.y - 0.05) < 0.02, "ground seam: telegraph discs on the flat floor still sit at 0.05")
+	flat_disc.queue_free()
+	# The player walks up the test ramp (grade 0.47 = 25 deg) and stays on the floor.
+	var walker := lab.player
+	var walk_back := walker.global_position
+	var ramp_start := Vector3(1040.0, 0.0, 174.0)
+	walker.global_position = lab.ground_point(ramp_start, 0.3)
+	walker.velocity = Vector3.ZERO
+	await _wait_frames(5)
+	var ramp_scripted := ScriptedInput.new()
+	var ramp_local := walker.input_source
+	walker.input_source = ramp_scripted
+	ramp_scripted.dir = Vector3(0, 0, -1)  # north, uphill
+	var y0 := walker.global_position.y
+	await _wait_frames(90)
+	ramp_scripted.dir = Vector3.ZERO
+	await _wait_frames(3)
+	_check(walker.global_position.y - y0 > 1.5 and walker.is_on_floor(),
+		"terrain: the player climbs the 25-degree ramp on foot (+%.2f m, on floor)" % (walker.global_position.y - y0))
+	# A drop spawned from the slope lands on it, not at y 0.
+	var slope_drop := lab.spawn_gold_drop(5, walker.global_position + Vector3(1.0, 0.0, 0.0))
+	_check(absf(slope_drop.position.y - terrain.height_at(slope_drop.position.x, slope_drop.position.z)) < 0.1,
+		"ground seam: gold drops land on the terrain")
+	slope_drop.queue_free()
+	walker.input_source = ramp_local
+	walker.global_position = walk_back
+	walker.velocity = Vector3.ZERO
+	lab.terrain = null
+	_check(lab.ground_y(Vector3(3, 0, 3)) == 0.0 and lab.ground_normal(Vector3(3, 0, 3)) == Vector3.UP, "ground seam: flat zone reports y 0, normal up")
+	terrain.queue_free()
+	await _wait_frames(3)
+
 	# --- M06 rigs: animation follows gameplay timing, never the other way ---
 	var p_anim := lab.player.animator
 	_check(p_anim != null and p_anim.anim.has_animation(&"cleave_l") and p_anim.anim.has_animation(&"run"),

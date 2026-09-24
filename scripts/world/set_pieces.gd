@@ -129,11 +129,15 @@ static func raider_camp(zone: ZoneBase, center: Vector3, banner_spots: Array[Vec
 	for i in 2:
 		var a := seat_a + i * rng.randf_range(2.2, 2.8)
 		# log axis tangential to the fire ring: it reads as a seat, not a spoke
-		prop(zone.dressing(), "log_seat", center + Vector3(cos(a), 0.0, sin(a)) * 1.55, PI * 0.5 - a + rng.randf_range(-0.2, 0.2))
+		var seat := center + Vector3(cos(a), 0.0, sin(a)) * 1.55
+		seat.y = zone.ground_y(seat)
+		prop(zone.dressing(), "log_seat", seat, PI * 0.5 - a + rng.randf_range(-0.2, 0.2))
 	for i in 3:
 		var a := rng.randf_range(0.0, TAU)
 		var r := rng.randf_range(2.4, 3.4)
-		prop(zone.dressing(), "bone_pile", center + Vector3(cos(a) * r, 0.0, sin(a) * r), rng.randf_range(0.0, TAU))
+		var spot := center + Vector3(cos(a) * r, 0.0, sin(a) * r)
+		spot.y = zone.ground_y(spot)
+		prop(zone.dressing(), "bone_pile", spot, rng.randf_range(0.0, TAU))
 	for spot in banner_spots:
 		var to_camp := Vector2(center.x - spot.x, center.z - spot.z)
 		prop(zone.dressing(), "banner_pole", spot, atan2(-to_camp.x, -to_camp.y) + PI)

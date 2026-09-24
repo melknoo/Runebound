@@ -50,6 +50,9 @@ extends Resource
 @export var fog_sky_affect: float = 0.0
 ## Camera-attached falling ash (0 = none, 1 = 180 flakes around the camera).
 @export var ash_fall: float = 0.0
+## Camera far plane for big open zones (0 = engine default). Fog hides the far
+## edge; the sky LUT carries the horizon.
+@export var camera_far: float = 0.0
 
 @export_group("Glow & tonemap")
 @export var glow_intensity: float = 0.7

@@ -247,6 +247,19 @@ static func paved(role: StringName, plazas: Array[Vector3], paths: Array[Vector4
 	return mat
 
 
+## Per-zone copy of a ground role whose trails come from a baked mask
+## (tools/worldgen: routes and trampled camp floors, 2 px/m). `bounds` =
+## (x, z, width, depth) of the mask in world metres. Unlimited path length,
+## unlike paved(); the M08 heightmap uses this.
+static func masked(role: StringName, mask: Texture2D, bounds: Rect2, paving_tex: String = "hl_trail") -> ShaderMaterial:
+	var mat := (material(role) as ShaderMaterial).duplicate() as ShaderMaterial
+	mat.set_shader_parameter(&"use_mask", 1)
+	mat.set_shader_parameter(&"path_mask", mask)
+	mat.set_shader_parameter(&"mask_bounds", Vector4(bounds.position.x, bounds.position.y, bounds.size.x, bounds.size.y))
+	mat.set_shader_parameter(&"paving", load(BIOME_DIR + paving_tex + ".png"))
+	return mat
+
+
 ## Per-zone copy of a floor role with emissive rune channels along line
 ## segments (x0, z0, x1, z1), world metres, max 16 (shader-side like paved()).
 static func inlaid(role: StringName, segments: Array[Vector4], color: Color, energy: float = 0.7) -> ShaderMaterial:

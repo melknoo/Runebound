@@ -924,7 +924,7 @@ func _do_slam_hit() -> void:
 	# Glacier Heart: the slam leaves a chilling frost field.
 	if has_power(&"glacier_heart"):
 		var field := FrostField.new()
-		field.position = Vector3(pos.x, 0.02, pos.z)
+		field.position = ZoneBase.ground_under(self, pos, 0.02)
 		scene.add_child(field)
 
 
@@ -1138,15 +1138,14 @@ func try_fracture_rune() -> bool:
 	_set_cooldown(&"fracture_rune", fracture_rune.cooldown)
 	var exclude: Array[RID] = [get_rid()]
 	var aim_point := camera_rig.get_aim_point(exclude) if camera_rig != null else global_position + facing() * 6.0
-	var flat := Vector3(aim_point.x, 0, aim_point.z)
-	var origin := Vector3(global_position.x, 0, global_position.z)
-	var offset := flat - origin
+	var offset := Vector3(aim_point.x - global_position.x, 0.0, aim_point.z - global_position.z)
 	if offset.length() > FRACTURE_RUNE_MAX_RANGE:
 		offset = offset.normalized() * FRACTURE_RUNE_MAX_RANGE
 	var rune := FractureRune.new()
 	rune.setup(fracture_rune, self)
 	rune.arm_time = maxf(FractureRune.ARM_TIME - stat(&"rune_arm_reduce"), 0.5)
-	rune.position = origin + offset + Vector3(0, 0.02, 0)
+	# M08: on the ground under the aim spot (slopes, ledges), never at y 0
+	rune.position = ZoneBase.ground_under(self, global_position + offset, 0.02)
 	get_tree().current_scene.add_child(rune)
 	_face_aim_instant()
 	# Casting gesture: brief point with the blade.

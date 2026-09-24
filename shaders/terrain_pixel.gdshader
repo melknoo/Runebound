@@ -40,6 +40,9 @@ uniform int paved_paths = 0;     // paths[i] = (x0, z0, x1, z1)
 uniform vec4 paths[8];
 uniform float path_width = 1.8;
 uniform float paving_ragged = 0.45;  // metres of edge noise
+uniform int use_mask = 0;            // M08: baked trail mask instead of / on top of segments
+uniform sampler2D path_mask : hint_default_black, filter_linear, repeat_disable;
+uniform vec4 mask_bounds = vec4(0.0, 0.0, 1.0, 1.0);  // world x, z, width, depth of the mask
 uniform int rune_lines = 0;      // lines[i] = (x0, z0, x1, z1)
 uniform vec4 lines[16];
 uniform float rune_width = 0.1;
@@ -113,6 +116,14 @@ void fragment() {
 				// own tile size (paving tiles are larger: big plazas hide the repeat)
 				col = texture(paving, world_pos.xz * px_per_m / float(textureSize(paving, 0).x)).rgb;
 				use_b = false;  // no ember specks on paving
+			}
+		}
+		if (use_mask == 1) {
+			vec2 p = (texel + 0.5) / px_per_m;
+			float m = texture(path_mask, (p - mask_bounds.xy) / mask_bounds.zw).r;
+			if (m + (bayer4(texel) - 0.5) * 0.5 > 0.5) {
+				col = texture(paving, world_pos.xz * px_per_m / float(textureSize(paving, 0).x)).rgb;
+				use_b = false;
 			}
 		}
 	} else {

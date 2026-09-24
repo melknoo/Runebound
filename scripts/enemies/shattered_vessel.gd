@@ -156,7 +156,7 @@ func _start_slam() -> void:
 	_enter_state(AIState.WINDUP)
 	var fwd := -visual.global_transform.basis.z
 	VFX.telegraph_disc(get_tree().current_scene,
-		Vector3(global_position.x, 0.0, global_position.z) + fwd * 1.6, SLAM_RADIUS, SLAM_WINDUP)
+		global_position + fwd * 1.6, SLAM_RADIUS, SLAM_WINDUP)
 	Sfx.play("earthbreaker_windup", global_position, -4.0, 0.1, 0.75)
 
 
@@ -276,7 +276,7 @@ func _place_runes(count: int) -> void:
 		var rune := ShadowRune.new()
 		var offset := Vector3.ZERO if i == 0 else Vector3(randf_range(-4.0, 4.0), 0, randf_range(-4.0, 4.0))
 		var pos := player.global_position + offset
-		rune.position = Vector3(pos.x, 0.02, pos.z)
+		rune.position = ZoneBase.ground_under(self, pos, 0.02)
 		scene.add_child(rune)
 
 

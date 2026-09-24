@@ -1,0 +1,1168 @@
+{
+ "id": "ashen_highlands",
+ "size_m": 384,
+ "resolution": 385,
+ "origin": [
+  -192,
+  -192
+ ],
+ "height_max": 80.0,
+ "seed": 2608,
+ "base": {
+  "south_y": 6.0,
+  "north_y": 22.0,
+  "noise_octaves": [
+   [
+    3,
+    0.55
+   ],
+   [
+    7,
+    0.3
+   ],
+   [
+    15,
+    0.15
+   ]
+  ],
+  "amplitude": 9.0
+ },
+ "ridges": [
+  {
+   "a": [
+    -78,
+    118
+   ],
+   "b": [
+    -32,
+    142
+   ],
+   "height": 7.0,
+   "width": 16.0
+  },
+  {
+   "a": [
+    32,
+    142
+   ],
+   "b": [
+    78,
+    118
+   ],
+   "height": 7.0,
+   "width": 16.0
+  },
+  {
+   "a": [
+    -72,
+    28
+   ],
+   "b": [
+    12,
+    46
+   ],
+   "height": 6.0,
+   "width": 14.0
+  },
+  {
+   "a": [
+    -44,
+    -64
+   ],
+   "b": [
+    52,
+    -82
+   ],
+   "height": 9.0,
+   "width": 16.0
+  },
+  {
+   "a": [
+    98,
+    -140
+   ],
+   "b": [
+    112,
+    12
+   ],
+   "height": 12.0,
+   "width": 22.0
+  },
+  {
+   "a": [
+    -152,
+    -104
+   ],
+   "b": [
+    -118,
+    -146
+   ],
+   "height": 10.0,
+   "width": 18.0
+  },
+  {
+   "a": [
+    -160,
+    60
+   ],
+   "b": [
+    -126,
+    96
+   ],
+   "height": 8.0,
+   "width": 16.0
+  },
+  {
+   "a": [
+    40,
+    60
+   ],
+   "b": [
+    58,
+    20
+   ],
+   "height": 5.0,
+   "width": 12.0
+  }
+ ],
+ "plateaus": [
+  {
+   "pos": [
+    0,
+    -140
+   ],
+   "radius": 56.0,
+   "height": 10.0,
+   "blend": 26.0
+  },
+  {
+   "pos": [
+    -96,
+    -100
+   ],
+   "radius": 30.0,
+   "height": 5.0,
+   "blend": 18.0
+  }
+ ],
+ "rim": {
+  "start_m": 176.0,
+  "height": 36.0
+ },
+ "test_bump": {
+  "pos": [
+   140,
+   156
+  ],
+  "height": 6.0,
+  "radius": 9.0
+ },
+ "routes": [
+  {
+   "id": "main",
+   "width": 3.2,
+   "grade_max": 0.45,
+   "points": [
+    [
+     0,
+     170
+    ],
+    [
+     0,
+     150
+    ],
+    [
+     -12,
+     122
+    ],
+    [
+     -24,
+     96
+    ],
+    [
+     -30,
+     64
+    ],
+    [
+     -26,
+     36
+    ],
+    [
+     -8,
+     12
+    ],
+    [
+     6,
+     -14
+    ],
+    [
+     18,
+     -42
+    ],
+    [
+     10,
+     -72
+    ],
+    [
+     0,
+     -96
+    ],
+    [
+     0,
+     -118
+    ],
+    [
+     0,
+     -132
+    ]
+   ]
+  },
+  {
+   "id": "east_loop",
+   "width": 2.8,
+   "grade_max": 0.45,
+   "points": [
+    [
+     -12,
+     122
+    ],
+    [
+     16,
+     112
+    ],
+    [
+     52,
+     96
+    ],
+    [
+     74,
+     66
+    ],
+    [
+     78,
+     30
+    ],
+    [
+     66,
+     -4
+    ],
+    [
+     44,
+     -30
+    ],
+    [
+     18,
+     -42
+    ]
+   ]
+  },
+  {
+   "id": "west_detour",
+   "width": 2.8,
+   "grade_max": 0.45,
+   "points": [
+    [
+     -30,
+     64
+    ],
+    [
+     -62,
+     58
+    ],
+    [
+     -90,
+     40
+    ],
+    [
+     -104,
+     4
+    ],
+    [
+     -92,
+     -34
+    ],
+    [
+     -64,
+     -58
+    ],
+    [
+     -30,
+     -78
+    ],
+    [
+     0,
+     -96
+    ]
+   ]
+  },
+  {
+   "id": "far_east",
+   "width": 2.6,
+   "grade_max": 0.5,
+   "points": [
+    [
+     66,
+     -4
+    ],
+    [
+     104,
+     -22
+    ],
+    [
+     126,
+     -56
+    ],
+    [
+     108,
+     -96
+    ],
+    [
+     70,
+     -118
+    ],
+    [
+     34,
+     -124
+    ],
+    [
+     0,
+     -118
+    ]
+   ]
+  },
+  {
+   "id": "far_west",
+   "width": 2.6,
+   "grade_max": 0.5,
+   "points": [
+    [
+     -104,
+     4
+    ],
+    [
+     -132,
+     -30
+    ],
+    [
+     -138,
+     -76
+    ],
+    [
+     -110,
+     -116
+    ],
+    [
+     -70,
+     -136
+    ],
+    [
+     -30,
+     -134
+    ],
+    [
+     0,
+     -132
+    ]
+   ]
+  },
+  {
+   "id": "spur_se",
+   "width": 2.2,
+   "grade_max": 0.5,
+   "points": [
+    [
+     52,
+     96
+    ],
+    [
+     84,
+     124
+    ],
+    [
+     116,
+     144
+    ]
+   ]
+  },
+  {
+   "id": "spur_sw",
+   "width": 2.2,
+   "grade_max": 0.5,
+   "points": [
+    [
+     -62,
+     58
+    ],
+    [
+     -96,
+     88
+    ],
+    [
+     -118,
+     116
+    ]
+   ]
+  },
+  {
+   "id": "spur_dungeon_e",
+   "width": 2.2,
+   "grade_max": 0.6,
+   "points": [
+    [
+     126,
+     -56
+    ],
+    [
+     148,
+     -62
+    ]
+   ]
+  },
+  {
+   "id": "spur_dungeon_w",
+   "width": 2.2,
+   "grade_max": 0.6,
+   "points": [
+    [
+     -132,
+     -30
+    ],
+    [
+     -152,
+     -28
+    ]
+   ]
+  },
+  {
+   "id": "spur_hidden",
+   "width": 1.8,
+   "grade_max": 0.5,
+   "points": [
+    [
+     -30,
+     -78
+    ],
+    [
+     -52,
+     -100
+    ]
+   ]
+  },
+  {
+   "id": "test_slope",
+   "width": 4.0,
+   "grade_max": 0.47,
+   "test_grade": 0.466,
+   "points": [
+    [
+     40,
+     176
+    ],
+    [
+     40,
+     146
+    ]
+   ]
+  }
+ ],
+ "bands": {
+  "cell_m": 48,
+  "grid": [
+   [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   [
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3,
+    3
+   ],
+   [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3
+   ],
+   [
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  ]
+ },
+ "areas": [
+  {
+   "id": "ashford",
+   "name": "Ashford Slopes",
+   "pos": [
+    0,
+    140
+   ],
+   "radius": 70,
+   "y": 7.807
+  },
+  {
+   "id": "crossroads",
+   "name": "The Crossroads",
+   "pos": [
+    -30,
+    50
+   ],
+   "radius": 60,
+   "y": 11.525
+  },
+  {
+   "id": "cinder_flats",
+   "name": "Cinder Flats",
+   "pos": [
+    70,
+    40
+   ],
+   "radius": 70,
+   "y": 13.404
+  },
+  {
+   "id": "westreach",
+   "name": "Westreach",
+   "pos": [
+    -110,
+    10
+   ],
+   "radius": 70,
+   "y": 14.04
+  },
+  {
+   "id": "emberfall",
+   "name": "Emberfall Ridge",
+   "pos": [
+    95,
+    -80
+   ],
+   "radius": 80,
+   "y": 24.35
+  },
+  {
+   "id": "northreach",
+   "name": "Northreach",
+   "pos": [
+    -80,
+    -110
+   ],
+   "radius": 80,
+   "y": 26.272
+  },
+  {
+   "id": "colossus_gate",
+   "name": "Colossus Gate",
+   "pos": [
+    0,
+    -130
+   ],
+   "radius": 50,
+   "y": 27.485
+  }
+ ],
+ "pois": [
+  {
+   "id": "spawn",
+   "type": "spawn",
+   "pos": [
+    0,
+    160
+   ],
+   "yaw": 3.1416,
+   "pad": 8,
+   "y": 8.174
+  },
+  {
+   "id": "gate_south",
+   "type": "portal",
+   "pos": [
+    0,
+    174
+   ],
+   "yaw": 3.1416,
+   "pad": 5,
+   "dest": "hub",
+   "label": "RUNEHOLD",
+   "arrival": "gate_highlands",
+   "y": 8.074
+  },
+  {
+   "id": "wp_ashford",
+   "type": "waypoint",
+   "pos": [
+    10,
+    152
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "name": "Ashford Shrine",
+   "y": 8.157
+  },
+  {
+   "id": "camp_1",
+   "type": "camp",
+   "pos": [
+    -12,
+    108
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "rusher",
+    "rusher"
+   ],
+   "banners": 2,
+   "y": 9.675
+  },
+  {
+   "id": "chest_south",
+   "type": "chest",
+   "pos": [
+    -46,
+    132
+   ],
+   "yaw": 0.4,
+   "pad": 3,
+   "rarity_bias": 0,
+   "y": 13.55
+  },
+  {
+   "id": "camp_2",
+   "type": "camp",
+   "pos": [
+    34,
+    98
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "rusher",
+    "caster",
+    "rusher"
+   ],
+   "banners": 2,
+   "y": 9.564
+  },
+  {
+   "id": "grove",
+   "type": "landmark",
+   "pos": [
+    62,
+    122
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "prop": "charred_grove",
+   "y": 16.087
+  },
+  {
+   "id": "ruin_1",
+   "type": "ruin",
+   "pos": [
+    -118,
+    116
+   ],
+   "yaw": 0.5,
+   "pad": 11,
+   "walls": 5,
+   "chest": true,
+   "rarity_bias": 0,
+   "ambush": [
+    "assassin",
+    "assassin"
+   ],
+   "y": 9.567
+  },
+  {
+   "id": "monolith_w",
+   "type": "landmark",
+   "pos": [
+    -60,
+    64
+   ],
+   "yaw": 0.26,
+   "pad": 3,
+   "prop": "rune_monolith",
+   "y": 9.079
+  },
+  {
+   "id": "wp_crossroads",
+   "type": "waypoint",
+   "pos": [
+    -46,
+    66
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "name": "Crossroads Cairn",
+   "y": 8.872
+  },
+  {
+   "id": "ambush_1",
+   "type": "ambush",
+   "pos": [
+    -26,
+    36
+   ],
+   "yaw": 0.0,
+   "pad": 4,
+   "radius": 7.0,
+   "composition": [
+    "rusher",
+    "rusher",
+    "assassin"
+   ],
+   "y": 15.553
+  },
+  {
+   "id": "camp_3",
+   "type": "camp",
+   "pos": [
+    -90,
+    40
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "assassin",
+    "assassin",
+    "caster"
+   ],
+   "banners": 2,
+   "y": 10.799
+  },
+  {
+   "id": "ruin_2",
+   "type": "ruin",
+   "pos": [
+    -108,
+    2
+   ],
+   "yaw": 1.1,
+   "pad": 11,
+   "walls": 4,
+   "chest": true,
+   "rarity_bias": 1,
+   "ambush": [],
+   "y": 14.04
+  },
+  {
+   "id": "camp_4",
+   "type": "camp",
+   "pos": [
+    -8,
+    10
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "brute",
+    "rusher",
+    "caster"
+   ],
+   "banners": 3,
+   "y": 14.036
+  },
+  {
+   "id": "camp_5",
+   "type": "camp",
+   "pos": [
+    74,
+    66
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "rusher",
+    "rusher",
+    "caster"
+   ],
+   "banners": 2,
+   "y": 11.709
+  },
+  {
+   "id": "chest_se",
+   "type": "chest",
+   "pos": [
+    118,
+    146
+   ],
+   "yaw": 2.4,
+   "pad": 3,
+   "rarity_bias": 1,
+   "y": 12.053
+  },
+  {
+   "id": "grove_se",
+   "type": "landmark",
+   "pos": [
+    94,
+    130
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "prop": "charred_grove",
+   "y": 10.59
+  },
+  {
+   "id": "wp_eastwatch",
+   "type": "waypoint",
+   "pos": [
+    80,
+    28
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "name": "Eastwatch Shrine",
+   "y": 13.352
+  },
+  {
+   "id": "camp_6",
+   "type": "camp",
+   "pos": [
+    66,
+    -6
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "elite",
+    "rusher",
+    "rusher"
+   ],
+   "banners": 3,
+   "y": 15.172
+  },
+  {
+   "id": "monolith_e",
+   "type": "landmark",
+   "pos": [
+    46,
+    -30
+   ],
+   "yaw": -0.35,
+   "pad": 3,
+   "prop": "rune_monolith",
+   "y": 17.327
+  },
+  {
+   "id": "dungeon_e",
+   "type": "dungeon",
+   "pos": [
+    148,
+    -62
+   ],
+   "yaw": 1.5708,
+   "pad": 7,
+   "label": "HOLLOW CISTERN",
+   "pad_from": [
+    126,
+    -56
+   ],
+   "y": 19.784
+  },
+  {
+   "id": "patrol_east",
+   "type": "elite_patrol",
+   "pos": [
+    104,
+    -22
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "patrol": [
+    [
+     104,
+     -22
+    ],
+    [
+     126,
+     -56
+    ],
+    [
+     108,
+     -96
+    ],
+    [
+     70,
+     -118
+    ]
+   ],
+   "composition": [
+    "elite",
+    "rusher",
+    "rusher"
+   ],
+   "wake_radius": 55.0,
+   "y": 24.987,
+   "patrol_y": [
+    24.987,
+    19.784,
+    27.738,
+    22.089
+   ]
+  },
+  {
+   "id": "bone_field",
+   "type": "landmark",
+   "pos": [
+    108,
+    -96
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "prop": "bone_field",
+   "y": 27.738
+  },
+  {
+   "id": "camp_7",
+   "type": "camp",
+   "pos": [
+    70,
+    -118
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "brute",
+    "assassin",
+    "caster",
+    "rusher"
+   ],
+   "banners": 3,
+   "y": 22.089
+  },
+  {
+   "id": "ambush_2",
+   "type": "ambush",
+   "pos": [
+    10,
+    -72
+   ],
+   "yaw": 0.0,
+   "pad": 4,
+   "radius": 7.0,
+   "composition": [
+    "assassin",
+    "assassin"
+   ],
+   "y": 33.414
+  },
+  {
+   "id": "wp_northreach",
+   "type": "waypoint",
+   "pos": [
+    -32,
+    -80
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "name": "Northreach Shrine",
+   "y": 25.599
+  },
+  {
+   "id": "chest_hidden",
+   "type": "chest",
+   "pos": [
+    -52,
+    -100
+   ],
+   "yaw": 1.0,
+   "pad": 3,
+   "rarity_bias": 1,
+   "y": 27.624
+  },
+  {
+   "id": "ruin_3",
+   "type": "ruin",
+   "pos": [
+    -138,
+    -76
+   ],
+   "yaw": 2.0,
+   "pad": 11,
+   "walls": 6,
+   "chest": true,
+   "rarity_bias": 1,
+   "ambush": [
+    "assassin",
+    "assassin",
+    "caster"
+   ],
+   "y": 21.078
+  },
+  {
+   "id": "dungeon_w",
+   "type": "dungeon",
+   "pos": [
+    -152,
+    -28
+   ],
+   "yaw": -1.5708,
+   "pad": 7,
+   "label": "EMBER WARRENS",
+   "pad_from": [
+    -132,
+    -30
+   ],
+   "y": 19.107
+  },
+  {
+   "id": "camp_8",
+   "type": "camp",
+   "pos": [
+    -70,
+    -136
+   ],
+   "yaw": 0.0,
+   "pad": 11,
+   "radius": 12.0,
+   "composition": [
+    "brute",
+    "rusher",
+    "rusher",
+    "caster"
+   ],
+   "banners": 3,
+   "y": 24.898
+  },
+  {
+   "id": "wp_gate",
+   "type": "waypoint",
+   "pos": [
+    22,
+    -110
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "name": "Colossus Gate Shrine",
+   "y": 29.975
+  },
+  {
+   "id": "arena",
+   "type": "arena",
+   "pos": [
+    0,
+    -142
+   ],
+   "yaw": 0.0,
+   "pad": 18,
+   "radius": 16.0,
+   "boss_offset": [
+    0,
+    -8
+   ],
+   "trigger_offset": [
+    0,
+    4
+   ],
+   "trigger_radius": 12.0,
+   "portals": [
+    {
+     "id": "gate_north",
+     "pos": [
+      -4,
+      -156
+     ],
+     "dest": "hub",
+     "label": "RUNEHOLD",
+     "arrival": "gate_highlands",
+     "y": 27.485
+    },
+    {
+     "id": "gate_spire",
+     "pos": [
+      4,
+      -156
+     ],
+     "dest": "spire",
+     "label": "THE SHATTERED SPIRE",
+     "arrival": "",
+     "y": 27.485
+    }
+   ],
+   "y": 27.485
+  }
+ ],
+ "baked": {
+  "height_file": "height.r16",
+  "min_y": 4.766,
+  "max_y": 66.118,
+  "map_px_per_m": 2,
+  "mask_bounds": [
+   -192,
+   -192,
+   384,
+   384
+  ]
+ }
+}

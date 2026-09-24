@@ -93,6 +93,7 @@ func _ready() -> void:
 	col.shape = capsule
 	col.position = Vector3(0, 0.8, 0)
 	add_child(col)
+	floor_snap_length = 0.4  # M08 terrain: the 0.1 default hops on downhill runs
 
 	health = HealthComponent.new()
 	health.max_health = max_health * (1.0 + HP_PER_LEVEL * (level - 1))

@@ -133,7 +133,7 @@ func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
 	var fwd := -visual.global_transform.basis.z
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		Vector3(global_position.x, 0.0, global_position.z) + fwd * 0.9,
+		global_position + fwd * 0.9,
 		1.0, WINDUP_TIME)
 	var tw := _blade_pivot.create_tween()
 	tw.tween_property(_blade_pivot, "rotation_degrees", Vector3(0, 0, 90), WINDUP_TIME * 0.8)

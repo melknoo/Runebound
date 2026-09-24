@@ -136,7 +136,7 @@ func _ai_process(delta: float) -> void:
 		if _fire_timer >= 3.0:
 			_fire_timer = 0.0
 			var patch := FirePatch.new()
-			patch.position = Vector3(global_position.x, 0.02, global_position.z)
+			patch.position = ZoneBase.ground_under(self, global_position, 0.02)
 			get_tree().current_scene.add_child(patch)
 	match ai_state:
 		AIState.IDLE:
@@ -185,7 +185,7 @@ func _start_slam() -> void:
 	_enter_state(AIState.WINDUP)
 	var fwd := -visual.global_transform.basis.z
 	_telegraph = VFX.telegraph_disc(get_tree().current_scene,
-		Vector3(global_position.x, 0.0, global_position.z) + fwd * 1.8, SLAM_RADIUS, _slam_windup)
+		global_position + fwd * 1.8, SLAM_RADIUS, _slam_windup)
 	var tw := _arms_pivot.create_tween()
 	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(-130, 0, 0), _slam_windup * 0.85) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)

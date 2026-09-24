@@ -28,6 +28,8 @@ var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
 var look: ZoneLook = null
 var _hulls: Array[MeshInstance3D] = []
+## M08: heightmap terrain when the zone has one (null = flat floor at y 0).
+var terrain: Terrain = null
 
 var style_name: String:
 	get:
@@ -62,7 +64,8 @@ func _ready() -> void:
 	# fight: drawn ahead of the camera (inside the frustum) just under the floor.
 	var ahead := -camera_rig.global_transform.basis.z
 	ahead = Vector3(ahead.x, 0.0, ahead.z).normalized() if absf(ahead.y) < 0.99 else Vector3.FORWARD
-	var hidden := Vector3(player.global_position.x, -0.5, player.global_position.z) + ahead * 4.0
+	var hidden := player.global_position + ahead * 4.0
+	hidden.y = ground_y(hidden) - 0.5
 	VFX.warm_up(world, hidden)
 	_warm_up_characters(hidden + Vector3(0, -1.2, 0))
 
@@ -432,6 +435,8 @@ func _spawn_player() -> void:
 	world.add_child(camera_rig)
 	camera_rig.set_target(player)
 	player.camera_rig = camera_rig
+	if look != null and look.camera_far > 0.0:
+		camera_rig.camera.far = look.camera_far
 
 	targeting = TargetingSystem.new()
 	targeting.name = "Targeting"
@@ -490,6 +495,58 @@ func _on_player_died(p: Player) -> void:
 
 
 # ---------------------------------------------------------------------------
+# Ground seam (M08): nothing hard-codes the floor height any more.
+#  * build time (no physics shapes in the space yet): ground_y() reads the
+#    terrain, 0 in flat zones;
+#  * runtime placement (drops, spawns, ground effects): ground_point() raycasts
+#    onto world layer 1, so rock-hull tops and platforms count too, and falls
+#    back to ground_y().
+# ---------------------------------------------------------------------------
+
+## Terrain height under `pos` (0 in flat zones).
+func ground_y(pos: Vector3) -> float:
+	return terrain.height_at(pos.x, pos.z) if terrain != null else 0.0
+
+
+## Ground normal under `pos` (UP in flat zones).
+func ground_normal(pos: Vector3) -> Vector3:
+	return terrain.normal_at(pos.x, pos.z) if terrain != null else Vector3.UP
+
+
+## `pos` dropped onto the world geometry below (ray from +2 m to -6 m), or
+## onto the terrain height when nothing is hit yet; `lift` metres above it.
+func ground_point(pos: Vector3, lift: float = 0.0) -> Vector3:
+	var w := world.get_world_3d() if world != null and world.is_inside_tree() else null
+	if w != null:
+		var query := PhysicsRayQueryParameters3D.create(pos + Vector3.UP * 2.0, pos + Vector3.DOWN * 6.0, 1)
+		var hit := w.direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			var p: Vector3 = hit["position"]
+			return p + Vector3.UP * lift
+	return Vector3(pos.x, ground_y(pos) + lift, pos.z)
+
+
+## The zone a world node belongs to (its ancestor, else the current scene).
+static func zone_of(node: Node) -> ZoneBase:
+	var n := node
+	while n != null:
+		if n is ZoneBase:
+			return n as ZoneBase
+		n = n.get_parent()
+	var tree := node.get_tree() if node != null else null
+	return tree.current_scene as ZoneBase if tree != null else null
+
+
+## ground_point() for nodes that only know themselves (enemies, projectiles,
+## abilities). Without a zone the legacy flat floor is assumed.
+static func ground_under(node: Node, pos: Vector3, lift: float = 0.0) -> Vector3:
+	var zone := zone_of(node)
+	if zone == null:
+		return Vector3(pos.x, lift, pos.z)
+	return zone.ground_point(pos, lift)
+
+
+# ---------------------------------------------------------------------------
 # Greybox building helpers
 # ---------------------------------------------------------------------------
 
@@ -510,7 +567,7 @@ func _material_from_texture(tex_path: String, fallback: Color, uv_scale: float =
 ## StaticBody and its BoxShape3D stay exactly as before. `wild_faces` lets
 ## faces that point out of the playable area bulge (RockHull bitmask).
 func _add_box(pos: Vector3, size: Vector3, mat: Material, rot_degrees: Vector3 = Vector3.ZERO,
-		dress: StringName = &"", wild_faces: int = 0) -> StaticBody3D:
+		dress: StringName = &"", wild_faces: int = 0, foot_sink: float = 0.15) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
@@ -529,7 +586,7 @@ func _add_box(pos: Vector3, size: Vector3, mat: Material, rot_degrees: Vector3 =
 	body.global_position = pos
 	body.rotation_degrees = rot_degrees
 	if dress != &"" and look != null and look.art_pass:
-		_dress_box(body, mesh, size, dress, wild_faces)
+		_dress_box(body, mesh, size, dress, wild_faces, foot_sink)
 	return body
 
 
@@ -653,12 +710,13 @@ func _add_ash_fall(density: float) -> void:
 	p.position = Vector3(0, 2.0, 0)
 
 
-func _dress_box(body: StaticBody3D, box_mesh: MeshInstance3D, size: Vector3, role: StringName, wild_faces: int) -> void:
+func _dress_box(body: StaticBody3D, box_mesh: MeshInstance3D, size: Vector3, role: StringName, wild_faces: int,
+		foot_sink: float = 0.15) -> void:
 	var p := body.global_position
 	var seed := int(p.x * 73.0) ^ int(p.z * 151.0) ^ int(p.y * 37.0) ^ int(size.x * 11.0 + size.z * 5.0)
 	var hull := MeshInstance3D.new()
 	hull.name = "RockHull"
-	hull.mesh = RockHull.build(size, seed, 0.3, 0.28, wild_faces)
+	hull.mesh = RockHull.build(size, seed, 0.3, 0.28, wild_faces, 1.6, foot_sink)
 	hull.material_override = ArtKit.material(role)
 	body.add_child(hull)
 	box_mesh.visible = false
@@ -746,7 +804,7 @@ func _resolve_spawn_pos(pos: Vector3) -> Vector3:
 		return pos
 	var angle := randf() * TAU
 	var dist := randf_range(9.0, 18.0)
-	return player.global_position + Vector3(cos(angle) * dist, 0.2, sin(angle) * dist)
+	return ground_point(player.global_position + Vector3(cos(angle) * dist, 0.0, sin(angle) * dist), 0.2)
 
 
 func _on_enemy_died(enemy: EnemyBase) -> void:
@@ -782,7 +840,7 @@ func spawn_gold_drop(amount: int, pos: Vector3, owner: Player = null) -> GoldDro
 	var drop := GoldDrop.new()
 	drop.amount = amount
 	drop.player = owner if owner != null else player
-	drop.position = Vector3(pos.x, 0.0, pos.z)
+	drop.position = ground_point(pos)
 	world.add_child(drop)
 	drop.picked_up.connect(func(_amount: int) -> void: SaveGame.request_save())
 	return drop
@@ -813,7 +871,7 @@ func spawn_item_drop(item: ItemData, pos: Vector3, owner: Player = null) -> Item
 	var drop := ItemDrop.new()
 	drop.item = item
 	drop.player = owner if owner != null else player
-	drop.position = Vector3(pos.x, 0.0, pos.z)
+	drop.position = ground_point(pos)
 	world.add_child(drop)
 	drop.picked_up.connect(func(picked: ItemData) -> void:
 		if drop.player != null and drop.player.is_local:  # a toast belongs to the one who picked it up

@@ -116,7 +116,7 @@ func _physics_process(delta: float) -> void:
 
 func _drop_fire_patch() -> void:
 	var patch := FirePatch.new()
-	patch.position = Vector3(enemy.global_position.x, 0.02, enemy.global_position.z)
+	patch.position = ZoneBase.ground_under(enemy, enemy.global_position, 0.02)
 	enemy.get_tree().current_scene.add_child(patch)
 
 

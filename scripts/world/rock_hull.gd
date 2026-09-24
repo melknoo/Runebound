@@ -24,7 +24,7 @@ const LEDGE := 0.03           # height of the step row under each band boundary
 ## of faces facing outside the playable area that may bulge up to wild_max
 ## (bit 0 +X, 1 -X, 2 +Z, 3 -Z).
 static func build(size: Vector3, seed: int, side_max: float = 0.3, top_max: float = 0.28,
-		wild_faces: int = 0, wild_max: float = 1.6) -> ArrayMesh:
+		wild_faces: int = 0, wild_max: float = 1.6, foot_sink: float = 0.15) -> ArrayMesh:
 	var noise := FastNoiseLite.new()
 	noise.seed = seed
 	noise.frequency = 0.6
@@ -44,7 +44,7 @@ static func build(size: Vector3, seed: int, side_max: float = 0.3, top_max: floa
 		bands.append(rng.randf_range(0.78, 1.0) if far else rng.randf_range(0.05, 0.3))
 		far = not far if rng.randf() < 0.85 else far
 	var ctx := {"h": h, "noise": noise, "bands": bands, "strata": strata, "side_max": side_max,
-		"top_max": top_max, "wild_faces": wild_faces, "wild_max": wild_max}
+		"top_max": top_max, "wild_faces": wild_faces, "wild_max": wild_max, "foot_sink": foot_sink}
 
 	# Vertical rows for side faces: a pair at every band boundary (ledge).
 	var ys := PackedFloat32Array([-h.y])
@@ -135,9 +135,10 @@ static func _displace(p: Vector3, ctx: Dictionary) -> Vector3:
 		var share := clampf(bands[band] + (n - 0.5) * 0.3, 0.0, 1.0)
 		push = MARGIN + (limit - MARGIN) * share
 	var moved := p + out * push
-	# Foot: sink the bottom rim a little so no gap shows against the floor.
+	# Foot: sink the bottom rim so no gap shows against the floor (deeper on
+	# terrain slopes: the caller passes the drop under the box).
 	if p.y <= -h.y + 0.001:
-		moved.y -= 0.15
+		moved.y -= float(ctx["foot_sink"])
 	return moved
 
 

@@ -8,6 +8,8 @@ const TRIGGER_RANGE := 1.6
 var destination_scene: String = ""
 var label_text: String = "PORTAL"
 var locked: bool = false
+## M08: yaw of the gate frame (NAN = legacy: face the world origin).
+var face_yaw: float = NAN
 
 var _ring: MeshInstance3D
 var _ring_mat: StandardMaterial3D
@@ -91,6 +93,9 @@ func _build_gate() -> void:
 ## Positions are set right after add_child: turn once they are.
 func _face_centre() -> void:
 	if _frame == null:
+		return
+	if not is_nan(face_yaw):
+		_frame.rotation.y = face_yaw
 		return
 	var to := -Vector3(global_position.x, 0.0, global_position.z)
 	if to.length() > 0.5:

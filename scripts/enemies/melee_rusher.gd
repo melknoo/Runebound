@@ -133,7 +133,7 @@ func _start_windup() -> void:
 	# Ground disc marks the strike zone; fills in over the wind-up.
 	var fwd := -visual.global_transform.basis.z
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		Vector3(global_position.x, 0.0, global_position.z) + fwd * 1.1,
+		global_position + fwd * 1.1,
 		1.4, WINDUP_TIME)
 	# Telegraph: axe raised, blade glows hot, warning sound.
 	var tw := _axe_pivot.create_tween()

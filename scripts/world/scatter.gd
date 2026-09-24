@@ -22,6 +22,8 @@ const POINTS_META := &"scatter_points"
 ##   obstacles  [{pos: Vector3, size: Vector3, yaw: float}] box footprints
 ##   exclude    [Vector3(x, z, radius)] keep-clear circles
 ##   height_at  Callable(x, z) -> float, default flat 0
+##   normal_at  Callable(x, z) -> Vector3, optional: instances tilt to the slope
+##   tilt       0..1 how much of that tilt to apply (default 1 when normal_at is set)
 ##   seed       int (placement is deterministic)
 ##   items      [{prop, per_m (clusters per metre of footprint perimeter),
 ##               band: Vector2 (min, max distance outside the footprint),
@@ -36,6 +38,8 @@ static func populate(zone: ZoneBase, rules: Dictionary) -> int:
 	var obstacles: Array = rules.get("obstacles", [])
 	var exclude: Array = rules.get("exclude", [])
 	var height_at: Callable = rules.get("height_at", func(_x: float, _z: float) -> float: return 0.0)
+	var normal_at: Callable = rules.get("normal_at", Callable())
+	var tilt := float(rules.get("tilt", 1.0))
 	var placed := 0
 	for item: Dictionary in rules.get("items", []):
 		var mesh := _item_mesh(String(item["prop"]))
@@ -54,6 +58,10 @@ static func populate(zone: ZoneBase, rules: Dictionary) -> int:
 						continue
 					var s := rng.randf_range(scale_range.x, scale_range.y)
 					var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s)
+					if normal_at.is_valid() and tilt > 0.0:
+						var n: Vector3 = normal_at.call(p.x, p.y)
+						if n.dot(Vector3.UP) < 0.9999:
+							basis = Basis(Quaternion(Vector3.UP, Vector3.UP.slerp(n, tilt))) * basis
 					var key := Vector2i(floori(p.x / CHUNK), floori(p.y / CHUNK))
 					if not chunks.has(key):
 						chunks[key] = []

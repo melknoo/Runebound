@@ -99,7 +99,7 @@ func _ai_process(delta: float) -> void:
 func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		Vector3(global_position.x, 0.0, global_position.z), SPIN_RADIUS, WINDUP_TIME)
+		global_position, SPIN_RADIUS, WINDUP_TIME)
 	Sfx.play("telegraph", global_position, -6.0, 0.1, 0.8)
 	var tw := visual.create_tween()
 	tw.tween_property(visual, "rotation:y", visual.rotation.y - 0.7, WINDUP_TIME * 0.85)

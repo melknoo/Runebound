@@ -364,6 +364,7 @@ def generate_highlands() -> None:
     ash_surface("hl_ash_a", pal["ash_ground"], 2, pebbles=10, cracks=False)
     ash_surface("hl_ash_b", pal["ash_ground"], 1, pebbles=6, cracks=True)
     ash_surface("hl_ash_top", pal["ash_top"], 1, pebbles=8, cracks=False)
+    ash_surface("hl_trail", pal["ash_ground"], 3, pebbles=14, cracks=False)  # M08 trodden trails (path mask)
     basalt_columns("hl_basalt", pal["basalt"])
     strata_rock("hl_strata", pal["basalt"])
     macro_noise("macro_noise")

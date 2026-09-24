@@ -237,7 +237,7 @@ static func ground_ring(root: Node, pos: Vector3, color: Color, max_radius: floa
 	var m := _ring_plane(max_radius, Color(color, minf(color.a, PLAYER_GROUND_ALPHA)))
 	m.name = "Shockwave"
 	root.add_child(m)
-	m.global_position = pos + Vector3(0, 0.06, 0)
+	_place_ground(m, pos, 0.06)
 	var mat := (m.mesh as PlaneMesh).material as ShaderMaterial
 	var base: Color = mat.get_shader_parameter(&"color")
 	var expand := func(t: float) -> void:
@@ -269,17 +269,45 @@ static func _ring_plane(radius: float, color: Color) -> MeshInstance3D:
 ## mid-air impacts (e.g. Ember Lance hitting a chest) must land on the floor,
 ## not hover — a floating "ground" plane reads as sliding when the camera moves.
 static func _ground_point(root: Node, pos: Vector3) -> Vector3:
+	return ground_hit(root, pos)["position"]
+
+
+## M08 ground seam for effects: {position, normal} of the world geometry
+## under `pos` (ray from +2 m down to -8 m on world layer 1). Off the
+## geometry (or while warming up) the zone's terrain height is used, and in
+## flat zones y stays as given. Every ground plane places itself with this,
+## so telegraphs, rings and fields sit on slopes, ledges and platforms.
+static var snap_ground := true
+
+
+static func ground_hit(root: Node, pos: Vector3) -> Dictionary:
+	var fallback := {"position": pos, "normal": Vector3.UP}
+	if not snap_ground:
+		return fallback
+	var zone := ZoneBase.zone_of(root)
+	if zone != null:
+		fallback["position"] = Vector3(pos.x, zone.ground_y(pos), pos.z)
+		fallback["normal"] = zone.ground_normal(pos)
 	var viewport := root.get_viewport()
 	if viewport == null:
-		return pos
+		return fallback
 	var world := viewport.find_world_3d()
 	if world == null:
-		return pos
-	var query := PhysicsRayQueryParameters3D.create(pos + Vector3.UP * 0.5, pos + Vector3.DOWN * 12.0, 1)
+		return fallback
+	var query := PhysicsRayQueryParameters3D.create(pos + Vector3.UP * 2.0, pos + Vector3.DOWN * 8.0, 1)
 	var result := world.direct_space_state.intersect_ray(query)
 	if result.is_empty():
-		return pos
-	return result["position"]
+		return fallback
+	return {"position": result["position"], "normal": result["normal"]}
+
+
+## Puts a ground plane on the geometry under `pos`, `lift` metres above it,
+## tilted to the surface, turned by `yaw` around its normal.
+static func _place_ground(m: Node3D, pos: Vector3, lift: float, yaw: float = 0.0) -> void:
+	var hit := ground_hit(m, pos)
+	var n: Vector3 = hit["normal"]
+	var tilt := Basis(Quaternion(Vector3.UP, n)) if n.dot(Vector3.UP) < 0.9999 else Basis.IDENTITY
+	m.global_transform = Transform3D(tilt * Basis(Vector3.UP, yaw), (hit["position"] as Vector3) + n * lift)
 
 
 ## Persistent ground decal (scorch marks, cracks) that slowly fades.
@@ -640,7 +668,7 @@ static func attach_ember_trail(parent: Node3D) -> void:
 static func telegraph_disc(root: Node, pos: Vector3, radius: float, duration: float) -> MeshInstance3D:
 	var m := _threat_plane(Vector2(radius * 2.0, radius * 2.0), 0)
 	root.add_child(m)
-	m.global_position = pos + Vector3(0, 0.05, 0)
+	_place_ground(m, pos, 0.05)
 	_run_progress(m, &"progress", duration)
 	return m
 
@@ -651,8 +679,7 @@ static func telegraph_lane(root: Node, start: Vector3, dir: Vector3, length: flo
 	var flat := Vector3(dir.x, 0.0, dir.z).normalized()
 	var m := _threat_plane(Vector2(width, length), 1)
 	root.add_child(m)
-	m.global_position = Vector3(start.x, 0.05, start.z) + flat * length * 0.5
-	m.rotation.y = atan2(-flat.x, -flat.z)
+	_place_ground(m, start + flat * length * 0.5, 0.05, atan2(-flat.x, -flat.z))
 	_run_progress(m, &"progress", duration)
 	return m
 
@@ -667,7 +694,7 @@ static func threat_ring(root: Node, center: Vector3, max_radius: float, half_wid
 	mat.set_shader_parameter(&"ring_w", half_width)
 	mat.set_shader_parameter(&"ring_r", 0.0)
 	root.add_child(m)
-	m.global_position = center + Vector3(0, 0.05, 0)
+	_place_ground(m, center, 0.05)
 	return m
 
 
@@ -704,7 +731,7 @@ static func player_ring(root: Node, pos: Vector3, radius: float, duration: float
 	m.name = "PlayerRing"
 	((m.mesh as PlaneMesh).material as ShaderMaterial).set_shader_parameter(&"lit", 0.0)
 	root.add_child(m)
-	m.global_position = pos + Vector3(0, 0.04, 0)
+	_place_ground(m, pos, 0.04)
 	_run_progress(m, &"lit", duration)
 	return m
 
@@ -722,6 +749,7 @@ static func _run_progress(m: MeshInstance3D, param: StringName, duration: float)
 ## INSIDE the camera frustum (culled draws compile nothing) but under the
 ## floor surface, e.g. a few metres ahead of the camera, 0.5 m down.
 static func warm_up(root: Node, hidden: Vector3) -> void:
+	snap_ground = false  # the spot is under the floor on purpose: keep it there
 	var holder := Node3D.new()
 	root.add_child(holder)
 	holder.global_position = hidden
@@ -740,6 +768,7 @@ static func warm_up(root: Node, hidden: Vector3) -> void:
 	telegraph_disc(root, hidden, 1.0, 0.1)
 	_free_after(threat_ring(root, hidden, 1.0, 0.3), 0.1)
 	player_ring(root, hidden, 1.0, 0.1, Color.WHITE)
+	snap_ground = true
 
 
 static func _free_after(node: Node, seconds: float) -> void:

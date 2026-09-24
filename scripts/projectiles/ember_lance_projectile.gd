@@ -191,7 +191,7 @@ func _phoenix_burst(victim: Node) -> void:
 	if not _source is Player or not (_source as Player).has_power(&"phoenix_burst"):
 		return
 	var scene := get_tree().current_scene
-	VFX.ground_ring(scene, Vector3(global_position.x, 0.0, global_position.z), ArtKit.color("color_roles.fire.body"),
+	VFX.ground_ring(scene, global_position, ArtKit.color("color_roles.fire.body"),
 		PHOENIX_RADIUS, 0.25)
 	for other in EnemyBase.all_enemies.duplicate():
 		if not is_instance_valid(other) or other == victim or other.ai_state == EnemyBase.AIState.DEAD:
