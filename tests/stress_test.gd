@@ -49,6 +49,7 @@ func _run() -> void:
 
 	var player := lab.player
 	player.god_mode = true
+	player.debug_learn_all()  # M07b: harness runs know the whole kit
 	_frames.clear()
 	_phys.clear()
 	await get_tree().create_timer(2.0).timeout

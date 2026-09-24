@@ -31,7 +31,23 @@ static func ensure() -> void:
 			InputMap.action_add_event(action, ev)
 
 
-## Label for a HUD slot: the first key of an action ("1", "2", ...).
+## Label for a HUD slot: the first key of an action ("1", "2", ...). Actions
+## the project binds itself (mouse buttons, Space) are read from the InputMap.
 static func key_label(action: StringName) -> String:
 	var keys: Array = KEYS.get(action, [])
-	return OS.get_keycode_string(keys[0]) if not keys.is_empty() else "?"
+	if not keys.is_empty():
+		return OS.get_keycode_string(keys[0])
+	if action == &"" or not InputMap.has_action(action):
+		return "?"
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventMouseButton:
+			match (ev as InputEventMouseButton).button_index:
+				MOUSE_BUTTON_LEFT: return "LMB"
+				MOUSE_BUTTON_RIGHT: return "RMB"
+				MOUSE_BUTTON_MIDDLE: return "MMB"
+				_: return "M%d" % (ev as InputEventMouseButton).button_index
+		if ev is InputEventKey:
+			var key := ev as InputEventKey
+			var code := key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
+			return "SPC" if code == KEY_SPACE else OS.get_keycode_string(code)
+	return "?"

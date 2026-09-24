@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ClassData" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/class_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/abilities/rune_cleave.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/abilities/ember_lance.tres" id="3"]
+[ext_resource type="Resource" path="res://resources/abilities/earthbreaker.tres" id="4"]
+[ext_resource type="Resource" path="res://resources/abilities/storm_step.tres" id="5"]
+[ext_resource type="Resource" path="res://resources/abilities/chain_spark.tres" id="6"]
+[ext_resource type="Resource" path="res://resources/abilities/fracture_rune.tres" id="7"]
+[ext_resource type="Resource" path="res://resources/abilities/runic_guard.tres" id="8"]
+[ext_resource type="Resource" path="res://resources/abilities/resonance_burst.tres" id="9"]
+
+[resource]
+script = ExtResource("1")
+id = &"runebreaker"
+display_name = "Runebreaker"
+description = "Armored rune warrior. Melee builds Resonance; heavy rune abilities spend it."
+abilities = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9")]
+starting_abilities = Array[StringName]([&"rune_cleave"])
+talent_branches = Array[String](["Storm", "Ember", "Runic Warden"])
+rig_path = "res://assets/models/chars/runebreaker.glb"
+material_id = "runebreaker"
+resource_label = "Resonance"
+max_resource = 100.0

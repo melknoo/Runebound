@@ -313,7 +313,7 @@ def main() -> None:
     save(frame(24, rgb("#0E0A14", 250), ACCENT_DIM, ACCENT_DIM), "button_pressed.png")
     cd = Image.new("RGBA", (20, 20), (13, 10, 20, 205))
     save(cd, "cooldown.png")
-    for name, fn in (("melee", icon_melee), ("ember", icon_ember), ("earthbreaker", icon_earthbreaker),
+    for name, fn in (("rune_cleave", icon_melee), ("ember_lance", icon_ember), ("earthbreaker", icon_earthbreaker),
                      ("storm_step", icon_storm_step), ("chain_spark", icon_chain_spark),
                      ("fracture_rune", icon_fracture_rune), ("dodge", icon_dodge),
                      ("runic_guard", icon_runic_guard), ("resonance_burst", icon_resonance_burst)):

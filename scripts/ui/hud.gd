@@ -15,7 +15,7 @@ var _hurt_flash: ColorRect
 var _slots: Dictionary = {}  # id -> {overlay, slot, icon, key, name, desc, type, data}
 var _toast_box: VBoxContainer
 var _slot_row: HBoxContainer
-const TALENT_SLOTS: Array[StringName] = [&"runic_guard", &"resonance_burst"]
+var _slots_built := false
 
 # Ability tooltip: names stay off the combat screen and only appear while the
 # inventory is open (cursor free) and the mouse hovers a slot.
@@ -43,9 +43,23 @@ const ICON_DIR := "res://assets/ui/icons/"
 func ability_names() -> Array[String]:
 	var out: Array[String] = []
 	for id: StringName in _slots:
-		if (_slots[id]["slot"] as Control).visible:  # talent abilities only once learned
+		if (_slots[id]["slot"] as Control).visible:  # only abilities the character knows
 			out.append(_slots[id]["name"] as String)
 	return out
+
+
+## Pixel icon of an ability (or dodge) by id; null when none is generated.
+static func icon(id: StringName) -> Texture2D:
+	var path := ICON_DIR + String(id) + ".png"
+	return load(path) as Texture2D if ResourceLoader.exists(path) else null
+
+
+## Key label for an ability id, as shown on its slot ("LMB", "1", "SPC").
+static func key_for(player_: Player, id: StringName) -> String:
+	if id == &"dodge":
+		return "SPC"
+	var data := player_.ability(id)
+	return InputSetup.key_label(data.input_action) if data != null else "?"
 
 
 ## Screen rect of an ability slot (tests use it to simulate hovering).
@@ -69,7 +83,7 @@ func setup(p: Player) -> void:
 	player.progression.leveled_up.connect(_on_level_up)
 	_build()
 	_on_health_changed(player.health.current_health, player.health.max_health)
-	_on_resonance_changed(player.resonance, Player.MAX_RESONANCE)
+	_on_resonance_changed(player.resonance, player.max_resource())
 	var prog := player.progression
 	_on_xp_changed(prog.xp, Progression.xp_to_next(prog.level), prog.level)
 
@@ -122,23 +136,27 @@ func _build() -> void:
 	slot_row.add_theme_constant_override("separation", SLOT_GAP)
 	slot_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot_row.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	var row_width := SLOT_SIZE * 7 + SLOT_GAP * 6
-	slot_row.position = Vector2(-row_width * 0.5, -98)
+	slot_row.position = Vector2(0, -98)
 	root.add_child(slot_row)
 
-	_add_slot(slot_row, &"melee", "LMB", player.cleave)
-	_add_slot(slot_row, &"ember", "RMB", player.ember)
-	_add_slot(slot_row, &"earthbreaker", InputSetup.key_label(&"ability_q"), player.earthbreaker)
-	_add_slot(slot_row, &"storm_step", InputSetup.key_label(&"ability_e"), player.storm_step)
-	_add_slot(slot_row, &"chain_spark", InputSetup.key_label(&"ability_r"), player.chain_spark)
-	_add_slot(slot_row, &"fracture_rune", InputSetup.key_label(&"ability_f"), player.fracture_rune)
-	_add_slot(slot_row, &"dodge", "SPC", null)
-	# M07 talent abilities: slots appear once their talent is learned.
-	_add_slot(slot_row, &"runic_guard", InputSetup.key_label(&"ability_runic_guard"), player.runic_guard)
-	_add_slot(slot_row, &"resonance_burst", InputSetup.key_label(&"ability_resonance_burst"), player.resonance_burst)
+	# M07b: one slot per class ability (ClassData order); dodge sits after the
+	# last learnable ability, the talent abilities (7-8) follow it. Slots show
+	# only while the character knows the ability (_refresh_slots).
+	var dodge_added := false
+	for data in player.class_data.abilities:
+		if data == null:
+			continue
+		if not dodge_added and data.unlock == AbilityData.Unlock.TALENT:
+			_add_slot(slot_row, &"dodge", "SPC", null)
+			dodge_added = true
+		_add_slot(slot_row, data.id, InputSetup.key_label(data.input_action), data)
+	if not dodge_added:
+		_add_slot(slot_row, &"dodge", "SPC", null)
 	_slot_row = slot_row
-	player.progression.talents_changed.connect(_refresh_talent_slots)
-	_refresh_talent_slots()
+	player.progression.talents_changed.connect(_refresh_slots)
+	player.abilities_changed.connect(_refresh_slots)
+	_refresh_slots()
+	_slots_built = true
 
 	# Pickup toasts, top-center.
 	_toast_box = VBoxContainer.new()
@@ -241,6 +259,7 @@ func _bar(parent: Control, height: float, fill_color: Color, back_color: Color, 
 func _add_slot(parent: Control, id: StringName, key_label: String, data: AbilityData) -> void:
 	var slot := Control.new()
 	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
+	slot.pivot_offset = Vector2(SLOT_SIZE, SLOT_SIZE) * 0.5  # the learn pop scales around the centre
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(slot)
 
@@ -394,15 +413,17 @@ func _process(_delta: float) -> void:
 	if player == null or not is_instance_valid(player):
 		return
 	for id: StringName in _slots.keys():
+		if not (_slots[id]["slot"] as Control).visible:
+			continue
 		var sweep := _slots[id]["overlay"] as TextureProgressBar
-		var icon := _slots[id]["icon"] as TextureRect
+		var icon_rect := _slots[id]["icon"] as TextureRect
 		sweep.value = player.cooldown_fraction(id) * 100.0
 		# Earthbreaker also dims fully while Resonance is below its cost.
 		if id == &"earthbreaker":
 			var starved := player.resonance < player.earthbreaker_cost()
 			if starved:
 				sweep.value = 100.0
-			icon.modulate = Color(0.6, 0.6, 0.65) if starved else Color.WHITE
+			icon_rect.modulate = Color(0.6, 0.6, 0.65) if starved else Color.WHITE
 	if _hurt_flash.color.a > 0.0:
 		_hurt_flash.color.a = maxf(_hurt_flash.color.a - _delta * 1.4, 0.0)
 	_update_tooltip(get_viewport().get_mouse_position())
@@ -415,18 +436,27 @@ func _on_health_changed(current: float, maximum: float) -> void:
 		_hurt_flash.color.a = maxf(_hurt_flash.color.a, 0.22)
 
 
-## Talent abilities show only once learned; the row stays centred.
-func _refresh_talent_slots() -> void:
-	var shown := 7
-	for id in TALENT_SLOTS:
-		var visible_now := player.has_power(id)
-		(_slots[id]["slot"] as Control).visible = visible_now
+## A slot shows only while the character knows its ability (start kit,
+## trainer, or a held talent power); the row stays centred. A slot that just
+## appeared pops in, so learning at the trainer reads on the HUD.
+func _refresh_slots() -> void:
+	var shown := 0
+	for id: StringName in _slots:
+		var slot := _slots[id]["slot"] as Control
+		var visible_now := player.knows(id)
+		if visible_now and not slot.visible and _slots_built:
+			slot.scale = Vector2.ZERO
+			var tw := slot.create_tween()
+			tw.tween_property(slot, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		slot.visible = visible_now
 		if visible_now:
 			shown += 1
-	var row_width := SLOT_SIZE * shown + SLOT_GAP * (shown - 1)
+	var row_width := SLOT_SIZE * shown + SLOT_GAP * maxi(shown - 1, 0)
 	# offsets, not position: once laid out, position is in parent space
 	_slot_row.offset_left = -row_width * 0.5
 	_slot_row.offset_right = row_width * 0.5
+	if _cost_tick != null:  # Earthbreaker's cost mark means nothing before it is learned
+		_cost_tick.visible = player.knows(&"earthbreaker")
 
 
 func _on_xp_changed(xp: int, needed: int, level: int) -> void:

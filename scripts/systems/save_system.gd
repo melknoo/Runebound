@@ -1,8 +1,14 @@
 extends Node
 ## Autoload "SaveGame": versioned JSON persistence for gear and world position.
 ## Corrupt or missing saves always fall back to a fresh start - never crash.
+##
+## v3 (M07b) layout, see docs/PROGRESSION_DESIGN.md:
+##   {version, world: {zone, flags},
+##    characters: [{class_id, known_abilities, gold, inventory, equipped, progression}],
+##    active}
+## `world` is what a co-op server will own; `characters` stay with the player.
 
-const VERSION := 2  # v2 (M07): progression; v1 saves migrate on load
+const VERSION := 3  # v2 (M07): progression; v3 (M07b): world/characters split
 const DEBOUNCE := 2.0
 ## Command-line flags (after `--`) that mark an automated capture/perf run.
 const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
@@ -14,6 +20,8 @@ const TEST_RUN_SEED := 1207
 var save_path: String = "user://runebound_save.json"
 var current_zone: String = "res://scenes/hub.tscn"
 var flags: Dictionary = {}  # persistent world state, e.g. bosses defeated
+## Index into `characters` of the character being played.
+var active: int = 0
 
 var _pending_save: bool = false
 var _debounce_left: float = 0.0
@@ -36,10 +44,7 @@ func _ready() -> void:
 		if FileAccess.file_exists(save_path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
 		seed(TEST_RUN_SEED)
-	_loaded_data = _read_file()
-	if _loaded_data.has("zone"):
-		current_zone = _loaded_data["zone"]
-	flags = _loaded_data.get("flags", {})
+	reload_from_disk()
 
 
 static func is_test_run() -> bool:
@@ -87,6 +92,7 @@ func save_now() -> void:
 func wipe() -> void:
 	_loaded_data = {}
 	flags = {}
+	active = 0
 	current_zone = "res://scenes/hub.tscn"
 	if FileAccess.file_exists(save_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
@@ -99,36 +105,76 @@ func has_save() -> bool:
 ## Re-read the save file from disk (tests use this after switching save_path).
 func reload_from_disk() -> void:
 	_loaded_data = _read_file()
-	if _loaded_data.has("zone"):
-		current_zone = _loaded_data["zone"]
-	flags = _loaded_data.get("flags", {})
+	var world: Dictionary = _loaded_data.get("world", {})
+	if world.has("zone"):
+		current_zone = world["zone"]
+	flags = world.get("flags", {})
+	active = int(_loaded_data.get("active", 0))
 
 
-## Restore gear into a freshly spawned player. Called by ZoneBase.
+## The saved character being played ({} on a fresh start).
+func active_character() -> Dictionary:
+	var chars: Array = _loaded_data.get("characters", [])
+	if active < 0 or active >= chars.size():
+		return {}
+	return chars[active] as Dictionary
+
+
+## Class of the active character; the default class on a fresh start.
+func active_class_id() -> StringName:
+	return StringName(str(active_character().get("class_id", ClassData.DEFAULT_ID)))
+
+
+## Restore the active character into a freshly spawned player. Called by ZoneBase.
 func restore_player(player: Player) -> void:
-	if _loaded_data.is_empty():
+	var ch := active_character()
+	if ch.is_empty():
 		return
-	for entry: Dictionary in _loaded_data.get("inventory", []):
+	for entry: Dictionary in ch.get("inventory", []):
 		player.equipment.inventory.append(ItemData.from_dict(entry))
-	for slot_key: String in _loaded_data.get("equipped", {}):
-		var item := ItemData.from_dict(_loaded_data["equipped"][slot_key])
+	for slot_key: String in ch.get("equipped", {}):
+		var item := ItemData.from_dict(ch["equipped"][slot_key])
 		player.equipment.equipped[int(slot_key) as ItemData.Slot] = item
-	player.progression.from_dict(_loaded_data.get("progression", {}))
+	player.progression.from_dict(ch.get("progression", {}))
+	if ch.has("known_abilities"):
+		var known: Array[StringName] = []
+		for id in ch["known_abilities"]:
+			var sid := StringName(str(id))
+			if player.ability(sid) != null and not known.has(sid):
+				known.append(sid)
+		for sid in player.class_data.starting_abilities:  # the start kit can't be lost
+			if not known.has(sid):
+				known.append(sid)
+		player.known_abilities = known
+	player.gold = maxi(int(ch.get("gold", 0)), 0)
 	player.equipment._recompute()
 	player.equipment.changed.emit()
+	player.abilities_changed.emit()
+	player.gold_changed.emit(player.gold, 0)
+
+
+static func character_dict(player: Player) -> Dictionary:
+	var ch := {"class_id": String(player.class_data.id), "known_abilities": [], "gold": player.gold,
+		"inventory": [], "equipped": {}, "progression": player.progression.to_dict()}
+	for id in player.known_abilities:
+		(ch["known_abilities"] as Array).append(String(id))
+	for item in player.equipment.inventory:
+		(ch["inventory"] as Array).append(item.to_dict())
+	for slot: ItemData.Slot in player.equipment.equipped:
+		ch["equipped"][str(int(slot))] = (player.equipment.equipped[slot] as ItemData).to_dict()
+	return ch
 
 
 func _collect() -> Dictionary:
 	var player := _find_player()
-	var data := {"version": VERSION, "zone": current_zone, "flags": flags, "inventory": [], "equipped": {}}
+	var chars: Array = (_loaded_data.get("characters", []) as Array).duplicate(true)
 	if player != null:
-		for item in player.equipment.inventory:
-			(data["inventory"] as Array).append(item.to_dict())
-		for slot: ItemData.Slot in player.equipment.equipped:
-			data["equipped"][str(int(slot))] = (player.equipment.equipped[slot] as ItemData).to_dict()
-		data["progression"] = player.progression.to_dict()
-	elif _loaded_data.has("progression"):
-		data["progression"] = _loaded_data["progression"]  # no player in this scene: keep it
+		while chars.size() <= active:
+			chars.append({})
+		chars[active] = character_dict(player)
+	# no player in this scene: the loaded characters are kept as they were
+	var data := {"version": VERSION, "world": {"zone": current_zone, "flags": flags},
+		"characters": chars, "active": active}
 	_loaded_data = data
 	return data
 
@@ -171,6 +217,25 @@ static func migrate(data: Dictionary) -> Dictionary:
 		data["progression"] = {"level": 1, "xp": 0, "talents": {}}
 		data["version"] = 2
 		version = 2
+	if version == 2:  # M07b: one Runebreaker; abilities its level had already earned are kept
+		var prog: Dictionary = data.get("progression", {"level": 1, "xp": 0, "talents": {}})
+		var level := int(prog.get("level", 1))
+		var cls := ClassData.default_class()
+		var known: Array = []
+		for id in cls.starting_abilities:
+			known.append(String(id))
+		for ability in cls.trainer_abilities():
+			if ability.learn_level <= level:
+				known.append(String(ability.id))
+		data = {
+			"version": 3,
+			"world": {"zone": data.get("zone", "res://scenes/hub.tscn"), "flags": data.get("flags", {})},
+			"characters": [{"class_id": String(cls.id), "known_abilities": known, "gold": 0,
+				"inventory": data.get("inventory", []), "equipped": data.get("equipped", {}),
+				"progression": prog}],
+			"active": 0,
+		}
+		version = 3
 	if version != VERSION:
 		push_warning("SaveGame: incompatible save version ignored")
 		return {}

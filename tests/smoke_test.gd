@@ -219,6 +219,38 @@ func _run() -> void:
 	await get_tree().process_frame
 	_check(lab.targeting._name_label.visible and lab.targeting._name_label.text.begins_with("Cinder Marauder"),
 		"target name plate shows the enemy name")
+	# --- M07b: one ability at the start, the rest are learned ---
+	var cls := ClassData.load_by_id(&"runebreaker")
+	_check(cls != null and cls.abilities.size() == 8 and cls.starting_abilities.size() == 1
+		and cls.starting_abilities[0] == &"rune_cleave"
+		and cls.trainer_abilities().size() == 5 and cls.trainer_abilities()[0].id == &"earthbreaker",
+		"ClassData: Runebreaker has 8 abilities, starts with Rune Cleave, trains 5 (Earthbreaker first)")
+	_check(player.class_data == cls and player.ability(&"ember_lance") == player.ember,
+		"player carries its ClassData; typed ability fields are its abilities")
+	var fresh_names := lab.hud.ability_names()
+	_check(fresh_names.size() == 2 and fresh_names[0] == "Rune Cleave" and fresh_names[1] == "Dodge",
+		"fresh character: HUD shows Rune Cleave and Dodge only (%s)" % [fresh_names])
+	_check(player.knows(&"rune_cleave") and player.knows(&"dodge") and not player.knows(&"ember_lance")
+		and not player.knows(&"earthbreaker") and not player.knows(&"runic_guard"),
+		"knows(): start kit and dodge yes, trainer and talent abilities no")
+	player.reset_cooldowns()
+	player.resonance = 100.0
+	_check(not player.try_ember() and not player.try_earthbreaker() and not player.try_storm_step()
+		and not player.try_chain_spark() and not player.try_fracture_rune() and player.state == Player.State.MOVE,
+		"unknown abilities refuse to cast")
+	_check(not player._try_action(&"storm_step") and player._buffered_action == &"",
+		"input dispatch ignores unknown abilities and never buffers them")
+	_check(not player.learn_ability(&"nope") and not player.learn_ability(&"runic_guard") and not player.learn_ability(&"rune_cleave"),
+		"learn_ability rejects unknown ids, talent abilities and known ones")
+	_check(player.learn_ability(&"earthbreaker") and player.knows(&"earthbreaker") and not player.learn_ability(&"earthbreaker"),
+		"learn_ability adds a trainer ability once")
+	_check(lab.hud.ability_names().size() == 3 and lab.hud.ability_names().has("Earthbreaker"),
+		"HUD slot appears once the ability is learned")
+	player.debug_learn_all()
+	_check(lab.hud.ability_names().size() == 7, "debug_learn_all knows the whole trainer kit (7 slots)")
+	player.resonance = 0.0
+	player.resonance_changed.emit(0.0, player.max_resource())
+
 	# --- M06 B5: HUD v2 look ---
 	var hud_root := lab.hud.get_child(0) as Control
 	var body_font := UiTheme.font()
@@ -226,7 +258,7 @@ func _run() -> void:
 		and body_font.antialiasing == TextServer.FONT_ANTIALIASING_NONE,
 		"HUD uses the pixel UI theme (Pixelify Sans, no antialiasing)")
 	var icons_ok := true
-	for id: StringName in [&"melee", &"ember", &"earthbreaker", &"storm_step", &"chain_spark", &"fracture_rune", &"dodge"]:
+	for id: StringName in [&"rune_cleave", &"ember_lance", &"earthbreaker", &"storm_step", &"chain_spark", &"fracture_rune", &"dodge"]:
 		icons_ok = icons_ok and (lab.hud._slots[id]["icon"] as TextureRect).texture != null
 	_check(icons_ok, "every ability slot shows its pixel icon")
 	var plate := Label3D.new()
@@ -585,8 +617,19 @@ func _run() -> void:
 	prog.respec()
 	_check(prog.points_free() == 4 and prog.stat(&"crit_pct") == 0.0, "respec returns every point")
 	var v1 := SaveGame.migrate({"version": 1, "zone": "res://scenes/hub.tscn", "flags": {"x": true}, "inventory": [], "equipped": {}})
-	_check(int(v1.get("version", 0)) == SaveGame.VERSION and (v1["progression"] as Dictionary)["level"] == 1
-		and v1["flags"].has("x"), "v1 saves migrate (level 1, gear and flags kept)")
+	var v1_char: Dictionary = (v1.get("characters", [{}]) as Array)[0]
+	_check(int(v1.get("version", 0)) == SaveGame.VERSION and (v1_char["progression"] as Dictionary)["level"] == 1
+		and (v1["world"] as Dictionary)["flags"].has("x") and v1_char["known_abilities"] == ["rune_cleave"],
+		"v1 saves migrate to v3 (level 1, Rune Cleave only, flags kept in world)")
+	var v2 := SaveGame.migrate({"version": 2, "zone": "res://scenes/shattered_spire.tscn", "flags": {"colossus_defeated": true},
+		"inventory": [{"n": "x"}], "equipped": {}, "progression": {"level": 4, "xp": 10, "talents": {"kindling": 2}}})
+	var v2_char: Dictionary = (v2.get("characters", [{}]) as Array)[0]
+	_check(v2_char["class_id"] == "runebreaker" and int(v2_char["gold"]) == 0
+		and v2_char["known_abilities"] == ["rune_cleave", "earthbreaker", "ember_lance", "storm_step"]
+		and (v2_char["inventory"] as Array).size() == 1 and (v2["world"] as Dictionary)["zone"].ends_with("shattered_spire.tscn")
+		and int(v2.get("active", -1)) == 0,
+		"v2 saves migrate to v3: one Runebreaker keeps gear, gets the abilities its level earned")
+	_check(SaveGame.active_class_id() == &"runebreaker", "fresh save plays the default class")
 	prog.queue_free()
 	prog_loaded.queue_free()
 	_check(absf(player.stat(&"damage_pct") - player.equipment.stat(&"damage_pct") - player.progression.stat(&"damage_pct")) < 0.001,
@@ -820,7 +863,7 @@ func _run() -> void:
 	player.reset_cooldowns()
 	player.try_ember()
 	var expected_cd: float = player.ember.cooldown * 0.8
-	_check(absf(float(player._cooldowns[&"ember"]) - expected_cd) < 0.01, "cooldown reduction applies")
+	_check(absf(float(player._cooldowns[&"ember_lance"]) - expected_cd) < 0.01, "cooldown reduction applies")
 	await _wait_frames(20)
 
 	# --- equip swap ---
@@ -970,7 +1013,7 @@ func _run() -> void:
 	lab.inventory_ui.toggle()
 	_check(lab.inventory_ui.visible and player.input_locked, "inventory opens and locks input")
 	var expected_names := {
-		&"melee": player.cleave.display_name, &"ember": player.ember.display_name,
+		&"rune_cleave": player.cleave.display_name, &"ember_lance": player.ember.display_name,
 		&"earthbreaker": player.earthbreaker.display_name, &"storm_step": player.storm_step.display_name,
 		&"chain_spark": player.chain_spark.display_name, &"fracture_rune": player.fracture_rune.display_name,
 		&"dodge": "Dodge",

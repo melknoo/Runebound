@@ -24,6 +24,19 @@ extends Resource
 @export var crit_chance: float = 0.08
 @export var crit_multiplier: float = 1.6
 
+## M07b: how a character comes to know this ability (docs/PROGRESSION_DESIGN.md).
+## START: known from creation. TRAINER: bought at the hub trainer (level +
+## gold). TALENT: granted while the talent `unlock_power` is learned.
+enum Unlock { START, TRAINER, TALENT }
+@export_group("Learning")
+## Input action that fires it (keys live in InputSetup / project.godot).
+@export var input_action: StringName = &""
+@export var unlock: Unlock = Unlock.TRAINER
+@export var learn_level: int = 1
+@export var learn_price: int = 0
+## TALENT unlocks: the power id Player.has_power() must report.
+@export var unlock_power: StringName = &""
+
 
 func roll_hit(source_pos: Vector3, damage_mult: float = 1.0, bonus_crit: float = 0.0) -> HitInfo:
 	var hit := HitInfo.create(damage * damage_mult, damage_type, weight, source_pos)

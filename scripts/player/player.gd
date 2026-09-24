@@ -9,6 +9,11 @@ signal cooldowns_changed
 signal player_died
 ## Presentation hook (M06 CharacterAnimator): an ability just started.
 signal action_started(action: StringName)
+## M07b: the set of known abilities changed (learned at the trainer, restored
+## from the save, or a talent unlock toggled).
+signal abilities_changed
+signal ability_learned(id: StringName)
+signal gold_changed(total: int, delta: int)
 
 enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP }
 
@@ -24,6 +29,7 @@ const DODGE_RECOVERY := 0.08
 const DODGE_COOLDOWN := 0.55
 const DODGE_IFRAMES := 0.26  # user-tuned: a touch past the dash itself
 
+## Default class resource cap; the live value is max_resource() (ClassData).
 const MAX_RESONANCE := 100.0
 const INPUT_BUFFER := 0.22
 
@@ -41,7 +47,20 @@ var health: HealthComponent
 var equipment: Equipment
 var progression: Progression
 
-# Ability tuning (assigned in _ready from resources, overridable in tests).
+## M07b class as data. ZoneBase sets it before add_child; tests that build a
+## bare Player.new() get the default class in _ready.
+var class_data: ClassData = null
+## id -> AbilityData for every ability of the class (HUD order in class_data).
+var abilities: Dictionary = {}
+## Ability ids this character has learned (START + trainer). TALENT abilities
+## are known through their power instead; dodge is always known. See knows().
+var known_abilities: Array[StringName] = []
+var gold: int = 0
+## action id -> Callable that tries to start it (built in _register_actions).
+var _actions: Dictionary = {}
+
+# Ability tuning: derived caches of `abilities`, kept because the Runebreaker
+# code and the tests read them by name (player.cleave.startup ...).
 var cleave: AbilityData
 var ember: AbilityData
 var earthbreaker: AbilityData
@@ -101,20 +120,109 @@ func _ready() -> void:
 
 	Hurtbox.create(self, 0b1000, 0.5, 1.75, 0.85)
 
-	_build_visual()
+	if class_data == null:
+		class_data = ClassData.default_class()
 	_load_abilities()
+	_register_actions()
+	if known_abilities.is_empty():
+		known_abilities = class_data.starting_abilities.duplicate()
+	_build_visual()
 	floor_snap_length = 0.4
 
 
 func _load_abilities() -> void:
-	cleave = load("res://resources/abilities/rune_cleave.tres")
-	ember = load("res://resources/abilities/ember_lance.tres")
-	earthbreaker = load("res://resources/abilities/earthbreaker.tres")
-	storm_step = load("res://resources/abilities/storm_step.tres")
-	chain_spark = load("res://resources/abilities/chain_spark.tres")
-	fracture_rune = load("res://resources/abilities/fracture_rune.tres")
-	runic_guard = load("res://resources/abilities/runic_guard.tres")
-	resonance_burst = load("res://resources/abilities/resonance_burst.tres")
+	abilities.clear()
+	for data in class_data.abilities:
+		if data != null:
+			abilities[data.id] = data
+	cleave = ability(&"rune_cleave")
+	ember = ability(&"ember_lance")
+	earthbreaker = ability(&"earthbreaker")
+	storm_step = ability(&"storm_step")
+	chain_spark = ability(&"chain_spark")
+	fracture_rune = ability(&"fracture_rune")
+	runic_guard = ability(&"runic_guard")
+	resonance_burst = ability(&"resonance_burst")
+
+
+## The Runebreaker's action table. A second class overrides this (and
+## _load_abilities / _anim_profile) and inherits the chassis.
+func _register_actions() -> void:
+	_actions = {
+		&"dodge": try_dodge,
+		&"rune_cleave": try_melee,
+		&"ember_lance": try_ember,
+		&"earthbreaker": try_earthbreaker,
+		&"storm_step": try_storm_step,
+		&"chain_spark": try_chain_spark,
+		&"fracture_rune": try_fracture_rune,
+		&"runic_guard": try_runic_guard,
+		&"resonance_burst": try_resonance_burst,
+	}
+
+
+func ability(id: StringName) -> AbilityData:
+	return abilities.get(id) as AbilityData
+
+
+func max_resource() -> float:
+	return class_data.max_resource if class_data != null else MAX_RESONANCE
+
+
+# ---------------------------------------------------------------------------
+# M07b: known abilities and gold
+# ---------------------------------------------------------------------------
+
+## Can this character use `id` right now (ignoring cooldown and state)?
+## Dodge always; TALENT abilities while their power is held; the rest once
+## learned (start kit or trainer).
+func knows(id: StringName) -> bool:
+	if id == &"dodge":
+		return true
+	var data := ability(id)
+	if data == null:
+		return false
+	if data.unlock == AbilityData.Unlock.TALENT:
+		return data.unlock_power != &"" and has_power(data.unlock_power)
+	return known_abilities.has(id)
+
+
+## Learn a START/TRAINER ability of this class. False if unknown id, a TALENT
+## ability, or already known.
+func learn_ability(id: StringName) -> bool:
+	var data := ability(id)
+	if data == null or data.unlock == AbilityData.Unlock.TALENT or known_abilities.has(id):
+		return false
+	known_abilities.append(id)
+	abilities_changed.emit()
+	ability_learned.emit(id)
+	return true
+
+
+## Tests, captures and the debug overlay: know the whole trainer kit at once.
+func debug_learn_all() -> void:
+	var changed := false
+	for data in class_data.trainer_abilities():
+		if not known_abilities.has(data.id):
+			known_abilities.append(data.id)
+			changed = true
+	if changed:
+		abilities_changed.emit()
+
+
+func add_gold(amount: int) -> void:
+	if amount == 0:
+		return
+	gold = maxi(gold + amount, 0)
+	gold_changed.emit(gold, amount)
+
+
+func spend_gold(amount: int) -> bool:
+	if amount < 0 or gold < amount:
+		return false
+	gold -= amount
+	gold_changed.emit(gold, -amount)
+	return true
 
 
 func _build_visual() -> void:
@@ -200,6 +308,7 @@ func _build_visual() -> void:
 	_build_weapon()
 
 
+## Legacy alias; the live rig comes from class_data.rig_path.
 const RIG_PATH := "res://assets/models/chars/runebreaker.glb"
 var animator: CharacterAnimator = null
 var _rune_glow: StandardMaterial3D
@@ -211,7 +320,7 @@ var _rune_glow: StandardMaterial3D
 ## invisible stand-in so the legacy ability tweens stay untouched. Returns
 ## false when the GLB is missing (legacy visuals then).
 func _build_rigged_visual() -> bool:
-	var scene := ArtKit.rig_scene(RIG_PATH)
+	var scene := ArtKit.rig_scene(class_data.rig_path if class_data.rig_path != "" else RIG_PATH)
 	if scene == null:
 		return false
 	var model := scene.instantiate() as Node3D
@@ -221,7 +330,7 @@ func _build_rigged_visual() -> bool:
 	_visual.add_child(rig_root)
 	rig_root.add_child(model)
 	var mesh := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
-	_body_mat = ArtKit.character_material("runebreaker")
+	_body_mat = ArtKit.character_material(class_data.material_id if class_data.material_id != "" else "runebreaker")
 	mesh.set_surface_override_material(0, _body_mat)
 	_rune_glow = ArtKit.glow_material(ArtKit.color("color_roles.resonance.body"), 1.2)
 	mesh.set_surface_override_material(1, _rune_glow)
@@ -230,7 +339,20 @@ func _build_rigged_visual() -> bool:
 		equipment.changed.connect(_refresh_blade)
 		_refresh_blade()
 	resonance_changed.connect(_on_resonance_glow)
-	animator = CharacterAnimator.create(self, model, {
+	animator = CharacterAnimator.create(self, model, _anim_profile())
+	if animator != null:
+		animator.full_rate = true  # the hero never drops animation rate
+		health.damaged.connect(func(_hit: HitInfo) -> void: animator.flinch())
+	_weapon_pivot = Node3D.new()
+	_weapon_pivot.name = "WeaponPivotStandIn"
+	_visual.add_child(_weapon_pivot)
+	return true
+
+
+## CharacterAnimator profile of this class's rig: action_started names -> clips.
+## A second class overrides this together with _register_actions.
+func _anim_profile() -> Dictionary:
+	return {
 		"idle": &"idle", "run": &"run", "run_speed": MAX_SPEED, "layered": true,
 		"actions": {&"dodge": &"dodge", &"cleave_l": &"cleave_l", &"cleave_r": &"cleave_r",
 			&"ember": &"ember", &"earthbreaker": &"earthbreaker_rise",
@@ -241,14 +363,7 @@ func _build_rigged_visual() -> bool:
 		"flinch": &"flinch",
 		# back in MOVE and moving: the run takes over an action's follow-through
 		"free": func() -> bool: return state == State.MOVE,
-	})
-	if animator != null:
-		animator.full_rate = true  # the hero never drops animation rate
-		health.damaged.connect(func(_hit: HitInfo) -> void: animator.flinch())
-	_weapon_pivot = Node3D.new()
-	_weapon_pivot.name = "WeaponPivotStandIn"
-	_visual.add_child(_weapon_pivot)
-	return true
+	}
 
 
 var _body_mat: StandardMaterial3D
@@ -405,44 +520,44 @@ func talent_damage_mult(hit: HitInfo, enemy: EnemyBase) -> float:
 	return 1.0 + pct / 100.0
 
 
-## Central cooldown setter: applies global (and dodge-specific) reduction.
-func _set_cooldown(id: StringName, base: float) -> void:
+## Effective cooldown of `id` with a base of `base` seconds: global reduction,
+## plus the dodge / Storm Step specific ones, clamped to 35-100 %. Pure, so
+## the character sheet shows the same number the game uses.
+func cooldown_for(id: StringName, base: float) -> float:
 	var mult := 1.0 - stat(&"cooldown_pct") / 100.0
 	if id == &"dodge":
 		mult *= 1.0 - stat(&"dodge_cd_pct") / 100.0
 	elif id == &"storm_step":
 		mult *= 1.0 - stat(&"storm_cd_pct") / 100.0
-	_cooldowns[id] = base * clampf(mult, 0.35, 1.0)
+	return base * clampf(mult, 0.35, 1.0)
+
+
+## Central cooldown setter.
+func _set_cooldown(id: StringName, base: float) -> void:
+	_cooldowns[id] = cooldown_for(id, base)
 
 
 func earthbreaker_cost() -> float:
 	return maxf(earthbreaker.resonance_cost - stat(&"eb_cost_reduce"), 10.0)
 
 
+## Local keyboard/mouse -> action ids. Unknown abilities never reach the
+## buffer, so a locked key can't queue an action for later.
 func _read_action_input() -> void:
 	if input_locked:
 		return
 	if Input.is_action_just_pressed(&"dodge"):
 		_try_or_buffer(&"dodge")
-	if Input.is_action_just_pressed(&"primary_attack"):
-		_try_or_buffer(&"melee")
-	if Input.is_action_just_pressed(&"secondary_ability"):
-		_try_or_buffer(&"ember")
-	if Input.is_action_just_pressed(&"ability_q"):
-		_try_or_buffer(&"earthbreaker")
-	if Input.is_action_just_pressed(&"ability_e"):
-		_try_or_buffer(&"storm_step")
-	if Input.is_action_just_pressed(&"ability_r"):
-		_try_or_buffer(&"chain_spark")
-	if Input.is_action_just_pressed(&"ability_f"):
-		_try_or_buffer(&"fracture_rune")
-	if InputMap.has_action(&"ability_runic_guard") and Input.is_action_just_pressed(&"ability_runic_guard"):
-		_try_or_buffer(&"runic_guard")
-	if InputMap.has_action(&"ability_resonance_burst") and Input.is_action_just_pressed(&"ability_resonance_burst"):
-		_try_or_buffer(&"resonance_burst")
+	for data in class_data.abilities:
+		if data == null or data.input_action == &"" or not InputMap.has_action(data.input_action):
+			continue
+		if Input.is_action_just_pressed(data.input_action):
+			_try_or_buffer(data.id)
 
 
 func _try_or_buffer(action: StringName) -> void:
+	if not knows(action):
+		return
 	if not _try_action(action):
 		_buffered_action = action
 		_buffer_timer = INPUT_BUFFER
@@ -457,26 +572,9 @@ func _consume_buffer() -> void:
 
 
 func _try_action(action: StringName) -> bool:
-	match action:
-		&"dodge":
-			return try_dodge()
-		&"melee":
-			return try_melee()
-		&"ember":
-			return try_ember()
-		&"earthbreaker":
-			return try_earthbreaker()
-		&"storm_step":
-			return try_storm_step()
-		&"chain_spark":
-			return try_chain_spark()
-		&"fracture_rune":
-			return try_fracture_rune()
-		&"runic_guard":
-			return try_runic_guard()
-		&"resonance_burst":
-			return try_resonance_burst()
-	return false
+	if not knows(action) or not _actions.has(action):
+		return false
+	return (_actions[action] as Callable).call()
 
 
 # ---------------------------------------------------------------------------
@@ -700,11 +798,11 @@ func _query_hurtboxes(center: Vector3, radius: float) -> Array[Node]:
 # ---------------------------------------------------------------------------
 
 func try_ember() -> bool:
-	if state != State.MOVE or _cooldowns.get(&"ember", 0.0) > 0.0:
+	if not knows(&"ember_lance") or state != State.MOVE or _cooldowns.get(&"ember_lance", 0.0) > 0.0:
 		return false
 	state = State.CAST
 	_state_timer = 0.0
-	_set_cooldown(&"ember", ember.cooldown)
+	_set_cooldown(&"ember_lance", ember.cooldown)
 	_face_aim_instant()
 	VFX.ember_cast(get_tree().current_scene, muzzle_position())
 	Sfx.play("ember_cast", global_position, -3.0)
@@ -740,7 +838,7 @@ func _fire_ember() -> void:
 # ---------------------------------------------------------------------------
 
 func try_earthbreaker() -> bool:
-	if state != State.MOVE or _cooldowns.get(&"earthbreaker", 0.0) > 0.0:
+	if not knows(&"earthbreaker") or state != State.MOVE or _cooldowns.get(&"earthbreaker", 0.0) > 0.0:
 		return false
 	if resonance < earthbreaker_cost():
 		Sfx.play_ui("ui_denied", -8.0)
@@ -812,7 +910,7 @@ var _dash_time: float = 0.12  # active window; shorter for close gap-closes
 
 
 func try_storm_step() -> bool:
-	if state != State.MOVE or _cooldowns.get(&"storm_step", 0.0) > 0.0:
+	if not knows(&"storm_step") or state != State.MOVE or _cooldowns.get(&"storm_step", 0.0) > 0.0:
 		return false
 	# Direction priority (user-tuned):
 	# 1. Held movement input — steering wins ("I'm dashing where I'm running").
@@ -921,7 +1019,7 @@ func _resolve_storm_step() -> void:
 # ---------------------------------------------------------------------------
 
 func try_chain_spark() -> bool:
-	if state != State.MOVE or _cooldowns.get(&"chain_spark", 0.0) > 0.0:
+	if not knows(&"chain_spark") or state != State.MOVE or _cooldowns.get(&"chain_spark", 0.0) > 0.0:
 		return false
 	var first: EnemyBase = null
 	if targeting != null:
@@ -1005,7 +1103,7 @@ const FRACTURE_RUNE_MAX_RANGE := 12.0
 
 
 func try_fracture_rune() -> bool:
-	if state != State.MOVE or _cooldowns.get(&"fracture_rune", 0.0) > 0.0:
+	if not knows(&"fracture_rune") or state != State.MOVE or _cooldowns.get(&"fracture_rune", 0.0) > 0.0:
 		return false
 	_set_cooldown(&"fracture_rune", fracture_rune.cooldown)
 	var exclude: Array[RID] = [get_rid()]
@@ -1037,13 +1135,13 @@ func try_fracture_rune() -> bool:
 
 func gain_resonance(amount: float, lightning: bool = false) -> void:
 	amount *= 1.0 + (stat(&"resonance_pct") + (stat(&"lightning_res_pct") if lightning else 0.0)) / 100.0
-	resonance = minf(resonance + amount, MAX_RESONANCE)
-	resonance_changed.emit(resonance, MAX_RESONANCE)
+	resonance = minf(resonance + amount, max_resource())
+	resonance_changed.emit(resonance, max_resource())
 
 
 func spend_resonance(amount: float) -> void:
 	resonance = maxf(resonance - amount, 0.0)
-	resonance_changed.emit(resonance, MAX_RESONANCE)
+	resonance_changed.emit(resonance, max_resource())
 
 
 func take_hit(hit: HitInfo) -> bool:
@@ -1110,7 +1208,7 @@ func _on_barrier_absorbed(amount: float) -> void:
 
 
 func try_runic_guard() -> bool:
-	if not has_power(&"runic_guard") or state != State.MOVE or float(_cooldowns.get(&"runic_guard", 0.0)) > 0.0:
+	if not knows(&"runic_guard") or state != State.MOVE or float(_cooldowns.get(&"runic_guard", 0.0)) > 0.0:
 		return false
 	if resonance < runic_guard.resonance_cost:
 		Sfx.play_ui("ui_denied", -8.0)
@@ -1125,7 +1223,7 @@ func try_runic_guard() -> bool:
 
 
 func try_resonance_burst() -> bool:
-	if not has_power(&"resonance_burst") or state != State.MOVE or float(_cooldowns.get(&"resonance_burst", 0.0)) > 0.0:
+	if not knows(&"resonance_burst") or state != State.MOVE or float(_cooldowns.get(&"resonance_burst", 0.0)) > 0.0:
 		return false
 	if resonance < resonance_burst.resonance_cost:
 		Sfx.play_ui("ui_denied", -8.0)
@@ -1156,16 +1254,10 @@ func try_resonance_burst() -> bool:
 
 
 func cooldown_fraction(id: StringName) -> float:
-	var total: float = 1.0
-	match id:
-		&"dodge": total = DODGE_COOLDOWN
-		&"ember": total = ember.cooldown
-		&"earthbreaker": total = earthbreaker.cooldown
-		&"storm_step": total = storm_step.cooldown
-		&"chain_spark": total = chain_spark.cooldown
-		&"fracture_rune": total = fracture_rune.cooldown
-		&"runic_guard": total = runic_guard.cooldown
-		&"resonance_burst": total = resonance_burst.cooldown
+	var total: float = DODGE_COOLDOWN if id == &"dodge" else 1.0
+	var data := ability(id)
+	if data != null and data.cooldown > 0.0:
+		total = data.cooldown
 	return clampf(_cooldowns.get(id, 0.0) / total, 0.0, 1.0)
 
 

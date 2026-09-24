@@ -53,6 +53,7 @@ func _recenter() -> void:
 func _run() -> void:
 	var player := lab.player
 	player.god_mode = true
+	player.debug_learn_all()  # M07b: harness runs know the whole kit
 	await _wait(0.8)
 	await _shot("start_view")
 

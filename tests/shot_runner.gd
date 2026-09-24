@@ -54,6 +54,8 @@ func _wait(seconds: float) -> void:
 func _run() -> void:
 	var player := _zone.player
 	player.god_mode = true
+	if not _list.get("fresh_abilities", false):  # M07b: shots know the whole kit unless asked not to
+		player.debug_learn_all()
 	await _wait(1.0)
 	var variants: Array = _list.get("variants", [{"name": "", "look": {}}])
 	for variant: Dictionary in variants:

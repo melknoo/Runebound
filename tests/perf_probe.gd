@@ -84,6 +84,7 @@ func _wait(seconds: float) -> void:
 func _run() -> void:
 	var player := _zone.player
 	player.god_mode = true
+	player.debug_learn_all()  # M07b: harness runs know the whole kit
 	for child in _zone.world.get_children():
 		if child is EncounterSpawner:
 			child.set_physics_process(false)

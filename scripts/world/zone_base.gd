@@ -408,6 +408,7 @@ func _build_interior_environment(l: ZoneLook) -> void:
 func _spawn_player() -> void:
 	player = Player.new()
 	player.name = "Player"
+	player.class_data = ClassData.load_by_id(SaveGame.active_class_id())
 	world.add_child(player)
 	player.global_position = _player_spawn_point()
 
@@ -756,7 +757,7 @@ func toggle_god_mode() -> void:
 
 func reset_cooldowns() -> void:
 	player.reset_cooldowns()
-	player.gain_resonance(Player.MAX_RESONANCE)
+	player.gain_resonance(player.max_resource())
 
 
 func reset_lab() -> void:
@@ -766,7 +767,7 @@ func reset_lab() -> void:
 	player.velocity = Vector3.ZERO
 	player.health.heal_full()
 	player.resonance = 0.0
-	player.resonance_changed.emit(0.0, Player.MAX_RESONANCE)
+	player.resonance_changed.emit(0.0, player.max_resource())
 	player.reset_cooldowns()
 
 
@@ -781,7 +782,7 @@ func stress_test() -> void:
 	spawn_elite()
 
 
-## Debug [9] (F3 overlay): a real fresh start. Clears the live character too
+## Debug [9] (F1 overlay): a real fresh start. Clears the live character too
 ## (gear, inventory, level, talents) and world flags, deletes the save, then
 ## reloads Runehold. Wiping only the file kept the items in memory, and the
 ## next save wrote them straight back.

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bfukc4133ownv"
-path="res://.godot/imported/melee.png-e1a672a56b81d6bb540a7a701623333d.ctex"
+uid="uid://bvso2vi6xn10u"
+path="res://.godot/imported/rune_cleave.png-4add99eed4bff1d00b50ea781f25d752.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/icons/melee.png"
-dest_files=["res://.godot/imported/melee.png-e1a672a56b81d6bb540a7a701623333d.ctex"]
+source_file="res://assets/ui/icons/rune_cleave.png"
+dest_files=["res://.godot/imported/rune_cleave.png-4add99eed4bff1d00b50ea781f25d752.ctex"]
 
 [params]
 

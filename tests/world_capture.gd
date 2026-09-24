@@ -41,6 +41,7 @@ func _run_hub() -> void:
 	SaveGame.save_path = "user://capture_save.json"
 	SaveGame.wipe()
 	zone.player.god_mode = true
+	zone.player.debug_learn_all()
 	await _wait(0.8)
 	_aim(0.0, -0.25)
 	await _wait(0.3)
@@ -61,6 +62,7 @@ func _run_hub() -> void:
 
 func _run_highlands() -> void:
 	zone.player.god_mode = true
+	zone.player.debug_learn_all()
 	await _wait(0.8)
 	_aim(0.0, -0.18)
 	await _shot("04_highlands_vista")
@@ -109,6 +111,7 @@ func _run_highlands() -> void:
 func _run_spire() -> void:
 	var spire := zone as SpireZone
 	zone.player.god_mode = true
+	zone.player.debug_learn_all()
 	await _wait(0.8)
 	_aim(0.0, -0.15)
 	await _shot("11_spire_entry")
