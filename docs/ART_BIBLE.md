@@ -383,8 +383,11 @@ gameplay timing is untouched.
   2.5, VFX 4.0.
 
 ## 11. UI
-- **Fonts:** Pixelify Sans for everything: body text, numbers, place names,
-  panel headings and the boss name. Jacquard 24 is retired (user feedback
+- **Fonts:** Runebound Pixel for everything: body text, numbers, place names,
+  panel headings and the boss name. It is Pixelify Sans with the digits 0-9
+  redrawn on the exact pixel grid (5x7 cells of 2 px at 20 px, all the same
+  width), `tools/fontgen/numerals.py`. Pixelify's own digits are off-grid and
+  rasterized 2 as 3 and 5 as S (user feedback 2026-09-24). Jacquard 24 is retired (user feedback
   2026-09-24, twice: the blackletter was unreadable as place names and then
   as panel headings); the file stays in `assets/fonts/` but nothing uses it.
   SIL OFL, license in `assets/fonts/`.

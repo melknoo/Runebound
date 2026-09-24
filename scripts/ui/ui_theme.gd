@@ -5,12 +5,14 @@ extends Object
 ## outline. Set on the HUD and inventory roots; Label3Ds call label3d().
 ##
 ## Crisp sizes were measured (other sizes grey the glyph edges):
-##   Pixelify Sans   20 / 40 / 60 px  (1/20 em grid)   body, keys, numbers
-##   Jacquard 24     43 / 86 px                        titles, boss + place names
+##   Runebound Pixel 20 / 40 / 60 px  (1/20 em grid)   everything
+## = Pixelify Sans letters + redrawn digits on the exact pixel grid (Pixelify's
+## own digits rasterized 2 as 3 and 5 as S). Jacquard 24 is retired.
 ## Pixel rendering is set on the FontFile at runtime: the same options in the
 ## .import file crash Godot 4.6.3's headless font reimport.
 
-const BODY_PATH := "res://assets/fonts/PixelifySans.ttf"
+## Pixelify Sans with grid-exact, tabular digits (tools/fontgen/numerals.py).
+const BODY_PATH := "res://assets/fonts/RuneboundPixel.ttf"
 const TITLE_PATH := "res://assets/fonts/Jacquard24-Regular.ttf"
 const UI_DIR := "res://assets/ui/"
 const BODY := 20
@@ -94,10 +96,6 @@ static func apply(root: Control) -> void:
 	root.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 
 
-## World label (plates, loot, portals, damage numbers) in the UI font, drawn at
-## a FIXED screen size with one font pixel per screen pixel. A pixel font
-## scaled by distance drops glyph pixels and turns unreadable, so labels keep
-## their anchor in the world but not a world size.
 ## The "X" in a window's top-right corner (user, 2026-09-24: every window
 ## closes by button too, not only by its key or Esc).
 static func close_button(on_close: Callable) -> Button:
@@ -111,6 +109,10 @@ static func close_button(on_close: Callable) -> Button:
 	return btn
 
 
+## World label (plates, loot, portals, damage numbers) in the UI font, drawn at
+## a FIXED screen size with one font pixel per screen pixel. A pixel font
+## scaled by distance drops glyph pixels and turns unreadable, so labels keep
+## their anchor in the world but not a world size.
 static func label3d(label: Label3D, crisp_size: int = BODY, title: bool = false) -> void:
 	var f := font(title)
 	if f == null:

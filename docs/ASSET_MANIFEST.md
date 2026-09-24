@@ -68,6 +68,7 @@ in code if a GLB is missing.
 | assets/models/env/highlands/{ash_tuft, stone_cluster}.glb + atlases | same | 32 px/m | scatter items (scripts/world/scatter.gd, MultiMesh); tuft = solid tapered blades on a `_cloth` material |
 | assets/music/highlands_{explore, combat}.wav | tools/musicgen/compose.py | 53.3 s stereo loops, 32 kHz, 16-bit (QOA on import) | same key/tempo/length, played in sync by MusicDirector; loop_mode Forward in .import |
 | assets/fonts/PixelifySans.ttf (+ OFL_PixelifySans.txt) | google/fonts ofl/pixelifysans (SIL OFL 1.1) | crisp 20/40/60 px | UI body + numbers; pixel rendering set at runtime (UiTheme) |
+| assets/fonts/RuneboundPixel.ttf (+ OFL_RuneboundPixel.txt) | Pixelify Sans, modified by `tools/fontgen/numerals.py` (SIL OFL 1.1) | crisp 20/40/60 px | **the UI font**: Pixelify letters, digits 0-9 redrawn on the pixel grid (5x7, tabular) |
 | assets/fonts/Jacquard24-Regular.ttf (+ OFL_Jacquard24.txt) | google/fonts ofl/jacquard24 (SIL OFL 1.1) | crisp 43/86 px | titles, boss + place names |
 | assets/ui/{frame, slot, bar, button, button_hover, button_pressed, cooldown}.png | tools/texgen/ui.py | art 1x, saved 2x | 9-slice pixel frames (teal player accent), radial cooldown fill |
 | assets/ui/icons/{melee, ember, earthbreaker, storm_step, chain_spark, fracture_rune, dodge}.png | tools/texgen/ui.py | 20x20 art, saved 40x40 | ability icons in their element colour roles, 1-px ink outline |

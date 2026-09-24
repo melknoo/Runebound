@@ -126,6 +126,9 @@
   gold; `reset` was undone by a still-running game (the script now refuses
   while the game runs); Jacquard titles were unreadable (Pixelify 40 px
   everywhere, `UiTheme.TITLE`); every window has an X button now.
+- Fixed 2026-09-24 (second pass): Pixelify's digits are off its pixel grid
+  and rasterized 2 as 3, 5 as S. The UI font is now Runebound Pixel
+  (Pixelify letters + grid-exact 5x7 digits, `tools/fontgen/numerals.py`).
 - Fracture Rune now goes through the player's hit roll (gear %, crit, talent
   multipliers): a small buff to check in play.
 - Esc: HeroUI / TrainerUI consume `toggle_cursor` first (later-added nodes
