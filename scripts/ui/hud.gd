@@ -10,6 +10,8 @@ var _health_fill: ColorRect
 var _resonance_fill: ColorRect
 var _xp_fill: ColorRect
 var _level_label: Label
+var _gold_box: HBoxContainer
+var _gold_label: Label
 var _cost_tick: ColorRect
 var _hurt_flash: ColorRect
 var _slots: Dictionary = {}  # id -> {overlay, slot, icon, key, name, desc, type, data}
@@ -130,6 +132,24 @@ func _build() -> void:
 	_level_label.add_theme_color_override("font_color", xp_color.lightened(0.3))
 	_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_level_label)
+	# M07b: gold, right of the bars (coin + total), mirrored to the level badge.
+	_gold_box = HBoxContainer.new()
+	_gold_box.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_gold_box.position = Vector2(BAR_WIDTH * 0.5 + 10, -152)
+	_gold_box.add_theme_constant_override("separation", 5)
+	_gold_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_gold_box)
+	var coin := TextureRect.new()
+	coin.texture = Hud.icon(&"coin")
+	coin.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	coin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(coin)
+	_gold_label = Label.new()
+	_gold_label.add_theme_color_override("font_color", ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
+	_gold_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(_gold_label)
+	player.gold_changed.connect(_on_gold_changed)
+	_on_gold_changed(player.gold, 0)
 
 	# Ability row: icon + key only. Names live in the hover tooltip.
 	var slot_row := HBoxContainer.new()
@@ -457,6 +477,19 @@ func _refresh_slots() -> void:
 	_slot_row.offset_right = row_width * 0.5
 	if _cost_tick != null:  # Earthbreaker's cost mark means nothing before it is learned
 		_cost_tick.visible = player.knows(&"earthbreaker")
+
+
+func gold_text() -> String:
+	return _gold_label.text if _gold_label != null else ""
+
+
+func _on_gold_changed(total: int, delta: int) -> void:
+	_gold_label.text = str(total)
+	if delta > 0 and _slots_built:  # a small pop on every pickup
+		_gold_box.pivot_offset = _gold_box.size * 0.5
+		_gold_box.scale = Vector2(1.25, 1.25)
+		var tw := _gold_box.create_tween()
+		tw.tween_property(_gold_box, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _on_xp_changed(xp: int, needed: int, level: int) -> void:

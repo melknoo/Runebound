@@ -303,6 +303,20 @@ def icon_resonance_burst() -> Image.Image:
     return outlined(img)
 
 
+def icon_coin() -> Image.Image:
+    """M07b gold counter: a rune-notched coin in Resonance gold."""
+    img, d = canvas()
+    hot = rgb(ROLES["resonance"].get("hot", ROLES["resonance"]["body"]))
+    dim = rgb("#A67A22")
+    d.ellipse([3, 4, 16, 17], fill=dim)                          # underside / rim shadow
+    d.ellipse([3, 3, 16, 16], fill=GOLD)                         # face
+    d.ellipse([6, 6, 13, 13], fill=hot)                          # polished centre
+    d.line([9, 7, 9, 12], fill=dim)                              # rune notch
+    d.line([7, 9, 11, 9], fill=dim)
+    img.putpixel((6, 5), (255, 255, 255, 230))                   # glint
+    return outlined(img)
+
+
 def main() -> None:
     print("UI kit:")
     save(frame(24, PANEL, ACCENT_DIM, ACCENT), "frame.png")
@@ -316,7 +330,8 @@ def main() -> None:
     for name, fn in (("rune_cleave", icon_melee), ("ember_lance", icon_ember), ("earthbreaker", icon_earthbreaker),
                      ("storm_step", icon_storm_step), ("chain_spark", icon_chain_spark),
                      ("fracture_rune", icon_fracture_rune), ("dodge", icon_dodge),
-                     ("runic_guard", icon_runic_guard), ("resonance_burst", icon_resonance_burst)):
+                     ("runic_guard", icon_runic_guard), ("resonance_burst", icon_resonance_burst),
+                     ("coin", icon_coin)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

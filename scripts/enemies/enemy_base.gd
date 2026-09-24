@@ -36,6 +36,15 @@ const HP_PER_LEVEL := 0.08
 
 func xp_reward() -> int:
 	return int(round(float(xp_value) * (4.0 if is_elite else 1.0) * (1.0 + 0.15 * (level - 1))))
+
+
+## M07b gold on death: about half the XP value, a little random, inheriting
+## the elite and level scaling. One rule for every enemy (PROGRESSION_DESIGN).
+const GOLD_PER_XP := 0.5
+
+
+func gold_reward() -> int:
+	return maxi(int(round(float(xp_reward()) * GOLD_PER_XP * randf_range(0.8, 1.25))), 1)
 ## Squash/death tweens scale relative to this — bosses and elites are bigger
 ## than 1.0, and a hit must never reset them to man-size.
 var base_visual_scale: Vector3 = Vector3.ONE

@@ -402,6 +402,25 @@ def resonance_burst():
     save(pad(thump, crack, delay(chord, 0.02), tail), "resonance_burst_01")
 
 
+# --- M07b (appended: every synth above must keep its place in the shared RNG order) ---
+
+def coin_pickup():
+    """Two short bright metallic pings: a coin landing in the purse."""
+    a = np.sin(2 * np.pi * 2093.0 * t(0.12)) * env_exp(0.12, 0.03)
+    b = np.sin(2 * np.pi * 2637.0 * t(0.16)) * env_exp(0.16, 0.04)
+    ring = np.sin(2 * np.pi * 5274.0 * t(0.16)) * env_exp(0.16, 0.02) * 0.3
+    save(pad(a, delay(b, 0.05), delay(ring, 0.05)), "coin_pickup_01")
+
+
+def ability_learned():
+    """Rune chime pair plus a steel ring: a new ability committed to the blade."""
+    chime = sum(np.sin(2 * np.pi * f * t(0.7)) * env_exp(0.7, 0.25) * 0.3 for f in (880.0, 1318.5))
+    chime2 = sum(np.sin(2 * np.pi * f * t(0.6)) * env_exp(0.6, 0.2) * 0.25 for f in (1174.7, 1760.0))
+    steel = highpass(noise(0.25), 0.3) * env_exp(0.25, 0.05) * 0.5
+    ring = np.sin(2 * np.pi * 3520.0 * t(0.3)) * env_exp(0.3, 0.06) * 0.2
+    save(pad(chime, delay(chime2, 0.12), delay(steel, 0.05), delay(ring, 0.05)), "ability_learned_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -421,4 +440,5 @@ if __name__ == "__main__":
     for i in range(1, 3):
         boss_blink(i)
     level_up(); runic_guard(); resonance_burst()
+    coin_pickup(); ability_learned()
     print("done.")

@@ -251,6 +251,35 @@ func _run() -> void:
 	player.resonance = 0.0
 	player.resonance_changed.emit(0.0, player.max_resource())
 
+	# --- M07b gold: kills pay it, it is picked up by walking over it ---
+	var gold_rusher := MeleeRusher.new()
+	lab.enemies_root.add_child(gold_rusher)
+	gold_rusher.global_position = Vector3(-14, 0.2, -18)
+	await _wait_frames(1)
+	var gold_pay := gold_rusher.gold_reward()
+	_check(gold_pay >= 8 and gold_pay <= 13, "a level-1 rusher pays 8-13 gold (%d)" % gold_pay)
+	var count_gold := func() -> int:
+		var n := 0
+		for child in lab.world.get_children():
+			if child is GoldDrop:
+				n += 1
+		return n
+	var gold_drops_before: int = count_gold.call()  # earlier kills in this run left theirs
+	gold_rusher.enemy_died.connect(lab._on_enemy_died)
+	gold_rusher.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, gold_rusher.global_position))
+	await _wait_frames(2)
+	_check(count_gold.call() == gold_drops_before + 1, "a kill leaves one gold drop")
+	for child in lab.world.get_children():
+		if child is GoldDrop:
+			child.free()
+	var gold_before := player.gold
+	var gold_drop := lab.spawn_gold_drop(37, player.global_position + player.facing() * 0.5)
+	await _wait_frames(3)
+	_check(player.gold == gold_before + 37 and not is_instance_valid(gold_drop), "gold is picked up by walking over it")
+	_check(lab.hud.gold_text() == str(player.gold), "HUD shows the gold total")
+	_check(not player.spend_gold(player.gold + 1) and player.spend_gold(37) and player.gold == gold_before,
+		"spend_gold refuses an overdraft and pays otherwise")
+
 	# --- M06 B5: HUD v2 look ---
 	var hud_root := lab.hud.get_child(0) as Control
 	var body_font := UiTheme.font()
@@ -1141,12 +1170,17 @@ func _run() -> void:
 	keepsake.display_name = "Saved Blade"
 	player.equipment.add_item(keepsake)
 	player.equipment.equip(keepsake)
+	player.add_gold(123 - player.gold)  # M07b: gold and known abilities ride along
 	SaveGame.save_now()
 	player.equipment.inventory.clear()
 	player.equipment.equipped.clear()
 	player.equipment._recompute()
+	player.gold = 0
+	player.known_abilities = [&"rune_cleave"]
 	SaveGame.reload_from_disk()
 	SaveGame.restore_player(player)
+	_check(player.gold == 123 and player.known_abilities.size() == 6 and player.knows(&"fracture_rune"),
+		"save restores gold and the learned abilities")
 	var restored_names: Array[String] = []
 	for it in player.equipment.inventory:
 		restored_names.append(it.display_name)
@@ -1187,6 +1221,7 @@ func _run() -> void:
 		if it.display_name == "Persistence Marker":
 			carried = true
 	_check(carried, "gear persists across zone travel")
+	_check(hub.player.gold == 123 and hub.player.knows(&"storm_step"), "gold and abilities persist across zone travel")
 
 	# --- M06 C3: Runehold kit on the unchanged hub layout ---
 	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")

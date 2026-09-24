@@ -3,7 +3,8 @@ extends CanvasLayer
 ## F1 toggles the panel. Hotkeys work while the panel is open:
 ## 1 spawn rusher, 2 spawn caster, 3 kill all, H heal, G god mode,
 ## R reset lab, C reset cooldowns, T stress test, V cycle visual style,
-## O character outline (LookDev; on is the Gate-0 look, off for comparison).
+## O character outline (LookDev; on is the Gate-0 look, off for comparison),
+## 0 +500 gold, L learn every trainer ability (M07b).
 
 var lab: Node  # CombatLab, untyped to avoid a load cycle
 
@@ -54,6 +55,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			lab.call(&"debug_drop_item", true)
 		KEY_9:
 			lab.call(&"wipe_save")
+		KEY_0:
+			lab.call(&"debug_add_gold", 500)
+		KEY_L:
+			(lab.get(&"player") as Player).debug_learn_all()
 		KEY_H:
 			lab.call(&"heal_player")
 		KEY_G:
@@ -81,7 +86,7 @@ func _process(delta: float) -> void:
 		worst = maxf(worst, t)
 	var player: Player = lab.get(&"player")
 	var god_text := "ON" if (player != null and player.god_mode) else "off"
-	_info.text = "FPS %d  |  worst frame %.1f ms\nenemies: %d   style: %s   god: %s\n\n[1] rusher  [2] caster  [3] kill all\n[4] assassin  [5] brute  [6] elite\n[7] drop item  [8] drop legendary  [9] fresh start\n[H] heal  [G] god  [R] reset  [C] cooldowns\n[T] stress test  [V] style  [I] inventory\n[O] outline %s" % [
+	_info.text = "FPS %d  |  worst frame %.1f ms\nenemies: %d   style: %s   god: %s\n\n[1] rusher  [2] caster  [3] kill all\n[4] assassin  [5] brute  [6] elite\n[7] drop item  [8] drop legendary  [9] fresh start\n[0] +500 gold  [L] learn all abilities\n[H] heal  [G] god  [R] reset  [C] cooldowns\n[T] stress test  [V] style  [I] inventory\n[O] outline %s" % [
 		Engine.get_frames_per_second(),
 		worst * 1000.0,
 		lab.call(&"enemy_count"),

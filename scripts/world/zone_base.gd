@@ -710,6 +710,39 @@ func _on_enemy_died(enemy: EnemyBase) -> void:
 	if item != null:
 		ItemGenerator.apply_item_level(item, enemy.level)
 		spawn_item_drop(item, enemy.global_position)
+	# M07b: every kill pays gold; bosses scatter theirs into several piles.
+	var piles := 4 if enemy is ShatteredVessel else (3 if enemy is AshveinColossus else 1)
+	spawn_gold_piles(enemy.gold_reward(), enemy.global_position, piles)
+
+
+func spawn_gold_drop(amount: int, pos: Vector3) -> GoldDrop:
+	var drop := GoldDrop.new()
+	drop.amount = amount
+	drop.player = player
+	drop.position = Vector3(pos.x, 0.0, pos.z)
+	world.add_child(drop)
+	drop.picked_up.connect(func(_amount: int) -> void: SaveGame.request_save())
+	return drop
+
+
+## Splits `amount` into `piles` drops around `pos` (bosses, chests).
+func spawn_gold_piles(amount: int, pos: Vector3, piles: int = 1) -> void:
+	if amount <= 0:
+		return
+	piles = clampi(piles, 1, amount)
+	var base := amount / piles
+	var rest := amount - base * piles
+	for i in piles:
+		var offset := Vector3.ZERO
+		if piles > 1:
+			var a := TAU * float(i) / float(piles) + randf_range(-0.3, 0.3)
+			offset = Vector3(cos(a), 0.0, sin(a)) * randf_range(0.7, 1.1)
+		spawn_gold_drop(base + (1 if i < rest else 0), pos + offset)
+
+
+func debug_add_gold(amount: int) -> void:
+	player.add_gold(amount)
+	hud.toast("+%d gold (debug)" % amount, ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 
 
 func spawn_item_drop(item: ItemData, pos: Vector3) -> ItemDrop:

@@ -4,6 +4,7 @@ extends Node3D
 
 const OPEN_RANGE := 2.0
 const CHEST_XP := 60  # M07
+const CHEST_GOLD := Vector2i(40, 60)  # M07b, scaled by item level
 
 var min_rarity_bias: int = 0
 var opened: bool = false
@@ -106,6 +107,9 @@ func open(zone: ZoneBase) -> void:
 	zone.player.progression.add_xp(CHEST_XP)
 	var count := 2 + (randi() % 2)
 	var ilvl := zone._enemy_level(null, global_position)
+	# M07b: a purse of gold, scaled like the items are.
+	var gold := int(round(float(randi_range(CHEST_GOLD.x, CHEST_GOLD.y)) * (1.0 + 0.15 * float(ilvl - 1))))
+	zone.spawn_gold_drop(gold, global_position + Vector3(0, 0, 1.3))
 	for i in count:
 		var item := ItemGenerator.generate(min_rarity_bias)
 		ItemGenerator.apply_item_level(item, ilvl)

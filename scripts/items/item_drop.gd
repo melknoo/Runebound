@@ -1,17 +1,12 @@
 class_name ItemDrop
-extends Node3D
+extends WorldPickup
 ## World pickup: bobbing rarity-colored shape, presentation scaled by rarity
-## (label → glow → beam → tall beam + fanfare). Auto-pickup on proximity.
+## (label → glow → beam → tall beam + fanfare). Auto-pickup on proximity
+## (WorldPickup owns the range test and the bob).
 
 signal picked_up(item: ItemData)
 
-const PICKUP_RANGE := 1.4
-
 var item: ItemData
-var player: Player
-
-var _bob_time: float = 0.0
-var _shape: Node3D
 
 
 ## M06 C5 loot shapes: blade / cuirass / relic from the common kit, the three
@@ -127,15 +122,6 @@ func _add_presentation(color: Color) -> void:
 		Sfx.play("legendary_drop", global_position, 0.0, 0.02)
 	elif item.rarity == ItemData.Rarity.RARE:
 		Sfx.play("rune_place", global_position, -6.0, 0.1, 0.8)
-
-
-func _process(delta: float) -> void:
-	_bob_time += delta
-	_shape.position.y = 0.55 + sin(_bob_time * 2.4) * 0.12
-	_shape.rotate_y(delta * 1.5)
-	if player != null and is_instance_valid(player) \
-			and player.global_position.distance_to(global_position) <= PICKUP_RANGE:
-		_try_pickup()
 
 
 func _try_pickup() -> void:
