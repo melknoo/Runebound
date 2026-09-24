@@ -34,6 +34,7 @@ Pillars, in priority order:
 | 2026-09-23 | Music is procedurally composed (`tools/musicgen`) | user |
 | 2026-09-23 | UI fonts: Pixelify Sans (body, numbers) + Jacquard 24 (titles, boss names), both SIL OFL | user |
 | 2026-09-23 | Ability names only as hover tooltips while the inventory is open | user |
+| 2026-09-24 | Jacquard retired (unreadable as place names, then as headings); one UI font, **Runebound Pixel** = Pixelify letters + grid-exact digits (Pixelify's digits read 2 as 3, 5 as S) | user, playtest screenshots |
 
 Gate-0 comparison stills: `captures_shots/gate0/`. The rejected variants
 (32 px/m atlases, stepped playback) were removed from code and assets.
