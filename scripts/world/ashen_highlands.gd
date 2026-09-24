@@ -235,7 +235,7 @@ func _physics_process(_delta: float) -> void:
 	# Once beaten, the colossus stays beaten (world flag).
 	if _boss_started or player == null or SaveGame.has_flag(&"colossus_defeated"):
 		return
-	if player.global_position.distance_to(_boss_trigger.global_position) <= _boss_trigger.trigger_radius:
+	if not players_within(_boss_trigger.global_position, _boss_trigger.trigger_radius).is_empty():  # M07b: any hero
 		_start_boss_fight()
 
 

@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"kindling"
 display_name = "Kindling"
+class_id = &"runebreaker"
 branch = 1
 tier = 0
 max_rank = 3

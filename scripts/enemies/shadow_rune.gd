@@ -53,9 +53,9 @@ func _detonate() -> void:
 	Sfx.play("rune_detonate", global_position, -4.0, 0.1, 0.8)
 
 	var zone := get_tree().current_scene as ZoneBase
-	if zone != null and zone.player != null and is_instance_valid(zone.player) \
-			and zone.player.global_position.distance_to(global_position) <= RADIUS:
-		var hit := HitInfo.create(DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
-		hit.knockback = 4.0
-		zone.player.take_hit(hit)
+	if zone != null:
+		for victim in zone.players_within(global_position, RADIUS):  # M07b: every hero on the rune
+			var hit := HitInfo.create(DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
+			hit.knockback = 4.0
+			victim.take_hit(hit)
 	queue_free()

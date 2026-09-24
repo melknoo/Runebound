@@ -17,6 +17,8 @@ const TALENT_DIR := "res://resources/talents/"
 var level: int = 1
 var xp: int = 0  # progress into the current level
 var ranks: Dictionary = {}  # talent id (StringName) -> rank
+## M07b: the class whose tree this character spends points in (Player sets it).
+var class_id: StringName = ClassData.DEFAULT_ID
 
 var _stats: Dictionary = {}
 var _powers: Array[StringName] = []
@@ -47,6 +49,15 @@ static func tree() -> Array[TalentData]:
 			return String(a.id) < String(b.id)
 		)
 	return _tree
+
+
+## The nodes of one class's tree (M07b), in tree() order.
+static func tree_for(cid: StringName) -> Array[TalentData]:
+	var out: Array[TalentData] = []
+	for t in tree():
+		if t.class_id == cid:
+			out.append(t)
+	return out
 
 
 static func talent(id: StringName) -> TalentData:
@@ -204,7 +215,7 @@ func from_dict(data: Dictionary) -> void:
 	var talents: Dictionary = data.get("talents", {})
 	for key: String in talents:
 		var t := talent(StringName(key))
-		if t != null:
+		if t != null and t.class_id == class_id:  # another class's nodes never carry over
 			ranks[t.id] = clampi(int(talents[key]), 0, t.max_rank)
 	# a save from a bigger tree (or a hand edit) never keeps unaffordable ranks
 	if points_free() < 0:

@@ -50,18 +50,31 @@ func damage_taken_multiplier() -> float:
 	return SHOCK_DAMAGE_MULT if has_shock() else 1.0
 
 
+## M07b: instance id of whoever applied the current Burn (Wildfire credit).
+var burn_source_id: int = 0
+
+
+func burn_source() -> Node:
+	if burn_source_id == 0:
+		return null
+	var obj := instance_from_id(burn_source_id)
+	return obj as Node if obj != null and is_instance_valid(obj) else null
+
+
 func apply_from_hit(hit: HitInfo) -> void:
 	if hit.applies_burn:
-		apply_burn(BURN_DPS * hit.burn_mult)
+		apply_burn(BURN_DPS * hit.burn_mult, BURN_DURATION, hit.attacker_id)
 	if hit.applies_chill:
 		apply_chill()
 	if hit.applies_shock:
 		apply_shock()
 
 
-func apply_burn(dps: float = BURN_DPS, duration: float = BURN_DURATION) -> void:
+func apply_burn(dps: float = BURN_DPS, duration: float = BURN_DURATION, source_id: int = 0) -> void:
 	_burn_dps = maxf(_burn_dps, dps)
 	_burn_left = maxf(_burn_left, duration)
+	if source_id != 0:
+		burn_source_id = source_id
 
 
 func apply_chill(duration: float = CHILL_DURATION) -> void:

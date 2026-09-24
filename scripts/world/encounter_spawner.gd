@@ -19,9 +19,9 @@ func _physics_process(_delta: float) -> void:
 	if triggered:
 		return
 	var zone := get_tree().current_scene as ZoneBase
-	if zone == null or zone.player == null:
+	if zone == null or zone.players.is_empty():
 		return
-	if zone.player.global_position.distance_to(global_position) <= trigger_radius:
+	if not zone.players_within(global_position, trigger_radius).is_empty():  # M07b: any hero wakes the camp
 		trigger(zone)
 
 
@@ -43,8 +43,10 @@ func trigger(zone: ZoneBase) -> void:
 			if _alive <= 0:
 				cleared.emit()
 				var bonus := CLEAR_XP_PER_ENEMY * composition.size()
-				if is_instance_valid(zone) and zone.player != null and is_instance_valid(zone.player):
-					zone.player.progression.add_xp(bonus)
+				if is_instance_valid(zone):
+					for hero in zone.players:  # M07b: the camp bonus goes to the whole party
+						if hero != null and is_instance_valid(hero):
+							hero.progression.add_xp(bonus)
 					zone.hud.toast("Camp cleared  +%d XP" % bonus, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
 		)
 	Sfx.play("telegraph", global_position, -6.0, 0.1, 0.7)

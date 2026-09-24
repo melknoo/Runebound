@@ -58,6 +58,17 @@ var known_abilities: Array[StringName] = []
 var gold: int = 0
 ## action id -> Callable that tries to start it (built in _register_actions).
 var _actions: Dictionary = {}
+## M07b input seam: Player reads only `intent`, which `input_source` fills
+## once per physics tick (LocalInputSource = this machine's keyboard/mouse;
+## a scripted or network source drives the same code).
+var input_source: InputSource = null
+var intent: PlayerIntent = PlayerIntent.new()
+## M07b: this machine's hero. Presentation that belongs to *a* player (camera
+## shake, impulses, denied clicks, pickup toasts) checks it; world presentation
+## (boss slams, positional SFX) does not. Remote heroes will be spawned false.
+var is_local: bool = true
+## Reserved for co-op (Godot's high-level multiplayer: 1 = server / local).
+var peer_id: int = 1
 
 # Ability tuning: derived caches of `abilities`, kept because the Runebreaker
 # code and the tests read them by name (player.cleave.startup ...).
@@ -122,6 +133,9 @@ func _ready() -> void:
 
 	if class_data == null:
 		class_data = ClassData.default_class()
+	progression.class_id = class_data.id
+	if input_source == null:
+		input_source = LocalInputSource.new()
 	_load_abilities()
 	_register_actions()
 	if known_abilities.is_empty():
@@ -208,6 +222,25 @@ func debug_learn_all() -> void:
 			changed = true
 	if changed:
 		abilities_changed.emit()
+
+
+# ---------------------------------------------------------------------------
+# M07b: presentation that belongs to this player only
+# ---------------------------------------------------------------------------
+
+func feel_shake(amount: float) -> void:
+	if is_local:
+		GameFeel.camera_shake(amount)
+
+
+func feel_impulse(dir: Vector3, strength: float) -> void:
+	if is_local:
+		GameFeel.camera_impulse(dir, strength)
+
+
+func ui_denied() -> void:
+	if is_local:
+		Sfx.play_ui("ui_denied", -8.0)
 
 
 func add_gold(amount: int) -> void:
@@ -462,6 +495,9 @@ func _physics_process(delta: float) -> void:
 		if _buffer_timer <= 0.0:
 			_buffered_action = &""
 
+	intent.clear()
+	if input_source != null:
+		input_source.poll(intent, self)
 	_read_action_input()
 
 	match state:
@@ -503,6 +539,7 @@ func roll_ability_hit(data: AbilityData) -> HitInfo:
 	var bonus_crit := stat(&"crit_pct") / 100.0
 	var hit := data.roll_hit(global_position, damage_mult, bonus_crit)
 	hit.from_player = true
+	hit.attacker_id = get_instance_id()  # M07b: talent mults, XP and loot follow the attacker
 	hit.ability = data.id
 	hit.burn_mult = 1.0 + stat(&"burn_pct") / 100.0
 	return hit
@@ -541,18 +578,13 @@ func earthbreaker_cost() -> float:
 	return maxf(earthbreaker.resonance_cost - stat(&"eb_cost_reduce"), 10.0)
 
 
-## Local keyboard/mouse -> action ids. Unknown abilities never reach the
-## buffer, so a locked key can't queue an action for later.
+## This tick's pressed actions (from the intent) -> try or buffer. Unknown
+## abilities never reach the buffer, so a locked key can't queue an action.
 func _read_action_input() -> void:
 	if input_locked:
 		return
-	if Input.is_action_just_pressed(&"dodge"):
-		_try_or_buffer(&"dodge")
-	for data in class_data.abilities:
-		if data == null or data.input_action == &"" or not InputMap.has_action(data.input_action):
-			continue
-		if Input.is_action_just_pressed(data.input_action):
-			_try_or_buffer(data.id)
+	for action in intent.pressed:
+		_try_or_buffer(action)
 
 
 func _try_or_buffer(action: StringName) -> void:
@@ -581,12 +613,10 @@ func _try_action(action: StringName) -> bool:
 # Movement
 # ---------------------------------------------------------------------------
 
+## Movement direction of the current tick (world-space, flat), as polled
+## into the intent by the input source.
 func _move_input_dir() -> Vector3:
-	var raw := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
-	if raw == Vector2.ZERO or camera_rig == null:
-		return Vector3.ZERO
-	var flat := camera_rig.get_flat_basis()
-	return (flat * Vector3(raw.x, 0, raw.y)).normalized()
+	return intent.move_dir
 
 
 func _process_move(delta: float) -> void:
@@ -771,7 +801,7 @@ func _do_cleave_hit() -> void:
 		var stop_targets: Array = [self]
 		stop_targets.append_array(hits)
 		GameFeel.hitstop(stop_targets, 0.045)
-		GameFeel.camera_impulse(fwd, 0.08)
+		feel_impulse(fwd, 0.08)
 	cooldowns_changed.emit()
 
 
@@ -829,7 +859,7 @@ func _fire_ember() -> void:
 	# frame overlaps the floor and detonates the projectile instantly.
 	proj.position = muzzle_position()
 	get_tree().current_scene.add_child(proj)
-	GameFeel.camera_impulse(-aim_direction(), 0.05)
+	feel_impulse(-aim_direction(), 0.05)
 	Sfx.play("ember_fire", muzzle_position(), -2.0, 0.1)
 
 
@@ -841,7 +871,7 @@ func try_earthbreaker() -> bool:
 	if not knows(&"earthbreaker") or state != State.MOVE or _cooldowns.get(&"earthbreaker", 0.0) > 0.0:
 		return false
 	if resonance < earthbreaker_cost():
-		Sfx.play_ui("ui_denied", -8.0)
+		ui_denied()
 		return false
 	state = State.SLAM
 	_state_timer = 0.0
@@ -881,7 +911,7 @@ func _do_slam_hit() -> void:
 	var pos := global_position
 	VFX.earthbreaker_slam(scene, pos, earthbreaker.aoe_radius)
 	Sfx.play("earthbreaker_impact", pos, 2.0, 0.06)
-	GameFeel.camera_shake(0.55)
+	feel_shake(0.55)
 	var hits := _query_hurtboxes(pos + Vector3(0, 0.5, 0), earthbreaker.aoe_radius)
 	for enemy: Node in hits:
 		var hit := roll_ability_hit(earthbreaker)
@@ -1030,7 +1060,7 @@ func try_chain_spark() -> bool:
 		else:
 			first = targeting.best_candidate()
 	if first == null:
-		Sfx.play_ui("ui_denied", -8.0)
+		ui_denied()
 		return false
 	_set_cooldown(&"chain_spark", chain_spark.cooldown)
 	_face_aim_instant()
@@ -1071,7 +1101,7 @@ func try_chain_spark() -> bool:
 				splash.source_position = last.global_position
 				other.take_hit(splash)
 	Sfx.play("chain_spark", global_position, -1.0, 0.1)
-	GameFeel.camera_impulse(aim_direction(), 0.04)
+	feel_impulse(aim_direction(), 0.04)
 	# Weapon flourish: quick raise, snap back.
 	var tw := _weapon_pivot.create_tween()
 	tw.tween_property(_weapon_pivot, "rotation_degrees", Vector3(-70, 20, 0), 0.07)
@@ -1165,7 +1195,7 @@ func take_hit(hit: HitInfo) -> bool:
 	push.y = 0
 	_knockback_velocity += push.normalized() * hit.knockback
 	Sfx.play("player_hurt", global_position, -2.0)
-	GameFeel.camera_shake(0.25)
+	feel_shake(0.25)
 	return true
 
 
@@ -1211,7 +1241,7 @@ func try_runic_guard() -> bool:
 	if not knows(&"runic_guard") or state != State.MOVE or float(_cooldowns.get(&"runic_guard", 0.0)) > 0.0:
 		return false
 	if resonance < runic_guard.resonance_cost:
-		Sfx.play_ui("ui_denied", -8.0)
+		ui_denied()
 		return false
 	spend_resonance(runic_guard.resonance_cost)
 	_set_cooldown(&"runic_guard", runic_guard.cooldown)
@@ -1226,7 +1256,7 @@ func try_resonance_burst() -> bool:
 	if not knows(&"resonance_burst") or state != State.MOVE or float(_cooldowns.get(&"resonance_burst", 0.0)) > 0.0:
 		return false
 	if resonance < resonance_burst.resonance_cost:
-		Sfx.play_ui("ui_denied", -8.0)
+		ui_denied()
 		return false
 	var spent := resonance
 	spend_resonance(spent)
@@ -1239,7 +1269,7 @@ func try_resonance_burst() -> bool:
 	VFX.burst(scene, pos + Vector3(0, 0.8, 0), {"tex": "shard", "amount": 14, "lifetime": 0.5, "size": 0.16,
 		"spread": 90.0, "vel_min": 4.0, "vel_max": 8.0, "colors": [ArtKit.color("color_roles.resonance.hot"), Color(gold, 0.0)] as Array[Color]})
 	Sfx.play("resonance_burst", pos, 0.0, 0.05)
-	GameFeel.camera_shake(0.45)
+	feel_shake(0.45)
 	var hits := _query_hurtboxes(pos + Vector3(0, 0.8, 0), resonance_burst.aoe_radius)
 	for enemy: Node in hits:
 		var hit := roll_ability_hit(resonance_burst)

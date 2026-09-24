@@ -38,36 +38,42 @@ static func apply_item_level(item: ItemData, lvl: int) -> void:
 
 
 ## rarity_bias: 0 = normal enemy, 1 = brute, 2 = elite (min RARE).
-static func generate(rarity_bias: int = 0) -> ItemData:
+## class_id (M07b): only that class's affixes and legendaries; "" = any.
+static func generate(rarity_bias: int = 0, class_id: StringName = &"") -> ItemData:
 	var item := ItemData.new()
 	item.slot = randi() % ItemData.SLOT_COUNT as ItemData.Slot
 	item.rarity = _roll_rarity(rarity_bias)
 	if item.rarity == ItemData.Rarity.LEGENDARY:
-		return _make_legendary(item)
+		if not AffixPool.legendaries_for(class_id).is_empty():
+			return _make_legendary(item, class_id)
+		item.rarity = ItemData.Rarity.RARE  # no legendary for this class yet
 	var affix_count := 0
 	match item.rarity:
 		ItemData.Rarity.MAGIC:
 			affix_count = 1
 		ItemData.Rarity.RARE:
 			affix_count = 2 + (randi() % 2)
-	_roll_affixes(item, affix_count)
+	_roll_affixes(item, affix_count, class_id)
 	item.display_name = _roll_name(item.slot)
 	return item
 
 
-static func generate_legendary() -> ItemData:
+static func generate_legendary(class_id: StringName = &"") -> ItemData:
 	var item := ItemData.new()
 	item.rarity = ItemData.Rarity.LEGENDARY
-	return _make_legendary(item)
+	return _make_legendary(item, class_id)
 
 
-static func _make_legendary(item: ItemData) -> ItemData:
-	var def: Dictionary = AffixPool.LEGENDARIES.pick_random()
+static func _make_legendary(item: ItemData, class_id: StringName = &"") -> ItemData:
+	var pool := AffixPool.legendaries_for(class_id)
+	if pool.is_empty():
+		pool = AffixPool.LEGENDARIES
+	var def: Dictionary = pool.pick_random()
 	item.slot = def["slot"]
 	item.display_name = def["name"]
 	item.legendary_id = def["id"]
 	item.legendary_text = def["text"]
-	_roll_affixes(item, 2)
+	_roll_affixes(item, 2, class_id)
 	return item
 
 
@@ -94,8 +100,8 @@ static func _roll_rarity(bias: int) -> ItemData.Rarity:
 			return ItemData.Rarity.COMMON
 
 
-static func _roll_affixes(item: ItemData, count: int) -> void:
-	var pool := AffixPool.defs_for_slot(item.slot)
+static func _roll_affixes(item: ItemData, count: int, class_id: StringName = &"") -> void:
+	var pool := AffixPool.defs_for_slot(item.slot, class_id)
 	var picked_ids: Array[StringName] = []
 	for i in count:
 		var total_weight := 0

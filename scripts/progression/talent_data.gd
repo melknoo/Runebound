@@ -9,6 +9,8 @@ enum Branch { STORM, EMBER, WARDEN }
 
 @export var id: StringName
 @export var display_name: String
+## M07b: the class whose tree this node belongs to (Progression.tree_for).
+@export var class_id: StringName = &"runebreaker"
 @export var branch: Branch = Branch.STORM
 ## 0 = opens at 0 points in the branch, 1 at 3, 2 at 6, 3 (capstone) at 10.
 @export_range(0, 3) var tier: int = 0

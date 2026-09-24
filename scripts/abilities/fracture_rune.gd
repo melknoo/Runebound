@@ -64,7 +64,8 @@ func _detonate() -> void:
 	var scene := get_tree().current_scene
 	VFX.frost_burst(scene, global_position, _data.aoe_radius)
 	Sfx.play("rune_detonate", global_position, 0.0, 0.08)
-	GameFeel.camera_shake(0.2)
+	if _source != null and is_instance_valid(_source):
+		_source.feel_shake(0.2)
 
 	var space := get_world_3d().direct_space_state
 	var shape := SphereShape3D.new()
@@ -79,11 +80,18 @@ func _detonate() -> void:
 	for result: Dictionary in space.intersect_shape(query, 16):
 		var hb := result["collider"] as Hurtbox
 		if hb != null and hb.owner_entity != null and hb.owner_entity.has_method(&"take_hit"):
-			var hit := _data.roll_hit(global_position)
+			# M07b: through the player's roll like every other ability (gear %,
+			# crit, talent mults, attacker id); a plain roll only without a source.
+			var hit: HitInfo
+			if _source != null and is_instance_valid(_source):
+				hit = _source.roll_ability_hit(_data)
+				hit.source_position = global_position
+			else:
+				hit = _data.roll_hit(global_position)
 			if bool(hb.owner_entity.call(&"take_hit", hit)):
 				hit_any = true
 				if _source != null and is_instance_valid(_source):
 					_source.gain_resonance(6.0)
-	if hit_any:
-		GameFeel.camera_impulse(Vector3.UP, 0.04)
+	if hit_any and _source != null and is_instance_valid(_source):
+		_source.feel_impulse(Vector3.UP, 0.04)
 	queue_free()

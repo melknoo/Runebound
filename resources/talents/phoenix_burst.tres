@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"phoenix_burst"
 display_name = "Phoenix Burst"
+class_id = &"runebreaker"
 branch = 1
 tier = 3
 max_rank = 1

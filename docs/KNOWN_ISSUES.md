@@ -118,6 +118,22 @@
 - Tab targeting can't be used while the talent panel is open (input
   locked), like the inventory.
 
+## M07b open items (needs the user's playtest)
+- Learn order and prices (Earthbreaker L2 / 50 g first) and the v2 save
+  migration (trainer abilities up to the saved level are kept) are proposals.
+- Fracture Rune now goes through the player's hit roll (gear %, crit, talent
+  multipliers): a small buff to check in play.
+- Esc: HeroUI / TrainerUI consume `toggle_cursor` first (later-added nodes
+  get `_unhandled_input` first); if the cursor still toggles under an open
+  window, make Player skip the toggle while `input_locked`.
+- While the F1 overlay shows, C / L / 0 belong to it (reset cooldowns, learn
+  all, +500 gold); the hero window ignores keys until it closes. The overlay
+  comments used to say F3; the key is F1.
+- Resonance fills with nothing to spend on until Earthbreaker (level 2); the
+  cost tick is hidden until then and Sigrun's toast points to the hub.
+- Sigrun borrows the Runebreaker rig (bronze tint); a real NPC model and her
+  story come with M11.
+
 ## Technical
 - Two game instances at once on the dev iGPU crashed the one in the
   background with "Vulkan device was lost" (Windows GPU resets,

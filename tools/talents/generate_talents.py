@@ -10,6 +10,7 @@ import os
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT = os.path.join(ROOT, "resources", "talents")
+CLASS = "runebreaker"  # M07b: every node of this table belongs to one class (TalentData.class_id)
 
 # id, name, branch, tier, max_rank, stat, per_rank, power, description
 TALENTS = [
@@ -64,6 +65,7 @@ def esc(text):
 
 FIELDS = ('id = &"{id}"\n'
           'display_name = "{name}"\n'
+          'class_id = &"{cls}"\n'
           'branch = {branch}\n'
           'tier = {tier}\n'
           'max_rank = {ranks}\n'
@@ -77,7 +79,7 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     keep = set()
     for tid, name, branch, tier, ranks, stat, per_rank, power, desc in TALENTS:
-        body = HEADER + FIELDS.format(id=tid, name=esc(name), branch=branch, tier=tier, ranks=ranks, stat=stat,
+        body = HEADER + FIELDS.format(id=tid, name=esc(name), cls=CLASS, branch=branch, tier=tier, ranks=ranks, stat=stat,
                                       per_rank=repr(float(per_rank)), power=power, desc=esc(desc))
         keep.add(tid + ".tres")
         with open(os.path.join(OUT, tid + ".tres"), "w", encoding="utf-8", newline="\n") as f:

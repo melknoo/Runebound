@@ -55,7 +55,7 @@ func _build() -> void:
 		col.add_theme_constant_override("separation", 6)
 		cols.add_child(col)
 		var name_label := Label.new()
-		name_label.text = TalentData.branch_name(b).to_upper()
+		name_label.text = player.class_data.talent_branches[b].to_upper()
 		name_label.add_theme_font_override("font", UiTheme.font(true))
 		name_label.add_theme_font_size_override("font_size", UiTheme.TITLE)
 		name_label.add_theme_color_override("font_color", ArtKit.color(BRANCH_COLORS[b]))
@@ -70,7 +70,7 @@ func _build() -> void:
 	_detail_text.custom_minimum_size = Vector2(1080, 44)
 	body.add_child(_detail_text)
 
-	for t in Progression.tree():
+	for t in Progression.tree_for(player.class_data.id):
 		var col := _columns[t.branch]
 		var btn := Button.new()
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -124,7 +124,7 @@ func _refresh() -> void:
 	var prog := player.progression
 	_header.text = "Level %d    %d point%s free    (left click: learn, right click: remove)" % [
 		prog.level, prog.points_free(), "" if prog.points_free() == 1 else "s"]
-	for t in Progression.tree():
+	for t in Progression.tree_for(player.class_data.id):
 		var btn := _buttons[t.id] as Button
 		var r := prog.rank(t.id)
 		var tier_label := "" if t.tier == 0 else ("%d+ " % TalentData.TIER_POINTS[t.tier])
@@ -150,7 +150,7 @@ func _render_detail() -> void:
 		return
 	var t := _hovered
 	var r := player.progression.rank(t.id)
-	_detail_title.text = "%s  -  %s, rank %d/%d" % [t.display_name, TalentData.branch_name(t.branch), r, t.max_rank]
+	_detail_title.text = "%s  -  %s, rank %d/%d" % [t.display_name, player.class_data.talent_branches[t.branch], r, t.max_rank]
 	var now := t.describe(r) if r > 0 else ""
 	var next := t.describe(r + 1) if r < t.max_rank else ""
 	var lines: Array[String] = []
@@ -159,5 +159,5 @@ func _render_detail() -> void:
 	if next != "":
 		lines.append(("Next: " if r > 0 else "") + next)
 	if not player.progression.tier_open(t):
-		lines.append("Needs %d points in %s below this tier." % [TalentData.TIER_POINTS[t.tier], TalentData.branch_name(t.branch)])
+		lines.append("Needs %d points in %s below this tier." % [TalentData.TIER_POINTS[t.tier], player.class_data.talent_branches[t.branch]])
 	_detail_text.text = "   ".join(lines)

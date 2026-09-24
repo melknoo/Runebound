@@ -20,6 +20,22 @@ var is_conductor_arc: bool = false
 var from_player: bool = false
 var ability: StringName = &""
 var burn_mult: float = 1.0  # Kindling: scales the Burn this hit applies
+## M07b: who dealt it, as an instance id (0 = nobody / the world). An id, not
+## a reference: statuses and Wildfire resolve seconds later, possibly after
+## the attacker is gone, and an int travels over the wire unchanged.
+var attacker_id: int = 0
+
+
+## The attacker node, or null when it is gone or unknown.
+func attacker() -> Node:
+	if attacker_id == 0:
+		return null
+	var obj := instance_from_id(attacker_id)
+	return obj as Node if obj != null and is_instance_valid(obj) else null
+
+
+func attacker_player() -> Player:
+	return attacker() as Player
 
 
 static func create(dmg: float, dmg_type: DamageType, hit_weight: Weight, source_pos: Vector3) -> HitInfo:

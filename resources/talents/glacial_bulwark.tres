@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"glacial_bulwark"
 display_name = "Glacial Bulwark"
+class_id = &"runebreaker"
 branch = 2
 tier = 2
 max_rank = 1

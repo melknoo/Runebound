@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"arc_conduit"
 display_name = "Arc Conduit"
+class_id = &"runebreaker"
 branch = 0
 tier = 1
 max_rank = 2

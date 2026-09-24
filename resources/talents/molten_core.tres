@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"molten_core"
 display_name = "Molten Core"
+class_id = &"runebreaker"
 branch = 1
 tier = 1
 max_rank = 1

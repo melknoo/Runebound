@@ -9,6 +9,11 @@ save. Player gear persists through `SaveGame` (see TECHNICAL_ARCHITECTURE).
 ember loop, crackle ambience), three stone shelters with rune lintels.
 Portals: ASHEN HIGHLANDS (north), TRAINING GROUNDS / Combat Lab (east).
 New game and every return lands here. No enemies, ever.
+- **Sigrun Runewright** (M07b, `TrainerNpc`) stands north of the west hut by
+  the weapon rack and training post, facing the hearth, on her own paved
+  path. `[E] Talk` opens the trainer panel (abilities for gold + level). She
+  borrows the Runebreaker rig in bronze until M11 gives her a model and a
+  story; the three flavour lines are placeholders.
 
 ## ASHEN HIGHLANDS (region — scenes/ashen_highlands.tscn)
 100x70, ember-haze sky, cracked ash ground with ember flecks, ridge pockets

@@ -192,5 +192,11 @@ func cycle_target() -> void:
 	if candidates.is_empty():
 		current = null
 		return
-	var idx := candidates.find(current)
+	# Manual scan instead of find(): a typed-array find validates its argument
+	# and errors on a reference freed this very frame (co-op despawns will do that).
+	var idx := -1
+	for i in candidates.size():
+		if candidates[i] == current:
+			idx = i
+			break
 	current = candidates[(idx + 1) % candidates.size()] if idx >= 0 else candidates[0]

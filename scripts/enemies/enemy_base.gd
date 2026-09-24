@@ -21,7 +21,21 @@ const AGGRO_RANGE := 16.0
 @export var stagger_resist: bool = false
 
 var ai_state: AIState = AIState.IDLE
-var player: Player = null
+## M07b: the hero this enemy hunts. `player` is the read/write alias every
+## subclass helper uses; with `auto_retarget` (set by ZoneBase._spawn_enemy)
+## it is re-evaluated: the last attacker while the fight is fresh, else the
+## nearest hero. Hand-built test enemies keep whatever they were given.
+var target: Player = null
+var player: Player:
+	get:
+		return target
+	set(v):
+		target = v
+var auto_retarget: bool = false
+const RETARGET_INTERVAL := 0.3
+const LAST_ATTACKER_MEMORY := 4.0
+var _retarget_left: float = 0.0
+var _zone: ZoneBase = null
 var health: HealthComponent
 var status: StatusEffectComponent
 var is_elite: bool = false
@@ -117,6 +131,11 @@ func _physics_process(delta: float) -> void:
 		_hitstop_left -= delta
 		return
 	_state_timer += delta
+	if auto_retarget and ai_state in [AIState.IDLE, AIState.CHASE, AIState.CIRCLE, AIState.RETREAT]:
+		_retarget_left -= delta
+		if _retarget_left <= 0.0:
+			_retarget_left = RETARGET_INTERVAL
+			_retarget()
 	if ai_state != AIState.DEAD:
 		_ai_process(delta)
 	if not is_on_floor():
@@ -155,6 +174,25 @@ func _enter_state(new_state: AIState) -> void:
 	state_entered.emit(new_state)
 
 
+## Pick who to hunt: whoever hit us in the last LAST_ATTACKER_MEMORY seconds
+## and is still close, else the nearest hero in the zone. Never mid-attack
+## (only called from the roaming states).
+func _retarget() -> void:
+	if _zone == null:
+		_zone = get_tree().current_scene as ZoneBase
+	if _zone == null:
+		return
+	var recent := last_attacker()
+	if recent != null and not recent.health.is_dead \
+			and Time.get_ticks_msec() / 1000.0 - last_attack_time <= LAST_ATTACKER_MEMORY \
+			and recent.global_position.distance_to(global_position) <= AGGRO_RANGE * 1.5:
+		target = recent
+		return
+	var nearest := _zone.nearest_player(global_position)
+	if nearest != null:
+		target = nearest
+
+
 func distance_to_player() -> float:
 	if player == null or not is_instance_valid(player):
 		return INF
@@ -186,11 +224,28 @@ func brake(delta: float) -> void:
 	velocity.z = move_toward(velocity.z, 0, 28.0 * delta)
 
 
+## M07b: the player whose hit landed last (talent mults, kill credit, retarget).
+var last_attacker_id: int = 0
+var last_attack_time: float = -1000.0
+
+
+func last_attacker() -> Player:
+	if last_attacker_id == 0:
+		return null
+	var obj := instance_from_id(last_attacker_id)
+	return obj as Player if obj != null and is_instance_valid(obj) else null
+
+
 func take_hit(hit: HitInfo) -> bool:
 	if ai_state == AIState.DEAD:
 		return false
-	if hit.from_player and player != null and is_instance_valid(player):
-		hit.damage *= player.talent_damage_mult(hit, self)  # M07: Galvanize, Fuel the Fire, Searing Lance
+	var attacker := hit.attacker_player()
+	if attacker == null and hit.from_player:
+		attacker = player  # hits built by hand (tests, older code): the assigned player
+	if attacker != null:
+		hit.damage *= attacker.talent_damage_mult(hit, self)  # M07: Galvanize, Fuel the Fire, Searing Lance
+		last_attacker_id = attacker.get_instance_id()
+		last_attack_time = Time.get_ticks_msec() / 1000.0
 	hit.damage *= status.damage_taken_multiplier()
 	if not health.apply_hit(hit):
 		return false
@@ -198,11 +253,11 @@ func take_hit(hit: HitInfo) -> bool:
 	# Conductor's Oath: lightning damage on a Conductor arcs to all other
 	# Conductors. Splash hits are flagged so they never chain again.
 	if hit.type == HitInfo.DamageType.LIGHTNING and not hit.is_conductor_arc and status.is_conductor():
-		_conductor_arc_out()
+		_conductor_arc_out(hit.attacker_id)
 	return true
 
 
-func _conductor_arc_out() -> void:
+func _conductor_arc_out(attacker_id: int = 0) -> void:
 	var scene := get_tree().current_scene
 	var my_chest := global_position + Vector3(0, 1.0, 0)
 	# Duplicate: an arc kill mutates all_enemies mid-iteration.
@@ -216,6 +271,7 @@ func _conductor_arc_out() -> void:
 		VFX.lightning_arc(scene, my_chest, other.global_position + Vector3(0, 1.0, 0))
 		var arc_hit := HitInfo.create(8.0, HitInfo.DamageType.LIGHTNING, HitInfo.Weight.LIGHT, global_position)
 		arc_hit.is_conductor_arc = true
+		arc_hit.attacker_id = attacker_id  # the arc is the attacker's damage too
 		other.take_hit(arc_hit)
 
 
@@ -367,9 +423,10 @@ func _on_interrupted() -> void:
 
 
 func _on_died() -> void:
-	# M07 Wildfire: a Burning enemy's death spreads its Burn.
-	if status.has_burn() and player != null and is_instance_valid(player) and player.has_power(&"wildfire"):
-		_spread_burn()
+	# M07 Wildfire: a Burning enemy's death spreads its Burn (the burn's owner's talent).
+	var arsonist := _burn_owner()
+	if status.has_burn() and arsonist != null and arsonist.has_power(&"wildfire"):
+		_spread_burn(arsonist)
 	_enter_state(AIState.DEAD)
 	collision_layer = 0
 	set_physics_process(false)
@@ -385,13 +442,24 @@ func _on_died() -> void:
 const WILDFIRE_RADIUS := 3.0
 
 
-func _spread_burn() -> void:
+## The player who set this enemy burning: the burn's recorded source, else the
+## last attacker, else the assigned player.
+func _burn_owner() -> Player:
+	var owner := status.burn_source() as Player
+	if owner == null:
+		owner = last_attacker()
+	if owner == null and player != null and is_instance_valid(player):
+		owner = player
+	return owner
+
+
+func _spread_burn(arsonist: Player) -> void:
 	VFX.ground_ring(get_tree().current_scene, global_position, ArtKit.color("color_roles.fire.body"), WILDFIRE_RADIUS, 0.3)
-	var dps := StatusEffectComponent.BURN_DPS * (1.0 + player.stat(&"burn_pct") / 100.0)
+	var dps := StatusEffectComponent.BURN_DPS * (1.0 + arsonist.stat(&"burn_pct") / 100.0)
 	for other in all_enemies:
 		if other != self and is_instance_valid(other) and other.ai_state != AIState.DEAD \
 				and other.global_position.distance_to(global_position) <= WILDFIRE_RADIUS:
-			other.status.apply_burn(dps)
+			other.status.apply_burn(dps, StatusEffectComponent.BURN_DURATION, arsonist.get_instance_id())
 
 
 ## Shared helper: chunky material.

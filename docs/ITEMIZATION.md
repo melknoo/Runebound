@@ -43,6 +43,19 @@ Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
   | Stormcaller's Band | Relic | Overload |
   | Emberheart Plate | Armor | Molten Core |
 
+## M07b additions
+- **Gold** is a `GoldDrop` (coin stack, magnet glide from 3 m, always picked
+  up, `+N gold` float text, `coin_pickup` SFX). `ItemDrop` and `GoldDrop`
+  share `WorldPickup` (proximity test, bob). Amounts: PROGRESSION_DESIGN.md.
+- **Class tags:** the six ability-specific affixes (`ember_pierce`,
+  `chain_jumps`, `cleave_radius_pct`, `eb_cost_reduce`, `rune_arm_reduce`,
+  `storm_cd_pct`) and every legendary carry `"class": &"runebreaker"`.
+  `ItemGenerator.generate(bias, class_id)` rolls only what fits the killer's
+  class (an elite drop with no legendary for the class becomes rare); an
+  empty class id (debug drops, tests) allows everything.
+- Drops, XP and gold go to the **attacker** who landed the last hit
+  (`HitInfo.attacker_id`), not to "the" player.
+
 ## Legendary powers
 | Item | Slot | Power |
 |---|---|---|

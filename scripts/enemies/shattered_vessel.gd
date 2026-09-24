@@ -286,20 +286,23 @@ func _expanding_ring() -> void:
 	# Shared threat language (crimson band + bright rims), exactly the band
 	# the hit test below uses (+- 0.8 m around the growing radius).
 	var ring := VFX.threat_ring(scene, arena_center, RING_MAX_RADIUS, 0.8)
-	var hit_done := {"v": false}
+	var hit_done: Array[Player] = []  # M07b: the ring checks every hero, each once
+	var zone := get_tree().current_scene as ZoneBase
 	var tw := ring.create_tween()
 	tw.tween_method(func(r: float) -> void:
 		VFX.set_threat_ring(ring, r)
-		if hit_done["v"] or player == null or not is_instance_valid(player):
-			return
-		var dist := Vector2(player.global_position.x - arena_center.x,
-			player.global_position.z - arena_center.z).length()
-		# The ring edge is ~1m thick; crossing it while not dodging hurts.
-		if absf(dist - r) < 0.8:
-			hit_done["v"] = true
-			var hit := HitInfo.create(RING_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, arena_center)
-			hit.knockback = 5.0
-			player.take_hit(hit)
+		var heroes: Array[Player] = zone.players if zone != null else ([player] as Array[Player])
+		for hero in heroes:
+			if hero == null or not is_instance_valid(hero) or hit_done.has(hero):
+				continue
+			var dist := Vector2(hero.global_position.x - arena_center.x,
+				hero.global_position.z - arena_center.z).length()
+			# The ring edge is ~1m thick; crossing it while not dodging hurts.
+			if absf(dist - r) < 0.8:
+				hit_done.append(hero)
+				var hit := HitInfo.create(RING_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, arena_center)
+				hit.knockback = 5.0
+				hero.take_hit(hit)
 	, 0.5, RING_MAX_RADIUS, RING_EXPAND_TIME)
 	tw.tween_callback(ring.queue_free)
 

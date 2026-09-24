@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"storm_surge"
 display_name = "Storm Surge"
+class_id = &"runebreaker"
 branch = 0
 tier = 2
 max_rank = 2

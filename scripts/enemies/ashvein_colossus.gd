@@ -228,13 +228,19 @@ func _begin_charge_run() -> void:
 func _charge_contact_check() -> void:
 	if _charge_hit_done:
 		return
-	if player != null and is_instance_valid(player) \
+	# M07b: the charge flattens every hero in its path, not only the target.
+	var zone := get_tree().current_scene as ZoneBase
+	var victims: Array[Player] = zone.players_within(global_position, 2.0) if zone != null else []
+	if victims.is_empty() and zone == null and player != null and is_instance_valid(player) \
 			and player.global_position.distance_to(global_position) <= 2.0:
+		victims.append(player)
+	if not victims.is_empty():
 		_charge_hit_done = true
-		var hit := HitInfo.create(CHARGE_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position - _charge_dir)
-		hit.knockback = 10.0
-		player.take_hit(hit)
-		VFX.melee_impact(get_tree().current_scene, player.global_position + Vector3(0, 1.0, 0), _charge_dir)
+		for victim in victims:
+			var hit := HitInfo.create(CHARGE_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position - _charge_dir)
+			hit.knockback = 10.0
+			victim.take_hit(hit)
+			VFX.melee_impact(get_tree().current_scene, victim.global_position + Vector3(0, 1.0, 0), _charge_dir)
 
 
 func _end_charge(hit_wall: bool) -> void:

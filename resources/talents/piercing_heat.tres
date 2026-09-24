@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"piercing_heat"
 display_name = "Piercing Heat"
+class_id = &"runebreaker"
 branch = 1
 tier = 1
 max_rank = 1

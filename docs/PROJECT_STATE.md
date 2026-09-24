@@ -1,12 +1,53 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-23 (night) · Milestone: **M06 Art Direction Pass** — Phase C
-propagation and Phase D gate work done; user gates pending (Style Gate
-review on the captures, final playtest, listening checkpoint) ·
-Plan: gold standard in Ashen Highlands South → Gate 0 (direction, user) →
-production → Style Gate (user) → propagation → §71 Visual Quality Gate.
-Environment work is reusable kit/systems only (Highlands become an open
-zone in M08 — see ROADMAP).
+Updated: 2026-09-24 · Milestone: **M07b Character Foundations** — built,
+smoke green (304 checks), shot list `m07b_character` reviewed; **user gate
+pending** (fresh-start playtest: gold → Sigrun → Earthbreaker → C window).
+M06 Style Gate passed; M07 accepted "for now". Next: M08 Open World I, then
+M09 Co-op (ROADMAP.md has the new order and the reasons).
+
+## M07b Character Foundations (2026-09-24)
+Decided after the user's post-M06 wishes (co-op for 2–5 on a home server,
+several classes, a real RPG, one ability at the start, gold, a stats
+window): a foundation milestone before the open world, so M08+ don't build
+on "one player, one class". No netcode yet, only the seams.
+- **Visible:**
+  - A fresh Runebreaker knows Rune Cleave and Dodge. Earthbreaker (L2, 50 g),
+    Ember Lance (L3, 150), Storm Step (L4, 275), Chain Spark (L5, 400) and
+    Fracture Rune (L7, 600) are bought from **Sigrun Runewright** in Runehold
+    (`[E] Talk`, TrainerUI: level / gold reasons, Learn, toast + slot pop +
+    `ability_learned` SFX). Runic Guard / Resonance Burst stay talent unlocks.
+  - **Gold:** every kill pays ~half its XP (elite x4, +15 %/level), bosses in
+    3–4 piles, chests a purse; coins glide to the player, never need a slot;
+    HUD counter with a coin icon; debug `[0]` +500 gold, `[L]` learn all.
+  - **Hero window** (HeroUI): I / C / N open Inventory / Character / Talents
+    as tabs, same key or Esc closes. The Character tab shows level/XP,
+    health, barrier, Resonance, damage/crit/cooldown/move %, gold, per
+    ability: damage, average with crit, crit %, cooldown, cost, gain and
+    behaviour notes, plus defence and equipped gear (`StatSheet`, the same
+    formulas as the hits; the HUD tooltip leads with the damage too).
+- **Seams (TECHNICAL_ARCHITECTURE "Multi-class / multi-player seams"):**
+  `ClassData` resource + one ability id space (`melee` → `rune_cleave`,
+  `ember` → `ember_lance`, icons renamed) + `knows()` gate + action table;
+  `PlayerIntent` / `InputSource` (Player never reads `Input` for gameplay);
+  `HitInfo.attacker_id` (talent mults, XP, gold, loot follow the attacker;
+  Wildfire follows the burn's owner; Fracture Rune rolls through the player);
+  `ZoneBase.players` / `local_player` / `nearest_player` / `players_within`,
+  enemies retarget (recent attacker, else nearest) when spawned by the zone;
+  boss triggers, camps, novas, charge and Vessel ring use the registry;
+  `Player.is_local` gates camera shake / impulses / denied clicks / pickup
+  toasts; SaveGame **v3** (world / characters / active, v1+v2 migrate);
+  talents carry `class_id`, ability-specific affixes and legendaries a
+  `"class"` tag; `ItemGenerator.generate(bias, class_id)`.
+- Tests: smoke 304 checks (start kit, gate, trainer, gold, hero window,
+  StatSheet vs formula, save v3 round-trip + migrations, input seam with a
+  scripted source, attacker identity, registry + retarget + local camera,
+  class filters). Shot list `tests/shots/m07b_character.json` (8 shots),
+  `b5_hud` and `m07_progression` re-captured. Harness runs (shots, perf,
+  stress, captures) call `debug_learn_all()` unless a shot list sets
+  `"fresh_abilities": true`.
+- Open for the user: KNOWN_ISSUES "M07b open items" (learn order/prices,
+  v2 migration gift, Fracture Rune buff, Esc ordering, Sigrun placeholder).
 
 ## M06 progress
 - **Step 0 (user request):** ability names only as hover tooltips while the

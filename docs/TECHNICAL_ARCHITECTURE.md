@@ -175,6 +175,63 @@ Godot 4.6.3 stable, typed GDScript, Forward+. Physics 60 Hz.
   so `project.godot` stays untouched.
 - SaveGame v2: `SaveGame.migrate()` upgrades v1 saves.
 
+## Multi-class / multi-player seams (M07b)
+The game stays single-player today; these seams make a second class a data
+addition and later co-op (server authority, ENet, headless Linux server) a
+matter of adding replication rather than untangling. Rule: **the
+Runebreaker's behavior stays where it is; only the lists and identities other
+systems read became data or registries.**
+- `ClassData` (`resources/classes/*.tres`): abilities in HUD order, starting
+  kit, talent branch names, rig, material, resource label/cap. ZoneBase sets
+  `player.class_data` before `add_child` from `SaveGame.active_class_id()`;
+  a bare `Player.new()` falls back to the default class.
+- **One ability id space:** internal keys equal `AbilityData.id`
+  (`rune_cleave`, `ember_lance`, ...); icons are `assets/ui/icons/<id>.png`.
+  `AbilityData.input_action` names the key, `unlock` (START / TRAINER /
+  TALENT) plus `learn_level` / `learn_price` / `unlock_power` how it is known.
+- `Player.knows(id)` is the single gate (dodge always; TALENT via
+  `has_power(unlock_power)`; else `known_abilities`). `_try_or_buffer` never
+  buffers an unknown action. `_register_actions()` maps ids to `try_*`
+  Callables (no dispatch `match`); `cooldown_fraction` reads the data.
+  Class 2 = `extends Player`, overriding `_register_actions`,
+  `_load_abilities`, `_anim_profile`; the Runebreaker's `try_*` then move
+  into `runebreaker.gd` mechanically. Not before a second class exists.
+- **Input seam:** `PlayerIntent` (move_dir, pressed) is filled once per
+  physics tick by an `InputSource` (`LocalInputSource` = keyboard/mouse
+  through the camera basis; tests script one; a peer will send one). Player
+  reads only the intent; the input buffer sits behind it.
+- **Attacker identity:** `HitInfo.attacker_id` (instance id, not a
+  reference: statuses and Wildfire resolve later and an int serializes).
+  `EnemyBase.take_hit` takes the talent multiplier from the attacker and
+  remembers `last_attacker_id`; Wildfire uses the burn's owner
+  (`StatusEffectComponent.burn_source_id`); XP, gold and loot go to the
+  killer (`ZoneBase._on_enemy_died`). FractureRune rolls through
+  `roll_ability_hit` like every ability.
+- **Player registry:** `ZoneBase.players` / `local_player` (`player` is a
+  read/write alias), `add_player`, `remove_player`, `nearest_player(pos)`,
+  `players_within(pos, r)`. `EnemyBase.target` (`player` alias) is re-picked
+  every 0.3 s in the roaming states when `auto_retarget` is set (only by
+  `_spawn_enemy`): the recent attacker if close, else the nearest hero. Boss
+  triggers, camps, novas, the charge and the Vessel ring use the registry.
+- **Local-only presentation:** `Player.is_local`; `feel_shake`,
+  `feel_impulse`, `ui_denied` and the pickup toast check it. World shakes
+  (boss slams) stay unconditional. `peer_id` is reserved (1 = server/local).
+- **Save v3:** `world {zone, flags}` / `characters [...]` / `active`
+  (PROGRESSION_DESIGN.md). Talents carry `class_id` (`Progression.tree_for`);
+  ability-specific affixes and legendaries carry `"class"`
+  (`AffixPool.defs_for_slot(slot, class_id)`, `legendaries_for`).
+- **For M08 and later:** spawn enemies only through `_spawn_enemy` /
+  `make_enemy`; activation, spawners and triggers use `players_within` /
+  `nearest_player`, never `zone.player` (that is HUD, camera, targeting,
+  prompts, debug); new hits go through `roll_ability_hit`; save additions go
+  into `world` or `characters[i]`.
+- UI: `HeroUI` (layer 8) hosts `InventoryUI`, `CharacterTab` and `TalentUI`
+  as pages (I / C / N, Esc closes; `zone.inventory_ui` / `talent_ui` stay as
+  aliases). `TrainerUI` is a separate panel opened by `TrainerNpc` (`Npc`
+  base: prompt, nameplate, re-tinted rig). `StatSheet` (static) holds the
+  sheet's formulas; the HUD tooltip uses it too. `WorldPickup` is the base of
+  `ItemDrop` and `GoldDrop`.
+
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
 Melee hits = shape queries against hurtbox layers; projectiles = Area3D.

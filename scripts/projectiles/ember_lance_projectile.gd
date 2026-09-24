@@ -129,7 +129,8 @@ func _damage(victim: Node) -> void:
 	else:
 		hit = _data.roll_hit(global_position)
 	if bool(victim.call(&"take_hit", hit)):
-		GameFeel.camera_impulse(_dir, 0.04)
+		if _source is Player:
+			(_source as Player).feel_impulse(_dir, 0.04)
 		if _source is Player:
 			(_source as Player).gain_resonance(_data.resonance_gain_per_hit)
 			if was_burning and (_source as Player).has_power(&"cindermaw"):
@@ -149,6 +150,8 @@ func _cindermaw_erupt(center_enemy: EnemyBase) -> void:
 			continue
 		var splash := HitInfo.create(15.0, HitInfo.DamageType.FIRE, HitInfo.Weight.LIGHT, center_enemy.global_position)
 		splash.applies_burn = true
+		splash.from_player = true
+		splash.attacker_id = _source.get_instance_id()
 		other.take_hit(splash)
 
 

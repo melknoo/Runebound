@@ -137,9 +137,13 @@ func _charge_nova() -> void:
 		VFX.lightning_arc(scene, pos + Vector3(0, 1.0, 0),
 			pos + Vector3(cos(a) * NOVA_RADIUS, 0.3, sin(a) * NOVA_RADIUS))
 	Sfx.play("bolt_impact", pos, -2.0, 0.1, 0.8)
-	var player := enemy.player
-	if player != null and is_instance_valid(player) \
-			and player.global_position.distance_to(pos) <= NOVA_RADIUS:
+	# M07b: every hero inside the nova, not only the enemy's target.
+	var zone := enemy.get_tree().current_scene as ZoneBase
+	var victims: Array[Player] = zone.players_within(pos, NOVA_RADIUS) if zone != null else []
+	if zone == null and enemy.player != null and is_instance_valid(enemy.player) \
+			and enemy.player.global_position.distance_to(pos) <= NOVA_RADIUS:
+		victims.append(enemy.player)
+	for victim in victims:
 		var hit := HitInfo.create(NOVA_DAMAGE, HitInfo.DamageType.LIGHTNING, HitInfo.Weight.MEDIUM, pos)
 		hit.knockback = 3.0
-		player.take_hit(hit)
+		victim.take_hit(hit)

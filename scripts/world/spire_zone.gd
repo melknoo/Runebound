@@ -380,7 +380,7 @@ func _physics_process(_delta: float) -> void:
 		if not _boss_started and SaveGame.has_flag(&"spire_cleansed") and boss_portal.locked:
 			boss_portal.set_locked(false)
 		return
-	if player.global_position.distance_to(_boss_trigger_pos) <= 10.0:
+	if not players_within(_boss_trigger_pos, 10.0).is_empty():  # M07b: any hero starts it
 		_start_boss_fight()
 
 

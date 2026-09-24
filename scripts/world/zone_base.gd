@@ -5,7 +5,16 @@ extends Node
 ## building helpers, enemy/drop plumbing, zone travel with save persistence.
 
 var world: Node3D
-var player: Player
+## M07b player registry: every hero in this zone (one today; co-op adds more).
+var players: Array[Player] = []
+## The hero this machine controls: HUD, camera, targeting and prompts follow
+## it. `player` is a read/write alias so existing code keeps working.
+var local_player: Player = null
+var player: Player:
+	get:
+		return local_player
+	set(v):
+		local_player = v
 var camera_rig: CameraRig
 var targeting: TargetingSystem
 var hud: Hud
@@ -411,10 +420,11 @@ func _build_interior_environment(l: ZoneLook) -> void:
 
 
 func _spawn_player() -> void:
-	player = Player.new()
-	player.name = "Player"
-	player.class_data = ClassData.load_by_id(SaveGame.active_class_id())
-	world.add_child(player)
+	local_player = Player.new()
+	local_player.name = "Player"
+	local_player.class_data = ClassData.load_by_id(SaveGame.active_class_id())
+	local_player.is_local = true
+	add_player(local_player)
 	player.global_position = _player_spawn_point()
 
 	camera_rig = CameraRig.new()
@@ -422,7 +432,6 @@ func _spawn_player() -> void:
 	world.add_child(camera_rig)
 	camera_rig.set_target(player)
 	player.camera_rig = camera_rig
-	player.player_died.connect(_on_player_died)
 
 	targeting = TargetingSystem.new()
 	targeting.name = "Targeting"
@@ -432,11 +441,52 @@ func _spawn_player() -> void:
 	player.targeting = targeting
 
 
-func _on_player_died() -> void:
-	player.health.heal_full()
-	player.global_position = _player_spawn_point()
-	player.velocity = Vector3.ZERO
-	GameFeel.camera_shake(0.4)
+## Puts a hero into the zone's registry and world (the local one at boot;
+## co-op will add remote ones the same way).
+func add_player(p: Player) -> void:
+	if p.get_parent() == null:
+		world.add_child(p)
+	if not players.has(p):
+		players.append(p)
+	if not p.player_died.is_connected(_on_player_died):
+		p.player_died.connect(_on_player_died.bind(p))
+
+
+func remove_player(p: Player) -> void:
+	players.erase(p)
+	if p.player_died.is_connected(_on_player_died):
+		p.player_died.disconnect(_on_player_died)
+
+
+## Closest living hero to `pos` (null when none).
+func nearest_player(pos: Vector3) -> Player:
+	var best: Player = null
+	var best_d := INF
+	for p in players:
+		if p == null or not is_instance_valid(p) or p.health.is_dead:
+			continue
+		var d := p.global_position.distance_squared_to(pos)
+		if d < best_d:
+			best_d = d
+			best = p
+	return best
+
+
+## Living heroes within `radius` of `pos`.
+func players_within(pos: Vector3, radius: float) -> Array[Player]:
+	var out: Array[Player] = []
+	for p in players:
+		if p != null and is_instance_valid(p) and not p.health.is_dead \
+				and p.global_position.distance_to(pos) <= radius:
+			out.append(p)
+	return out
+
+
+func _on_player_died(p: Player) -> void:
+	p.health.heal_full()
+	p.global_position = _player_spawn_point()
+	p.velocity = Vector3.ZERO
+	p.feel_shake(0.4)
 
 
 # ---------------------------------------------------------------------------
@@ -651,7 +701,8 @@ func _spawn_enemy(enemy: EnemyBase, pos: Vector3) -> void:
 	enemy.level = _enemy_level(enemy, pos)
 	enemies_root.add_child(enemy)
 	enemy.global_position = pos
-	enemy.player = player
+	enemy.player = nearest_player(pos)
+	enemy.auto_retarget = true  # M07b: keeps hunting the nearest / last attacking hero
 	enemy.enemy_died.connect(_on_enemy_died)
 
 
@@ -699,31 +750,38 @@ func _resolve_spawn_pos(pos: Vector3) -> Vector3:
 
 
 func _on_enemy_died(enemy: EnemyBase) -> void:
-	if player != null and is_instance_valid(player):
+	# M07b: XP, gold and loot go to whoever landed the last hit (the local
+	# player when nobody did, e.g. hazards). Party-share rules come with co-op.
+	var killer := enemy.last_attacker()
+	if killer == null and player != null and is_instance_valid(player):
+		killer = player
+	if killer != null:
 		var xp := enemy.xp_reward()
-		player.progression.add_xp(xp)
+		killer.progression.add_xp(xp)
 		GameFeel.float_text(enemy.global_position + Vector3(0, 2.2, 0), "+%d XP" % xp,
 			ArtKit.color("color_roles.experience.body", Color("#9FB4FF")))
 	var item: ItemData = null
+	var cid: StringName = killer.class_data.id if killer != null else &""  # M07b: drops fit the killer's class
 	if enemy.is_elite:
-		item = ItemGenerator.generate(2)
+		item = ItemGenerator.generate(2, cid)
 	elif enemy is Brute:
 		if randf() < 0.6:
-			item = ItemGenerator.generate(1)
+			item = ItemGenerator.generate(1, cid)
 	elif randf() < 0.2:
-		item = ItemGenerator.generate(0)
+		item = ItemGenerator.generate(0, cid)
 	if item != null:
 		ItemGenerator.apply_item_level(item, enemy.level)
-		spawn_item_drop(item, enemy.global_position)
+		spawn_item_drop(item, enemy.global_position, killer)
 	# M07b: every kill pays gold; bosses scatter theirs into several piles.
 	var piles := 4 if enemy is ShatteredVessel else (3 if enemy is AshveinColossus else 1)
-	spawn_gold_piles(enemy.gold_reward(), enemy.global_position, piles)
+	spawn_gold_piles(enemy.gold_reward(), enemy.global_position, piles, killer)
 
 
-func spawn_gold_drop(amount: int, pos: Vector3) -> GoldDrop:
+## `owner` picks it up (null = the local player).
+func spawn_gold_drop(amount: int, pos: Vector3, owner: Player = null) -> GoldDrop:
 	var drop := GoldDrop.new()
 	drop.amount = amount
-	drop.player = player
+	drop.player = owner if owner != null else player
 	drop.position = Vector3(pos.x, 0.0, pos.z)
 	world.add_child(drop)
 	drop.picked_up.connect(func(_amount: int) -> void: SaveGame.request_save())
@@ -731,7 +789,7 @@ func spawn_gold_drop(amount: int, pos: Vector3) -> GoldDrop:
 
 
 ## Splits `amount` into `piles` drops around `pos` (bosses, chests).
-func spawn_gold_piles(amount: int, pos: Vector3, piles: int = 1) -> void:
+func spawn_gold_piles(amount: int, pos: Vector3, piles: int = 1, owner: Player = null) -> void:
 	if amount <= 0:
 		return
 	piles = clampi(piles, 1, amount)
@@ -742,7 +800,7 @@ func spawn_gold_piles(amount: int, pos: Vector3, piles: int = 1) -> void:
 		if piles > 1:
 			var a := TAU * float(i) / float(piles) + randf_range(-0.3, 0.3)
 			offset = Vector3(cos(a), 0.0, sin(a)) * randf_range(0.7, 1.1)
-		spawn_gold_drop(base + (1 if i < rest else 0), pos + offset)
+		spawn_gold_drop(base + (1 if i < rest else 0), pos + offset, owner)
 
 
 func debug_add_gold(amount: int) -> void:
@@ -750,15 +808,17 @@ func debug_add_gold(amount: int) -> void:
 	hud.toast("+%d gold (debug)" % amount, ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 
 
-func spawn_item_drop(item: ItemData, pos: Vector3) -> ItemDrop:
+## `owner` picks it up (null = the local player).
+func spawn_item_drop(item: ItemData, pos: Vector3, owner: Player = null) -> ItemDrop:
 	var drop := ItemDrop.new()
 	drop.item = item
-	drop.player = player
+	drop.player = owner if owner != null else player
 	drop.position = Vector3(pos.x, 0.0, pos.z)
 	world.add_child(drop)
 	drop.picked_up.connect(func(picked: ItemData) -> void:
-		hud.toast("[%s] %s" % [ItemData.rarity_name(picked.rarity), picked.display_name],
-			ItemData.rarity_color(picked.rarity))
+		if drop.player != null and drop.player.is_local:  # a toast belongs to the one who picked it up
+			hud.toast("[%s] %s" % [ItemData.rarity_name(picked.rarity), picked.display_name],
+				ItemData.rarity_color(picked.rarity))
 		SaveGame.request_save()
 	)
 	return drop

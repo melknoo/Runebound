@@ -11,6 +11,17 @@ var _failures: Array[String] = []
 var lab: CombatLab
 
 
+## M07b: a scripted input source (what a network peer will be) for the seam test.
+class ScriptedInput extends InputSource:
+	var dir := Vector3.ZERO
+	var queue: Array[StringName] = []
+
+	func poll(intent: PlayerIntent, _player: Player) -> void:
+		intent.move_dir = dir
+		intent.pressed.append_array(queue)
+		queue.clear()
+
+
 func _ready() -> void:
 	get_tree().create_timer(WATCHDOG_SEC, true, false, true).timeout.connect(_on_watchdog)
 	_run.call_deferred()
@@ -210,6 +221,9 @@ func _run() -> void:
 	_check(rusher.health.current_health < rusher_hp, "melee damages enemy in range")
 	_check(player.resonance > 0.0, "melee generates Resonance")
 	_check(player.state == Player.State.MOVE, "melee recovers to MOVE")
+	var to_target := rusher.global_position - player.global_position
+	var facing_dot := player.facing().dot(Vector3(to_target.x, 0, to_target.z).normalized())
+	_check(facing_dot > 0.9, "melee faced the enemy")
 
 	# --- tab targeting ---
 	_check(lab.targeting.current == null, "no target before Tab is pressed")
@@ -325,6 +339,98 @@ func _run() -> void:
 	_check(names_ok, "every affix stat has a display name")
 	_check(lab.hud._stats_line(&"ember_lance", player.ember).begins_with("Damage"), "ability tooltip leads with the damage")
 
+	# --- M07b input seam: Player only reads its intent; any source drives it ---
+	_check(player.input_source is LocalInputSource, "the local player polls keyboard and mouse through LocalInputSource")
+	var scripted := ScriptedInput.new()
+	var local_source := player.input_source
+	player.input_source = scripted
+	var seam_start := player.global_position
+	var seam_yaw: float = player._visual.rotation.y  # the melee-facing check below still needs it
+	scripted.dir = Vector3(0, 0, 1)  # back towards the spawn: nothing stands there
+	await _wait_frames(30)
+	scripted.dir = Vector3.ZERO
+	_check(player.global_position.z - seam_start.z > 1.0, "a scripted input source moves the player")
+	await _wait_frames(12)
+	player.reset_cooldowns()
+	_check(player.try_dodge() and player.state == Player.State.DODGE, "dodge starts for the buffer check")
+	await _wait_frames(10)
+	scripted.queue.append(&"rune_cleave")
+	await _wait_frames(2)
+	_check(player._buffered_action == &"rune_cleave", "an action pressed mid-dodge is buffered through the seam")
+	await _wait_frames(12)
+	_check(player.state == Player.State.MELEE, "the buffered melee fires when the dodge ends")
+	await _wait_frames(30)
+	player.input_source = local_source
+	player.global_position = seam_start
+	player._visual.rotation.y = seam_yaw
+	await _wait_frames(2)
+
+	# --- M07b attacker identity on hits ---
+	var atk_hit := player.roll_ability_hit(player.cleave)
+	_check(atk_hit.attacker_id == player.get_instance_id() and atk_hit.attacker_player() == player,
+		"player hits carry their attacker")
+	_check(HitInfo.create(1.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO).attacker() == null,
+		"world hits have no attacker")
+
+	# --- M07b player registry, retargeting, local-only presentation ---
+	_check(lab.players.size() == 1 and lab.local_player == lab.player and player.is_local and player.peer_id == 1,
+		"the zone registry holds the local hero")
+	_check(lab.nearest_player(Vector3.ZERO) == player and lab.players_within(player.global_position, 1.0).size() == 1,
+		"nearest_player / players_within find the local hero")
+	var hunter := lab.spawn_by_id("rusher", player.global_position + player.facing() * 7.0)
+	await _wait_frames(2)
+	_check(hunter.player == player and hunter.auto_retarget, "a spawned enemy hunts the nearest hero and may retarget")
+	var buddy := Player.new()
+	buddy.is_local = false
+	buddy.input_source = InputSource.new()  # inert: a remote hero gets its intent elsewhere
+	lab.add_player(buddy)
+	buddy.global_position = hunter.global_position + Vector3(1.2, 0, 0)
+	await _wait_frames(2)
+	_check(lab.players.size() == 2 and not buddy.is_local and lab.nearest_player(hunter.global_position) == buddy,
+		"a second hero registers; nearest_player picks it near the enemy")
+	await _wait_frames(25)  # > RETARGET_INTERVAL
+	_check(hunter.player == buddy, "the enemy retargets to the closer hero")
+	var rig := lab.camera_rig
+	rig._trauma = 0.0
+	buddy.take_hit(HitInfo.create(3.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, buddy.global_position + Vector3.FORWARD))
+	_check(is_zero_approx(rig._trauma), "a remote hero being hit leaves the local camera still")
+	player.health.invulnerable = false
+	player.take_hit(HitInfo.create(3.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, player.global_position + Vector3.FORWARD))
+	_check(rig._trauma > 0.0, "the local hero being hit shakes the camera")
+	player.health.heal_full()
+	hunter.health.max_health = 1.0
+	hunter.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hunter.global_position))
+	lab.remove_player(buddy)
+	buddy.queue_free()
+	await _wait_frames(20)
+	for child in lab.world.get_children():  # the hunter's gold, so it can't skew the later loot counts
+		if child is GoldDrop:
+			child.free()
+	_check(lab.players.size() == 1, "removing the second hero leaves the local one")
+
+	# --- M07b class filters: talents and class-specific loot ---
+	_check(Progression.tree_for(&"runebreaker").size() == 24 and Progression.tree_for(&"nope").is_empty()
+		and player.progression.class_id == &"runebreaker",
+		"the talent tree is filtered by class")
+	var foreign_tagged := 0
+	var foreign_legendary := 0
+	for i in 200:
+		var roll_item := ItemGenerator.generate(2, &"nope")
+		if roll_item.legendary_id != &"":
+			foreign_legendary += 1
+		for affix in roll_item.affixes:
+			for def: Dictionary in AffixPool.DEFS:
+				if def["id"] == affix["id"] and def.has("class"):
+					foreign_tagged += 1
+	_check(foreign_tagged == 0 and foreign_legendary == 0,
+		"another class never rolls Runebreaker affixes or legendaries (elite drops downgrade to rare)")
+	var own_legendary := false
+	for i in 60:
+		if ItemGenerator.generate(2, &"runebreaker").legendary_id != &"":
+			own_legendary = true
+	_check(own_legendary and AffixPool.legendaries_for(&"runebreaker").size() == AffixPool.LEGENDARIES.size(),
+		"the Runebreaker still rolls its own legendaries")
+
 	# --- M06 B5: HUD v2 look ---
 	var hud_root := lab.hud.get_child(0) as Control
 	var body_font := UiTheme.font()
@@ -345,9 +451,6 @@ func _run() -> void:
 		"HUD knows all 7 ability names")
 	lab.targeting.cycle_target()
 	_check(lab.targeting.current == rusher, "tab cycle wraps with single candidate")
-	var to_target := rusher.global_position - player.global_position
-	var facing_dot := player.facing().dot(Vector3(to_target.x, 0, to_target.z).normalized())
-	_check(facing_dot > 0.9, "melee faced the enemy")
 	# Second candidate: spawn another enemy nearby, Tab must move to it.
 	var second := MeleeRusher.new()
 	lab.enemies_root.add_child(second)
@@ -466,6 +569,7 @@ func _run() -> void:
 	# Priority 1: held movement input steers the dash (camera looks -Z,
 	# holding BACK must dash +Z).
 	Input.action_press(&"move_back")
+	await _wait_frames(1)  # M07b: movement reaches the player through its per-tick intent
 	var stepped := player.try_storm_step()
 	Input.action_release(&"move_back")
 	_check(stepped, "storm step starts")
@@ -786,6 +890,16 @@ func _run() -> void:
 	dummy.status.clear_all()
 	dummy.status.apply_shock()
 	_check(is_equal_approx(player.talent_damage_mult(galv_hit, dummy), 1.24), "Galvanize: +24 % damage to Shocked enemies at 3 ranks")
+	# M07b: the multiplier comes from the ATTACKER, not from the enemy's assigned player.
+	dummy.player = null
+	var atk_dummy_hit := player.roll_ability_hit(player.cleave)
+	atk_dummy_hit.applies_shock = false
+	var atk_before := atk_dummy_hit.damage
+	dummy.take_hit(atk_dummy_hit)
+	_check(is_equal_approx(atk_dummy_hit.damage, atk_before * 1.24 * dummy.status.damage_taken_multiplier())
+		and dummy.last_attacker() == player,
+		"talent damage follows the attacker id (no assigned player needed); the enemy remembers its attacker")
+	dummy.player = player
 	# Overload: the Storm Step landing Shocks everything near it.
 	grant.call(["overload"])
 	dummy.status.clear_all()
@@ -1482,11 +1596,11 @@ func _run() -> void:
 	await _wait_frames(20)
 	_check(chest.get_node_or_null("treasure_chest") != null and chest._lid.rotation_degrees.x < -30.0,
 		"kit chest wraps the collider and swings its hinged lid open")
-	var kit_drops := 0
-	for child in highlands.world.get_children():
-		if child is ItemDrop and (child as ItemDrop)._shape != null and not (child as ItemDrop)._shape is MeshInstance3D:
-			kit_drops += 1
-	_check(kit_drops >= 1, "loot drops use the kit shapes (%d)" % kit_drops)
+	# (a spawned probe, not the chest's drops: those may all have been picked up already)
+	var kit_probe := highlands.spawn_item_drop(ItemGenerator.generate(0), highlands.player.global_position + Vector3(12, 0, 0))
+	await _wait_frames(1)
+	_check(kit_probe._shape != null and not kit_probe._shape is MeshInstance3D, "loot drops use the kit shapes")
+	kit_probe.free()
 
 	# Boss: trigger, enrage, kill, unlock.
 	highlands.player.god_mode = true

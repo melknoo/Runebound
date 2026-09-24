@@ -32,7 +32,7 @@ Singleplayer bleibt jederzeit vollständig spielbar.
 
 ## Aktuell
 
-### M07b — Character Foundations (läuft)
+### M07b — Character Foundations (umgesetzt, Gate beim Spieler)
 Sichtbar:
 - Start mit **einer** Fähigkeit (Rune Cleave + Dodge). Earthbreaker, Ember Lance, Storm Step,
   Chain Spark, Fracture Rune lernt man bei der **Trainerin Sigrun Runewright in Runehold** gegen
@@ -47,7 +47,9 @@ Unsichtbar (Nahtstellen für Klassen und Koop, kein Netcode):
 - Input-Intent-Schicht (lokal heute, Netzwerk-Peer später).
 - Spieler-eigene Präsentation nur lokal (`is_local`).
 - SaveGame v3: Welt-Flags und Charaktere getrennt; Talente/Affixe klassen-gefiltert.
-Gate: Smoke grün, Shot-Liste `m07b_character`, dein Playtest (Fresh Start → Sigrun → C-Fenster).
+Stand 2026-09-24: alles gebaut, Smoke grün, Shot-Liste `m07b_character` gesichtet.
+Gate: dein Playtest (`tools\run_godot.cmd reset` → `play`: Fresh Start → Gold sammeln → Sigrun →
+Earthbreaker lernen → C-Fenster).
 
 ## Geplant
 

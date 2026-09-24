@@ -95,11 +95,43 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
 | 3 | ⚙ Resonance Burst | 1 | **Ability 8 (key 6):** spend all Resonance (at least 50) in a 4 m nova: 0.7 damage per point, heavy stagger |
 | Cap | ⚙ Unbroken | 1 | Dodging through an attack grants a 15-health barrier (8 s cooldown) |
 
+## Gold and the trainer (M07b)
+- **Start kit:** Rune Cleave and Dodge. The five other base abilities are
+  bought from **Sigrun Runewright** (Runehold, by the training gear, `[E]`):
+
+  | Ability | Level | Price |
+  |---|---|---|
+  | Earthbreaker | 2 | 50 |
+  | Ember Lance | 3 | 150 |
+  | Storm Step | 4 | 275 |
+  | Chain Spark | 5 | 400 |
+  | Fracture Rune | 7 | 600 |
+
+  Cumulative 50 / 200 / 475 / 875 / 1,475. Runic Guard and Resonance Burst
+  stay talent unlocks. All of it is data on the `AbilityData` (`unlock`,
+  `learn_level`, `learn_price`).
+- **Gold drops:** every kill pays `round(xp_reward * 0.5 * rand(0.8..1.25))`,
+  so elites (x4) and enemy levels (+15 %) carry over. Bosses scatter theirs
+  into 3 (Colossus) / 4 (Vessel) piles; chests add 40–60 x item-level scale.
+  Coins glide to the player from 3 m and never need an inventory slot.
+- **Pacing check:** a slice clear (~3,500 XP, level 6–7) yields ~1,500 gold,
+  so the fifth ability lands around level 6–8; the second one after camps
+  1–2. A toast says when Sigrun can teach something new (level and gold met).
+- **HUD / sheet:** gold counter right of the bars; the character tab (C)
+  lists effective damage, average with crit, cooldown, cost and Resonance
+  gain per known ability (`StatSheet`, same formulas as the hits).
+
 ## Save format
-SaveGame v2 adds `progression: {level, xp, talents: {id: rank}}`. v1 saves
-migrate to level 1 with no talents; gear and flags are kept.
+SaveGame **v3** (M07b): `{version, world: {zone, flags}, characters:
+[{class_id, known_abilities, gold, inventory, equipped, progression}],
+active}`. `world` is what a co-op server will own; `characters` stay with the
+player. v1 → v2 adds progression; v2 → v3 wraps the single character as a
+Runebreaker with 0 gold and **the trainer abilities its saved level had
+already reached** (a level-1 save becomes a true one-ability start).
 
 ## Open for the user (decisions to confirm)
+0. M07b: Earthbreaker before Ember Lance (L2 / L3); prices; the v2 migration
+   gift; Fracture Rune now gets gear and talent bonuses like every ability.
 1. The cap (25), the curve steepness, and XP per source.
 2. The talent list and names, especially the capstones.
 3. Key bindings (user, 2026-09-24): every ability on the number row:
