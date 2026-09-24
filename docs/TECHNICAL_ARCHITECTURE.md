@@ -220,7 +220,7 @@ systems read became data or registries.**
   (PROGRESSION_DESIGN.md). Talents carry `class_id` (`Progression.tree_for`);
   ability-specific affixes and legendaries carry `"class"`
   (`AffixPool.defs_for_slot(slot, class_id)`, `legendaries_for`).
-- **For M08 and later:** spawn enemies only through `_spawn_enemy` /
+- **Rules (kept in M08):** spawn enemies only through `_spawn_enemy` /
   `make_enemy`; activation, spawners and triggers use `players_within` /
   `nearest_player`, never `zone.player` (that is HUD, camera, targeting,
   prompts, debug); new hits go through `roll_ability_hit`; save additions go
@@ -231,6 +231,91 @@ systems read became data or registries.**
   base: prompt, nameplate, re-tinted rig). `StatSheet` (static) holds the
   sheet's formulas; the HUD tooltip uses it too. `WorldPickup` is the base of
   `ItemDrop` and `GoldDrop`.
+
+## Open world (M08)
+The Ashen Highlands are a 384 m heightmap zone built from data; M10's zones
+copy the pattern.
+- **Bake** (`tools/worldgen/highlands_layout.py` → `bake.py`): base fbm
+  relief, Gaussian ridges, plateaus, a rim wall, graded routes (profiles
+  smoothed, clamped to `grade_max`, fixed to the flat pads they cross and to
+  earlier routes at junctions; the nearest segment wins per cell), flat POI
+  pads (pads first, routes, pads again with route corridors kept), a test
+  bump and a 25-degree test ramp for the smoke test. Outputs in
+  `assets/world/highlands/`: `height.r16` (uint16 LE, row 0 = north,
+  `height_max` scale; Godot's PNG loader would cut 16-bit to 8), `path_mask.png`
+  (2 px/m trails + trampled camp floors), `map.png` (pixel-style map, no
+  markers) and `layout.json` (the layout plus baked POI heights). The bake
+  asserts pad flatness, route grade, camp spacing and POI density, and is
+  byte-identical on rerun.
+- **`Terrain`** (`scripts/world/terrain.gd`): decodes the grid (index
+  `iz * res + ix`, sample (0, 0) at `origin`), builds 144 chunks x 3 LODs
+  (1 / 2 / 4 m, `visibility_range` switches at 72 / 150 m with hysteresis,
+  skirts hide LOD cracks, smooth normals so `terrain_pixel`'s slope blend
+  works unchanged, only LOD0 casts shadows) plus one `HeightMapShape3D`
+  (centred on its body: `origin + (res-1)/2`, 1 m cells, no scale) and four
+  border walls. `height_at` / `normal_at` (bilinear), `footprint_range`
+  (min/max ground under a yawed box). LookDev keys `terrain_lod`,
+  `terrain_shadows`. Build time ~150 ms.
+- **Ground seam:** nothing hard-codes the floor height any more.
+  `ZoneBase.ground_y(pos)` (terrain or 0) is for build time (no physics
+  shapes yet); `ground_point(pos, lift)` raycasts world layer 1 (+2 … -6 m)
+  and falls back to `ground_y`; `zone_of(node)` / `ground_under(node, pos,
+  lift)` for enemies and abilities. `VFX.ground_hit(root, pos)` returns
+  {position, normal} and every ground plane (telegraph discs and lanes,
+  threat rings, ground / player rings) places and tilts itself with it
+  (`snap_ground` is off during the warm-up under the floor). Drops, spawns,
+  fire patches, shadow runes, the frost field and the Fracture Rune go
+  through the seam; enemies snap to floors like the player
+  (`floor_snap_length 0.4`).
+- **`ZoneLayout`** reads `layout.json` (POIs by id / type, routes, areas,
+  `level_at` from the 8x8 band grid, bounds). **`PoiBuilder`** turns each
+  POI into nodes: `portal` (Portal with `face_yaw` + `arrival`), `camp` /
+  `ambush` / `elite_patrol` (EncounterSpawner), `chest`, `landmark`
+  (monolith / charred grove / bone field), `ruin` (`_add_box` walls with
+  `masonry_wall` trim, rubble rocks, chest, optional ambush), `arena`
+  (rock ring, boss trigger, gates), `dungeon` (locked Portal between rocks),
+  `waypoint`. Shared pieces: `blocker` (invisible collider under tall
+  props), `rock` (hull box sunk to the lowest ground of its footprint,
+  grown to clear the highest; `RockHull.foot_sink`), `prop` (kit prop on
+  the ground with a 110 m visibility range), `apply_range`. Ridge rocks
+  follow the layout's ridge lines, rim trees stand on blockers, scatter
+  hugs obstacles and fills open ground (`Scatter` `field` items with
+  `slope_max`, tilted to the slope). `ArtKit.masked()` gives the ground
+  role the trail mask (shader uniform `use_mask`).
+- **Camps** (`EncounterSpawner` v2): ARMED / ACTIVE / CLEARED; proximity
+  checks every 0.5 s; `trigger()` spawns one enemy per physics frame
+  (`spawn_frames` records them) around `home` or, for ambushes, on a ring
+  around the hero who walked in; a clear writes `world.camps[camp_id]
+  .cleared_at`; `check_rearm` resets after `respawn_minutes` while
+  `players_within(home, rearm_radius)` is empty; a `patrol` path makes the
+  home roam while nobody fights. `home` resolves lazily (zones set the
+  position after `add_child`). Members get `home` + `leash`.
+- **Leash** (`EnemyBase`): `AIState.RETURN` handled centrally in
+  `_physics_process` (beyond `leash`, target out of reach, or stuck while
+  chasing): walk home, `heal_full`, `clear_all`, IDLE. Subclass state
+  machines and rig profiles never see it (`@loco` keeps playing). Bosses
+  keep `leash 0`.
+- **SaveGame v4:** `world.camps {id: {cleared_at}}` (debounced),
+  `characters[i].waypoints` and `map_discovered`; v3 → v4 adds them empty.
+  `pending_arrival` is transient.
+- **Waypoints:** `Waypoint` (shrine prop on a collider, attunes every hero
+  within 6 m, lit crystals, `[E] Travel`), `WaypointRegistry` (hub +
+  layout waypoints, keys `<scene basename>:<poi id>`), `WaypointUI`
+  (grouped list), `ZoneBase.fast_travel(key)` (fade + hop, or
+  `travel_to(scene, arrival)`), `_arrival_point(id)` (a step in front of
+  the node with meta `poi_id`), `_fade_then`. Zones override
+  `_on_player_died` for shrine respawns.
+- **Map + compass:** `ZoneBase.map_texture / map_bounds / map_markers /
+  compass_markers` (defaults: none); `MapUI` (M, `world_to_map`), `Compass`
+  (heading from the camera basis, bearing helpers, icon cache
+  `Compass.icon`), `Hud.area_name`. Discovery: the Highlands tick every
+  0.5 s over `players_within(pad + 15)`.
+- **Runners:** `perf_probe` / `shot_runner` positions may be
+  `{"poi": id, "offset": [dx, dy, dz]}` (`ZoneBase.poi_position`, offset y
+  = lift above the ground); shot verbs `map`, `waypoint`, `close`, action
+  `discover`; the runner hides the boss bar when it clears a wave.
+- **Not in M08:** navmesh (open pads + leash instead), fog-of-war on the
+  map, per-portal arrival in the Spire.
 
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
@@ -257,7 +342,8 @@ resonance cost/gain, crit. Behavior lives in Player; numbers live in data.
 - `tools\run_godot.ps1 shots <list>` — data-driven screenshots from
   `tests/shots/<list>.json` (zone, camera, spawns, actions, LookDev variants).
 - `tools\run_godot.ps1 perf <scenario> [label]`: scripted fight from
-  `tests/perf/<scenario>.json`.
+  `tests/perf/<scenario>.json` (M08: `highlands_open`, `highlands_vista`;
+  `highlands_south` now at camp 1).
   - Reports the median of repeats with GPU/CPU render time, keeps history in
     `captures_perf/`, and exits 1 below `budget_fps`.
   - Frames over 50 ms are listed with the fight step that preceded them,

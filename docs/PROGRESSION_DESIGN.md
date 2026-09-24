@@ -122,10 +122,12 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
   gain per known ability (`StatSheet`, same formulas as the hits).
 
 ## Save format
-SaveGame **v3** (M07b): `{version, world: {zone, flags}, characters:
-[{class_id, known_abilities, gold, inventory, equipped, progression}],
-active}`. `world` is what a co-op server will own; `characters` stay with the
-player. v1 → v2 adds progression; v2 → v3 wraps the single character as a
+SaveGame **v4** (M08): `{version, world: {zone, flags, camps: {id:
+{cleared_at}}}, characters: [{class_id, known_abilities, gold, inventory,
+equipped, progression, waypoints, map_discovered}], active}`. `world` is
+what a co-op server will own (flags, cleared camps); `characters` stay with
+the player (attuned shrines, map discovery). v3 → v4 adds the new keys
+empty. v1 → v2 adds progression; v2 → v3 wraps the single character as a
 Runebreaker with **the start kit only and the prices of the abilities its
 level had reached refunded as gold** (user, 2026-09-24: every character walks
 the trainer path). Debug `[9]` and `tools\run_godot.cmd reset` (game closed;

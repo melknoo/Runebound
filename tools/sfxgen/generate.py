@@ -421,6 +421,18 @@ def ability_learned():
     save(pad(chime, delay(chime2, 0.12), delay(steel, 0.05), delay(ring, 0.05)), "ability_learned_01")
 
 
+# --- M08 (appended: every synth above must keep its place in the shared RNG order) ---
+
+def waypoint_attune():
+    """Crystal attunement: a rising glass shimmer settling into a soft two-note
+    chord (rune magic waking, not a fanfare)."""
+    rise = sine_sweep(0.45, 620.0, 1240.0) * env_exp(0.45, 0.18) * 0.4
+    shimmer = highpass(noise(0.5), 0.5) * env_exp(0.5, 0.12) * 0.25
+    chord = sum(np.sin(2 * np.pi * f * t(1.1)) * env_exp(1.1, 0.35) * 0.22 for f in (659.26, 987.77))
+    bell = np.sin(2 * np.pi * 2637.0 * t(0.6)) * env_exp(0.6, 0.1) * 0.15
+    save(pad(rise, shimmer, delay(chord, 0.3), delay(bell, 0.32)), "waypoint_attune_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -441,4 +453,5 @@ if __name__ == "__main__":
         boss_blink(i)
     level_up(); runic_guard(); resonance_burst()
     coin_pickup(); ability_learned()
+    waypoint_attune()
     print("done.")

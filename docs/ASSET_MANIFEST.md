@@ -89,6 +89,11 @@ in code if a GLB is missing.
 | assets/ui/icons/{runic_guard, resonance_burst}.png | tools/texgen/ui.py | 20x20 art, saved 40x40 | HUD slots for the talent abilities |
 | assets/sfx/{level_up, runic_guard, resonance_burst}_01.wav | tools/sfxgen/generate.py (appended last: earlier sounds stay byte-identical) | 32 kHz mono | M07 level-up chime, ward snap, burst bloom |
 | runebreaker.glb clips runic_guard, resonance_burst | tools/modelgen/generate_characters_v2.py | — | M07 talent ability clips (upper-body ward, full-body burst) |
+| assets/world/highlands/{height.r16, path_mask.png, map.png, layout.json} | tools/worldgen/bake.py (from highlands_layout.py; deterministic, asserts the layout rules) | 385x385 samples at 1 m (uint16 LE); mask + map 2 px/m (768x768) | M08 heightmap, trail mask, zone map, POI layout with baked heights |
+| assets/textures/biome/hl_{trail, masonry} | tools/texgen/biome.py | 64 px = 2 m | M08 trodden trails (path mask paving), basalt masonry for ruins |
+| assets/models/env/common/waypoint_shrine.glb + textures/env/waypoint_shrine_atlas.png | tools/modelgen/generate_props.py | 32 px/m | M08 waypoint shrine (plinth, rune pillar, crystal brazier `_glow`); wraps a 1.2 x 2.2 x 1.2 collider |
+| assets/ui/map/{player, waypoint, portal, camp, camp_cleared, chest, ruin, landmark, boss, dungeon}.png | tools/texgen/ui.py | 12x12 art, saved 24x24 | M08 map and compass icons |
+| assets/sfx/waypoint_attune_01.wav | tools/sfxgen/generate.py (appended last) | 32 kHz mono | M08 shrine attunement shimmer |
 Blender helpers: tools/modelgen/lib/rig.py (armature, rigid parts, lofts, actions, export),
 tools/modelgen/lib/atlas.py (UV to exact density, pixel-atlas bake). GLB imports:
 60 fps, no LODs, name suffixes off (no accidental -col bodies). Regenerate:

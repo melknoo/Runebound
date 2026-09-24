@@ -1,10 +1,68 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-24 · Milestone: **M07b Character Foundations** — built,
-smoke green (304 checks), shot list `m07b_character` reviewed; **user gate
-pending** (fresh-start playtest: gold → Sigrun → Earthbreaker → C window).
-M06 Style Gate passed; M07 accepted "for now". Next: M08 Open World I, then
-M09 Co-op (ROADMAP.md has the new order and the reasons).
+Updated: 2026-09-24 · Milestone: **M08 Open World I** — built, smoke green
+(373 checks), shot list `m08_open_world` (17 shots) reviewed by the
+implementer; **user gate pending** (see the M08 section for the walk).
+M07 and M07b were accepted by the user on 2026-09-24. Next: M09 Co-op
+(ROADMAP.md).
+
+## M08 Open World I (2026-09-24)
+The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.
+- **Visible:**
+  - **Terrain:** rolling ash relief from the south slopes up to the north
+    plateau, rim mountains with charred trees, ridges with rock hulls,
+    graded trails carved into the ground and drawn through a baked trail
+    mask; every combat spot is a flat pad. Camera far plane 560 m, haze on
+    the far edge.
+  - **32 points of interest** along five routes (WORLD_DESIGN.md): 8 raider
+    camps (respawn ~10 min after a clear, never while a hero stands near),
+    2 pass ambushes that spawn around the hero, a roaming elite patrol,
+    3 masonry ruins with chests, 4 free chests, 5 waypoint shrines, rune
+    monoliths / charred groves / a bone field, 2 sealed dungeon gates
+    (M10/M11 placeholders) and the Colossus arena on the plateau. Level
+    bands south 1 / middle 2 / north + Emberfall Ridge 3.
+  - **Camp members have a leash:** dragged beyond it (or stuck, or with
+    their target out of reach) they walk home, heal and rest.
+  - **Waypoints:** walking up to a shrine attunes it (+40 XP, lit crystals);
+    `[E] Travel` lists Runehold and every attuned shrine; travelling fades
+    and hops within the zone or changes zones. Gates place you in front of
+    the gate you came through. Death returns you to the nearest attuned
+    shrine. Runehold has its own always-attuned shrine by the Highlands gate.
+  - **Compass strip** (top of the HUD): headings, attuned shrines, gates,
+    the arena, sealed gates, armed camps within 120 m. **Map on M:** the
+    baked map with everything this character has seen, the hero's arrow, a
+    legend and the list of known places. Named areas announce themselves.
+- **Tech (TECHNICAL_ARCHITECTURE "Open world"):** `tools/worldgen` bake
+  (deterministic, asserts the layout rules), `Terrain` (chunked 3-LOD mesh,
+  `HeightMapShape3D`, `height_at` / `normal_at`), `ZoneLayout`, `PoiBuilder`,
+  the ground seam (`ground_y` / `ground_point` / `VFX.ground_hit`: nothing
+  hard-codes y 0 any more), `EncounterSpawner` v2 (states, persistence,
+  staggered spawns, ambush, patrol), `EnemyBase.RETURN`, SaveGame **v4**
+  (`world.camps`, `characters[i].waypoints` / `map_discovered`),
+  `WaypointRegistry`, `ZoneBase.travel_to(scene, arrival)` / `fast_travel`,
+  `MapUI`, `Compass`. Runners address positions by POI id
+  (`{"poi": id, "offset": [...]}`).
+- **Tests:** smoke 373 checks (terrain spike: decode, build time, bake
+  orientation, collision vs `height_at`, flat pads, slope walk, ground
+  seam on flat and sloped ground; zone: POI heights, camp spacing, bands,
+  gates, hull grounding, ruins, scatter fields, colliders under tall
+  props; camps: clear → save → round-trip → stays cleared with a hero
+  near → re-arms after 11 min → staggered spawns, leash return + heal,
+  ambush ring, patrol wake + roaming, v3 → v4 migration; waypoints: attune,
+  save, travel list, fast travel, shrine respawn, arrival at the gate used;
+  compass heading, map open/close, discovery, area card). Shot list
+  `tests/shots/m08_open_world.json`; perf scenarios `highlands_open`,
+  `highlands_vista`; the older Highlands shot lists and `highlands_south`
+  moved to POI positions.
+- **Perf (median of 3, 2026-09-24):** `perf highlands_open` 66.3 FPS / GPU
+  13.9 ms / 340 draw calls; `perf highlands_vista` 71.8 FPS / 13.2 ms / 391
+  draw calls; A/B: terrain LOD saves 0.7 ms GPU, terrain shadows cost
+  0.4 ms (kept). Zone build about 150 ms (terrain) + POIs and scatter.
+- **Open for the user:** KNOWN_ISSUES "M08 open items". **Gate walk:**
+  `tools\run_godot.cmd reset` → `play` → the Highlands gate → attune the
+  Ashford shrine → clear camp 1 → M (map) → the Crossroads → `[E] Travel`
+  back to Runehold and out again (you arrive at the south gate) → let a camp
+  come back (10 min) → the plateau and the Colossus.
 
 ## M07b Character Foundations (2026-09-24)
 Decided after the user's post-M06 wishes (co-op for 2–5 on a home server,
@@ -412,14 +470,15 @@ the held target within 4m, else camera-aim facing.)
   machine (worst-frame spikes remain mass-spawn only).
 
 ## What is playable
-`tools\run_godot.ps1 play` (or open in Godot 4.6.3 and F5) launches the Combat
-Lab: third-person controller, free mouse camera (wheel zoom, SpringArm
+`tools\run_godot.cmd play` (or open in Godot 4.6.3 and F5) launches Runehold
+(the hub; the Combat Lab is behind the training-grounds portal). M01 core:
+third-person controller, free mouse camera (wheel zoom, SpringArm
 collision), center-screen aim with capsule-sweep soft assist, directional
 dodge with i-frames, Rune Cleave melee (alternating swings, Resonance
 builder), Ember Lance (fire projectile + Burn DoT), Earthbreaker (Resonance
 spender, AoE slam), melee Rusher + ranged Caster enemies with telegraphs and
 3-tier hit reactions, full VFX/SFX feedback stack, HUD, damage numbers,
-debug overlay (F3: spawn/heal/god/reset/stress/style keys), instant respawn.
+debug overlay (F1: spawn/heal/god/reset/stress/style keys), instant respawn.
 
 ## Verification status
 - `tools\run_godot.ps1 smoke` — 35 headless functional checks, all green.
@@ -443,7 +502,7 @@ debug overlay (F3: spawn/heal/god/reset/stress/style keys), instant respawn.
 - Duck-typed hitstop (`apply_hitstop`), never `process_mode=DISABLED`
   (breaks SpringArm/area queries).
 - Hitstop 45ms melee / 70ms Earthbreaker; camera trauma shake + impulses.
-- Directional shadow: single split (SHADOW_ORTHOGONAL), 50m max — 4-split PSSM
+- Directional shadow: single split (SHADOW_ORTHOGONAL), 60m max — 4-split PSSM
   cost ~2ms on the dev GPU. MSAA off (pixel aesthetic).
 - Characters: Blender-5.2-headless generated GLBs
   (`tools/modelgen/generate_characters.py`) with primitive-mesh fallback in

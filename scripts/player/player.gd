@@ -265,7 +265,7 @@ func discover_waypoint(id: String, display_name: String) -> bool:
 		if zone != null and zone.hud != null:
 			zone.hud.toast("Waypoint attuned: %s  +%d XP" % [display_name, Waypoint.DISCOVER_XP],
 				ArtKit.color("color_roles.player_accent.body", Color(0.37, 0.88, 0.91)))
-		Sfx.play_ui("rune_place", -4.0)
+		Sfx.play_ui("waypoint_attune", -3.0)
 	SaveGame.request_save()
 	return true
 

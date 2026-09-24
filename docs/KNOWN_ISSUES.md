@@ -142,6 +142,33 @@
 - Sigrun borrows the Runebreaker rig (bronze tint); a real NPC model and her
   story come with M11.
 
+## M08 open items (needs the user's playtest)
+- Camp respawn is 10 minutes (`respawn_min` per POI, default in
+  EncounterSpawner), the re-arm radius 45 m, the leash 26 m (ambush 30,
+  patrol 40): start values.
+- Camp density and compositions (8 camps, 2 ambushes, 1 patrol) and the
+  level bands (south 1 / middle 2 / north 3) are the first proposal; the
+  route grades (24 deg) and the rim height too.
+- The rim mountains are smooth heightmap slopes with basalt sides; from the
+  plateau they read as a wall. Candidates: more ridge rocks on the rim,
+  heavier haze, a second rock texture band.
+- Telegraph discs tilt with the ground; on steep slopes off the pads the
+  disc and the actual hit volume (a flat radius) can disagree at the edge.
+  Every combat POI sits on a flat pad, so this only shows in chases.
+- Storm Step keeps `velocity.y = 0`: over a crest the dash flies level and
+  drops after; Earthbreaker's jump works on slopes.
+- No navmesh: enemies steer straight; the leash (return home + heal) covers
+  stuck enemies and long chases. A navmesh is the M10 candidate if pads and
+  passes are not enough.
+- The map shows what the character has seen (no fog-of-war layer); the two
+  sealed gates are placeholders until M10/M11 give them dungeons.
+- Portal labels of the two arena gates overlap from a distance (the gates
+  are 8 m apart). The boss bar hides the compass; that is intended.
+- Camp clear time is wall-clock (`Time.get_unix_time_from_system`): a clock
+  set back only delays a respawn, never spawns one on top of anyone.
+- Debug overlay keys (F1) unchanged; M is the map. F, G, H, T, Z, X, B, P
+  stay free.
+
 ## Technical
 - Two game instances at once on the dev iGPU crashed the one in the
   background with "Vulkan device was lost" (Windows GPU resets,
@@ -160,6 +187,12 @@
   until the status-effect system (M02).
 - Enemy separation is O(n²) across all enemies (fine ≤~60; grid-bucket it
   beyond that).
+- Smoke tests that watch `_process` effects (pickups, camera yaw) must wait
+  on `process_frame`: several physics steps can pass in one slow headless
+  frame without an idle frame in between.
+- `Node.add_child` without `force_readable_name` names duplicates
+  `@Blocker@12`; tests that count nodes by name prefix need
+  `add_child(node, true)`.
 
 ## Test debt
 - tests/debug_ember.gd / debug_camera.gd are throwaway diagnostics; delete or

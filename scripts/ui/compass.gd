@@ -7,7 +7,10 @@ extends Control
 ## shows; zones without a map show none.
 
 const WIDTH := 520.0
-const HEIGHT := 34.0
+const HEIGHT := 48.0   # icons on top, headings below
+const ICON_Y := 3.0
+const TICK_Y := 33.0
+const TEXT_BASE := 44.0
 const HALF_FOV := deg_to_rad(70.0)
 const ICON_DIR := "res://assets/ui/map/"
 const LETTERS := {0: "N", 6: "E", 12: "S", 18: "W"}
@@ -79,7 +82,6 @@ func _draw() -> void:
 		return
 	var h := heading()
 	var cx := WIDTH * 0.5
-	var mid := HEIGHT * 0.5
 	var span := cx - 16.0
 	var muted := UiTheme.MUTED
 	var text := UiTheme.TEXT
@@ -94,10 +96,10 @@ func _draw() -> void:
 			var letter: String = LETTERS[i]
 			var col := (ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")) if i == 0 else text)
 			col.a = edge
-			draw_string(_font, Vector2(x - 6.0, mid + 7.0), letter, HORIZONTAL_ALIGNMENT_CENTER, 12.0, UiTheme.BODY, col)
+			draw_string(_font, Vector2(x - 6.0, TEXT_BASE), letter, HORIZONTAL_ALIGNMENT_LEFT, -1, UiTheme.BODY, col)
 		else:
 			var tick := Color(muted, 0.7 * edge)
-			draw_line(Vector2(x, mid - 3.0), Vector2(x, mid + 3.0), tick, 2.0)
+			draw_line(Vector2(x, TICK_Y), Vector2(x, TICK_Y + 6.0), tick, 2.0)
 	# Marker icons, faded with distance; the nearest draws last (on top).
 	var origin := zone.player.global_position
 	var visible_markers: Array[Dictionary] = []
@@ -115,8 +117,7 @@ func _draw() -> void:
 		if tex == null:
 			continue
 		var alpha := clampf(1.15 - float(vm["dist"]) / float(vm["max"]), 0.3, 1.0)
-		draw_texture(tex, Vector2(float(vm["x"]) - 12.0, mid - 12.0), Color(1, 1, 1, alpha))
-	# Centre pointer.
+		draw_texture(tex, Vector2(float(vm["x"]) - 12.0, ICON_Y), Color(1, 1, 1, alpha))
+	# Centre pointer between the two rows.
 	var accent := ArtKit.color("color_roles.player_accent.body", Color(0.37, 0.88, 0.91))
-	draw_line(Vector2(cx, 2.0), Vector2(cx, 8.0), accent, 2.0)
-	draw_line(Vector2(cx, HEIGHT - 8.0), Vector2(cx, HEIGHT - 2.0), accent, 2.0)
+	draw_line(Vector2(cx, ICON_Y + 25.0), Vector2(cx, TICK_Y + 6.0), accent, 2.0)

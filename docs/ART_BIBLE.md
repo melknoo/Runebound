@@ -35,6 +35,7 @@ Pillars, in priority order:
 | 2026-09-23 | UI fonts: Pixelify Sans (body, numbers) + Jacquard 24 (titles, boss names), both SIL OFL | user |
 | 2026-09-23 | Ability names only as hover tooltips while the inventory is open | user |
 | 2026-09-24 | Jacquard retired (unreadable as place names, then as headings); one UI font, **Runebound Pixel** = Pixelify letters + grid-exact digits (Pixelify's digits read 2 as 3, 5 as S) | user, playtest screenshots |
+| 2026-09-24 (M08) | Open zones are **baked heightmaps from a declarative layout** (Python, deterministic, rule-asserting); trails through a baked mask, not paving segments; combat only on flat pads; map full-screen on M plus a compass strip (no minimap); camps respawn on a timer, never on top of a hero | user (scope, size, respawn, map style), captures `m08_open_world` |
 
 Gate-0 comparison stills: `captures_shots/gate0/`. The rejected variants
 (32 px/m atlases, stepped playback) were removed from code and assets.
@@ -270,7 +271,19 @@ Props and environment never get one: the outline marks "this can act".
   never in lockstep.
 - **Atmosphere:** camera-attached ash fall per zone (`ZoneLook.ash_fall`),
   tiny flakes only.
-- **No new collision in M06.** The walkable floor stays flat at y = 0.
+- **Heightmap terrain (M08, the Highlands):** the ground is a baked height
+  grid (1 m samples) drawn as 32 m chunks with three LODs and skirts; the
+  same `terrain_pixel` role covers it (slope blend from the mesh normals),
+  and a baked **trail mask** (`ArtKit.masked`) switches texels to the
+  trodden `hl_trail` texture along the routes and on camp floors. Every
+  combat POI stands on a flat pad the bake guarantees; routes are graded to
+  24 degrees; the outer 24 m rise into rim mountains (basalt sides through
+  the slope blend). Rocks are hull boxes sunk to the lowest ground under
+  their footprint; tall props stand on invisible colliders. Ground VFX
+  (telegraphs, rings) snap to the surface below and tilt with it. Waypoint
+  shrines, map and compass icons are in the player accent; camp markers in
+  fire orange; the arena in threat red; sealed gates in void violet.
+- **No new collision in M06.** The walkable floor stayed flat at y = 0 then.
 - **Big surfaces are shader-mapped, props are trim.** Walls, hut bodies, sod
   roofs, floors and cover blocks use world-mapped `terrain_pixel` roles, so
   every surface of a zone shares one texel grid. Blender props add only the
@@ -476,6 +489,17 @@ gameplay timing is untouched.
   | `perf lab_crowd` (29 rigs, Runehold look) | 64.0 | 14.6 ms |
   | `stress` full combat (lab) | 71.1 | — |
 
+- **M08 open Highlands** (median of 3, 2026-09-24 evening):
+
+  | Scenario / A/B | FPS | GPU |
+  |---|---|---|
+  | `perf highlands_open` (camp 4, eight enemies, looking north over the plateau) | 66.3 | 13.9 ms, 340 draw calls |
+  | `perf highlands_vista` (spawn, no enemies, the whole zone in view) | 71.8 | 13.2 ms, 391 draw calls |
+  | `--ab=terrain_lod` (3 LODs vs LOD0 everywhere) | LOD saves 0.7 ms | |
+  | `--ab=terrain_shadows` (LOD0 chunks cast) | costs 0.4 ms | kept: the sun shadows on the ground carry the relief |
+
+  Both scenarios pass the 60 FPS budget; the third repeat of every run sits
+  5–10 % lower (thermal), as before.
 - **How to measure:** compare look features only with interleaved A/B
   (`--ab=<key>`), because this GPU swings up to 25 % between runs.
 - **Before measuring:** close other game instances. They distort the numbers

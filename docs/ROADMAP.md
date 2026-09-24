@@ -1,7 +1,7 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-09-24 · M01–M07 abgeschlossen. Style Gate (Optik + Musik) bestanden, M07 Progression
-vom Spieler „für jetzt" akzeptiert (Cap 25, 24 Talente, Zahlen bleiben Daten).
+Stand: 2026-09-24 · M01–M07b abgeschlossen (M07 und M07b vom Spieler am 24.09. abgenommen).
+M08 Open World I ist gebaut (Smoke grün, Shot-Liste gesichtet), Gate beim Spieler.
 
 ## Nordstern (aktualisiert 2026-09-24)
 RUNEBOUND wird ein **Koop-Action-RPG für 2–5 Spieler** in einer stilisierten Pixel-Fantasy-Welt:
@@ -29,10 +29,32 @@ Singleplayer bleibt jederzeit vollständig spielbar.
 - **M06 Visual & Audio Identity** — Rigs + Animationen, Environment-Kit, Licht, HUD-Theme, Musik je Zone. Style Gate ✅
 - **M07 Progression** — Leveling (Cap 25), 24-Node-Talentbaum (Storm / Ember / Runic Warden),
   Item-Level, Fähigkeiten 7–8 als Talent-Unlocks, SaveGame v2.
+- **M07b Character Foundations** — eine Startfähigkeit, Trainerin Sigrun, Gold, Helden-Fenster,
+  Klassen-/Koop-Nahtstellen, SaveGame v3. Vom Spieler abgenommen.
 
 ## Aktuell
 
-### M07b — Character Foundations (umgesetzt, Gate beim Spieler)
+### M08 — Open World I: Ashen Highlands, offen (umgesetzt, Gate beim Spieler)
+Sichtbar:
+- **Heightmap-Terrain 384 × 384 m** aus einem deklarativen Layout gebacken (`tools/worldgen`):
+  Südhänge → Nordplateau, Randgebirge, Grate mit Felsen, eingeschnittene Trampelpfade, flache
+  Kampf-Pads unter jedem POI. Kamera-Far 560 m, Dunst am Rand.
+- **32 POIs an fünf Routen** (alle 50–80 m): 8 Camps, 2 Hinterhalte (Pack erscheint um den
+  Spieler), 1 Elite-Patrouille, 3 Ruinen mit Truhen, 4 freie Truhen, 5 Wegpunkt-Schreine,
+  Landmarken, 2 versiegelte Dungeon-Tore (Platzhalter für M10/M11), Colossus-Arena. Level-Bänder
+  Süd 1 / Mitte 2 / Nord + Emberfall Ridge 3.
+- **Camps leben:** gecleart → im Save gemerkt → nach ~10 min wieder da, aber nie, solange ein Held
+  in 45 m steht. Camp-Gegner haben eine Leine (gehen heim und heilen).
+- **Wegpunkte + Schnellreise:** Schrein berühren = attunen (+40 XP), `[E] Travel` listet Runehold
+  und alle attunten Schreine; Tore setzen dich vor das Tor, durch das du kamst; Tod = zurück zum
+  nächsten attunten Schrein. Runehold hat seinen eigenen Schrein.
+- **Kompass** oben im HUD und **Karte auf M** mit allem, was der Charakter gesehen hat.
+Unsichtbar: Boden-Seam (nichts kodiert mehr y = 0), `EncounterSpawner` v2, `EnemyBase.RETURN`,
+SaveGame v4, `WaypointRegistry`, Ankunfts-Hints, Runner-Positionen per POI-ID.
+Gate: dein Playtest (PROJECT_STATE „Gate walk"). Offen: KNOWN_ISSUES „M08 open items" (Respawn-
+Minuten, Camp-Dichte, Randgebirge-Look, NavMesh später).
+
+### M07b — Character Foundations (abgenommen)
 Sichtbar:
 - Start mit **einer** Fähigkeit (Rune Cleave + Dodge). Earthbreaker, Ember Lance, Storm Step,
   Chain Spark, Fracture Rune lernt man bei der **Trainerin Sigrun Runewright in Runehold** gegen
@@ -52,14 +74,6 @@ Gate: dein Playtest (`tools\run_godot.cmd reset` → `play`: Fresh Start → Gol
 Earthbreaker lernen → C-Fenster).
 
 ## Geplant
-
-### M08 — Open World I: Ashen Highlands, offen
-Die Region wird zur frei erkundbaren Zone (~300–500 m): Heightmap-Terrain statt Greybox, mehrere
-Wege, alle 50–80 m ein POI (Camps, Ruinen, Events, Truhen, Mini-Dungeon-Eingänge, Geheimnisse),
-respawnende Camps, Wegpunkte + Schnellreise, Karte + Kompass, Level-Bereiche. Terrain-, Sichtweiten-,
-LOD- und Perf-Technik einmal sauber (Ziel 60 FPS auf der Dev-GPU).
-**Neu wegen Koop:** Aktivierung, Spawner und Trigger arbeiten mit *allen* Spielern in Reichweite,
-Gegner nur über die Zonen-Factory.
 
 ### M09 — Co-op (2–5 Spieler, dedizierter Server)
 - Godot High-Level-Multiplayer (ENet), **Server-Autorität**: Bewegung/Fähigkeiten als Intents zum
