@@ -140,6 +140,9 @@ func _do(action: Dictionary) -> void:
 			player.progression.learn(Progression.talent(StringName(id)))
 	elif action.has("gold"):  # M07b
 		player.add_gold(int(action["gold"]))
+	elif action.has("give_items"):  # M07b: straight into the inventory (no pickup walk)
+		for i in int(action["give_items"]):
+			player.equipment.add_item(ItemGenerator.generate(randi() % 3))
 	elif action.has("learn_abilities"):  # M07b: ["earthbreaker", ...] or "all"
 		if str(action["learn_abilities"]) == "all":
 			player.debug_learn_all()
@@ -162,6 +165,9 @@ func _do(action: Dictionary) -> void:
 			"inventory", "hero_inventory": _zone.inventory_ui.toggle()
 			"talents", "hero_talents": _zone.talent_ui.toggle()
 			"hero_character": _zone.hero_ui.toggle_tab(HeroUI.Tab.CHARACTER)
+			"close":
+				_zone.hero_ui.close()
+				_zone.trainer_ui.close()
 			"trainer":
 				for child in _zone.world.get_children():
 					if child is TrainerNpc:

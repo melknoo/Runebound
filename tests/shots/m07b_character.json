@@ -1,0 +1,22 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/m07b_character",
+	"fresh_abilities": true,
+	"comment": "M07b: one-ability start, Sigrun the trainer (prompt, panel, a purchase), gold drops, the hero window tabs.",
+	"shots": [
+		{"name": "fresh_hud", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0, "settle": 0.8},
+		{"name": "trainer_prompt", "player": [-12.8, 0.2, -12.8], "face": 2.28, "yaw": 3.4, "pitch": -0.18, "zoom": 4.0, "settle": 0.8},
+		{"name": "trainer_panel", "player": [-12.8, 0.2, -12.8], "face": 2.28, "yaw": 2.28, "pitch": -0.18, "zoom": 4.0,
+			"actions": [{"xp": 800}, {"gold": 300}, {"do": "trainer"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "ability_learned", "player": [-12.8, 0.2, -12.8], "face": 2.28, "yaw": 2.28, "pitch": -0.25, "zoom": 4.5,
+			"actions": [{"do": "close"}, {"wait": 0.2}, {"learn_abilities": ["earthbreaker"]}, {"wait": 0.22}], "settle": 0.0},
+		{"name": "gold_drop", "player": [0, 0.2, 6], "yaw": 0.0, "pitch": -0.38, "zoom": 4.0,
+			"actions": [{"do": "gold"}, {"do": "gold"}, {"do": "gold"}, {"wait": 0.5}], "settle": 0.0},
+		{"name": "hero_inventory", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"give_items": 5}, {"do": "hero_inventory"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "hero_character", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"learn_abilities": "all"}, {"xp": 3000}, {"gold": 240}, {"do": "hero_character"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "hero_talents", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"do": "hero_talents"}, {"wait": 0.3}], "settle": 0.1}
+	]
+}
