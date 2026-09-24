@@ -1,15 +1,15 @@
 class_name TalentUI
-extends CanvasLayer
+extends VBoxContainer
 ## M07 talent panel (`N`): three branch columns of tiered nodes. Left click
 ## learns a rank, right click removes one, Respec returns every point.
-## Locks combat input and frees the mouse while open (like the inventory).
+## M07b: a tab of the hero window (HeroUI owns frame, input lock and mouse).
 
 const ACTION := &"talents_toggle"
 const BRANCH_COLORS := ["color_roles.lightning.body", "color_roles.fire.body", "color_roles.frost.body"]
 
 var player: Player
+var hero: HeroUI
 
-var _root: Control
 var _header: Label
 var _detail_title: Label
 var _detail_text: Label
@@ -18,43 +18,21 @@ var _buttons: Dictionary = {}  # talent id -> Button
 var _hovered: TalentData = null
 
 
-func setup(p: Player) -> void:
+func setup(p: Player, hero_ui: HeroUI = null) -> void:
 	player = p
-	layer = 8
+	hero = hero_ui
 	player.progression.talents_changed.connect(_refresh)
 	_build()
 	visible = false
 
 
 func _build() -> void:
-	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	UiTheme.apply(_root)
-	add_child(_root)
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.01, 0.04, 0.6)
-	_root.add_child(dim)
-
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(1120, 620)
-	panel.position = Vector2(-560, -310)
-	panel.add_theme_stylebox_override("panel", UiTheme.nine("frame.png", 16, 18))
-	_root.add_child(panel)
-	var body := VBoxContainer.new()
-	body.add_theme_constant_override("separation", 10)
-	panel.add_child(body)
+	add_theme_constant_override("separation", 10)
+	var body := self
 
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 24)
 	body.add_child(top)
-	var title := Label.new()
-	title.text = "TALENTS"
-	title.add_theme_font_override("font", UiTheme.font(true))
-	title.add_theme_font_size_override("font_size", UiTheme.TITLE)
-	title.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.body"))
-	top.add_child(title)
 	_header = Label.new()
 	_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -127,22 +105,17 @@ func try_unlearn(t: TalentData) -> bool:
 	return ok
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(ACTION):
-		toggle()
-
-
+## Opens the hero window on this tab, or closes it when this tab is showing.
 func toggle() -> void:
-	visible = not visible
-	player.input_locked = visible
-	if visible:
-		var zone := get_parent() as ZoneBase
-		if zone != null and zone.inventory_ui != null and zone.inventory_ui.visible:
-			zone.inventory_ui.toggle()  # one panel at a time
-			player.input_locked = true
+	if hero != null:
+		hero.toggle_tab(HeroUI.Tab.TALENTS)
+	else:
+		visible = not visible
 		_refresh()
-	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if visible else Input.MOUSE_MODE_CAPTURED
+
+
+func refresh() -> void:
+	_refresh()
 
 
 func _refresh() -> void:

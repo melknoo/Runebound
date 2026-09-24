@@ -16,6 +16,9 @@ extends Node
 ## mouse on an ability slot (tooltip shots), {"do": "loot"} drops a random item,
 ## {"do": "legendary"} a legendary. M07: {"xp": n} grants XP, {"learn": [ids]}
 ## learns talents, {"do": "talents" | "runic_guard" | "resonance_burst"}.
+## M07b: {"gold": n}, {"learn_abilities": [ids] | "all"}, {"do": "trainer" |
+## "hero_inventory" | "hero_character" | "hero_talents" | "gold"}; a list with
+## "fresh_abilities": true starts with the one-ability kit.
 
 var list_path: String = ""
 
@@ -135,6 +138,14 @@ func _do(action: Dictionary) -> void:
 	elif action.has("learn"):
 		for id: String in action["learn"]:
 			player.progression.learn(Progression.talent(StringName(id)))
+	elif action.has("gold"):  # M07b
+		player.add_gold(int(action["gold"]))
+	elif action.has("learn_abilities"):  # M07b: ["earthbreaker", ...] or "all"
+		if str(action["learn_abilities"]) == "all":
+			player.debug_learn_all()
+		else:
+			for id: String in action["learn_abilities"]:
+				player.learn_ability(StringName(id))
 	elif action.has("do"):
 		match str(action["do"]):
 			"melee": player.try_melee()
@@ -148,8 +159,15 @@ func _do(action: Dictionary) -> void:
 			"dodge": player.try_dodge()
 			"tab": _zone.targeting.cycle_target()
 			"reset": player.reset_cooldowns()
-			"inventory": _zone.inventory_ui.toggle()
-			"talents": _zone.talent_ui.toggle()
+			"inventory", "hero_inventory": _zone.inventory_ui.toggle()
+			"talents", "hero_talents": _zone.talent_ui.toggle()
+			"hero_character": _zone.hero_ui.toggle_tab(HeroUI.Tab.CHARACTER)
+			"trainer":
+				for child in _zone.world.get_children():
+					if child is TrainerNpc:
+						_zone.trainer_ui.open(child)
+			"gold": _zone.spawn_gold_drop(25 + randi() % 30,
+				player.global_position + player.facing() * 3.5 + Vector3(randf_range(-1.0, 1.0), 0, 0))
 			"runic_guard":
 				player.gain_resonance(Player.MAX_RESONANCE)
 				player.try_runic_guard()

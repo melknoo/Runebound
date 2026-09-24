@@ -298,6 +298,33 @@ func _run() -> void:
 	_check(not player.spend_gold(player.gold + 1) and player.spend_gold(37) and player.gold == gold_before,
 		"spend_gold refuses an overdraft and pays otherwise")
 
+	# --- M07b hero window (I / C / N tabs) + StatSheet ---
+	lab.hero_ui.open_tab(HeroUI.Tab.CHARACTER)
+	_check(lab.hero_ui.visible and lab.hero_ui.character_tab.visible and not lab.inventory_ui.visible and player.input_locked,
+		"hero window opens on the character tab and locks input")
+	lab.hero_ui.open_tab(HeroUI.Tab.TALENTS)
+	_check(lab.talent_ui.visible and not lab.hero_ui.character_tab.visible, "N switches the hero window to the talent tab")
+	lab.talent_ui.toggle()
+	_check(not lab.hero_ui.visible and not lab.talent_ui.visible and not player.input_locked,
+		"the showing tab's key closes the hero window")
+	lab.inventory_ui.toggle()
+	_check(lab.hero_ui.visible and lab.inventory_ui.visible and lab.hero_ui.current == HeroUI.Tab.INVENTORY,
+		"I opens the hero window on the inventory tab")
+	lab.hero_ui.close()
+	var sheet_rows := StatSheet.ability_rows(player)
+	_check(sheet_rows.size() == 6 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB",
+		"character sheet lists the 6 known abilities in class order with their keys")
+	var d_pct := player.stat(&"damage_pct")
+	var c_pct := player.stat(&"crit_pct")
+	var manual_avg := 24.0 * (1.0 + d_pct / 100.0) * (1.0 + (0.08 + c_pct / 100.0) * 0.6)
+	_check(absf(StatSheet.expected_damage(player, player.cleave) - manual_avg) < 0.001,
+		"StatSheet's average Rune Cleave damage matches the hit formula (%.1f)" % manual_avg)
+	var names_ok := true
+	for def: Dictionary in AffixPool.DEFS:
+		names_ok = names_ok and StatSheet.STAT_NAMES.has(def["stat"])
+	_check(names_ok, "every affix stat has a display name")
+	_check(lab.hud._stats_line(&"ember_lance", player.ember).begins_with("Damage"), "ability tooltip leads with the damage")
+
 	# --- M06 B5: HUD v2 look ---
 	var hud_root := lab.hud.get_child(0) as Control
 	var body_font := UiTheme.font()
@@ -911,6 +938,8 @@ func _run() -> void:
 	player.try_ember()
 	var expected_cd: float = player.ember.cooldown * 0.8
 	_check(absf(float(player._cooldowns[&"ember_lance"]) - expected_cd) < 0.01, "cooldown reduction applies")
+	_check(absf(StatSheet.effective_cooldown(player, player.ember) - expected_cd) < 0.001,
+		"the character sheet shows the same reduced cooldown")
 	await _wait_frames(20)
 
 	# --- equip swap ---

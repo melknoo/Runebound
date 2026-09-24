@@ -1,11 +1,12 @@
 class_name InventoryUI
-extends CanvasLayer
-## `I` toggles: equipped slots | inventory list | detail + compare pane.
-## Locks combat input and frees the mouse while open.
+extends HBoxContainer
+## Inventory tab of the hero window (`I`): equipped slots | inventory list |
+## detail + compare pane. M07b: a page inside HeroUI, which owns the frame,
+## the input lock and the mouse; `toggle()` still opens/closes it.
 
 var player: Player
+var hero: HeroUI
 
-var _root: Control
 var _equip_column: VBoxContainer
 var _list_column: VBoxContainer
 var _list_box: VBoxContainer
@@ -13,35 +14,17 @@ var _detail: VBoxContainer
 var _selected: ItemData = null
 
 
-func setup(p: Player) -> void:
+func setup(p: Player, hero_ui: HeroUI = null) -> void:
 	player = p
-	layer = 8
+	hero = hero_ui
 	player.equipment.changed.connect(_refresh)
 	_build()
 	visible = false
 
 
 func _build() -> void:
-	_root = Control.new()
-	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	UiTheme.apply(_root)  # M06: pixel fonts, framed panel, themed buttons
-	add_child(_root)
-
-	var dim := ColorRect.new()
-	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0.02, 0.01, 0.04, 0.55)
-	_root.add_child(dim)
-
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.custom_minimum_size = Vector2(960, 540)
-	panel.position = Vector2(-480, -270)
-	panel.add_theme_stylebox_override("panel", UiTheme.nine("frame.png", 16, 18))
-	_root.add_child(panel)
-
-	var columns := HBoxContainer.new()
-	columns.add_theme_constant_override("separation", 18)
-	panel.add_child(columns)
+	add_theme_constant_override("separation", 18)
+	var columns := self
 
 	_equip_column = _column(columns, "EQUIPPED", 230)
 	_list_column = _column(columns, "INVENTORY", 320)
@@ -69,22 +52,17 @@ func _column(parent: Control, title: String, width: float) -> VBoxContainer:
 	return col
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"inventory_toggle"):
-		toggle()
-
-
+## Opens the hero window on this tab, or closes it when this tab is showing.
 func toggle() -> void:
-	visible = not visible
-	player.input_locked = visible
-	var zone := get_parent() as ZoneBase
-	if visible and zone != null and zone.talent_ui != null and zone.talent_ui.visible:
-		zone.talent_ui.toggle()  # one panel at a time
-		player.input_locked = true
-	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if visible else Input.MOUSE_MODE_CAPTURED
-	if visible:
-		_refresh()
+	if hero != null:
+		hero.toggle_tab(HeroUI.Tab.INVENTORY)
+	else:
+		visible = not visible
+		refresh()
+
+
+func refresh() -> void:
+	_refresh()
 
 
 func _refresh() -> void:
@@ -176,17 +154,8 @@ func _render_detail() -> void:
 		row.add_child(drop_btn)
 
 
-const STAT_NAMES := {
-	&"damage_pct": ["%", " damage"], &"max_hp": ["", " maximum health"],
-	&"cooldown_pct": ["%", " cooldown reduction"], &"resonance_pct": ["%", " Resonance gained"],
-	&"move_pct": ["%", " movement speed"], &"crit_pct": ["%", " critical chance"],
-	&"ember_pierce": ["", " Ember Lance pierce"], &"chain_jumps": ["", " Chain Spark jump"],
-	&"cleave_radius_pct": ["%", " Rune Cleave area"], &"dodge_cd_pct": ["%", " dodge cooldown reduction"],
-	&"eb_cost_reduce": ["", " Earthbreaker cost reduction"], &"rune_arm_reduce": ["s", " faster rune arming"],
-}
-
-
 ## [text, colour] per stat that differs between two items (green = gain).
+## Stat names live in StatSheet.STAT_NAMES (shared with the character sheet).
 static func compare_lines(candidate: ItemData, current: ItemData) -> Array:
 	var totals := {}
 	for affix in candidate.affixes:
@@ -198,9 +167,7 @@ static func compare_lines(candidate: ItemData, current: ItemData) -> Array:
 		var delta := float(totals[key])
 		if absf(delta) < 0.01:
 			continue
-		var fmt: Array = STAT_NAMES.get(key, ["", " " + String(key)])
-		var amount := ("%+.1f" % delta) if absf(delta) < 1.0 else ("%+d" % roundi(delta))
-		lines.append([amount + fmt[0] + fmt[1], Color(0.45, 0.9, 0.5) if delta > 0.0 else Color(0.95, 0.4, 0.38)])
+		lines.append([StatSheet.stat_text(key, delta), Color(0.45, 0.9, 0.5) if delta > 0.0 else Color(0.95, 0.4, 0.38)])
 	if candidate.legendary_id != current.legendary_id:
 		if candidate.legendary_id != &"":
 			lines.append(["+ legendary power: " + candidate.display_name, Color(1.0, 0.6, 0.25)])

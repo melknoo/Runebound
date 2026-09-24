@@ -86,7 +86,7 @@ func _process(delta: float) -> void:
 		worst = maxf(worst, t)
 	var player: Player = lab.get(&"player")
 	var god_text := "ON" if (player != null and player.god_mode) else "off"
-	_info.text = "FPS %d  |  worst frame %.1f ms\nenemies: %d   style: %s   god: %s\n\n[1] rusher  [2] caster  [3] kill all\n[4] assassin  [5] brute  [6] elite\n[7] drop item  [8] drop legendary  [9] fresh start\n[0] +500 gold  [L] learn all abilities\n[H] heal  [G] god  [R] reset  [C] cooldowns\n[T] stress test  [V] style  [I] inventory\n[O] outline %s" % [
+	_info.text = "FPS %d  |  worst frame %.1f ms\nenemies: %d   style: %s   god: %s\n\n[1] rusher  [2] caster  [3] kill all\n[4] assassin  [5] brute  [6] elite\n[7] drop item  [8] drop legendary  [9] fresh start\n[0] +500 gold  [L] learn all abilities\n[H] heal  [G] god  [R] reset  [C] cooldowns\n[T] stress test  [V] style  [I] inventory (close F1 first)\n[O] outline %s" % [
 		Engine.get_frames_per_second(),
 		worst * 1000.0,
 		lab.call(&"enemy_count"),

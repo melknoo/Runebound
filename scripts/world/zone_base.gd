@@ -11,8 +11,9 @@ var targeting: TargetingSystem
 var hud: Hud
 var debug_overlay: DebugOverlay
 var style_manager: StyleManager
-var inventory_ui: InventoryUI
-var talent_ui: TalentUI
+var hero_ui: HeroUI
+var inventory_ui: InventoryUI  # the hero window's inventory tab
+var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
@@ -65,13 +66,12 @@ func _ready() -> void:
 	add_child(debug_overlay)
 	debug_overlay.setup(self)
 
-	inventory_ui = InventoryUI.new()
-	add_child(inventory_ui)
-	inventory_ui.setup(player)
-
-	talent_ui = TalentUI.new()
-	add_child(talent_ui)
-	talent_ui.setup(player)
+	# M07b hero window: inventory (I), character (C) and talents (N) as tabs.
+	hero_ui = HeroUI.new()
+	add_child(hero_ui)
+	hero_ui.setup(player)
+	inventory_ui = hero_ui.inventory_tab
+	talent_ui = hero_ui.talent_tab
 
 	trainer_ui = TrainerUI.new()  # M07b: hidden until a TrainerNpc opens it
 	add_child(trainer_ui)

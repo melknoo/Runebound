@@ -419,6 +419,9 @@ func _stats_line(id: StringName, data: AbilityData) -> String:
 	if data == null:
 		parts.append("Cooldown %ss" % String.num(Player.DODGE_COOLDOWN, 2))
 		return "  ·  ".join(parts)
+	var dmg := StatSheet.damage_text(player, data)  # M07b: the sheet's numbers
+	if dmg != "":
+		parts.append(dmg)
 	var cost := player.earthbreaker_cost() if id == &"earthbreaker" else data.resonance_cost
 	if cost > 0.0:
 		parts.append("Costs %s Resonance" % String.num(cost, 0))

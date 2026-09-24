@@ -77,11 +77,8 @@ func open(npc: TrainerNpc, p: Player = null) -> void:
 		player = p
 	_npc = npc
 	var zone := get_parent() as ZoneBase
-	if zone != null:
-		if zone.inventory_ui != null and zone.inventory_ui.visible:
-			zone.inventory_ui.toggle()
-		if zone.talent_ui != null and zone.talent_ui.visible:
-			zone.talent_ui.toggle()
+	if zone != null and zone.hero_ui != null:
+		zone.hero_ui.close()  # one window at a time
 	visible = true
 	player.input_locked = true
 	_refresh()

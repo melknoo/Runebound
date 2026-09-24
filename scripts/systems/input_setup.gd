@@ -13,8 +13,9 @@ const KEYS := {
 	&"ability_f": [KEY_4],                     # Fracture Rune (F is free)
 	&"ability_runic_guard": [KEY_5],
 	&"ability_resonance_burst": [KEY_6],
-	&"interact": [KEY_E],                      # portals, chests
+	&"interact": [KEY_E],                      # portals, chests, NPCs
 	&"talents_toggle": [KEY_N],
+	&"hero_character": [KEY_C],                # M07b character sheet tab
 }
 
 
