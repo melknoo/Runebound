@@ -383,13 +383,14 @@ gameplay timing is untouched.
   2.5, VFX 4.0.
 
 ## 11. UI
-- **Fonts:** Pixelify Sans for body text, numbers and every place name (portal
-  labels, arrival title cards). Jacquard 24 only for panel headings and the
-  boss name. User feedback 2026-09-24: blackletter place names were
-  unreadable. Both SIL OFL, license in `assets/fonts/`.
+- **Fonts:** Pixelify Sans for everything: body text, numbers, place names,
+  panel headings and the boss name. Jacquard 24 is retired (user feedback
+  2026-09-24, twice: the blackletter was unreadable as place names and then
+  as panel headings); the file stays in `assets/fonts/` but nothing uses it.
+  SIL OFL, license in `assets/fonts/`.
   - Only the measured crisp sizes are allowed:
-    - Pixelify 20 / 40 / 60 px (1/20 em grid; body 20, crits 40)
-    - Jacquard 43 / 86 px
+    - Pixelify 20 / 40 / 60 px (1/20 em grid; body 20, headings and crits 40,
+      arrival cards 60)
   - Antialiasing, hinting and subpixel positioning are off.
 - **Pixel scale:** text is drawn at 1x; frames and icons at 2x (the UI kit is
   saved pre-scaled and drawn 1:1).
