@@ -1,0 +1,70 @@
+Du arbeitest auf meinem Linux-Mint-Laptop zuhause. Er soll der dedizierte Server für RUNEBOUND werden, ein Godot-4.6.3-Koop-ARPG (2–5 Spieler, Freunde). Das Repo (github.com/melknoo/Runebound) ist hier geklont. Der Laptop hängt an Starlink (vermutlich CGNAT, keine eingehenden IPv4-Verbindungen). Bitte lies zuerst docs/PROJECT_STATE.md, docs/ROADMAP.md (Abschnitt M09 Co-op) und docs/TECHNICAL_ARCHITECTURE.md (Abschnitt "Multi-class / multi-player seams"), damit du weißt, was auf dich zukommt.
+
+WICHTIG, was du NICHT tust:
+- Keinen Spielcode anfassen: nichts unter scripts/, scenes/, resources/, tests/, kein project.godot, kein .godot/, kein export_presets.cfg. Der Netcode (M09) wird auf meinem Windows-Dev-Rechner gebaut; dieser Laptop ist nur Deployment-Ziel und zieht per git pull.
+- Keine bestehenden Docs ändern. Du legst nur NEUE Dateien an: alles unter tools/server/ und docs/SERVER_SETUP.md. Grund: auf dem Dev-Rechner wird parallel gearbeitet, ich will keine Merge-Konflikte.
+- Keine Portfreigaben am Router versuchen, kein UPnP, kein DynDNS. Hinter Starlink-CGNAT ist das sinnlos.
+- Keine Godot-Version aus apt, flatpak oder snap. Es muss exakt 4.6.3-stable sein (gleiche Version wie auf dem Dev-Rechner).
+- Nichts Windowed starten; alles headless.
+- Vor jedem sudo-Schritt in einem Satz sagen, was und warum.
+
+ZIEL: Am Ende läuft auf dem Laptop alles, was ein Spielserver braucht, außer dem Spielserver selbst: passende Godot-Version, Projekt läuft headless und der Smoke-Test ist grün, der Laptop ist über Tailscale erreichbar, schläft nie ein, hat eine Firewall, einen systemd-Dienst und eine Doku. Erreichbarkeit läuft erstmal über Tailscale; später soll Verbinden nativ im Spiel ohne Zusatz-App gehen, deshalb soll nichts, was du baust, an Tailscale hängen außer der Firewall-Regel.
+
+SCHRITTE (in dieser Reihenfolge, nach jedem Schritt kurz Status melden):
+
+1. Bestandsaufnahme (nur lesen):
+   - Mint-Version, Kernel, CPU (Kerne), RAM, freier Plattenplatz, Akku vorhanden ja/nein, Netzwerk-Interfaces.
+   - Repo-Pfad, git status, git pull --ff-only, aktueller Commit.
+   - Starlink-Lage: WAN-IP des Routers vs. externe IP (curl -4 ifconfig.me). Liegt die Router-WAN-IP in 100.64.0.0/10, ist es CGNAT. Gibt es eine globale IPv6-Adresse (ip -6 addr, curl -6 ifconfig.me)? Funktioniert IPv6 nach außen? Notiere die Fakten, bewerte sie noch nicht.
+   - Ist bereits Godot, Tailscale, ufw oder ein sshd installiert?
+
+2. Godot 4.6.3 installieren:
+   - Lade Godot_v4.6.3-stable_linux.x86_64.zip vom GitHub-Release-Tag 4.6.3-stable (godotengine/godot) nach ~/godot/, entpacke, mache es ausführbar, lege einen Symlink ~/godot/godot an.
+   - Prüfe: ~/godot/godot --version muss mit 4.6.3.stable beginnen.
+   - Im Repo: ~/godot/godot --headless --path . --import ausführen (das committete .godot/ stammt von Windows, Godot wird neu importieren). Fehler und Warnungen lesen und melden. Bekannt und harmlos: Warnungen zu Font-Importoptionen; alles mit "SCRIPT ERROR" oder "Parse Error" ist NICHT harmlos.
+   - Smoke-Test: ~/godot/godot --headless --path . res://tests/smoke_test.tscn mit timeout 480. Erwartung: alle Checks grün (zuletzt 304), 0 failures, keine SCRIPT-ERROR-Zeilen. Wenn rot: melden, nicht selbst im Spielcode fixen.
+
+3. Linux-Startskripte anlegen (neu, unter tools/server/):
+   - tools/server/run_godot.sh mit den Modi import | smoke | serve. Gegenstück zu tools/run_godot.ps1 (lies es, übernimm die Logik): smoke hat ein hartes Limit von 8 Minuten (Exit 3 bei Timeout), Exit 2 wenn der Test seinen eigenen 300-s-Watchdog meldet, Exit 1 wenn im Output "SCRIPT ERROR" oder "Parse Error" vorkommt, sonst der Godot-Exit-Code. Godot-Pfad über Umgebungsvariable GODOT, Default ~/godot/godot.
+   - tools/server/server.env mit RUNEBOUND_PORT=7777 und RUNEBOUND_SCENE=res://tests/smoke_test.tscn (Platzhalter, bis M09 eine echte Server-Szene liefert; dann wird nur diese Zeile geändert). Kommentar dazu in die Datei.
+   - tools/server/runebound-server.sh: lädt server.env, macht git pull --ff-only (bei Fehler abbrechen und laut melden), dann exec ~/godot/godot --headless --path <repo> "$RUNEBOUND_SCENE". Der Port wird später vom Spiel gelesen; das Skript reicht ihn als Umgebungsvariable durch, mehr nicht.
+   - Alle Skripte: bash, set -euo pipefail, LF-Zeilenenden, ausführbar, Shebang.
+
+4. systemd-Dienst:
+   - tools/server/runebound-server.service: Type=simple, User=<mein Login-User>, WorkingDirectory=<Repo-Pfad>, EnvironmentFile=<Repo>/tools/server/server.env, ExecStart=<Repo>/tools/server/runebound-server.sh, Restart=on-failure, RestartSec=5, After=network-online.target tailscaled.service. Im Repo liegt die Datei; nach /etc/systemd/system/ wird sie per Symlink oder Kopie installiert (dokumentieren, was du gewählt hast).
+   - Einmal systemctl start, Log mit journalctl -u runebound-server prüfen: der Smoke-Test muss durchlaufen und der Dienst danach sauber beenden (Exit 0). Danach den Dienst NICHT enablen (er würde ohne echte Server-Szene nur den Smoke-Test loopen). In die Doku: "enable erst nach M09".
+
+5. Tailscale:
+   - Offizielles Installskript von tailscale.com, dann sudo tailscale up --ssh. Den Login-Link zeigst du mir, ich melde mich an.
+   - Danach: tailscale ip -4, tailscale status (MagicDNS-Name), tailscale netcheck (steht der Laptop direkt erreichbar oder nur über DERP-Relay? UDP blockiert?). Alles notieren.
+   - Tailscale SSH reicht als Fernzugang; einen separaten sshd nur dann aktivieren, wenn schon einer läuft. Dann aber auf tailscale0 beschränken.
+
+6. Laptop als Dauerläufer:
+   - /etc/systemd/logind.conf: HandleLidSwitch=ignore, HandleLidSwitchExternalPower=ignore, HandleLidSwitchDocked=ignore, IdleAction=ignore; systemd-logind neu laden.
+   - sleep.target suspend.target hibernate.target hybrid-sleep.target maskieren.
+   - Cinnamon-Power-Settings für meinen User per gsettings: kein Sleep bei Netz und Akku (sleep-inactive-ac-timeout 0, sleep-inactive-battery-timeout 0), Deckel-Aktion "nothing" bei Netz und Akku, Bildschirm darf ausgehen.
+   - Wenn /sys/class/power_supply/BAT*/charge_control_end_threshold existiert: Ladegrenze 80 % setzen und per systemd-Unit oder udev-Regel dauerhaft machen (schont den Akku im Dauerbetrieb). Wenn nicht vorhanden: nur notieren.
+   - Automatische Updates dürfen den Rechner nicht neu starten; prüfe, ob unattended-upgrades mit Automatic-Reboot aktiv ist, und schalte den Reboot ab.
+
+7. Firewall (ufw):
+   - Default deny incoming, allow outgoing.
+   - Erlauben nur auf Interface tailscale0: 22/tcp (falls sshd) und 7777/udp.
+   - ufw enable. Vorher sicherstellen, dass Tailscale SSH funktioniert, damit ich mich nicht aussperre.
+   - Notiere in der Doku, welche zweite Regel später für "nativ ohne Tailscale" dazukommt (7777/udp auf dem WAN-Interface bzw. IPv6).
+
+8. docs/SERVER_SETUP.md schreiben (Deutsch, knapp, für mich und später für Freunde):
+   - Ist-Zustand: Hardware, Mint-Version, Godot-Pfad und -Version, Repo-Pfad, Starlink-Fakten (CGNAT ja/nein, IPv6 ja/nein), Tailscale-IP, MagicDNS-Name, Port 7777/udp, netcheck-Ergebnis (direkt oder Relay).
+   - Bedienung: Dienst starten/stoppen/Log lesen, Update einspielen (git pull passiert beim Start; sonst systemctl restart), Smoke-Test von Hand, Godot updaten.
+   - Vom Dev-Rechner aus: ssh <magicdns-name> und Restart-Befehl in einer Zeile.
+   - Freunde: Tailscale installieren, Einladung zum geteilten Knoten annehmen, dann im Spiel <magicdns-name>:7777 eintragen. (Das Sharing selbst mache ich in der Tailscale-Admin-Konsole; schreibe die genauen Klickschritte hin: Machines > Laptop > Share, plus Key-Expiry für den Laptop abschalten.)
+   - Abschnitt "Später: nativ ohne Tailscale": drei Wege mit je zwei Sätzen Vor-/Nachteil: (a) kleiner VPS mit WireGuard-Tunnel zum Laptop, der 7777/udp weiterleitet, (b) Starlink-Tarif mit öffentlicher IPv4, (c) IPv6 direkt (nur wenn Schritt 1 eine globale IPv6 ergab; Freunde brauchen dann selbst IPv6). Halte fest, dass für den Wechsel nur der Hostname im Client wechselt und die Firewall eine Regel dazubekommt; am Server-Skript ändert sich nichts. Und als Anforderung an M09: Serveradresse im Spiel als Textfeld mit "zuletzt benutzt", keine feste IP im Code.
+   - Abschnitt "Offen / manuell": alles, was du nicht automatisieren konntest.
+
+9. Commit und Push:
+   - git add nur tools/server/ und docs/SERVER_SETUP.md. Commit-Message: "Server laptop: Godot 4.6.3, Tailscale, systemd unit, SERVER_SETUP.md". Falls das Repo eine Vorgabe für Commit-Attribution hat, halte dich daran.
+   - git push origin main. Wenn Push wegen fehlender Zugangsdaten scheitert: nicht lange an GitHub-Auth basteln, Commit lokal lassen und mir sagen, dass ich Auth einrichten muss.
+
+10. Abschlussbericht (das brauche ich auf dem Dev-Rechner weiter, bitte als Tabelle):
+   Repo-Pfad, Godot-Pfad, Godot-Version, Smoke-Test-Ergebnis (Checks/Failures), Tailscale-IPv4, MagicDNS-Name, netcheck direkt/Relay, CGNAT ja/nein, globale IPv6 ja/nein, Dienst installiert (ja, disabled), Firewall-Regeln, Commit-Hash, Push ja/nein, und eine Liste der manuellen Schritte, die noch bei mir liegen.
+
+Wenn etwas unklar ist oder ein Schritt einen Eingriff braucht, den ich nicht aufgezählt habe (z. B. BIOS-Einstellung, Router-Modus), frag mich, statt zu raten.
