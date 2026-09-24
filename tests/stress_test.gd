@@ -1,6 +1,10 @@
 extends Node
-## Windowed performance stress: 18 enemies, constant casting, heavy VFX.
-## Logs frame statistics, quits with 0 if the run stays above 45 FPS average.
+## Windowed performance stress: 29 enemies, constant casting, heavy VFX.
+## Run via `tools/run_godot.ps1 stress` (passes `--stress`, so SaveGame uses the
+## scratch save). Logs frame statistics; exits 1 when the full-combat phase
+## averages below BUDGET_FPS.
+
+const BUDGET_FPS := 60.0
 
 var lab: CombatLab
 var _frames: Array[float] = []
@@ -16,7 +20,7 @@ func _process(delta: float) -> void:
 	_phys.append(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS))
 
 
-func _report(phase: String) -> void:
+func _report(phase: String) -> float:
 	var total := 0.0
 	var worst := 0.0
 	for f in _frames:
@@ -26,10 +30,12 @@ func _report(phase: String) -> void:
 	for p in _phys:
 		ptotal += p
 	var n := maxf(_frames.size(), 1)
+	var fps := n / maxf(total, 0.001)
 	print("stress[%s]: frames=%d avg=%.2f ms (%.0f FPS) worst=%.2f ms physics_avg=%.2f ms" % [
-		phase, _frames.size(), total / n * 1000.0, n / maxf(total, 0.001), worst * 1000.0, ptotal / n * 1000.0])
+		phase, _frames.size(), total / n * 1000.0, fps, worst * 1000.0, ptotal / n * 1000.0])
 	_frames.clear()
 	_phys.clear()
+	return fps
 
 
 func _run() -> void:
@@ -49,12 +55,12 @@ func _run() -> void:
 	_report("baseline_3_enemies")
 
 	lab.stress_test()
-	lab.stress_test()  # 2x = 18 rushers + 8 casters + initial 3
+	lab.stress_test()  # 2x = 26 spawned + the lab's initial 3
 	print("stress: enemies=", lab.enemy_count())
 	await get_tree().create_timer(3.0).timeout
 	_report("29_enemies_no_combat")
 
-	# 12 seconds of constant combat: move, swing, cast, slam.
+	# ~16 seconds of constant combat: move, swing, cast, slam.
 	for cycle in 24:
 		Input.action_press(&"move_forward" if cycle % 4 < 2 else &"move_left")
 		player.gain_resonance(100.0)
@@ -78,11 +84,13 @@ func _run() -> void:
 		Input.action_release(&"move_forward")
 		Input.action_release(&"move_left")
 
-	_report("full_combat")
+	var combat_fps := _report("full_combat")
 	print("stress: draw_calls=%d  primitives=%d  nodes=%d  video_mem=%.1f MB  enemies_left=%d" % [
 		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
 		Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
 		Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
 		Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1048576.0,
 		lab.enemy_count()])
-	get_tree().quit(0)
+	var passed := combat_fps >= BUDGET_FPS
+	print("stress: full_combat %.1f FPS vs budget %.0f -> %s" % [combat_fps, BUDGET_FPS, "PASS" if passed else "FAIL"])
+	get_tree().quit(0 if passed else 1)

@@ -15,13 +15,26 @@ var _orb_mesh: MeshInstance3D
 
 
 func _init() -> void:
+	xp_value = 22
 	display_name = "Duskweaver"
 	max_health = 40.0
 	move_speed = 3.2
 	body_color = Color(0.45, 0.3, 0.65)
 
 
+const RIG_PATH := "res://assets/models/chars/duskweaver.glb"
+
+
 func _build_body() -> void:
+	# M06 rig: the floating staff is part of the model (root bone, never
+	# animated); the orb stays code-built — telegraph glow + bolt origin.
+	if _setup_rigged_visual(RIG_PATH, "duskweaver", {
+		"idle": &"idle", "run": &"glide", "run_speed": move_speed,
+		"states": {AIState.WINDUP: &"charge", AIState.RECOVER: &"cast", AIState.STAGGER: &"stagger",
+			AIState.CHASE: &"@loco", AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+	}, ArtKit.color("palettes.duskweaver.eyes")) != null:
+		_build_orb()
+		return
 	if _setup_model_visual("res://assets/models/enemy_caster.glb"):
 		_build_staff()
 		return
@@ -66,12 +79,17 @@ func _build_staff() -> void:
 	staff.mesh = staff_mesh
 	staff.position = Vector3(0.42, 0.8, 0)
 	visual.add_child(staff)
+	_build_orb()
 
+
+## Staff orb: charges during the windup and is where the bolt spawns.
+func _build_orb() -> void:
 	_orb_mesh = MeshInstance3D.new()
 	var orb := SphereMesh.new()
 	orb.radius = 0.14
 	orb.height = 0.28
 	_staff_orb = flat_material(Color(0.7, 0.35, 1.0), true, 0.4)
+	_staff_orb.disable_fog = true  # the charge is the telegraph: readable in haze
 	orb.material = _staff_orb
 	_orb_mesh.mesh = orb
 	_orb_mesh.position = Vector3(0.42, 1.7, 0)

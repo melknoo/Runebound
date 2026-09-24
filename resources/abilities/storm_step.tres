@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"storm_step"
 display_name = "Storm Step"
+description = "Lightning dash through enemies. Everything on the path is Shocked."
 cooldown = 5.0
 resonance_cost = 0.0
 resonance_gain_per_hit = 5.0

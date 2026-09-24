@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"rune_cleave"
 display_name = "Rune Cleave"
+description = "Wide rune-edged sweep. Every hit builds Resonance."
 cooldown = 0.0
 resonance_cost = 0.0
 resonance_gain_per_hit = 12.0

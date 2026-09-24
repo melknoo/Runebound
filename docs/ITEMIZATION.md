@@ -4,7 +4,15 @@ Philosophy: every interesting drop should ask "what happens if I use this?"
 Numeric affixes stay chunky; the exciting drops change ability behavior.
 
 ## Structure
-- **Slots**: Weapon · Armor · Relic (3 equip slots, list inventory cap 24).
+- **Slots** (7, user decision 2026-09-24): Weapon · Helm · Chest · Gloves ·
+  Boots · Amulet · Ring. Old Armor/Relic items are Chest/Amulet (same enum
+  values, no save conversion). Inventory cap 24.
+- **Affix spread**:
+  - Movement, dodge and Storm Step cooldown roll on boots only.
+  - Crit and area on gloves, rings and weapons.
+  - Health on chest, helm and amulet.
+  - Cooldown reduction on amulet, helm and chest.
+  - Every slot has at least 3 affixes.
 - **Rarities**: Common (0 affixes) · Magic (1) · Rare (2–3) ·
   Legendary (2 + power). Epic/Unique reserved for later.
 - **Drop rates**: trash 20% · brute 60% · elite 100% (rare or better,
@@ -17,6 +25,23 @@ Numeric: +12–20% damage (W/R) · +20–35 HP (A/R) · 10–20% CDR (A/R) ·
 +20–35% Resonance (W/R) · +8–12% move speed (A) · +4–7% crit (W).
 Behavioral: Ember Lance +1 pierce · Chain Spark +1 jump · Cleave +35% area ·
 Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
+
+## M07 additions
+- **Item level** = level of the drop source. `damage_pct`, `max_hp` and
+  `resonance_pct` scale +6 % per level above 1; cooldown, speed, crit and
+  behavioral affixes stay fixed.
+- **Compare:** the detail pane lists every stat that changes against the
+  equipped item (green gain, red loss), plus legendary power gain or loss.
+- **New affixes** on the talent stats, so they stack with talents:
+  +10–16 % damage to Shocked, Burn +20–35 %, Storm Step cooldown −10–18 %.
+- **New legendaries** grant a talent's behavior. A matching talent doesn't
+  stack with them.
+
+  | Item | Slot | Power |
+  |---|---|---|
+  | Forked Ember | Weapon | Split Lance |
+  | Stormcaller's Band | Relic | Overload |
+  | Emberheart Plate | Armor | Molten Core |
 
 ## Legendary powers
 | Item | Slot | Power |

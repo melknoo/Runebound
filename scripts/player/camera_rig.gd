@@ -117,7 +117,13 @@ func get_flat_basis() -> Basis:
 ## projectiles must go where the player *means*, not into the floor.
 const AIM_ASSIST_RADIUS := 0.8
 
+## True when the last get_aim_point() landed on walkable ground (not an enemy,
+## not a wall): projectiles then aim at chest height above that spot.
+var last_aim_on_floor: bool = false
+
+
 func get_aim_point(exclude: Array[RID] = []) -> Vector3:
+	last_aim_on_floor = false
 	var from := camera.global_position
 	var dir := -camera.global_transform.basis.z
 	var to := from + dir * AIM_RAY_LENGTH
@@ -133,6 +139,7 @@ func get_aim_point(exclude: Array[RID] = []) -> Vector3:
 			# right behind the target (kills pierce lines).
 			return (collider as Node3D).global_position + Vector3(0, 0.9, 0)
 		hit_pos = result["position"]
+		last_aim_on_floor = (result["normal"] as Vector3).y > 0.7
 
 	# Soft assist: sweep a capsule along the aim line, enemy layer only.
 	# Extend past the terrain hit — the player aiming "at the ground" a few
@@ -161,5 +168,6 @@ func get_aim_point(exclude: Array[RID] = []) -> Vector3:
 			best_along = along
 			best = body
 	if best != null:
+		last_aim_on_floor = false
 		return best.global_position + Vector3(0, 0.9, 0)
 	return hit_pos

@@ -11,13 +11,50 @@ var item: ItemData
 var player: Player
 
 var _bob_time: float = 0.0
-var _shape: MeshInstance3D
+var _shape: Node3D
+
+
+## M06 C5 loot shapes: blade / cuirass / relic from the common kit, the three
+## legendaries get their own models. The glow part carries the rarity colour
+## (commons stay unlit). Returns null when the kit is missing.
+func _kit_shape(color: Color) -> Node3D:
+	var prop_name: String = ["loot_blade", "loot_armor", "loot_relic", "loot_helm", "loot_gloves", "loot_boots", "loot_ring"][item.slot]
+	if item.rarity == ItemData.Rarity.LEGENDARY and SetPieces.prop_path("legendary_" + String(item.legendary_id)) != "":
+		prop_name = "legendary_" + String(item.legendary_id)
+	if SetPieces.prop_path(prop_name) == "":
+		return null
+	var holder := Node3D.new()
+	add_child(holder)
+	var inst := SetPieces.prop(holder, prop_name, global_position)
+	inst.position = Vector3.ZERO
+	inst.scale = Vector3.ONE * 1.25
+	if not prop_name.begins_with("legendary_"):
+		for mi: MeshInstance3D in inst.find_children("*", "MeshInstance3D", true, false):
+			for s in mi.mesh.get_surface_count():
+				var m := mi.get_surface_override_material(s) as StandardMaterial3D
+				if m != null and m.emission_enabled:
+					if item.rarity == ItemData.Rarity.COMMON:
+						var plain := StandardMaterial3D.new()
+						plain.albedo_color = color
+						mi.set_surface_override_material(s, plain)
+					else:
+						mi.set_surface_override_material(s, ArtKit.glow_material(color, 1.2))
+	return holder
 
 
 func _ready() -> void:
 	var color := ItemData.rarity_color(item.rarity)
+	_shape = _kit_shape(color)
+	if _shape != null:
+		_shape.position = Vector3(0, 0.55, 0)
+	else:
+		_build_greybox_shape(color)
+	_add_presentation(color)
 
-	_shape = MeshInstance3D.new()
+
+func _build_greybox_shape(color: Color) -> void:
+	var box_shape := MeshInstance3D.new()
+	_shape = box_shape
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
 	mat.emission_enabled = item.rarity != ItemData.Rarity.COMMON
@@ -29,7 +66,7 @@ func _ready() -> void:
 			var blade := BoxMesh.new()
 			blade.size = Vector3(0.1, 0.55, 0.16)
 			mesh = blade
-		ItemData.Slot.ARMOR:
+		ItemData.Slot.CHEST:
 			var cuirass := BoxMesh.new()
 			cuirass.size = Vector3(0.4, 0.35, 0.2)
 			mesh = cuirass
@@ -39,10 +76,12 @@ func _ready() -> void:
 			orb.height = 0.32
 			mesh = orb
 	(mesh as PrimitiveMesh).material = mat
-	_shape.mesh = mesh
+	box_shape.mesh = mesh
 	add_child(_shape)
 	_shape.position = Vector3(0, 0.55, 0)
 
+
+func _add_presentation(color: Color) -> void:
 	var label := Label3D.new()
 	label.text = item.display_name
 	label.font_size = 36
@@ -53,6 +92,7 @@ func _ready() -> void:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
 	label.position = Vector3(0, 1.15, 0)
+	UiTheme.label3d(label)
 	add_child(label)
 
 	if item.rarity >= ItemData.Rarity.MAGIC:
@@ -77,6 +117,7 @@ func _ready() -> void:
 		beam_mat.emission = color
 		beam_mat.emission_energy_multiplier = 1.5
 		beam_mat.disable_receive_shadows = true
+		beam_mat.disable_fog = true  # ART_BIBLE: loot beams are fog-exempt
 		beam_mesh.material = beam_mat
 		beam.mesh = beam_mesh
 		beam.position = Vector3(0, beam_mesh.size.y * 0.5, 0)

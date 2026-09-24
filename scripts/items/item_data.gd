@@ -4,7 +4,12 @@ extends Resource
 ## Affix entries: { "id": StringName, "label": String, "stat": StringName,
 ## "value": float } — `stat` keys are interpreted by Equipment/Player.
 
-enum Slot { WEAPON, ARMOR, RELIC }
+## 7 equipment slots (user, 2026-09-24). The first three keep their old
+## values (ARMOR -> CHEST, RELIC -> AMULET), so saves need no conversion.
+enum Slot { WEAPON, CHEST, AMULET, HELM, GLOVES, BOOTS, RING }
+const SLOT_COUNT := 7
+## Display / equip order in the inventory.
+const SLOT_ORDER: Array[Slot] = [Slot.WEAPON, Slot.HELM, Slot.CHEST, Slot.GLOVES, Slot.BOOTS, Slot.AMULET, Slot.RING]
 enum Rarity { COMMON, MAGIC, RARE, LEGENDARY }
 
 var slot: Slot = Slot.WEAPON
@@ -13,6 +18,8 @@ var display_name: String = ""
 var affixes: Array[Dictionary] = []
 var legendary_id: StringName = &""
 var legendary_text: String = ""
+## M07: level of the source that dropped it; scales the numeric affixes.
+var item_level: int = 1
 
 
 func to_dict() -> Dictionary:
@@ -31,6 +38,7 @@ func to_dict() -> Dictionary:
 		"affixes": affix_list,
 		"legendary_id": String(legendary_id),
 		"legendary_text": legendary_text,
+		"item_level": item_level,
 	}
 
 
@@ -41,6 +49,7 @@ static func from_dict(data: Dictionary) -> ItemData:
 	item.display_name = data.get("name", "Unknown Item")
 	item.legendary_id = StringName(data.get("legendary_id", ""))
 	item.legendary_text = data.get("legendary_text", "")
+	item.item_level = int(data.get("item_level", 1))
 	for affix: Dictionary in data.get("affixes", []):
 		item.affixes.append({
 			"id": StringName(affix.get("id", "")),
@@ -77,9 +86,17 @@ static func rarity_name(r: Rarity) -> String:
 
 static func slot_name(s: Slot) -> String:
 	match s:
-		Slot.ARMOR:
-			return "Armor"
-		Slot.RELIC:
-			return "Relic"
+		Slot.CHEST:
+			return "Chest"
+		Slot.AMULET:
+			return "Amulet"
+		Slot.HELM:
+			return "Helm"
+		Slot.GLOVES:
+			return "Gloves"
+		Slot.BOOTS:
+			return "Boots"
+		Slot.RING:
+			return "Ring"
 		_:
 			return "Weapon"

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"galvanize"
+display_name = "Galvanize"
+branch = 0
+tier = 1
+max_rank = 3
+stat = &"shocked_dmg_pct"
+per_rank = 8.0
+power = &""
+description = "+{value}% damage to Shocked enemies."

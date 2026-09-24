@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"phoenix_burst"
+display_name = "Phoenix Burst"
+branch = 1
+tier = 3
+max_rank = 1
+stat = &""
+per_rank = 0.0
+power = &"phoenix_burst"
+description = "Ember Lance bursts where it ends: 50% of its damage to enemies within 2 m, and Burn."

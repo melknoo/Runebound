@@ -1,0 +1,22 @@
+{
+	"zone": "res://scenes/combat_lab.tscn",
+	"comment": "Stress-sized crowd (26 rigged Marauders + 3 casters) for CPU/GPU attribution of character cost.",
+	"player": [0, 0.2, 6],
+	"yaw": 0.0,
+	"pitch": -0.3,
+	"warmup": 2.0,
+	"repeats": 3,
+	"ab_rounds": 3,
+	"duration": 10.0,
+	"budget_fps": 60,
+	"wave": [
+		["rusher", [-6, 0, -6]], ["rusher", [-4, 0, -7]], ["rusher", [-2, 0, -6]], ["rusher", [0, 0, -7]],
+		["rusher", [2, 0, -6]], ["rusher", [4, 0, -7]], ["rusher", [6, 0, -6]], ["rusher", [-5, 0, -10]],
+		["rusher", [-3, 0, -11]], ["rusher", [-1, 0, -10]], ["rusher", [1, 0, -11]], ["rusher", [3, 0, -10]],
+		["rusher", [5, 0, -11]], ["rusher", [-6, 0, -14]], ["rusher", [-4, 0, -15]], ["rusher", [-2, 0, -14]],
+		["rusher", [0, 0, -15]], ["rusher", [2, 0, -14]], ["rusher", [4, 0, -15]], ["rusher", [6, 0, -14]],
+		["rusher", [-7, 0, -3]], ["rusher", [7, 0, -3]], ["rusher", [-7, 0, -18]], ["rusher", [7, 0, -18]],
+		["rusher", [-1, 0, -18]], ["rusher", [1, 0, -18]],
+		["caster", [-8, 0, -12]], ["caster", [8, 0, -12]], ["caster", [0, 0, -20]]
+	]
+}

@@ -1,0 +1,14 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"out": "captures_shots/c5_props",
+	"comment": "M06 C5: portal v2, kit chest, loot shapes, elite aura, Vessel-style threat ring in the gold-target light.",
+	"shots": [
+		{"name": "portal_back", "player": [1.2, 0.2, 27.5], "yaw": 3.3, "pitch": -0.12, "zoom": 5.0, "settle": 0.6},
+		{"name": "chest_west", "player": [-28.2, 0.2, 11.2], "yaw": 0.35, "pitch": -0.35, "zoom": 4.0, "settle": 0.4},
+		{"name": "loot", "player": [0, 0.2, 26], "yaw": 0.0, "pitch": -0.35, "zoom": 4.5,
+			"actions": [{"do": "loot"}, {"do": "loot"}, {"do": "loot"}, {"do": "legendary"}, {"wait": 0.4}], "settle": 0.3},
+		{"name": "elite", "player": [2.2, 0.2, 24], "yaw": 0.35, "pitch": -0.25, "zoom": 5.0,
+			"spawn": [{"id": "elite", "at": [0, 0.2, 20.5], "freeze": true, "face": 0.2}], "settle": 0.6},
+		{"name": "portals_north", "player": [0, 0.2, -25], "yaw": 0.0, "pitch": -0.1, "zoom": 6.0, "settle": 0.4}
+	]
+}

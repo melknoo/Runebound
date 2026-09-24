@@ -1,0 +1,18 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/m07_progression",
+	"comment": "M07: arrival title card, XP bar + level-up, talent panel, Runic Guard barrier, Resonance Burst.",
+	"shots": [
+		{"name": "arrival_title", "player": [0, 0.2, 10], "yaw": 0.0, "pitch": -0.25, "zoom": 6.0, "settle": 1.0},
+		{"name": "level_up", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"xp": 1400}, {"wait": 0.25}], "settle": 0.1},
+		{"name": "talent_panel", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"xp": 3000}, {"learn": ["runic_plate", "runic_plate", "resonant_strikes", "runic_guard", "static_charge"]},
+			            {"do": "talents"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "runic_guard", "player": [0, 0.2, 8], "yaw": 0.4, "pitch": -0.3, "zoom": 4.0,
+			"actions": [{"do": "talents"}, {"wait": 0.2}, {"do": "runic_guard"}, {"wait": 0.12}], "settle": 0.0},
+		{"name": "resonance_burst", "player": [0, 0.2, 8], "yaw": 0.4, "pitch": -0.3, "zoom": 5.0,
+			"actions": [{"xp": 16000}, {"learn": ["earthshaker", "frost_ward", "earthshaker", "frost_ward", "resonance_burst"]},
+			            {"wait": 1.2}, {"do": "resonance_burst"}, {"wait": 0.08}], "settle": 0.0}
+	]
+}

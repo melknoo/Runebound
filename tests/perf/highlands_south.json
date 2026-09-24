@@ -1,0 +1,21 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"comment": "Gold-target area: two camps pulled at once between the funnel and camp 1.",
+	"player": [0, 0.2, 21],
+	"yaw": 0.0,
+	"pitch": -0.3,
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 12.0,
+	"budget_fps": 60,
+	"wave": [
+		["rusher", [0, 0, -6]],
+		["rusher", [2.5, 0, -7]],
+		["rusher", [-2.5, 0, -7]],
+		["rusher", [1, 0, -10]],
+		["rusher", [-1, 0, -11]],
+		["caster", [4, 0, -11]],
+		["caster", [-4, 0, -12]],
+		["caster", [0, 0, -13]]
+	]
+}

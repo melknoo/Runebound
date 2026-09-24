@@ -1,0 +1,474 @@
+{
+	"version": 1,
+	"comment": "Single source of RUNEBOUND look parameters (M06). Read by tools/texgen, tools/modelgen and scripts/systems/art_kit.gd. Colors are sRGB hex; modelgen converts to linear for Blender. v1 = Gate 0 decided by the user in live play (2026-09-23): character outline on, smooth animation, characters 64 px/m over environment 32 px/m.",
+	"texel_density": {
+		"environment_px_per_m": 32,
+		"character_px_per_m": 64,
+		"vfx_px_per_m": 32
+	},
+	"color_roles": {
+		"threat": {
+			"body": "#E8283C",
+			"rim": "#FFF4F0",
+			"rule": "enemy danger only: filled disc/lane + bright rim + visible fill progress, top render priority, fog-exempt"
+		},
+		"resonance": {
+			"body": "#FFC34D",
+			"hot": "#FFF0B8",
+			"rule": "player class resource: armor rune glow + HUD bar; never used on enemies"
+		},
+		"player_accent": {
+			"body": "#3CBEB4",
+			"hot": "#9FF2E6",
+			"rule": "player identity + targeting UI (Tab ring, frames)"
+		},
+		"experience": {
+			"body": "#9FB4FF",
+			"rule": "M07 experience: the thin HUD bar, level badge, XP toasts; periwinkle so it never reads as Resonance gold or the player teal"
+		},
+		"fire": {
+			"edge": "#B8321C",
+			"body": "#FF6A2A",
+			"core": "#FFD27A",
+			"rule": "Ember Lance, Burn, fire patches: turbulent, rising, short-lived"
+		},
+		"frost": {
+			"edge": "#2C6FA8",
+			"body": "#7FE0FF",
+			"core": "#E8FBFF",
+			"rule": "angular crystals, mist, fragmentation"
+		},
+		"lightning": {
+			"edge": "#7C8CFF",
+			"body": "#FFF6A0",
+			"core": "#FFFFFF",
+			"rule": "instant, branching, brief afterimage"
+		},
+		"physical": {
+			"edge": "#8A8078",
+			"body": "#E8E4DA",
+			"core": "#FFFFFF",
+			"rule": "directional sparks, dust, debris"
+		},
+		"void": {
+			"edge": "#4A2A7A",
+			"body": "#A060E8",
+			"core": "#E8C8FF",
+			"rule": "Spire/Duskweaver magic; enemy projectiles"
+		},
+		"env_emissive": {
+			"body": "#A8441C",
+			"rule": "ember cracks in the Highlands ground: tiny, dim (below glow threshold), slow flicker, never red, never disc-shaped"
+		},
+		"hearth": {
+			"body": "#FFB866",
+			"rule": "settlement windows and lanterns: small lit rectangles, dim (environment cap), never on the ground, never disc-shaped"
+		},
+		"rarity": {
+			"common": "#E6E1D6",
+			"magic": "#5A8CFF",
+			"rare": "#F2D04B",
+			"legendary": "#FF8A2A",
+			"rule": "loot reads by vertical beam + label shape, not by hue alone"
+		}
+	},
+	"palettes": {
+		"highlands": {
+			"ash_ground": [
+				"#2B2322",
+				"#382E2B",
+				"#463A35",
+				"#554740",
+				"#65554B"
+			],
+			"basalt": [
+				"#1E1A1E",
+				"#2A2428",
+				"#373036",
+				"#463D43",
+				"#574C52"
+			],
+			"ash_top": [
+				"#4A413D",
+				"#5A4F49",
+				"#6B5F57",
+				"#7C6F65"
+			],
+			"dead_grass": [
+				"#3E3526",
+				"#524630",
+				"#66583B",
+				"#7A6A48"
+			],
+			"rust_hide": [
+				"#4A2418",
+				"#63301E",
+				"#7C3F26",
+				"#95502F"
+			],
+			"bone": [
+				"#8C8272",
+				"#A89D8A",
+				"#C4B9A4",
+				"#DDD3BE"
+			],
+			"sky": {
+				"top": "#1C1230",
+				"mid": "#4A2344",
+				"horizon": "#B8503A",
+				"sun": "#FFD9A8"
+			},
+			"fog": "#5E4044",
+			"ambient": "#4A3A52"
+		},
+		"runebreaker": {
+			"iron": [
+				"#2B303B",
+				"#3A404D",
+				"#4F5766",
+				"#66707F",
+				"#838D9C"
+			],
+			"teal_cloth": [
+				"#123A3A",
+				"#1A5250",
+				"#236B67",
+				"#2E8680",
+				"#3CBEB4"
+			],
+			"leather": [
+				"#2A1D16",
+				"#3A281D",
+				"#4D3526",
+				"#624531"
+			],
+			"skin": [
+				"#6E4A3A",
+				"#8C6049",
+				"#A87A5E",
+				"#C4957A"
+			],
+			"rune_glow": "resonance",
+			"gold_trim": [
+				"#5A4220",
+				"#8A6A2A",
+				"#B8903A",
+				"#E0B84E",
+				"#FFE08A"
+			],
+			"steel": [
+				"#3A3E48",
+				"#5A606E",
+				"#7E8594",
+				"#A8AFBC",
+				"#D2D8E2"
+			]
+		},
+		"cinder_marauder": {
+			"hide": [
+				"#4A2A20",
+				"#65392A",
+				"#85503A",
+				"#A06448",
+				"#B87A58"
+			],
+			"rust_plate": [
+				"#524038",
+				"#6E5546",
+				"#8A6B55",
+				"#A68566",
+				"#C09E7C"
+			],
+			"bone": [
+				"#7E7464",
+				"#9C917E",
+				"#BAAE98",
+				"#D6CBB4"
+			],
+			"eyes": "#FFD24A",
+			"weapon_glow": "#FF7A2E",
+			"wood": [
+				"#2A1A12",
+				"#3E271A",
+				"#553624",
+				"#6E4A31"
+			]
+		},
+		"duskweaver": {
+			"robe": [
+				"#34284F",
+				"#4A3A74",
+				"#64509A",
+				"#7A60B4",
+				"#8E74C8",
+				"#A68CDE"
+			],
+			"trim": [
+				"#6E6488",
+				"#8C82A6",
+				"#AAA2C2"
+			],
+			"void": [
+				"#07050C",
+				"#120C1C",
+				"#1E1630"
+			],
+			"staff": [
+				"#2A1C24",
+				"#3D2A33",
+				"#523A44",
+				"#6A4C56"
+			],
+			"eyes": "#E070FF",
+			"orb": "void"
+		},
+		"runehold": {
+			"comment": "the safe settlement: warmer dawn, living green, grey granite; still the same twilight family as the Highlands",
+			"earth": [
+				"#2E241C",
+				"#3C2F24",
+				"#4B3B2D",
+				"#5B4A38",
+				"#6B5943"
+			],
+			"flagstone": [
+				"#2A2A30",
+				"#3A3A42",
+				"#4B4A53",
+				"#5D5C66",
+				"#716F7A"
+			],
+			"granite": [
+				"#23232A",
+				"#30303A",
+				"#3F3E49",
+				"#4F4E5A",
+				"#62606D"
+			],
+			"moss": [
+				"#2B3322",
+				"#3A4429",
+				"#4B5532",
+				"#5E683C"
+			],
+			"turf": [
+				"#2E3321",
+				"#3E452A",
+				"#505834",
+				"#636B3E"
+			],
+			"canopy": [
+				"#1F2A1E",
+				"#2B3A27",
+				"#3A4B31",
+				"#4C5E3B",
+				"#63713F"
+			],
+			"sky": {
+				"top": "#1E1633",
+				"mid": "#553150",
+				"horizon": "#D9875A",
+				"sun": "#FFE2B8"
+			},
+			"fog": "#6A4E52",
+			"ambient": "#4E4458",
+			"wood": [
+				"#2B1D14",
+				"#3D2A1C",
+				"#523926",
+				"#6A4A31",
+				"#83603F"
+			],
+			"bark": [
+				"#231A15",
+				"#33261D",
+				"#453427",
+				"#584332"
+			],
+			"flame": "#FF6A2A"
+		},
+		"spire": {
+			"comment": "interior: no sun; cold violet stone, crystal light, cyan rune inlays",
+			"floor": [
+				"#1D1927",
+				"#27223A",
+				"#332C48",
+				"#403857",
+				"#4F4668"
+			],
+			"wall": [
+				"#17131F",
+				"#211C2C",
+				"#2C263B",
+				"#39314B",
+				"#473E5C"
+			],
+			"crystal": [
+				"#2A1F4A",
+				"#3E2E6E",
+				"#5A44A0",
+				"#7D64D0",
+				"#A48CF0"
+			],
+			"rune": "#5FE0E8",
+			"fog": "#241B33",
+			"ambient": "#3A3050",
+			"background": "#0C0912"
+		},
+		"stonehulk": {
+			"comment": "Highlands/lab brute: weathered stone slabs, moss on the up-facing planes, ember slit eyes",
+			"stone": [
+				"#4E5048",
+				"#646659",
+				"#7B7D6C",
+				"#93957F",
+				"#ACAE95"
+			],
+			"moss": [
+				"#3E4A2C",
+				"#50603A",
+				"#647848",
+				"#7A8E58"
+			],
+			"eyes": "#FF9A3A"
+		},
+		"veilstalker": {
+			"comment": "skirmisher: slate cloak (never the player's teal), bone mask for the value read, acid eye slit",
+			"cloak": [
+				"#2C3040",
+				"#3A4054",
+				"#4A526A",
+				"#5C6682",
+				"#707C9C"
+			],
+			"wraps": [
+				"#6A6458",
+				"#847D6E",
+				"#9E9684"
+			],
+			"mask": [
+				"#B8B0A0",
+				"#D2CBBB",
+				"#ECE6D8"
+			],
+			"blade": [
+				"#6C7482",
+				"#9AA2B0",
+				"#C8D0DC"
+			],
+			"eyes": "#C8FF5A"
+		},
+		"hollow_warden": {
+			"comment": "Spire construct: violet-grey slabs, bronze trim, tower shield in front (reads 'not here'), teal rune core on the back (reads 'hit here')",
+			"plate": [
+				"#3C3A4A",
+				"#4E4B5E",
+				"#625E74",
+				"#78738C",
+				"#8F89A4"
+			],
+			"bronze": [
+				"#5E4A2E",
+				"#7C6440",
+				"#9C8254",
+				"#BDA06A"
+			],
+			"core": "#5FE0E8"
+		},
+		"ashvein": {
+			"comment": "Highlands mini-boss (x1.7): ash-grey basalt hide cracked by ember veins; veins and back crystals glow brighter on enrage",
+			"basalt": [
+				"#3A3336",
+				"#4E4549",
+				"#655A5F",
+				"#7E7277",
+				"#988C91"
+			],
+			"char": [
+				"#241E20",
+				"#332A2D",
+				"#443739"
+			],
+			"vein": "#FF6A2A",
+			"eyes": "#FFD27A"
+		},
+		"vessel": {
+			"comment": "Spire boss (x1.4): floating lavender crystal construct, violet heart, orbiting shards",
+			"crystal": [
+				"#3A2C66",
+				"#503E8C",
+				"#6A55B0",
+				"#8870D0",
+				"#A890EA"
+			],
+			"stone": [
+				"#2A2436",
+				"#3A3249",
+				"#4B425E"
+			],
+			"heart": "#E8C8FF"
+		}
+	},
+	"value_structure": {
+		"rule": "luminance bands (0-100) so gameplay reads before hue: background 15-40, ground 25-40, walls/rocks 20-45, characters key planes 40-70, telegraphs/VFX 80-100",
+		"min_enemy_vs_ground_delta": 15
+	},
+	"shapes": {
+		"bevel_width_m": 0.03,
+		"facet_angle_deg": 30,
+		"min_detail_m": 0.1,
+		"exaggeration": 1.2,
+		"player_heads_tall": 4.5,
+		"envelope": {
+			"max_height_m": 2.0,
+			"hurtbox_radius_m": 0.55,
+			"hurtbox_height_m": 1.7,
+			"tolerance": 0.15
+		}
+	},
+	"outline": {
+		"default": true,
+		"thickness": 0.012,
+		"color": "#0B0810"
+	},
+	"animation": {
+		"import_fps": 60,
+		"attack_blend_frames_max": 2,
+		"playback": "smooth"
+	},
+	"emissive_caps": {
+		"environment": 0.8,
+		"character_eyes": 3.0,
+		"telegraph": 2.5,
+		"vfx": 4.0,
+		"glow_hdr_threshold": 1.1
+	},
+	"fog_exempt": [
+		"telegraph",
+		"enemy_eyes",
+		"enemy_orb",
+		"player_xray",
+		"loot_beam"
+	],
+	"marker_heights_m": {
+		"scatter_max": 0.02,
+		"decal": 0.03,
+		"fire_frost_fields": 0.02,
+		"telegraph": 0.05,
+		"ground_ring": 0.06,
+		"target_ring": 0.06
+	},
+	"shadows": {
+		"atlas": 2048,
+		"filter": "hard",
+		"max_distance_m": 60,
+		"casters": "characters, dressing hulls, props taller than 0.6 m"
+	},
+	"forbidden_render_features": [
+		"SSAO",
+		"SSR",
+		"SSIL",
+		"SDFGI",
+		"volumetric_fog"
+	]
+}

@@ -11,7 +11,7 @@ startup (never Earthbreaker's committed slam).
 | Rune Cleave | 0.12 | 0.10 | 0.24 | 24 phys | +12 Resonance/hit, alternating swings, sphere r=1.5 @1.2m |
 | Ember Lance | 0.14 | — | — | 18 fire + Burn 4/s·3s | 26 m/s projectile, cd 0.5, +4 Resonance/hit |
 | Earthbreaker | 0.38 | 0.12 | 0.30 | 55 phys heavy | costs 40 Resonance, r=4 AoE, hop+slam, cd 4s |
-| Storm Step | — | ≤0.12 | 0.08 | 10 lightning + Shock | 50 m/s dash, direction priority: 1) held movement input, 2) Tab target in view → gap-closer landing ~1.3m short, 3) camera aim. ~6m max, hard velocity cut at dash end (no slide). Phases through enemies, zaps path, cd 5s |
+| Storm Step | — | ≤0.12 | 0.08 | 10 lightning + Shock | 50 m/s dash, direction priority: 1) held movement input, 2) Tab target in view → gap-closer landing ~1.3m short, 3) camera aim. ~6m max, hard velocity cut at dash end (no slide). Phases through enemies, zaps path, cd 5s; a dodge may cancel it and still resolves the path zap |
 | Chain Spark | instant | — | — | 14 lightning + Shock | needs target (Tab or aim-nearest), jump range 6m, 3 jumps / 4 vs Shocked, cd 3s |
 | Fracture Rune | 0.1 | 1.2 arm | — | 30 frost + Chill | ground-placed (aim, max 12m), r=3, rune = its own telegraph, cd 6s |
 | Dodge | — | 0.24 | 0.08 | — | 15 m/s ease-out, i-frames 0.26s (user-tuned up from 0.22), cd 0.55s |

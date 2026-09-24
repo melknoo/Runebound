@@ -16,6 +16,10 @@ var applies_chill: bool = false
 var applies_shock: bool = false
 ## Set on Conductor splash hits so they never chain into further splashes.
 var is_conductor_arc: bool = false
+## M07: player hits carry their ability so talents can modify them on impact.
+var from_player: bool = false
+var ability: StringName = &""
+var burn_mult: float = 1.0  # Kindling: scales the Burn this hit applies
 
 
 static func create(dmg: float, dmg_type: DamageType, hit_weight: Weight, source_pos: Vector3) -> HitInfo:

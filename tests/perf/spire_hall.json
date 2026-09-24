@@ -1,0 +1,16 @@
+{
+	"zone": "res://scenes/shattered_spire.tscn",
+	"comment": "Spire entry hall: interior look, 17 beacon lights in the level, a mixed pack of the new rigs.",
+	"player": [0, 0.2, 24],
+	"yaw": 0.0,
+	"pitch": -0.3,
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 12.0,
+	"budget_fps": 60,
+	"wave": [
+		["rusher", [0, 0, -6]], ["rusher", [2.5, 0, -7]], ["warden", [-2.5, 0, -7]],
+		["assassin", [1, 0, -10]], ["assassin", [-1, 0, -11]], ["brute", [3, 0, -12]],
+		["caster", [4, 0, -11]], ["caster", [-4, 0, -12]]
+	]
+}

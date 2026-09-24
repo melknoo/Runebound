@@ -33,6 +33,7 @@ var _core_visual: Node3D
 
 
 func _init() -> void:
+	xp_value = 1200
 	display_name = "Vessel of the Shattered Rune"
 	max_health = 1400.0
 	move_speed = 2.4
@@ -71,8 +72,16 @@ func _ready() -> void:
 	)
 
 
+const RIG_PATH := "res://assets/models/chars/vessel.glb"
+
+
 func _build_body() -> void:
-	if not _setup_model_visual("res://assets/models/boss_vessel.glb"):
+	var rigged := _setup_rigged_visual(RIG_PATH, "vessel", {
+		"idle": &"idle", "run": &"run", "run_speed": maxf(move_speed, 0.1),
+		"states": {AIState.WINDUP: &"slam", AIState.STAGGER: &"stagger", AIState.CIRCLE: &"~p2_idle",
+			AIState.CHASE: &"@loco", AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+	}, ArtKit.color("palettes.vessel.heart")) != null
+	if not rigged and not _setup_model_visual("res://assets/models/boss_vessel.glb"):
 		var body := MeshInstance3D.new()
 		var mesh := PrismMesh.new()
 		mesh.size = Vector3(1.2, 2.4, 1.2)
@@ -147,8 +156,7 @@ func _start_slam() -> void:
 	_enter_state(AIState.WINDUP)
 	var fwd := -visual.global_transform.basis.z
 	VFX.telegraph_disc(get_tree().current_scene,
-		Vector3(global_position.x, 0.0, global_position.z) + fwd * 1.6, SLAM_RADIUS, SLAM_WINDUP,
-		Color(0.75, 0.4, 1.0, 0.4))
+		Vector3(global_position.x, 0.0, global_position.z) + fwd * 1.6, SLAM_RADIUS, SLAM_WINDUP)
 	Sfx.play("earthbreaker_windup", global_position, -4.0, 0.1, 0.75)
 
 
@@ -191,6 +199,8 @@ func _begin_shatter() -> void:
 	})
 	Sfx.play("shatter_burst", global_position, 4.0)
 	GameFeel.camera_shake(0.6)
+	if animator != null:
+		animator.play_one_shot(&"shatter")
 	await get_tree().create_timer(1.0).timeout
 	if not is_instance_valid(self) or health.is_dead:
 		return
@@ -254,6 +264,8 @@ func _fire_fan() -> void:
 		bolt.position = origin + dir * 1.2
 		get_tree().current_scene.add_child(bolt)
 	Sfx.play("bolt_fire", global_position, -2.0, 0.1, 0.85)
+	if animator != null:
+		animator.play_one_shot(&"fan")
 
 
 func _place_runes(count: int) -> void:
@@ -271,30 +283,13 @@ func _place_runes(count: int) -> void:
 func _expanding_ring() -> void:
 	var scene := get_tree().current_scene
 	Sfx.play("caster_charge", arena_center, -2.0, 0.05, 0.7)
-	var ring := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(1, 1)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-	mat.alpha_scissor_threshold = 0.3
-	if ResourceLoader.exists("res://assets/vfx/ring.png"):
-		mat.albedo_texture = load("res://assets/vfx/ring.png")
-	mat.albedo_color = Color(0.8, 0.45, 1.0)
-	mat.emission_enabled = true
-	mat.emission = Color(0.7, 0.35, 1.0)
-	mat.emission_energy_multiplier = 2.0
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.disable_receive_shadows = true
-	plane.material = mat
-	ring.mesh = plane
-	scene.add_child(ring)
-	ring.global_position = arena_center + Vector3(0, 0.1, 0)
-	ring.scale = Vector3(0.5, 1, 0.5)
+	# Shared threat language (crimson band + bright rims), exactly the band
+	# the hit test below uses (+- 0.8 m around the growing radius).
+	var ring := VFX.threat_ring(scene, arena_center, RING_MAX_RADIUS, 0.8)
 	var hit_done := {"v": false}
 	var tw := ring.create_tween()
 	tw.tween_method(func(r: float) -> void:
-		ring.scale = Vector3(r * 2.0, 1.0, r * 2.0)
+		VFX.set_threat_ring(ring, r)
 		if hit_done["v"] or player == null or not is_instance_valid(player):
 			return
 		var dist := Vector2(player.global_position.x - arena_center.x,

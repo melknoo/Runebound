@@ -239,6 +239,10 @@ func _run() -> void:
 	lab.inventory_ui._select(player.equipment.inventory[player.equipment.inventory.size() - 1])
 	await _wait(0.2)
 	await _shot("inventory_panel")
+	# Ability names only appear as a tooltip while hovering a slot here.
+	get_viewport().warp_mouse(lab.hud.slot_rect(&"earthbreaker").get_center())
+	await _wait(0.2)
+	await _shot("ability_tooltip")
 	lab.inventory_ui.toggle()
 	await _wait(0.3)
 
@@ -270,7 +274,7 @@ func _run() -> void:
 	# --- Conductor arcs ---
 	_recenter()
 	var oath := ItemData.new()
-	oath.slot = ItemData.Slot.RELIC
+	oath.slot = ItemData.Slot.AMULET
 	oath.rarity = ItemData.Rarity.LEGENDARY
 	oath.display_name = "Conductor's Oath"
 	oath.legendary_id = &"conductors_oath"

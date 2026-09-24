@@ -11,6 +11,12 @@ var _age: float = 0.0
 var _dead: bool = false
 var _pierces_left: int = 0
 var _already_hit: Array[Node] = []
+## M07 talents: split shards deal a share of the damage and never split again.
+var damage_scale: float = 1.0
+var can_split: bool = true
+
+const SPLIT_ANGLE := 0.45
+const PHOENIX_RADIUS := 2.0
 
 
 func setup(data: AbilityData, dir: Vector3, source: Node3D) -> void:
@@ -18,7 +24,7 @@ func setup(data: AbilityData, dir: Vector3, source: Node3D) -> void:
 	_dir = dir.normalized()
 	_source = source
 	if source is Player:
-		_pierces_left = int((source as Player).equipment.stat(&"ember_pierce"))
+		_pierces_left = int((source as Player).stat(&"ember_pierce"))
 
 
 func _ready() -> void:
@@ -103,6 +109,7 @@ func _on_area_entered(area: Area3D) -> void:
 		_pierces_left -= 1
 		_already_hit.append(hb.owner_entity)
 		_damage(hb.owner_entity)
+		_split_from(hb.owner_entity)
 		VFX.enemy_hit(get_tree().current_scene, global_position, Color(1.0, 0.6, 0.2))
 		Sfx.play("ember_impact", global_position, -8.0, 0.15, 1.3)
 	else:
@@ -118,13 +125,14 @@ func _damage(victim: Node) -> void:
 	if _source is Player:
 		hit = (_source as Player).roll_ability_hit(_data)
 		hit.source_position = _source.global_position
+		hit.damage *= damage_scale
 	else:
 		hit = _data.roll_hit(global_position)
 	if bool(victim.call(&"take_hit", hit)):
 		GameFeel.camera_impulse(_dir, 0.04)
 		if _source is Player:
 			(_source as Player).gain_resonance(_data.resonance_gain_per_hit)
-			if was_burning and (_source as Player).equipment.has_power(&"cindermaw"):
+			if was_burning and (_source as Player).has_power(&"cindermaw"):
 				_cindermaw_erupt(victim as EnemyBase)
 
 
@@ -153,4 +161,42 @@ func _explode(victim: Node) -> void:
 	Sfx.play("ember_impact", global_position, 0.0, 0.1)
 	if victim != null:
 		_damage(victim)
+		_split_from(victim)
+	_phoenix_burst(victim)
 	queue_free()
+
+
+## M07 Split Lance: the first hit forks two half-damage shards (+-26 deg).
+## Added deferred: this runs inside a physics callback.
+func _split_from(victim: Node) -> void:
+	if not can_split or not _source is Player or not (_source as Player).has_power(&"split_lance"):
+		return
+	can_split = false
+	for side: float in [-1.0, 1.0]:
+		var d := _dir.rotated(Vector3.UP, side * SPLIT_ANGLE)
+		var shard := EmberLanceProjectile.new()
+		shard.setup(_data, d, _source)
+		shard.damage_scale = damage_scale * 0.5
+		shard.can_split = false
+		shard._already_hit.append(victim)
+		shard.position = global_position + d * 0.6
+		get_tree().current_scene.add_child.call_deferred(shard)
+
+
+## M07 Phoenix Burst: where a lance ends it bursts (50 % damage, Burn, 2 m).
+func _phoenix_burst(victim: Node) -> void:
+	if not _source is Player or not (_source as Player).has_power(&"phoenix_burst"):
+		return
+	var scene := get_tree().current_scene
+	VFX.ground_ring(scene, Vector3(global_position.x, 0.0, global_position.z), ArtKit.color("color_roles.fire.body"),
+		PHOENIX_RADIUS, 0.25)
+	for other in EnemyBase.all_enemies.duplicate():
+		if not is_instance_valid(other) or other == victim or other.ai_state == EnemyBase.AIState.DEAD:
+			continue
+		if other.global_position.distance_to(global_position) > PHOENIX_RADIUS + 0.5:
+			continue
+		var burst := (_source as Player).roll_ability_hit(_data)
+		burst.damage *= 0.5 * damage_scale
+		burst.applies_burn = true
+		burst.source_position = global_position
+		other.take_hit(burst)

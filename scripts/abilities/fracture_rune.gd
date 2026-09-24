@@ -1,4 +1,4 @@
-﻿class_name FractureRune
+class_name FractureRune
 extends Node3D
 ## Ground rune placed at the aim point; arms for ARM_TIME while brightening,
 ## then detonates: Frost damage + Chill in an AoE. The rune itself is the
@@ -38,9 +38,10 @@ func _ready() -> void:
 	add_child(glyph)
 	glyph.position.y = 0.05
 
-	# Radius outline so the blast area is readable before it pops.
+	# Broken frost ring marks the blast radius; its dashes light up as the rune
+	# arms (a player marker, never the enemies' filled red disc).
 	# (Player positions the rune before add_child, so global_position is valid.)
-	VFX.telegraph_disc(self, global_position, _data.aoe_radius, arm_time, Color(0.5, 0.85, 1.0, 0.18))
+	VFX.player_ring(self, global_position, _data.aoe_radius, arm_time, ArtKit.color("color_roles.frost.body"))
 
 	var light := OmniLight3D.new()
 	light.light_color = Color(0.5, 0.85, 1.0)

@@ -29,7 +29,7 @@ func _ready() -> void:
 	glyph.position.y = 0.05
 	add_child(glyph)
 
-	VFX.telegraph_disc(self, global_position, RADIUS, ARM_TIME, Color(0.7, 0.35, 1.0, 0.2))
+	VFX.telegraph_disc(self, global_position, RADIUS, ARM_TIME)  # danger reads red; the void glyph names the source
 	Sfx.play("rune_place", global_position, -8.0, 0.1, 0.7)
 
 	var tw := create_tween()

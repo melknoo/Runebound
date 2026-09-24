@@ -18,13 +18,28 @@ var _telegraph_disc: MeshInstance3D
 
 
 func _init() -> void:
+	xp_value = 24
 	display_name = "Veilstalker"
 	max_health = 30.0
 	move_speed = 6.0
 	body_color = Color(0.16, 0.45, 0.5)
 
 
+const RIG_PATH := "res://assets/models/chars/veilstalker.glb"
+
+
 func _build_body() -> void:
+	var rig_mesh := _setup_rigged_visual(RIG_PATH, "veilstalker", {
+		"idle": &"idle", "run": &"run", "run_speed": move_speed,
+		"states": {AIState.CIRCLE: &"~strafe", AIState.ATTACK: &"~dash", AIState.WINDUP: &"stab",
+			AIState.RETREAT: &"~retreat", AIState.STAGGER: &"stagger", AIState.CHASE: &"@loco",
+			AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+	}, ArtKit.color("palettes.veilstalker.eyes"))
+	if rig_mesh != null:
+		_blade_pivot = Node3D.new()
+		_blade_pivot.name = "BladePivotStandIn"
+		visual.add_child(_blade_pivot)
+		return
 	if _setup_model_visual("res://assets/models/enemy_assassin.glb"):
 		_build_blades()
 		return

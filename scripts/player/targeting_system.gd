@@ -79,6 +79,7 @@ func _ready() -> void:
 	_name_label.outline_modulate = Color(0.05, 0.03, 0.08)
 	_name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_name_label.no_depth_test = true
+	UiTheme.label3d(_name_label)
 	add_child(_name_label)
 
 	_set_marker_visible(false)
@@ -112,7 +113,7 @@ func _process(delta: float) -> void:
 	var head := current.nameplate_height()
 	_bar.global_position = pos + Vector3(0, head, 0)
 	_name_label.global_position = pos + Vector3(0, head + 0.2, 0)
-	_name_label.text = current.display_name
+	_name_label.text = current.display_name if current.level <= 1 else "%s   Lv %d" % [current.display_name, current.level]
 	if current is AshveinColossus or current is ShatteredVessel:
 		_name_label.modulate = Color(1.0, 0.6, 0.3)
 	elif current.is_elite:

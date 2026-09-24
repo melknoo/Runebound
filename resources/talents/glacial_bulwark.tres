@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"glacial_bulwark"
+display_name = "Glacial Bulwark"
+branch = 2
+tier = 2
+max_rank = 1
+stat = &""
+per_rank = 0.0
+power = &"glacial_bulwark"
+description = "Enemies that strike your Runic Guard are Chilled."

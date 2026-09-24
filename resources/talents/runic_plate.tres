@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"runic_plate"
+display_name = "Runic Plate"
+branch = 2
+tier = 0
+max_rank = 3
+stat = &"max_hp"
+per_rank = 15.0
+power = &""
+description = "+{value} maximum health."

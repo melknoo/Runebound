@@ -14,6 +14,7 @@ var _telegraph_disc: MeshInstance3D
 
 
 func _init() -> void:
+	xp_value = 45
 	display_name = "Stonehulk"
 	max_health = 140.0
 	move_speed = 2.2
@@ -21,7 +22,22 @@ func _init() -> void:
 	stagger_resist = true
 
 
+const RIG_PATH := "res://assets/models/chars/stonehulk.glb"
+
+
 func _build_body() -> void:
+	var rig_mesh := _setup_rigged_visual(RIG_PATH, "stonehulk", {
+		"idle": &"idle", "run": &"run", "run_speed": move_speed,
+		"states": {AIState.WINDUP: &"slam", AIState.STAGGER: &"stagger", AIState.CHASE: &"@loco",
+			AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+	}, ArtKit.color("palettes.stonehulk.eyes"))
+	if rig_mesh != null:
+		# The slam clip animates the arms; the old pivot tweens run on an
+		# invisible stand-in (gameplay timing untouched).
+		_arms_pivot = Node3D.new()
+		_arms_pivot.name = "ArmsPivotStandIn"
+		visual.add_child(_arms_pivot)
+		return
 	if _setup_model_visual("res://assets/models/enemy_brute.glb"):
 		_build_arms()
 		return

@@ -2,8 +2,12 @@ extends Node
 ## Autoload "SaveGame": versioned JSON persistence for gear and world position.
 ## Corrupt or missing saves always fall back to a fresh start - never crash.
 
-const VERSION := 1
+const VERSION := 2  # v2 (M07): progression; v1 saves migrate on load
 const DEBOUNCE := 2.0
+## Command-line flags (after `--`) that mark an automated capture/perf run.
+const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
+const TEST_SAVE_PATH := "user://capture_save.json"
+const TEST_RUN_SEED := 1207
 
 ## Overridable so tests can run against a scratch file without touching
 ## the real save.
@@ -17,10 +21,33 @@ var _loaded_data: Dictionary = {}
 
 
 func _ready() -> void:
+	# Autoloads are ready before the first zone builds, so this is the only
+	# place that keeps automated runs off the real save from the very first
+	# frame and makes randf()-driven layout (rock yaw, spawn scatter) repeatable
+	# for before/after captures.
+	var custom_save := ""
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--save="):
+			custom_save = arg.trim_prefix("--save=")  # debugging: play a copied save
+	if custom_save != "":
+		save_path = custom_save
+	elif is_test_run():
+		save_path = TEST_SAVE_PATH
+		if FileAccess.file_exists(save_path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
+		seed(TEST_RUN_SEED)
 	_loaded_data = _read_file()
 	if _loaded_data.has("zone"):
 		current_zone = _loaded_data["zone"]
 	flags = _loaded_data.get("flags", {})
+
+
+static func is_test_run() -> bool:
+	for arg in OS.get_cmdline_user_args():
+		for flag in TEST_RUN_FLAGS:
+			if arg == flag or arg.begins_with(flag + "="):
+				return true
+	return false
 
 
 func set_flag(flag: StringName) -> void:
@@ -86,6 +113,7 @@ func restore_player(player: Player) -> void:
 	for slot_key: String in _loaded_data.get("equipped", {}):
 		var item := ItemData.from_dict(_loaded_data["equipped"][slot_key])
 		player.equipment.equipped[int(slot_key) as ItemData.Slot] = item
+	player.progression.from_dict(_loaded_data.get("progression", {}))
 	player.equipment._recompute()
 	player.equipment.changed.emit()
 
@@ -98,6 +126,9 @@ func _collect() -> Dictionary:
 			(data["inventory"] as Array).append(item.to_dict())
 		for slot: ItemData.Slot in player.equipment.equipped:
 			data["equipped"][str(int(slot))] = (player.equipment.equipped[slot] as ItemData).to_dict()
+		data["progression"] = player.progression.to_dict()
+	elif _loaded_data.has("progression"):
+		data["progression"] = _loaded_data["progression"]  # no player in this scene: keep it
 	_loaded_data = data
 	return data
 
@@ -130,7 +161,17 @@ func _read_file() -> Dictionary:
 		push_warning("SaveGame: corrupt save ignored")
 		return {}
 	var data := parsed as Dictionary
-	if int(data.get("version", -1)) != VERSION:
+	return migrate(data)
+
+
+## Brings an older save up to VERSION; unknown versions start fresh.
+static func migrate(data: Dictionary) -> Dictionary:
+	var version := int(data.get("version", -1))
+	if version == 1:  # M07: add progression (level 1, no talents); gear and flags kept
+		data["progression"] = {"level": 1, "xp": 0, "talents": {}}
+		data["version"] = 2
+		version = 2
+	if version != VERSION:
 		push_warning("SaveGame: incompatible save version ignored")
 		return {}
 	return data

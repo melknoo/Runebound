@@ -10,6 +10,8 @@ enum Style { HYBRID, NATIVE_PIXEL, LOW_RES }
 const POST_SHADER := preload("res://shaders/pixel_post.gdshader")
 
 var style: Style = Style.HYBRID
+## Zone grading (M06). Null = the original hybrid values.
+var look: ZoneLook = null
 
 var _lab_root: Node
 var _world: Node3D
@@ -65,9 +67,33 @@ func apply_style(new_style: Style) -> void:
 		Style.HYBRID:
 			_exit_low_res()
 			_post_rect.visible = true
-			mat.set_shader_parameter(&"levels", 14.0)
-			mat.set_shader_parameter(&"dither_strength", 0.02)
-			mat.set_shader_parameter(&"saturation_boost", 1.06)
+			mat.set_shader_parameter(&"levels", look.post_levels if look != null else 14.0)
+			mat.set_shader_parameter(&"dither_strength", look.post_dither if look != null else 0.02)
+			mat.set_shader_parameter(&"saturation_boost", look.post_saturation if look != null else 1.06)
+	_apply_grading(mat)
+
+
+## Neutral unless a ZoneLook is set; grading stays on across styles so the
+## A/B comparison keys only swap the pixel technique.
+func _apply_grading(mat: ShaderMaterial) -> void:
+	var has := look != null
+	mat.set_shader_parameter(&"lift", _rgb(look.lift) if has else Vector3.ZERO)
+	mat.set_shader_parameter(&"gain", _rgb(look.gain) if has else Vector3.ONE)
+	mat.set_shader_parameter(&"split_shadows", _rgb(look.split_shadows) if has else Vector3(0.5, 0.5, 0.5))
+	mat.set_shader_parameter(&"split_highlights", _rgb(look.split_highlights) if has else Vector3(0.5, 0.5, 0.5))
+	mat.set_shader_parameter(&"split_amount", look.split_amount if has else 0.0)
+	mat.set_shader_parameter(&"vignette", look.vignette if has else 0.0)
+	# Luma-banded posterize only for ZoneLook zones in the hybrid style.
+	mat.set_shader_parameter(&"luma_quantize", has and look.luma_quantize and style == Style.HYBRID)
+
+
+func apply_look(new_look: ZoneLook) -> void:
+	look = new_look
+	apply_style(style)
+
+
+static func _rgb(c: Color) -> Vector3:
+	return Vector3(c.r, c.g, c.b)
 
 
 func _enter_low_res() -> void:

@@ -26,5 +26,11 @@ spend it. Rhythm: BUILD → SPEND. Max Resonance 100.
 - Lightning loop: Storm Step through a pack → Chain Spark the Shocked group.
 - Control loop: Fracture Rune ahead of a chase → kite Chilled enemies into it.
 
-## Planned (M03+): Runic Guard (barrier, F-alternative), Resonance Burst
-(finisher), specializations Storm / Ember / Runic Warden.
+## M07: specializations and abilities 7-8 (talent unlocks)
+The talent tree has three branches, Storm, Ember and Runic Warden
+(PROGRESSION_DESIGN.md). The Runic Warden branch unlocks two abilities:
+
+| Key | Ability | Element | Role | Resonance |
+|---|---|---|---|---|
+| 5 | Runic Guard | — | barrier: absorbs 40 + level for 4 s, 12 s cooldown (Glacial Bulwark chills attackers) | −30 |
+| 6 | Resonance Burst | Physical | finisher nova, 4 m, 0.7 damage per point spent, heavy stagger | all (≥ 50) |

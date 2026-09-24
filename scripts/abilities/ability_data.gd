@@ -4,6 +4,8 @@ extends Resource
 
 @export var id: StringName = &""
 @export var display_name: String = ""
+## One-line player-facing summary, shown in the HUD tooltip (inventory open).
+@export var description: String = ""
 @export var cooldown: float = 1.0
 @export var resonance_cost: float = 0.0
 @export var resonance_gain_per_hit: float = 0.0

@@ -52,7 +52,7 @@ func damage_taken_multiplier() -> float:
 
 func apply_from_hit(hit: HitInfo) -> void:
 	if hit.applies_burn:
-		apply_burn()
+		apply_burn(BURN_DPS * hit.burn_mult)
 	if hit.applies_chill:
 		apply_chill()
 	if hit.applies_shock:

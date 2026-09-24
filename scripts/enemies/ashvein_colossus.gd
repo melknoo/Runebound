@@ -23,11 +23,13 @@ var _charge_cd: float = 3.0
 var _charge_dir: Vector3 = Vector3.FORWARD
 var _charge_hit_done: bool = false
 var _arms_pivot: Node3D
+var _veins: StandardMaterial3D
 var _telegraph: MeshInstance3D
 var _fire_timer: float = 0.0
 
 
 func _init() -> void:
+	xp_value = 600
 	display_name = "Ashvein Colossus"
 	max_health = 600.0
 	move_speed = 2.6
@@ -57,7 +59,39 @@ func _ready() -> void:
 	)
 
 
+const RIG_PATH := "res://assets/models/chars/ashvein_colossus.glb"
+const VEIN_ENERGY := 0.6
+const VEIN_ENRAGED := 2.4
+
+
 func _build_body() -> void:
+	var rig_mesh := _setup_rigged_visual(RIG_PATH, "ashvein_colossus", {
+		"idle": &"idle", "run": &"run", "run_speed": move_speed,
+		"states": {
+			AIState.WINDUP: func() -> StringName: return &"slam" if _attack_kind == "slam" else &"charge_windup",
+			AIState.ATTACK: &"~charge",
+			AIState.RECOVER: func() -> StringName: return &"~stun" if _attack_kind == "charge" else &"",
+			AIState.STAGGER: &"stagger", AIState.CHASE: &"@loco", AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+		# enraged slams wind up faster (0.65 s): the clip follows the timing
+		"rate": func(clip: StringName) -> float: return 0.9 / _slam_windup if clip == &"slam" else 1.0,
+	}, ArtKit.color("palettes.ashvein.eyes"))
+	if rig_mesh != null:
+		visual.scale = Vector3.ONE * 1.7
+		base_visual_scale = visual.scale
+		# Veins + back crystals (surface 2): code-owned, never hit-flashed,
+		# emission always on (the enrage ramps energy only).
+		_veins = flat_material(ArtKit.color("palettes.ashvein.vein"))
+		_veins.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_veins.emission_enabled = true
+		_veins.emission = ArtKit.color("palettes.ashvein.vein")
+		_veins.emission_energy_multiplier = VEIN_ENERGY
+		_veins.disable_fog = true
+		_veins.set_meta(ArtKit.KEEP_EMISSION, true)
+		rig_mesh.set_surface_override_material(2, _veins)
+		_arms_pivot = Node3D.new()
+		_arms_pivot.name = "ArmsPivotStandIn"
+		visual.add_child(_arms_pivot)
+		return
 	if not _setup_model_visual("res://assets/models/enemy_brute.glb"):
 		var torso := MeshInstance3D.new()
 		var torso_mesh := BoxMesh.new()
@@ -178,25 +212,9 @@ func _start_charge() -> void:
 	_enter_state(AIState.WINDUP)
 	_charge_dir = dir_to_player()
 	visual.rotation.y = atan2(-_charge_dir.x, -_charge_dir.z)
-	# Line telegraph: stretched pixel strip along the charge lane.
-	_telegraph = MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(3.0, CHARGE_MAX)
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	if ResourceLoader.exists("res://assets/vfx/telegraph.png"):
-		mat.albedo_texture = load("res://assets/vfx/telegraph.png")
-	mat.albedo_color = Color(1.0, 0.35, 0.2, 0.3)
-	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	mat.disable_receive_shadows = true
-	plane.material = mat
-	_telegraph.mesh = plane
-	get_tree().current_scene.add_child(_telegraph)
-	_telegraph.global_position = Vector3(global_position.x, 0.06, global_position.z) + _charge_dir * CHARGE_MAX * 0.5
-	_telegraph.rotation.y = atan2(-_charge_dir.x, -_charge_dir.z)
-	var tw := _telegraph.create_tween()
-	tw.tween_property(mat, "albedo_color:a", 0.55, 0.8)
+	# Line telegraph: the shared threat language as a lane, filling from the
+	# colossus to the far end over the 0.8 s charge windup (see WINDUP above).
+	_telegraph = VFX.telegraph_lane(get_tree().current_scene, global_position, _charge_dir, CHARGE_MAX, 3.0, 0.8)
 	Sfx.play("charge_horn", global_position, 0.0)
 
 
@@ -251,6 +269,10 @@ func _enrage() -> void:
 	enraged = true
 	move_speed = 3.4
 	_slam_windup = 0.65
+	if _veins != null:
+		create_tween().tween_property(_veins, "emission_energy_multiplier", VEIN_ENRAGED, 0.4)
+	if animator != null and ai_state == AIState.CHASE:
+		animator.play_one_shot(&"roar")
 	var aura := OmniLight3D.new()
 	aura.light_color = Color(1.0, 0.3, 0.15)
 	aura.light_energy = 2.0

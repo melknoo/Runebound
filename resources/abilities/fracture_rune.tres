@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"fracture_rune"
 display_name = "Fracture Rune"
+description = "Frost rune placed at your aim. Detonates after arming and Chills."
 cooldown = 6.0
 resonance_cost = 0.0
 resonance_gain_per_hit = 0.0

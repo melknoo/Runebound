@@ -1,8 +1,9 @@
 class_name DebugOverlay
 extends CanvasLayer
-## F3 toggles the panel. Hotkeys work while the panel is open:
+## F1 toggles the panel. Hotkeys work while the panel is open:
 ## 1 spawn rusher, 2 spawn caster, 3 kill all, H heal, G god mode,
-## R reset lab, C reset cooldowns, T stress test, V cycle visual style.
+## R reset lab, C reset cooldowns, T stress test, V cycle visual style,
+## O character outline (LookDev; on is the Gate-0 look, off for comparison).
 
 var lab: Node  # CombatLab, untyped to avoid a load cycle
 
@@ -65,6 +66,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			lab.call(&"stress_test")
 		KEY_V:
 			lab.call(&"cycle_style")
+		KEY_O:
+			LookDev.apply({&"outline": not bool(LookDev.get_value(&"outline", true))})
 
 
 func _process(delta: float) -> void:
@@ -78,10 +81,11 @@ func _process(delta: float) -> void:
 		worst = maxf(worst, t)
 	var player: Player = lab.get(&"player")
 	var god_text := "ON" if (player != null and player.god_mode) else "off"
-	_info.text = "FPS %d  |  worst frame %.1f ms\nenemies: %d   style: %s   god: %s\n\n[1] rusher  [2] caster  [3] kill all\n[4] assassin  [5] brute  [6] elite\n[7] drop item  [8] drop legendary  [9] wipe save\n[H] heal  [G] god  [R] reset  [C] cooldowns\n[T] stress test  [V] style  [I] inventory" % [
+	_info.text = "FPS %d  |  worst frame %.1f ms\nenemies: %d   style: %s   god: %s\n\n[1] rusher  [2] caster  [3] kill all\n[4] assassin  [5] brute  [6] elite\n[7] drop item  [8] drop legendary  [9] fresh start\n[H] heal  [G] god  [R] reset  [C] cooldowns\n[T] stress test  [V] style  [I] inventory\n[O] outline %s" % [
 		Engine.get_frames_per_second(),
 		worst * 1000.0,
 		lab.call(&"enemy_count"),
 		lab.get(&"style_name"),
 		god_text,
+		"ON" if bool(LookDev.get_value(&"outline", true)) else "off",
 	]

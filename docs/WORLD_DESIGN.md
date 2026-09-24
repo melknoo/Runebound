@@ -34,7 +34,8 @@ runes carry all light — telegraphs must read in the dark. Deep drone ambience.
 Gated behind `colossus_defeated` (portal in the Highlands boss arena; shortcut
 portal appears in Runehold). 50x72, four sections with door-gap dividers:
 1. **Entry hall**: rusher/caster/warden camp.
-2. **Broken gallery**: raised side platforms with casters (ramp east),
+2. **Broken gallery**: raised side platforms with casters (ramp up to the east
+   platform from its west edge, x 2.8 to 8; west platform is ranged-only),
    assassins below; west alcove: warden-guarded chest (rare bias).
 3. **Rune vault**: elite camp + second chest.
 4. **Boss chamber**: torch ring, sealed exit portal.
@@ -45,7 +46,7 @@ vs. the Colossus' orange). Two phases:
 - **P1 Construct**: telegraphed slams, 3 shadow runes around the player
   (1.2s arm → r2.5 blast), summons 2 rusher adds (~20s, max 3).
 - **P2 Shatter (<50%)**: 1s invulnerable transition burst, then blinks
-  between 5 arena anchors, 3-bolt rune fans, 4 shadow runes, expanding hazard
+  between 5 arena anchors (centre + 7 x 3.5 m ellipse inside the chamber), 3-bolt rune fans, 4 shadow runes, expanding hazard
   ring from the arena center (~10s) — pure timing dodge.
 Death: legendary + 2 rares, `spire_cleansed` flag, exit unsealed. Once
 cleansed the Vessel stays dead (world flag).
@@ -57,4 +58,12 @@ Telegraphed full-circle spin (r2.4).
 
 ## Rules going forward
 Every zone must answer: where does the player go next (readable path), what
-rewards curiosity (detours), what escalates (camp order). Density beats size.
+rewards curiosity (detours), what escalates (camp order).
+
+**Open, but dense** (changed 2026-09-23, see ROADMAP M08/M09): the world
+becomes several large, freely explorable zones (~300–500 m) linked through
+Runehold, not one seamless streamed world. Size is allowed, emptiness is not:
+there should be a point of interest roughly every 50–80 m, several routes
+instead of a single corridor, and landmarks visible from far away for
+orientation. The current layouts above are the vertical-slice versions;
+Ashen Highlands gets rebuilt as an open zone in M08.

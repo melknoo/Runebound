@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"unbroken"
+display_name = "Unbroken"
+branch = 2
+tier = 3
+max_rank = 1
+stat = &""
+per_rank = 0.0
+power = &"unbroken"
+description = "Dodging through an attack grants a 15-health barrier (8 s cooldown)."

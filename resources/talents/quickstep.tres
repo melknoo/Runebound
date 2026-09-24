@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"quickstep"
+display_name = "Quickstep"
+branch = 0
+tier = 0
+max_rank = 2
+stat = &"storm_cd_pct"
+per_rank = 12.0
+power = &""
+description = "Storm Step cooldown -{value}%."

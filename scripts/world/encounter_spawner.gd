@@ -5,6 +5,8 @@ extends Node3D
 
 signal cleared  # every spawned enemy died
 
+const CLEAR_XP_PER_ENEMY := 15  # M07: camp bonus on top of the kills
+
 var composition: Array[String] = ["rusher", "rusher"]
 var trigger_radius: float = 13.0
 var elite_kind: int = -1  # forwarded when composition contains "elite"
@@ -40,5 +42,9 @@ func trigger(zone: ZoneBase) -> void:
 			_alive -= 1
 			if _alive <= 0:
 				cleared.emit()
+				var bonus := CLEAR_XP_PER_ENEMY * composition.size()
+				if is_instance_valid(zone) and zone.player != null and is_instance_valid(zone.player):
+					zone.player.progression.add_xp(bonus)
+					zone.hud.toast("Camp cleared  +%d XP" % bonus, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
 		)
 	Sfx.play("telegraph", global_position, -6.0, 0.1, 0.7)

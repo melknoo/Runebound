@@ -27,6 +27,14 @@ SaveGame="*res://scripts/systems/save_system.gd"
 window/size/viewport_width=1600
 window/size/viewport_height=900
 
+[importer_defaults]
+
+texture={
+"compress/mode": 0,
+"detect_3d/compress_to": 0,
+"mipmaps/generate": true
+}
+
 [input]
 
 move_forward={
@@ -127,3 +135,7 @@ debug_toggle={
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
+lights_and_shadows/directional_shadow/size=2048
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
+anti_aliasing/screen_space_roughness_limiter/enabled=false
+environment/glow/upscale_mode=0

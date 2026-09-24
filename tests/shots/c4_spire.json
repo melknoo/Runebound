@@ -1,0 +1,16 @@
+{
+	"zone": "res://scenes/shattered_spire.tscn",
+	"out": "captures_shots/c4_spire",
+	"comment": "M06 C4 Shattered Spire kit (interior look). Run again with `legacy` for before/after pairs.",
+	"shots": [
+		{"name": "entry_hall", "player": [0, 0.2, 26], "yaw": 0.0, "pitch": -0.25, "zoom": 7.0, "settle": 0.6},
+		{"name": "hall_camp", "player": [-2, 0.2, 18], "yaw": 0.2, "pitch": -0.35, "zoom": 6.0,
+			"spawn": [{"id": "rusher", "at": [0, 0.2, 14], "freeze": true, "face": 3.14},
+			          {"id": "caster", "at": [3, 0.2, 12.5], "freeze": true, "face": 3.14}], "settle": 0.4},
+		{"name": "gallery", "player": [-3, 0.2, 6.5], "yaw": 0.0, "pitch": -0.3, "zoom": 8.0, "settle": 0.4},
+		{"name": "vault_pillar", "player": [-6, 0.2, -13], "yaw": 0.9, "pitch": -0.2, "zoom": 5.5, "settle": 0.4},
+		{"name": "boss_chamber", "player": [0, 0.2, -21], "yaw": 0.0, "pitch": -0.35, "zoom": 7.0, "settle": 0.4},
+		{"name": "wall_arches", "player": [-19, 0.2, 20], "yaw": 1.5708, "pitch": 0.05, "zoom": 5.0, "settle": 0.4},
+		{"name": "overview", "player": [0, 0.2, 0], "yaw": 0.2, "pitch": -0.9, "zoom": 16.0, "settle": 0.4}
+	]
+}

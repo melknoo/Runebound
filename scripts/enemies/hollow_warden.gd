@@ -16,6 +16,7 @@ var _telegraph_disc: MeshInstance3D
 
 
 func _init() -> void:
+	xp_value = 40
 	display_name = "Hollow Warden"
 	max_health = 90.0
 	move_speed = 2.8
@@ -23,7 +24,17 @@ func _init() -> void:
 	stagger_resist = true
 
 
+const RIG_PATH := "res://assets/models/chars/hollow_warden.glb"
+
+
 func _build_body() -> void:
+	# The spin stays gameplay-driven on Visual; the clips add brace and arms.
+	if _setup_rigged_visual(RIG_PATH, "hollow_warden", {
+		"idle": &"idle", "run": &"run", "run_speed": move_speed,
+		"states": {AIState.WINDUP: &"windup", AIState.RECOVER: &"spin", AIState.STAGGER: &"stagger",
+			AIState.CHASE: &"@loco", AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+	}, ArtKit.color("palettes.hollow_warden.core")) != null:
+		return
 	if _setup_model_visual("res://assets/models/enemy_warden.glb"):
 		return
 	var torso := MeshInstance3D.new()
@@ -99,7 +110,7 @@ func _spin() -> void:
 	var tw := visual.create_tween()
 	tw.tween_property(visual, "rotation:y", visual.rotation.y + TAU + 0.7, 0.3) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	VFX.ground_ring(get_tree().current_scene, global_position, Color(0.5, 0.95, 0.85, 0.9), SPIN_RADIUS, 0.3)
+	VFX.ground_ring(get_tree().current_scene, global_position, ArtKit.color("color_roles.physical.body"), SPIN_RADIUS, 0.3)
 	Sfx.play("swing", global_position, -4.0, 0.1, 0.7)
 	var space := get_world_3d().direct_space_state
 	var shape := SphereShape3D.new()

@@ -1,0 +1,26 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"out": "captures_shots/b4_vfx",
+	"comment": "M06 B4: threat vs player VFX readability (ART_BIBLE sections 5 + 10). Telegraph shots catch the fill mid-way.",
+	"shots": [
+		{"name": "telegraph_on_ember_ground", "player": [0, 0.2, 24], "yaw": 0.55, "pitch": -0.5, "zoom": 5.2,
+			"spawn": [{"id": "rusher", "at": [0.4, 0.2, 22.4], "face": 3.14}],
+			"actions": [{"wait": 0.05}], "settle": 0.0},
+		{"name": "telegraph_under_player_vfx", "player": [0, 0.2, 24], "yaw": 0.3, "pitch": -0.45, "zoom": 5.6,
+			"spawn": [{"id": "rusher", "at": [0.4, 0.2, 22.4], "face": 3.14},
+			          {"id": "rusher", "at": [-2.5, 0.2, 18.5], "freeze": true, "face": 3.14}],
+			"actions": [{"do": "fracture_rune"}, {"do": "chain_spark"}, {"wait": 0.05}], "settle": 0.0},
+		{"name": "chain_spark_arcs", "player": [0, 0.2, 26], "yaw": 0.45, "pitch": -0.25, "zoom": 5.0,
+			"spawn": [{"id": "rusher", "at": [0.5, 0.2, 20], "freeze": true, "face": 3.14},
+			          {"id": "rusher", "at": [3.0, 0.2, 17.5], "freeze": true, "face": 3.14},
+			          {"id": "rusher", "at": [-1.5, 0.2, 15.5], "freeze": true, "face": 3.14}],
+			"actions": [{"wait": 0.2}, {"do": "reset"}, {"do": "chain_spark"}, {"wait": 0.04}], "settle": 0.0},
+		{"name": "fracture_rune_arming", "player": [0, 0.2, 26], "yaw": 0.0, "pitch": -0.55, "zoom": 5.0,
+			"actions": [{"wait": 0.2}, {"do": "reset"}, {"do": "fracture_rune"}, {"wait": 0.6}], "settle": 0.0},
+		{"name": "earthbreaker_ring", "player": [0, 0.2, 24], "yaw": 0.5, "pitch": -0.5, "zoom": 5.6,
+			"actions": [{"wait": 0.2}, {"do": "reset"}, {"do": "earthbreaker"}, {"wait": 0.62}], "settle": 0.0},
+		{"name": "duskweaver_bolt", "player": [0, 0.2, 26], "yaw": -0.6, "pitch": -0.1, "zoom": 3.6,
+			"spawn": [{"id": "caster", "at": [4.5, 0.2, 18.5], "face": 2.6}],
+			"actions": [{"wait": 1.35}], "settle": 0.0}
+	]
+}

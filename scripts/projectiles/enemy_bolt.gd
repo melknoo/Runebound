@@ -27,19 +27,7 @@ func _ready() -> void:
 	col.shape = sphere
 	add_child(col)
 
-	var core := MeshInstance3D.new()
-	var mesh := SphereMesh.new()
-	mesh.radius = 0.22
-	mesh.height = 0.44
-	var mat := StandardMaterial3D.new()
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.albedo_color = Color(0.8, 0.4, 1.0)
-	mat.emission_enabled = true
-	mat.emission = Color(0.7, 0.3, 1.0)
-	mat.emission_energy_multiplier = 2.2
-	mesh.material = mat
-	core.mesh = mesh
-	add_child(core)
+	build_visual(self)
 
 	var light := OmniLight3D.new()
 	light.light_color = Color(0.75, 0.4, 1.0)
@@ -50,6 +38,54 @@ func _ready() -> void:
 
 	body_entered.connect(func(_b: Node3D) -> void: _pop(null))
 	area_entered.connect(_on_area_entered)
+
+
+static var _core_mesh: SphereMesh
+static var _halo_mesh: SphereMesh
+
+
+## M06 void language: white-violet core inside a violet halo plus a short
+## particle wake, fog-exempt so the bolt reads across the whole arena. Meshes
+## are shared (VFX.warm_up draws one at zone start, so the first bolt of a
+## fight never compiles its shaders).
+static func build_visual(parent: Node3D) -> void:
+	if _core_mesh == null:
+		_core_mesh = _sphere(0.13, ArtKit.color("color_roles.void.core", Color(0.91, 0.78, 1.0)), false)
+		_halo_mesh = _sphere(0.24, Color(ArtKit.color("color_roles.void.body", Color(0.63, 0.38, 0.91)), 0.55), true)
+	for mesh: SphereMesh in [_core_mesh, _halo_mesh]:
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		parent.add_child(mi)
+	VFX.attach_trail(parent, "ember", [ArtKit.color("color_roles.void.core"), ArtKit.color("color_roles.void.body"),
+		Color(ArtKit.color("color_roles.void.edge"), 0.0)] as Array[Color], 24, 0.12)
+
+
+static func _sphere(radius: float, color: Color, halo: bool) -> SphereMesh:
+	var mesh := SphereMesh.new()
+	mesh.radius = radius
+	mesh.height = radius * 2.0
+	mesh.radial_segments = 8
+	mesh.rings = 4
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = color
+	mat.disable_fog = true
+	if halo:
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	else:
+		mat.emission_enabled = true
+		mat.emission = color
+		mat.emission_energy_multiplier = 2.6
+	mesh.material = mat
+	return mesh
+
+
+## Shutdown hygiene (GameFeel._exit_tree via VFX.clear_caches).
+static func clear_meshes() -> void:
+	_core_mesh = null
+	_halo_mesh = null
 
 
 func _physics_process(delta: float) -> void:

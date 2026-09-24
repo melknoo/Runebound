@@ -368,6 +368,40 @@ def ui_denied():
     save(pad(a, delay(b, 0.08)) * 0.5, "ui_denied_01")
 
 
+# --- M07 (appended last: the shared rng keeps every earlier sound identical) ---
+
+def level_up():
+    """Rising pentatonic run into a held bell pair: brighter and longer than
+    the legendary drop, never mistaken for a pickup."""
+    notes = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5]
+    parts = []
+    for n, f in enumerate(notes):
+        tone = np.sin(2 * np.pi * f * t(0.4)) * env_exp(0.4, 0.16)
+        tone += np.sin(2 * np.pi * f * 3.01 * t(0.4)) * env_exp(0.4, 0.06) * 0.18   # bell partial
+        parts.append(delay(tone, n * 0.065))
+    hold = (np.sin(2 * np.pi * 1046.5 * t(1.1)) + 0.6 * np.sin(2 * np.pi * 1318.5 * t(1.1))) * env_exp(1.1, 0.45)
+    shimmer = highpass(noise(1.0), 0.65) * env_exp(1.0, 0.35) * 0.12
+    save(pad(*parts, delay(hold, 0.36), delay(shimmer, 0.3)) * 0.75, "level_up_01")
+
+
+def runic_guard():
+    """A ward snapping shut: low whoomp, glassy rune partials, airy swell."""
+    whoomp = sine_sweep(0.35, 190, 80) * env_exp(0.35, 0.12)
+    glass = sum(np.sin(2 * np.pi * f * t(0.9)) * env_exp(0.9, d) * g
+                for f, d, g in ((1210.0, 0.35, 0.35), (1815.0, 0.25, 0.22), (2420.0, 0.18, 0.12)))
+    air = highpass(noise(0.6), 0.5) * np.clip(t(0.6) / 0.2, 0, 1) * env_exp(0.6, 0.25) * 0.25
+    save(pad(whoomp, delay(glass, 0.03), air), "runic_guard_01")
+
+
+def resonance_burst():
+    """Heavy thump plus a bright chord bloom (the Resonance let go at once)."""
+    thump = sine_sweep(0.5, 120, 40) * env_exp(0.5, 0.16)
+    crack = highpass(noise(0.12), 0.35) * env_exp(0.12, 0.03) * 0.8
+    chord = sum(np.sin(2 * np.pi * f * t(1.0)) * env_exp(1.0, 0.3) * 0.25 for f in (587.33, 739.99, 880.0, 1174.7))
+    tail = lowpass(noise(0.9), 0.08) * env_exp(0.9, 0.3) * 0.6
+    save(pad(thump, crack, delay(chord, 0.02), tail), "resonance_burst_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -386,4 +420,5 @@ if __name__ == "__main__":
     spire_drone_loop(); vessel_roar(); shatter_burst()
     for i in range(1, 3):
         boss_blink(i)
+    level_up(); runic_guard(); resonance_burst()
     print("done.")

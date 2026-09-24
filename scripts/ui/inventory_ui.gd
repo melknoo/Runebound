@@ -24,6 +24,7 @@ func setup(p: Player) -> void:
 func _build() -> void:
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	UiTheme.apply(_root)  # M06: pixel fonts, framed panel, themed buttons
 	add_child(_root)
 
 	var dim := ColorRect.new()
@@ -35,12 +36,7 @@ func _build() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(960, 540)
 	panel.position = Vector2(-480, -270)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.09, 0.07, 0.13, 0.97)
-	style.border_color = Color(0.35, 0.75, 0.72)
-	style.set_border_width_all(2)
-	style.set_content_margin_all(16)
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", UiTheme.nine("frame.png", 16, 18))
 	_root.add_child(panel)
 
 	var columns := HBoxContainer.new()
@@ -66,7 +62,9 @@ func _column(parent: Control, title: String, width: float) -> VBoxContainer:
 	parent.add_child(col)
 	var label := Label.new()
 	label.text = title
-	label.add_theme_color_override("font_color", Color(0.5, 0.85, 0.8))
+	label.add_theme_font_override("font", UiTheme.font(true))
+	label.add_theme_font_size_override("font_size", UiTheme.TITLE)
+	label.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.body", Color(0.5, 0.85, 0.8)))
 	col.add_child(label)
 	return col
 
@@ -79,6 +77,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func toggle() -> void:
 	visible = not visible
 	player.input_locked = visible
+	var zone := get_parent() as ZoneBase
+	if visible and zone != null and zone.talent_ui != null and zone.talent_ui.visible:
+		zone.talent_ui.toggle()  # one panel at a time
+		player.input_locked = true
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if visible else Input.MOUSE_MODE_CAPTURED
 	if visible:
@@ -88,15 +90,16 @@ func toggle() -> void:
 func _refresh() -> void:
 	if not visible:
 		return
-	# Equipped column: fixed 3 slots.
+	# Equipped column: all 7 slots in body order.
 	for child in _equip_column.get_children().slice(1):
 		child.queue_free()
-	for slot: ItemData.Slot in [ItemData.Slot.WEAPON, ItemData.Slot.ARMOR, ItemData.Slot.RELIC]:
+	for slot: ItemData.Slot in ItemData.SLOT_ORDER:
 		var item: ItemData = player.equipment.equipped.get(slot)
 		var btn := Button.new()
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if item != null:
 			btn.text = "%s: %s" % [ItemData.slot_name(slot), item.display_name]
+			btn.icon = UiTheme.item_icon(item)
 			btn.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 			btn.pressed.connect(_select.bind(item))
 		else:
@@ -112,7 +115,8 @@ func _refresh() -> void:
 	for item in player.equipment.inventory:
 		var btn := Button.new()
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.text = "[%s] %s" % [ItemData.slot_name(item.slot).left(1), item.display_name]
+		btn.text = item.display_name
+		btn.icon = UiTheme.item_icon(item)
 		btn.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 		btn.pressed.connect(_select.bind(item))
 		_list_box.add_child(btn)
@@ -132,8 +136,8 @@ func _render_detail() -> void:
 		return
 	var item := _selected
 	_add_detail_label(item.display_name, ItemData.rarity_color(item.rarity))
-	_add_detail_label("%s · %s" % [ItemData.rarity_name(item.rarity), ItemData.slot_name(item.slot)],
-		Color(0.7, 0.7, 0.75))
+	_add_detail_label("%s · %s · Item Level %d" % [ItemData.rarity_name(item.rarity), ItemData.slot_name(item.slot),
+		item.item_level], Color(0.7, 0.7, 0.75))
 	for affix in item.affixes:
 		_add_detail_label("· " + String(affix["label"]), Color(0.85, 0.85, 0.9))
 	if item.legendary_text != "":
@@ -147,6 +151,9 @@ func _render_detail() -> void:
 			ItemData.rarity_color(equipped_same.rarity))
 		for affix in equipped_same.affixes:
 			_add_detail_label("· " + String(affix["label"]), Color(0.55, 0.55, 0.6))
+		# M07 compare: what equipping this would change, stat by stat.
+		for line: Array in compare_lines(item, equipped_same):
+			_add_detail_label(line[0], line[1])
 
 	if in_inventory:
 		var row := HBoxContainer.new()
@@ -167,6 +174,39 @@ func _render_detail() -> void:
 			_selected = null
 		)
 		row.add_child(drop_btn)
+
+
+const STAT_NAMES := {
+	&"damage_pct": ["%", " damage"], &"max_hp": ["", " maximum health"],
+	&"cooldown_pct": ["%", " cooldown reduction"], &"resonance_pct": ["%", " Resonance gained"],
+	&"move_pct": ["%", " movement speed"], &"crit_pct": ["%", " critical chance"],
+	&"ember_pierce": ["", " Ember Lance pierce"], &"chain_jumps": ["", " Chain Spark jump"],
+	&"cleave_radius_pct": ["%", " Rune Cleave area"], &"dodge_cd_pct": ["%", " dodge cooldown reduction"],
+	&"eb_cost_reduce": ["", " Earthbreaker cost reduction"], &"rune_arm_reduce": ["s", " faster rune arming"],
+}
+
+
+## [text, colour] per stat that differs between two items (green = gain).
+static func compare_lines(candidate: ItemData, current: ItemData) -> Array:
+	var totals := {}
+	for affix in candidate.affixes:
+		totals[affix["stat"]] = float(totals.get(affix["stat"], 0.0)) + float(affix["value"])
+	for affix in current.affixes:
+		totals[affix["stat"]] = float(totals.get(affix["stat"], 0.0)) - float(affix["value"])
+	var lines := []
+	for key: StringName in totals:
+		var delta := float(totals[key])
+		if absf(delta) < 0.01:
+			continue
+		var fmt: Array = STAT_NAMES.get(key, ["", " " + String(key)])
+		var amount := ("%+.1f" % delta) if absf(delta) < 1.0 else ("%+d" % roundi(delta))
+		lines.append([amount + fmt[0] + fmt[1], Color(0.45, 0.9, 0.5) if delta > 0.0 else Color(0.95, 0.4, 0.38)])
+	if candidate.legendary_id != current.legendary_id:
+		if candidate.legendary_id != &"":
+			lines.append(["+ legendary power: " + candidate.display_name, Color(1.0, 0.6, 0.25)])
+		if current.legendary_id != &"":
+			lines.append(["- loses legendary power: " + current.display_name, Color(0.95, 0.4, 0.38)])
+	return lines
 
 
 func _add_detail_label(text: String, color: Color, wrap: bool = false) -> void:

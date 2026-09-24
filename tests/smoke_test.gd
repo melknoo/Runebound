@@ -1,14 +1,24 @@
-﻿extends Node
+extends Node
 ## Headless smoke test: boots the Combat Lab and exercises every M01 system.
 ## Run: godot --headless --path . res://tests/smoke_test.tscn
 ## (a scene, not a --script MainLoop: autoloads must be active)
+
+## A hung run must fail instead of lingering: stale headless runs once kept
+## burning CPU for a day, which also slowed the iGPU (shared power budget).
+const WATCHDOG_SEC := 300.0
 
 var _failures: Array[String] = []
 var lab: CombatLab
 
 
 func _ready() -> void:
+	get_tree().create_timer(WATCHDOG_SEC, true, false, true).timeout.connect(_on_watchdog)
 	_run.call_deferred()
+
+
+func _on_watchdog() -> void:
+	printerr("  FAIL: smoke watchdog - run exceeded %d s" % int(WATCHDOG_SEC))
+	get_tree().quit(2)
 
 
 func _check(condition: bool, label: String) -> void:
@@ -41,6 +51,125 @@ func _run() -> void:
 	_check(lab.player != null, "player spawned")
 	_check(lab.camera_rig != null, "camera rig spawned")
 	_check(lab.enemy_count() == 3, "initial enemies spawned (3)")
+	# M06 C3: training grounds dressed from the Runehold kit, layout untouched.
+	var lab_bodies := lab.world.find_children("*", "StaticBody3D", true, false)
+	_check(lab.look != null and lab_bodies.size() == 14,
+		"training grounds: Runehold look, dressing adds no collision (%d bodies, layout had 14)" % lab_bodies.size())
+
+	# --- M06 rigs: animation follows gameplay timing, never the other way ---
+	var p_anim := lab.player.animator
+	_check(p_anim != null and p_anim.anim.has_animation(&"cleave_l") and p_anim.anim.has_animation(&"run"),
+		"runebreaker rig loads with idle/run/cleave clips")
+	if p_anim != null:
+		var cleave_len := lab.player.cleave.startup + lab.player.cleave.active + lab.player.cleave.recovery
+		_check(absf(p_anim.anim.get_animation(&"cleave_l").length - cleave_len) < 1.5 / 60.0,
+			"cleave clip length = startup + active + recovery (%.3f s)" % cleave_len)
+	var marauder: MeleeRusher = null
+	for e in lab.enemies_root.get_children():
+		if e is MeleeRusher:
+			marauder = e
+			break
+	if marauder != null and marauder.animator != null:
+		var m_anim := marauder.animator.anim
+		var attack_len := MeleeRusher.WINDUP_TIME + MeleeRusher.ATTACK_TIME + MeleeRusher.RECOVER_TIME
+		_check(absf(m_anim.get_animation(&"attack").length - attack_len) < 1.5 / 60.0,
+			"marauder attack clip = windup + strike + recover (%.2f s)" % attack_len)
+		_check(not marauder._flash_mats.has(marauder._axe_glow) and marauder._flash_mats.size() == 1,
+			"telegraph axe material is never in the hit-flash list")
+		marauder.apply_hitstop(0.2)
+		var pos_before := m_anim.current_animation_position
+		await _wait_frames(3)
+		_check(is_equal_approx(m_anim.current_animation_position, pos_before), "rig freezes during hitstop")
+		var body_mat: StandardMaterial3D = marauder._flash_mats[0]
+		marauder._flash_white()
+		await _wait_frames(8)
+		_check(body_mat.emission_enabled and is_equal_approx(body_mat.emission_energy_multiplier, 0.0),
+			"hit flash changes energy only (no shader-variant toggle)")
+	else:
+		_check(false, "marauder rig loads")
+
+	# --- M06 B4: one threat language; bursts never compile process shaders ---
+	var disc := VFX.telegraph_disc(lab, Vector3(0, 0, -30), 1.4, 0.3)
+	var disc_mat := (disc.mesh as PlaneMesh).material as ShaderMaterial
+	await _wait_frames(9)
+	var fill: float = disc_mat.get_shader_parameter(&"progress")
+	_check(disc_mat.shader == VFX.THREAT_SHADER and fill > 0.2 and fill < 0.9
+		and disc_mat.render_priority == VFX.THREAT_PRIORITY,
+		"enemy telegraph = threat shader with visible fill progress (%.2f), sorted on top" % fill)
+	var fx := VFX.burst(lab, Vector3(0, 1, -30), {"amount": 4, "lifetime": 0.2})
+	_check(fx is CPUParticles3D, "combat bursts are CPU particles by default")
+
+	# --- M06 B2: every ability has a clip at gameplay timing; layered player ---
+	if p_anim != null:
+		var missing: Array[String] = []
+		for clip: StringName in [&"cleave_r", &"dodge", &"ember", &"earthbreaker_rise", &"earthbreaker_impact",
+				&"storm_step", &"chain_spark", &"fracture_rune", &"flinch"]:
+			if not p_anim.anim.has_animation(clip):
+				missing.append(String(clip))
+		_check(missing.is_empty(), "runebreaker has a clip for every ability %s" % str(missing))
+		var swing_len := lab.player.cleave.startup + lab.player.cleave.active + lab.player.cleave.recovery
+		_check(missing.is_empty() and absf(p_anim.anim.get_animation(&"cleave_r").length - swing_len) < 1.5 / 60.0,
+			"cleave_r clip length = cleave timing")
+		var dodge_len := Player.DODGE_DURATION + Player.DODGE_RECOVERY
+		_check(missing.is_empty() and absf(p_anim.anim.get_animation(&"dodge").length - dodge_len) < 1.5 / 60.0,
+			"dodge clip = dash + recovery (%.2f s)" % dodge_len)
+		_check(p_anim.tree != null, "player rig runs the layered animation tree")
+		if p_anim.tree != null:
+			p_anim._on_action(&"chain_spark")
+			await _wait_frames(2)
+			_check(bool(p_anim.tree.get(&"parameters/upper/active")) and p_anim._one_shot == &"",
+				"chain spark plays on the upper-body layer, legs stay on locomotion")
+			p_anim._on_action(&"cleave_l")
+			await _wait_frames(1)
+			var started := p_anim._one_shot == &"cleave_l"
+			await _wait_frames(40)
+			_check(started and p_anim._one_shot == &"", "full-body one-shot hands back to locomotion")
+	if marauder != null and marauder.animator != null:
+		_check(marauder.animator.anim.has_animation(&"stagger")
+			and marauder.animator.profile["states"][EnemyBase.AIState.STAGGER] == &"stagger",
+			"marauder staggers with its own clip")
+	var weaver := RangedCaster.new()
+	lab.enemies_root.add_child(weaver)
+	weaver.global_position = Vector3(6, 0.2, -12)
+	await _wait_frames(2)
+	if weaver.animator != null:
+		var w_anim := weaver.animator.anim
+		_check(w_anim.has_animation(&"glide") and w_anim.has_animation(&"cast") and w_anim.has_animation(&"stagger"),
+			"duskweaver rig loads with glide/cast/stagger")
+		_check(w_anim.has_animation(&"charge")
+			and absf(w_anim.get_animation(&"charge").length - RangedCaster.WINDUP_TIME) < 1.5 / 60.0,
+			"duskweaver charge clip = WINDUP_TIME")
+		_check(weaver._orb_mesh != null and weaver._orb_mesh.position.is_equal_approx(Vector3(0.42, 1.7, 0))
+			and weaver._orb_mesh.get_parent() == weaver.visual and weaver._flash_mats.size() == 1,
+			"duskweaver orb stays the bolt origin, outside the hit-flash list")
+	else:
+		_check(false, "duskweaver rig loads")
+	weaver.queue_free()
+
+	# --- M06 C1/C2/C4: every enemy type has its rig; clip timing follows gameplay ---
+	var rig_specs := [
+		["brute", ["idle", "run", "slam", "stagger"], "slam", Brute.WINDUP_TIME + Brute.RECOVER_TIME],
+		["assassin", ["idle", "run", "strafe", "dash", "retreat", "stab", "stagger"], "", 0.0],
+		["warden", ["idle", "run", "windup", "spin", "stagger"], "windup", HollowWarden.WINDUP_TIME],
+		["colossus", ["idle", "run", "slam", "charge_windup", "charge", "stun", "roar", "stagger"], "charge_windup", 0.8],
+		["vessel", ["idle", "run", "slam", "shatter", "p2_idle", "fan", "stagger"], "", 0.0],
+	]
+	for spec: Array in rig_specs:
+		var foe := ZoneBase.make_enemy(spec[0])
+		lab.enemies_root.add_child(foe)
+		foe.global_position = Vector3(-10, 0.2, -20)
+		await _wait_frames(1)
+		var clips_ok := foe.animator != null
+		if clips_ok:
+			for clip: String in spec[1]:
+				clips_ok = clips_ok and foe.animator.anim.has_animation(StringName(clip))
+		var timing_ok := true
+		if clips_ok and spec[2] != "":
+			timing_ok = absf(foe.animator.anim.get_animation(StringName(spec[2])).length - float(spec[3])) < 1.5 / 60.0
+		_check(clips_ok and timing_ok and foe._flash_mats.size() == 1,
+			"%s rig: clips %s, %s timing matches gameplay, glow parts outside the hit flash" % [spec[0], str(spec[1]), spec[2]])
+		foe.queue_free()
+	await _wait_frames(1)
 	var sfx := get_node("/root/Sfx")
 	_check(bool(sfx.call(&"has_sound", "swing")), "sfx library loaded (swing)")
 	_check(bool(sfx.call(&"has_sound", "ember_impact")), "sfx library loaded (ember_impact)")
@@ -88,11 +217,26 @@ func _run() -> void:
 	_check(lab.targeting.current == rusher, "tab selects enemy near aim")
 	await get_tree().process_frame
 	await get_tree().process_frame
-	_check(lab.targeting._name_label.visible and lab.targeting._name_label.text == "Cinder Marauder",
+	_check(lab.targeting._name_label.visible and lab.targeting._name_label.text.begins_with("Cinder Marauder"),
 		"target name plate shows the enemy name")
+	# --- M06 B5: HUD v2 look ---
+	var hud_root := lab.hud.get_child(0) as Control
+	var body_font := UiTheme.font()
+	_check(hud_root.theme == UiTheme.theme() and body_font != null
+		and body_font.antialiasing == TextServer.FONT_ANTIALIASING_NONE,
+		"HUD uses the pixel UI theme (Pixelify Sans, no antialiasing)")
+	var icons_ok := true
+	for id: StringName in [&"melee", &"ember", &"earthbreaker", &"storm_step", &"chain_spark", &"fracture_rune", &"dodge"]:
+		icons_ok = icons_ok and (lab.hud._slots[id]["icon"] as TextureRect).texture != null
+	_check(icons_ok, "every ability slot shows its pixel icon")
+	var plate := Label3D.new()
+	UiTheme.label3d(plate)
+	_check(plate.fixed_size and plate.font == body_font and plate.font_size == UiTheme.BODY,
+		"world labels: pixel font at a fixed screen size (1 font px = 1 screen px)")
+	plate.free()
 	var hud_names := lab.hud.ability_names()
 	_check(hud_names.size() == 7 and hud_names.has("Fracture Rune") and hud_names.has("Dodge"),
-		"HUD shows all 7 ability names")
+		"HUD knows all 7 ability names")
 	lab.targeting.cycle_target()
 	_check(lab.targeting.current == rusher, "tab cycle wraps with single candidate")
 	var to_target := rusher.global_position - player.global_position
@@ -126,6 +270,16 @@ func _run() -> void:
 	# --- ember lance ---
 	lab.kill_all_enemies()
 	await _wait_frames(20)
+	# Default camera looks down at the hero: a floor hit must not steer the
+	# lance into the ground (user feedback 2026-09-24).
+	var saved_pitch: float = player.camera_rig._pitch
+	player.camera_rig._pitch = -0.45
+	await _wait_frames(2)
+	var floor_aim := player.aim_direction()
+	_check(player.camera_rig.last_aim_on_floor and absf(floor_aim.y) < 0.08,
+		"ember aim stays level when the camera ray hits the floor (y=%.2f)" % floor_aim.y)
+	player.camera_rig._pitch = saved_pitch
+	await _wait_frames(2)
 	var target := MeleeRusher.new()
 	lab.enemies_root.add_child(target)
 	target.player = player
@@ -160,12 +314,18 @@ func _run() -> void:
 	player.gain_resonance(100.0)
 	var res_before := player.resonance
 	var eb_hp := eb_target.health.current_health
+	var actions_seen: Array[StringName] = []
+	var record := func(a: StringName) -> void: actions_seen.append(a)
+	player.action_started.connect(record)
 	_check(player.try_earthbreaker(), "earthbreaker starts with resonance")
 	_check(player.resonance < res_before, "earthbreaker consumes Resonance")
 	await _wait_frames(70)
+	player.action_started.disconnect(record)
 	var eb_hit := not is_instance_valid(eb_target) or eb_target.health.current_health < eb_hp
 	_check(eb_hit, "earthbreaker damages nearby enemy")
 	_check(player.state == Player.State.MOVE, "earthbreaker recovers to MOVE")
+	_check(actions_seen.size() == 2 and actions_seen[0] == &"earthbreaker" and actions_seen[1] == &"earthbreaker_impact",
+		"earthbreaker emits rise then impact for the rig (%s)" % str(actions_seen))
 	player.resonance = 0.0
 	player.reset_cooldowns()
 	_check(not player.try_earthbreaker(), "earthbreaker refused without Resonance")
@@ -238,6 +398,28 @@ func _run() -> void:
 	var gap := player.global_position.distance_to(gap_target.global_position)
 	_check(gap > 0.6 and gap < 3.0, "gap-closer lands in melee range (%.2fm)" % gap)
 
+	# M06 fix: dodging out of a running Storm Step still ends the dash
+	# (collision mask restored, path zapped) instead of leaving the player
+	# phasing through enemies.
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
+	var cancel_victim := MeleeRusher.new()
+	lab.enemies_root.add_child(cancel_victim)
+	cancel_victim.player = player
+	cancel_victim.global_position = player.global_position + Vector3(0, 0, -1.5)
+	await _wait_frames(2)
+	player.reset_cooldowns()
+	_check(player.try_storm_step(), "cancel test: dash starts")
+	await _wait_frames(2)
+	_check(player.state == Player.State.STORM_STEP, "cancel test: still mid-dash")
+	_check(player.try_dodge(), "dodge cancels a running storm step")
+	_check(player.collision_mask == 0b101, "dodge-cancelled storm step restores collision mask")
+	_check(cancel_victim.status.has_shock(), "dodge-cancelled storm step still zaps its path")
+	await _wait_frames(25)
+	_check(player.state == Player.State.MOVE, "dodge after storm step returns to MOVE")
+
 	# --- chain spark ---
 	lab.kill_all_enemies()
 	await _wait_frames(20)
@@ -274,6 +456,13 @@ func _run() -> void:
 	_check(player.try_fracture_rune(), "fracture rune places")
 	await _wait_frames(30)
 	_check(rune_victim.health.current_health == rune_hp, "fracture rune has not detonated during arming")
+	var rune_node: Node = null
+	for child in get_tree().current_scene.get_children():
+		if child is FractureRune:
+			rune_node = child
+	_check(rune_node != null and rune_node.get_node_or_null("PlayerRing") != null
+		and rune_node.find_children("ThreatMarker", "", true, false).is_empty(),
+		"player rune marks its radius with a broken ring, never the red threat disc")
 	await _wait_frames(60)
 	var rune_hit := not is_instance_valid(rune_victim) or rune_victim.health.current_health < rune_hp
 	_check(rune_hit, "fracture rune detonates and damages")
@@ -346,16 +535,283 @@ func _run() -> void:
 
 	# --- equip stats: max hp + cooldown reduction ---
 	var hp_item := ItemData.new()
-	hp_item.slot = ItemData.Slot.ARMOR
+	hp_item.slot = ItemData.Slot.CHEST
 	hp_item.rarity = ItemData.Rarity.MAGIC
 	hp_item.display_name = "Test Cuirass"
 	hp_item.affixes = [{"id": &"max_hp", "label": "+30 maximum health", "stat": &"max_hp", "value": 30.0}]
 	player.equipment.add_item(hp_item)
 	player.equipment.equip(hp_item)
-	_check(absf(player.health.max_health - 130.0) < 0.01, "equipping +30 HP raises max health")
+	_check(absf(player.health.max_health - (130.0 + player.progression.stat(&"max_hp"))) < 0.01,
+		"equipping +30 HP raises max health (on top of level bonuses)")
+
+	# Keyboard layout (user, 2026-09-24): abilities on the number row, Q/R kept, E = interact.
+	var has_key := func(action: StringName, key: Key) -> bool:
+		for ev in InputMap.action_get_events(action):
+			if ev is InputEventKey and (ev as InputEventKey).physical_keycode == key:
+				return true
+		return false
+	_check(has_key.call(&"ability_q", KEY_1) and has_key.call(&"ability_q", KEY_Q) and has_key.call(&"ability_e", KEY_2)
+		and not has_key.call(&"ability_e", KEY_E) and has_key.call(&"ability_r", KEY_3) and has_key.call(&"ability_r", KEY_R)
+		and has_key.call(&"ability_f", KEY_4) and has_key.call(&"ability_runic_guard", KEY_5)
+		and has_key.call(&"ability_resonance_burst", KEY_6) and has_key.call(&"interact", KEY_E),
+		"number-row ability layout with Q/R alternates, E = interact")
+
+	# --- M07 progression: XP, levels, talent rules, save format ---
+	var tree := Progression.tree()
+	var t_static := Progression.talent(&"static_charge")
+	var t_arc := Progression.talent(&"arc_conduit")
+	_check(tree.size() == 24 and t_static != null and t_arc != null and t_arc.tier == 1,
+		"talent tree loads 24 data nodes (3 branches)")
+	var prog := Progression.new()
+	add_child(prog)
+	prog.add_xp(Progression.xp_to_next(1) + Progression.xp_to_next(2) + Progression.xp_to_next(3) + Progression.xp_to_next(4))
+	_check(prog.level == 5 and prog.xp == 0 and prog.points_free() == 4, "XP fills levels exactly; one point per level")
+	_check(absf(prog.stat(&"max_hp") - 24.0) < 0.01 and absf(prog.stat(&"damage_pct") - 8.0) < 0.01,
+		"levels grant +6 health and +2 % damage each")
+	_check(not prog.can_learn(t_arc), "tier 2 stays closed until 3 points sit below it")
+	for i in 3:
+		prog.learn(t_static)
+	_check(prog.rank(&"static_charge") == 3 and absf(prog.stat(&"crit_pct") - 9.0) < 0.01, "ranks stack a talent's stat")
+	_check(prog.learn(t_arc) and prog.stat(&"chain_jumps") == 1.0, "tier 2 opens after 3 points")
+	_check(not prog.can_unlearn(t_static), "a rank that holds a higher tier open can't be removed")
+	_check(prog.unlearn(t_arc) and prog.can_unlearn(t_static), "unlearning from the top works")
+	_check(not prog.learn(t_static), "a maxed talent takes no more points")
+	var saved := prog.to_dict()
+	var prog_loaded := Progression.new()
+	add_child(prog_loaded)
+	prog_loaded.from_dict(saved)
+	_check(prog_loaded.level == 5 and prog_loaded.rank(&"static_charge") == 3 and prog_loaded.points_free() == 1,
+		"progression round-trips through the save format")
+	prog.respec()
+	_check(prog.points_free() == 4 and prog.stat(&"crit_pct") == 0.0, "respec returns every point")
+	var v1 := SaveGame.migrate({"version": 1, "zone": "res://scenes/hub.tscn", "flags": {"x": true}, "inventory": [], "equipped": {}})
+	_check(int(v1.get("version", 0)) == SaveGame.VERSION and (v1["progression"] as Dictionary)["level"] == 1
+		and v1["flags"].has("x"), "v1 saves migrate (level 1, gear and flags kept)")
+	prog.queue_free()
+	prog_loaded.queue_free()
+	_check(absf(player.stat(&"damage_pct") - player.equipment.stat(&"damage_pct") - player.progression.stat(&"damage_pct")) < 0.001,
+		"player stats sum equipment and progression")
+	var xp_before := player.progression.level * 100000 + player.progression.xp  # monotonic across level-ups
+	var xp_victim := MeleeRusher.new()
+	lab.enemies_root.add_child(xp_victim)
+	xp_victim.global_position = Vector3(-12, 0.2, -18)
+	xp_victim.enemy_died.connect(lab._on_enemy_died)
+	await _wait_frames(2)
+	xp_victim.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, xp_victim.global_position))
+	await _wait_frames(2)
+	var xp_after := player.progression.level * 100000 + player.progression.xp
+	_check(xp_after > xp_before, "a kill pays XP (%d -> %d)" % [xp_before, xp_after])
+
+	# --- M07 behavior talents + abilities 7-8 (powers granted directly) ---
+	var grant := func(ids: Array) -> void:
+		player.progression.ranks.clear()
+		for id in ids:
+			player.progression.ranks[StringName(id)] = 1
+		player.progression._changed()
+	var dummy := MeleeRusher.new()
+	lab.enemies_root.add_child(dummy)
+	dummy.player = player
+	dummy.global_position = player.global_position + player.facing() * 1.6
+	await _wait_frames(2)
+	dummy.set_physics_process(false)  # a still target
+	dummy.health.max_health = 1.0e6
+	dummy.health.heal_full()
+	# Runic Guard: barrier soaks a hit.
+	grant.call(["runic_guard", "glacial_bulwark"])
+	player.reset_cooldowns()
+	player.resonance = 100.0
+	_check(player.try_runic_guard() and player.barrier > 30.0 and player.resonance < 71.0,
+		"Runic Guard (key 5) spends 30 Resonance for a barrier")
+	var hp_guard := player.health.current_health
+	player.take_hit(HitInfo.create(12.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, dummy.global_position))
+	_check(is_equal_approx(player.health.current_health, hp_guard) and dummy.status.has_chill(),
+		"the barrier absorbs the hit; Glacial Bulwark chills the attacker")
+	player.barrier = 0.0
+	# Resonance Burst: spends everything, hits around the hero.
+	grant.call(["resonance_burst"])
+	player.reset_cooldowns()
+	player.resonance = 80.0
+	var hp_dummy := dummy.health.current_health
+	_check(player.try_resonance_burst() and player.resonance == 0.0 and dummy.health.current_health < hp_dummy,
+		"Resonance Burst (key 6) spends all Resonance in a damaging nova")
+	player.resonance = 20.0
+	player.reset_cooldowns()
+	_check(not player.try_resonance_burst(), "Resonance Burst needs 50 Resonance")
+	# Molten Core + Wildfire + Kindling.
+	grant.call(["molten_core", "wildfire", "kindling"])
+	player.progression.ranks[&"kindling"] = 3
+	player.progression._changed()
+	dummy.status.clear_all()
+	player._do_slam_hit()
+	_check(dummy.status.has_burn() and is_equal_approx(dummy.status._burn_dps, StatusEffectComponent.BURN_DPS * 1.6),
+		"Molten Core: Earthbreaker ignites; Kindling scales the Burn (x1.6 at 3 ranks)")
+	var neighbor := MeleeRusher.new()
+	lab.enemies_root.add_child(neighbor)
+	neighbor.player = player
+	neighbor.global_position = dummy.global_position + Vector3(1.5, 0, 0)
+	await _wait_frames(2)
+	neighbor.set_physics_process(false)
+	var burner := MeleeRusher.new()
+	lab.enemies_root.add_child(burner)
+	burner.player = player
+	burner.global_position = neighbor.global_position + Vector3(0.8, 0, 0.8)
+	await _wait_frames(2)
+	burner.status.apply_burn()
+	neighbor.status.clear_all()
+	burner.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, burner.global_position))
+	_check(neighbor.status.has_burn(), "Wildfire: a Burning enemy's death spreads its Burn")
+	# Galvanize: bonus damage to Shocked targets.
+	grant.call(["galvanize"])
+	player.progression.ranks[&"galvanize"] = 3
+	player.progression._changed()
+	var galv_hit := HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, player.global_position)
+	galv_hit.from_player = true
+	dummy.status.clear_all()
+	dummy.status.apply_shock()
+	_check(is_equal_approx(player.talent_damage_mult(galv_hit, dummy), 1.24), "Galvanize: +24 % damage to Shocked enemies at 3 ranks")
+	# Overload: the Storm Step landing Shocks everything near it.
+	grant.call(["overload"])
+	dummy.status.clear_all()
+	neighbor.status.clear_all()
+	player._dash_start = player.global_position
+	player._resolve_storm_step()
+	_check(dummy.status.has_shock(), "Overload: Storm Step's end point Shocks nearby enemies")
+	# Split Lance: the first hit forks two shards.
+	grant.call(["split_lance"])
+	var lance := EmberLanceProjectile.new()
+	lance.setup(player.ember, player.facing(), player)
+	lance.position = dummy.global_position + Vector3(0, 1.0, 0)
+	lab.add_child(lance)
+	lance._split_from(dummy)
+	var split_done := not lance.can_split  # the lance itself may be gone after its hit
+	await _wait_frames(2)
+	var lances := 0
+	for child in lab.get_children():
+		if child is EmberLanceProjectile:
+			lances += 1
+	_check(lances >= 2 and split_done, "Split Lance: the first hit forks two half-damage shards")
+	# Unbroken: an attack inside the dodge's i-frames grants a barrier.
+	grant.call(["unbroken"])
+	player.barrier = 0.0
+	player._cooldowns.erase(&"unbroken")
+	player.health.invulnerable = true
+	player.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, dummy.global_position))
+	player.health.invulnerable = false
+	_check(is_equal_approx(player.barrier, Player.UNBROKEN_BARRIER), "Unbroken: dodging through an attack grants a barrier")
+	player.barrier = 0.0
+	# Searing Lance + Fuel the Fire: conditional damage by ability / Burning.
+	grant.call(["searing_lance", "fuel_the_fire"])
+	player.progression.ranks[&"searing_lance"] = 3
+	player.progression.ranks[&"fuel_the_fire"] = 2
+	player.progression._changed()
+	var lance_hit := HitInfo.create(10.0, HitInfo.DamageType.FIRE, HitInfo.Weight.LIGHT, player.global_position)
+	lance_hit.from_player = true
+	lance_hit.ability = &"ember_lance"
+	dummy.status.clear_all()
+	dummy.status.apply_burn()
+	_check(is_equal_approx(player.talent_damage_mult(lance_hit, dummy), 1.44),
+		"Searing Lance (+24 %) and Fuel the Fire (+20 % on Burning) add up")
+	# Quickstep + Storm Surge: Storm Step cooldown and lightning Resonance.
+	grant.call(["quickstep", "storm_surge"])
+	player.progression.ranks[&"quickstep"] = 2
+	player.progression.ranks[&"storm_surge"] = 2
+	player.progression._changed()
+	player.reset_cooldowns()
+	player._set_cooldown(&"storm_step", player.storm_step.cooldown)
+	_check(is_equal_approx(float(player._cooldowns[&"storm_step"]), player.storm_step.cooldown * 0.76),
+		"Quickstep: Storm Step cooldown -24 % at 2 ranks")
+	player.resonance = 0.0
+	player.gain_resonance(10.0, true)
+	var surge_res := player.resonance
+	player.resonance = 0.0
+	player.gain_resonance(10.0)
+	_check(surge_res > player.resonance + 2.9, "Storm Surge: lightning hits build +30 % more Resonance")
+	player.resonance = 0.0
+	# Eye of the Storm: the dash refunds cooldown per enemy on its path.
+	grant.call(["eye_of_the_storm"])
+	player.reset_cooldowns()
+	player._set_cooldown(&"storm_step", player.storm_step.cooldown)
+	var cd_full := float(player._cooldowns[&"storm_step"])
+	player._dash_start = player.global_position - player.facing() * 0.5
+	player.global_position = player._dash_start + player.facing() * 3.2  # the dash passed the dummy
+	player._resolve_storm_step()
+	_check(float(player._cooldowns[&"storm_step"]) < cd_full - 0.01, "Eye of the Storm: enemies on the path refund cooldown")
+	player.global_position = player._dash_start + player.facing() * 0.5
+	player.velocity = Vector3.ZERO
+	# Thunderclap: the Chain Spark's last target bursts onto a neighbour.
+	grant.call(["thunderclap"])
+	player.reset_cooldowns()
+	var clap_hp := neighbor.health.current_health
+	neighbor.health.max_health = 1.0e6
+	neighbor.health.heal_full()
+	clap_hp = neighbor.health.current_health
+	lab.targeting.current = dummy
+	var sparked := player.try_chain_spark()
+	await _wait_frames(2)
+	_check(sparked and neighbor.health.current_health < clap_hp, "Thunderclap / chain: the neighbour takes lightning damage")
+	# Phoenix Burst: where a lance ends it bursts onto neighbours.
+	grant.call(["phoenix_burst"])
+	var phoenix := EmberLanceProjectile.new()
+	phoenix.setup(player.ember, player.facing(), player)
+	phoenix.position = dummy.global_position + Vector3(0, 1.0, 0)
+	lab.add_child(phoenix)
+	var burst_hp := neighbor.health.current_health
+	neighbor.status.clear_all()
+	phoenix._phoenix_burst(dummy)
+	_check(neighbor.health.current_health < burst_hp and neighbor.status.has_burn(),
+		"Phoenix Burst: the lance's end bursts (damage + Burn) onto neighbours")
+	phoenix.queue_free()
+	# Talent panel: toggles, locks input, learns through the rules.
+	grant.call([])
+	lab.talent_ui.toggle()
+	_check(lab.talent_ui.visible and player.input_locked, "talent panel (N) opens and locks combat input")
+	var learnable := Progression.talent(&"static_charge")
+	var free_before := player.progression.points_free()
+	var learned := lab.talent_ui.try_learn(learnable)
+	_check(learned == (free_before > 0), "the panel learns a rank when a point is free")
+	lab.talent_ui.toggle()
+	_check(not lab.talent_ui.visible and not player.input_locked, "talent panel closes and frees combat input")
+	player.progression.respec()
+	for m07_foe in [dummy, neighbor]:
+		if is_instance_valid(m07_foe):
+			m07_foe.queue_free()
+	for child in lab.get_children():
+		if child is EmberLanceProjectile:
+			child.queue_free()
+	await _wait_frames(2)
+
+	# 7 equipment slots: every slot rolls affixes and has an icon; old values keep their meaning.
+	var slots_ok := true
+	for slot_i in ItemData.SLOT_COUNT:
+		var sl := slot_i as ItemData.Slot
+		slots_ok = slots_ok and AffixPool.defs_for_slot(sl).size() >= 3
+		var probe := ItemData.new()
+		probe.slot = sl
+		slots_ok = slots_ok and UiTheme.item_icon(probe) != null
+	_check(slots_ok and ItemData.Slot.CHEST == 1 and ItemData.Slot.AMULET == 2 and ItemData.SLOT_ORDER.size() == 7,
+		"7 gear slots: each has 3+ affixes and an icon; saved armor/relic map to chest/amulet")
+	var ring := ItemData.new()
+	ring.slot = ItemData.Slot.RING
+	ring.display_name = "Test Band"
+	player.equipment.add_item(ring)
+	player.equipment.equip(ring)
+	_check(player.equipment.equipped.get(ItemData.Slot.RING) == ring
+		and ItemData.from_dict(ring.to_dict()).slot == ItemData.Slot.RING, "a ring equips into its own slot and saves")
+	player.equipment.unequip(ItemData.Slot.RING)
+
+	# M07 item level + compare
+	var scaled := ItemData.new()
+	scaled.affixes = [{"id": &"damage_pct", "label": "+15% damage", "stat": &"damage_pct", "value": 15.0},
+		{"id": &"ember_pierce", "label": "Ember Lance pierces 1 additional enemy", "stat": &"ember_pierce", "value": 1.0}]
+	ItemGenerator.apply_item_level(scaled, 6)
+	_check(scaled.item_level == 6 and is_equal_approx(float(scaled.affixes[0]["value"]), 20.0)
+		and scaled.affixes[0]["label"] == "+20% damage" and float(scaled.affixes[1]["value"]) == 1.0,
+		"item level scales numeric affixes (+6 %/level), behavioral ones stay")
+	var cmp := InventoryUI.compare_lines(scaled, hp_item)
+	_check(cmp.size() == 3, "compare lists every stat that changes (%d lines)" % cmp.size())
 
 	var cd_item := ItemData.new()
-	cd_item.slot = ItemData.Slot.RELIC
+	cd_item.slot = ItemData.Slot.AMULET
 	cd_item.rarity = ItemData.Rarity.MAGIC
 	cd_item.display_name = "Test Sigil"
 	cd_item.affixes = [{"id": &"cooldown_pct", "label": "20% cooldown reduction", "stat": &"cooldown_pct", "value": 20.0}]
@@ -440,7 +896,7 @@ func _run() -> void:
 	lab.kill_all_enemies()
 	await _wait_frames(20)
 	var oath := ItemData.new()
-	oath.slot = ItemData.Slot.RELIC
+	oath.slot = ItemData.Slot.AMULET
 	oath.rarity = ItemData.Rarity.LEGENDARY
 	oath.display_name = "Conductor's Oath"
 	oath.legendary_id = &"conductors_oath"
@@ -469,7 +925,7 @@ func _run() -> void:
 	lab.kill_all_enemies()
 	await _wait_frames(20)
 	var glacier := ItemData.new()
-	glacier.slot = ItemData.Slot.ARMOR
+	glacier.slot = ItemData.Slot.CHEST
 	glacier.rarity = ItemData.Rarity.LEGENDARY
 	glacier.display_name = "Glacier Heart"
 	glacier.legendary_id = &"glacier_heart"
@@ -507,14 +963,40 @@ func _run() -> void:
 		_check(drop_found.item.rarity >= ItemData.Rarity.RARE, "elite drop is rare or better")
 		drop_found.free()
 
-	# --- inventory UI toggling ---
+	# --- inventory UI toggling + ability tooltips (names only on hover) ---
+	var hud := lab.hud
+	hud._update_tooltip(hud.slot_rect(&"fracture_rune").get_center())
+	_check(not hud.tooltip_visible(), "ability names hidden while the inventory is closed")
 	lab.inventory_ui.toggle()
 	_check(lab.inventory_ui.visible and player.input_locked, "inventory opens and locks input")
+	var expected_names := {
+		&"melee": player.cleave.display_name, &"ember": player.ember.display_name,
+		&"earthbreaker": player.earthbreaker.display_name, &"storm_step": player.storm_step.display_name,
+		&"chain_spark": player.chain_spark.display_name, &"fracture_rune": player.fracture_rune.display_name,
+		&"dodge": "Dodge",
+	}
+	var tooltips_ok := true
+	for id: StringName in expected_names:
+		hud._update_tooltip(hud.slot_rect(id).get_center())
+		if not hud.tooltip_visible() or hud.tooltip_title() != expected_names[id]:
+			tooltips_ok = false
+	_check(tooltips_ok, "hovering each ability slot (inventory open) shows its name")
+	# Headless viewports are 64x64, so check the placement rule at a real window size.
+	var tip_size := Vector2(270, 120)
+	var slot_1600 := Rect2(Vector2(720, 804), Vector2(44, 44))
+	var tip_pos := Hud.tooltip_position(slot_1600, tip_size, Vector2(1600, 900))
+	_check(tip_pos.y + tip_size.y <= slot_1600.position.y
+		and absf(tip_pos.x + tip_size.x * 0.5 - slot_1600.get_center().x) < 1.0,
+		"ability tooltip sits centered above its slot")
+	var edge_pos := Hud.tooltip_position(Rect2(Vector2(1590, 804), Vector2(44, 44)), tip_size, Vector2(1600, 900))
+	_check(edge_pos.x + tip_size.x <= 1592.0, "ability tooltip stays on screen at the edge")
+	hud._update_tooltip(Vector2(-100, -100))
+	_check(not hud.tooltip_visible(), "tooltip hides when the mouse leaves the slots")
 	lab.inventory_ui.toggle()
 	_check(not lab.inventory_ui.visible and not player.input_locked, "inventory closes and unlocks input")
 
 	# Cleanup: fresh equipment for the remaining M01/M02 sections.
-	for slot: ItemData.Slot in [ItemData.Slot.WEAPON, ItemData.Slot.ARMOR, ItemData.Slot.RELIC]:
+	for slot: ItemData.Slot in [ItemData.Slot.WEAPON, ItemData.Slot.CHEST, ItemData.Slot.AMULET]:
 		player.equipment.unequip(slot)
 	player.equipment.inventory.clear()
 	player.equipment.changed.emit()
@@ -578,6 +1060,13 @@ func _run() -> void:
 	lab.cycle_style()
 	await _wait_frames(3)
 	_check(lab.style_manager.style == StyleManager.Style.HYBRID, "style cycle returns to hybrid")
+	# M06 fix: the low-res style reparents the world; enemies must stay registered
+	# (Tab targeting, Chain Spark jumps and separation all read the registry).
+	var registry_ok := lab.enemies_root.get_child_count() > 0
+	for child in lab.enemies_root.get_children():
+		if child is EnemyBase and not EnemyBase.all_enemies.has(child):
+			registry_ok = false
+	_check(registry_ok, "enemy registry survives the low-res style reparent")
 
 	# --- reset ---
 	lab.reset_lab()
@@ -601,7 +1090,7 @@ func _run() -> void:
 
 	# --- save/load roundtrip ---
 	var marker := ItemData.new()
-	marker.slot = ItemData.Slot.RELIC
+	marker.slot = ItemData.Slot.AMULET
 	marker.display_name = "Persistence Marker"
 	player.equipment.add_item(marker)
 	var keepsake := ItemData.new()
@@ -656,6 +1145,58 @@ func _run() -> void:
 			carried = true
 	_check(carried, "gear persists across zone travel")
 
+	# --- M06 C3: Runehold kit on the unchanged hub layout ---
+	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")
+	var hub_bodies := hub.world.find_children("*", "StaticBody3D", true, false)
+	_check(hub_bodies.size() == 19, "hub dressing adds no collision (%d bodies, layout had 19)" % hub_bodies.size())
+	var wall_trims := 0
+	var sod_roofs := 0
+	var roofs_fit := true
+	for b: Node in hub_bodies:
+		if b.get_node_or_null("WallTrim") != null:
+			wall_trims += 1
+		var roof := b.get_node_or_null("SodRoof") as MeshInstance3D
+		if roof == null:
+			continue
+		sod_roofs += 1
+		var h := ((b.get_child(1) as CollisionShape3D).shape as BoxShape3D).size * 0.5
+		var box := roof.mesh.get_aabb()
+		roofs_fit = roofs_fit and box.position.x <= -h.x and box.position.y <= -h.y and box.position.z <= -h.z \
+			and box.end.x >= h.x and box.end.y >= h.y and box.end.z >= h.z and box.end.y <= h.y + 0.31 \
+			and box.end.x <= h.x + 0.31 and box.end.z <= h.z + 0.31
+	_check(wall_trims == 4 and sod_roofs == 3, "hub walls get masonry trim (%d), huts sod roofs (%d)" % [wall_trims, sod_roofs])
+	_check(roofs_fit, "sod roofs contain their slab collider, within the camera margin and overhang limits")
+	_check(hub.dressing().find_children("*", "CollisionObject3D", true, false).is_empty(), "hub dressing adds no collision")
+	var gates := 0
+	for child in hub.world.get_children():
+		if child is Portal and child.get_node_or_null("Frame/Gate") != null and (child as Portal)._gate_mat != null:
+			gates += 1
+	_check(gates == 2, "hub portals are v2 gates (floating arch, upright swirl, flush plate)")
+	var hub_portal: Portal = null
+	for child in hub.world.get_children():
+		if child is Portal:
+			hub_portal = child
+			break
+	var spot_before := hub.player.global_position
+	hub_portal._cooldown = 0.0
+	hub.player.global_position = hub_portal.global_position + Vector3(0.8, 0.2, 0)
+	await _wait_frames(5)
+	_check(hub_portal._prompt.visible and not hub._travelling, "portal shows its prompt and waits for the interact key")
+	hub.player.global_position = spot_before
+	await _wait_frames(2)
+	var fire := hub.dressing().get_node_or_null("rh_hearth_fire")
+	_check(fire != null and fire.find_child("flames", true, false) != null, "hub hearth is the kit fire with living flames")
+	var ground := ((hub_bodies[0] as StaticBody3D).get_child(0) as MeshInstance3D).mesh.surface_get_material(0) as ShaderMaterial
+	_check(ground != null and int(ground.get_shader_parameter(&"paved_circles")) == 1
+		and int(ground.get_shader_parameter(&"paved_paths")) >= 5, "hub ground has a paved plaza and paths")
+	var hub_scatter := 0
+	for child in hub.dressing().get_children():
+		if child is MultiMeshInstance3D:
+			hub_scatter += ((child as MultiMeshInstance3D).get_meta(Scatter.POINTS_META, PackedVector3Array()) as PackedVector3Array).size()
+	_check(hub_scatter > 100, "hub scatter along walls and huts (%d)" % hub_scatter)
+	_check(MusicDirector.instance != null and MusicDirector.instance.zone_key() == "runehold"
+		and MusicDirector.instance.is_playing(), "Runehold plays its own theme")
+
 	# --- highlands ---
 	hub.travel_to("res://scenes/ashen_highlands.tscn")
 	for i in 60:
@@ -669,13 +1210,112 @@ func _run() -> void:
 		get_tree().quit(1)
 		return
 	await _wait_frames(5)
-	_check(highlands.enemy_count() == 0, "highlands spawners idle before approach")
+	# Camp 1 sits exactly 13.0 m (its trigger radius) from the spawn, so it
+	# fires the moment the player lands (float32 distance == 13.0) — existing
+	# M04 design ("triggers almost immediately"). The old check only passed
+	# while the player was still airborne; what must hold is that no FAR camp
+	# wakes up on arrival.
+	var far_camp_enemies := 0
+	for e in highlands.enemies_root.get_children():
+		if Vector2((e as Node3D).global_position.x, (e as Node3D).global_position.z - 16.0).length() > 4.5:
+			far_camp_enemies += 1
+	_check(far_camp_enemies == 0, "highlands: no far camp triggers on arrival")
+
+	# --- M06 look: data-driven environment + dressing never touches collision ---
+	_check(highlands.look != null and highlands.look.art_pass, "highlands uses its ZoneLook (art pass)")
+	var hull_bodies := 0
+	var hull_contains := true
+	var shapes_intact := true
+	for child in highlands.world.get_children():
+		var body := child as StaticBody3D
+		if body == null or body.get_node_or_null("RockHull") == null:
+			continue
+		hull_bodies += 1
+		var box := (body.get_child(1) as CollisionShape3D).shape as BoxShape3D
+		var box_mesh := body.get_child(0) as MeshInstance3D
+		shapes_intact = shapes_intact and box != null and not box_mesh.visible \
+			and box.size == (box_mesh.mesh as BoxMesh).size and body.collision_layer == 1
+		var h := box.size * 0.5
+		var arrays := ((body.get_node("RockHull") as MeshInstance3D).mesh as ArrayMesh).surface_get_arrays(0)
+		for v: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
+			if absf(v.x) < h.x - 0.001 and absf(v.y) < h.y - 0.001 and absf(v.z) < h.z - 0.001:
+				hull_contains = false
+				break
+	_check(hull_bodies >= 18, "ridges, cliffs and rocks are dressed with rock hulls (%d)" % hull_bodies)
+	_check(shapes_intact, "dressed boxes keep their collider (box shape, layer 1), box mesh hidden")
+	_check(hull_contains, "every rock hull vertex lies outside its collider box")
+
+	# --- M06 B3: rule-placed scatter + kit props stay out of play space ---
+	var scatter_count := 0
+	var bad := {"shadow": 0, "collider": 0, "spawn": 0, "camp": 0}
+	var obstacles := highlands.scatter_obstacles()
+	for child in highlands.dressing().get_children():
+		var mmi := child as MultiMeshInstance3D
+		if mmi == null or not mmi.name.begins_with("Scatter_"):
+			continue
+		if mmi.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			bad["shadow"] += 1
+		var points: PackedVector3Array = mmi.get_meta(Scatter.POINTS_META, PackedVector3Array())
+		if points.size() != mmi.multimesh.instance_count:
+			bad["collider"] += 1000  # positions must match the instances
+		for p in points:
+			var p2 := Vector2(p.x, p.z)
+			scatter_count += 1
+			if Scatter._inside_any(p2, obstacles):
+				bad["collider"] += 1
+			if p2.distance_to(Vector2(0, 29)) < 2.99:
+				bad["spawn"] += 1
+			for camp: Vector3 in AshenHighlands.CAMPS:
+				if p2.distance_to(Vector2(camp.x, camp.z)) < 3.49:
+					bad["camp"] += 1
+	_check(scatter_count > 300, "scatter hugs the obstacle bases (%d instances)" % scatter_count)
+	_check(bad.values().all(func(n: int) -> bool: return n == 0),
+		"scatter: no shadows, never inside a collider, camps and spawn kept clear %s" % str(bad))
+	var banner := highlands.dressing().get_node_or_null("banner_pole") as Node3D
+	var banner_sways := false
+	if banner != null:
+		var banner_mesh := banner.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+		for s in banner_mesh.mesh.get_surface_count():
+			banner_sways = banner_sways or banner_mesh.get_surface_override_material(s) is ShaderMaterial
+	_check(banner_sways, "hide banners sway in the wind (cloth surface uses the wind shader)")
+	var seats_low := true
+	var seats := 0
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("log_seat"):
+			seats += 1
+			var seat_mesh := (child as Node3D).find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+			seats_low = seats_low and seat_mesh.get_aabb().end.y <= 0.4
+	_check(seats >= 4 and seats_low, "camp log seats are walk-through height (<= 0.4 m, %d seats)" % seats)
+
+	# --- M06 audio: mix buses, music layers, looping ambience ---
+	var music_bus := AudioServer.get_bus_index("Music")
+	var buses_ok := music_bus != -1
+	for bus_name in ["SFX", "Telegraph", "Ambience", "UI"]:
+		buses_ok = buses_ok and AudioServer.get_bus_index(bus_name) != -1
+	var duck := AudioServer.get_bus_effect(music_bus, 0) as AudioEffectCompressor if buses_ok else null
+	_check(buses_ok and duck != null and duck.sidechain == &"Telegraph",
+		"mix buses exist and telegraph sounds duck the music (sidechain)")
+	var director := MusicDirector.instance
+	_check(director != null and director.zone_key() == "highlands" and director.is_playing()
+		and (director._sync as AudioStreamSynchronized).stream_count == 2,
+		"highlands music plays its exploration + combat layers in sync")
+	var loops_ok := true
+	var ambience_found := 0
+	for child in highlands.world.get_children():
+		if (child is AudioStreamPlayer or child is AudioStreamPlayer3D) and child.get(&"bus") == &"Ambience":
+			ambience_found += 1
+			var wav := child.get(&"stream") as AudioStreamWAV
+			loops_ok = loops_ok and wav != null and wav.loop_mode == AudioStreamWAV.LOOP_FORWARD
+	_check(ambience_found >= 2 and loops_ok, "ambience loops come from the import (loop mode Forward, %d players)" % ambience_found)
 
 	# First camp triggers once.
 	highlands.player.global_position = Vector3(0, 0.2, 16)
 	await _wait_frames(10)
 	var camp_count := highlands.enemy_count()
 	_check(camp_count >= 2, "camp spawner triggers on approach")
+	await _wait_frames(60)
+	_check(director != null and director.combat_mix > 0.3, "combat layer swells in once the camp engages (%.2f)"
+		% (director.combat_mix if director != null else 0.0))
 
 	# Chest opens and pops loot.
 	var chest: TreasureChest = null
@@ -685,14 +1325,28 @@ func _run() -> void:
 			break
 	var inv_before_chest := highlands.player.equipment.inventory.size()
 	highlands.player.global_position = chest.global_position + Vector3(1.0, 0.2, 0)
+	await _wait_frames(5)
+	_check(not chest.opened and chest._prompt.visible and chest._prompt.text.begins_with("[E]"),
+		"chest waits for the interact key and shows its prompt")
+	Input.action_press(&"interact")
+	await _wait_frames(2)
+	Input.action_release(&"interact")
 	await _wait_frames(30)
 	var drops_out := 0
 	for child in highlands.world.get_children():
 		if child is ItemDrop:
 			drops_out += 1
 	var chest_loot := drops_out + (highlands.player.equipment.inventory.size() - inv_before_chest)
-	_check(chest.opened, "chest opens on proximity")
+	_check(chest.opened, "chest opens on the interact key")
 	_check(chest_loot >= 2, "chest pops at least 2 items")
+	await _wait_frames(20)
+	_check(chest.get_node_or_null("treasure_chest") != null and chest._lid.rotation_degrees.x < -30.0,
+		"kit chest wraps the collider and swings its hinged lid open")
+	var kit_drops := 0
+	for child in highlands.world.get_children():
+		if child is ItemDrop and (child as ItemDrop)._shape != null and not (child as ItemDrop)._shape is MeshInstance3D:
+			kit_drops += 1
+	_check(kit_drops >= 1, "loot drops use the kit shapes (%d)" % kit_drops)
 
 	# Boss: trigger, enrage, kill, unlock.
 	highlands.player.god_mode = true
@@ -701,9 +1355,11 @@ func _run() -> void:
 	_check(highlands.boss != null, "boss fight starts at the arena")
 	_check(highlands.boss_portal.locked, "north portal sealed while boss lives")
 	var boss := highlands.boss
-	boss.take_hit(HitInfo.create(320.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO))
+	boss.take_hit(HitInfo.create(boss.health.max_health * 0.55, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO))
 	await _wait_frames(3)
 	_check(boss.enraged, "colossus enrages below 50%")
+	_check(boss._veins != null and boss.animator != null and boss.animator.anim.has_animation(&"charge"),
+		"colossus v2 rig with code-owned ember veins")
 	# Regression: the hit squash must return to boss scale, not man-size.
 	await _wait_frames(20)
 	_check(boss.visual.scale.x > 1.6, "boss keeps his size after being hit")
@@ -715,6 +1371,8 @@ func _run() -> void:
 		if child is ItemDrop and (child as ItemDrop).item.rarity == ItemData.Rarity.LEGENDARY:
 			legendary_drop_found = true
 	_check(legendary_drop_found, "boss drops a guaranteed legendary")
+	_check(MusicDirector.instance != null and MusicDirector.instance._stinger != null
+		and MusicDirector.instance._stinger.playing, "a boss kill plays the victory stinger")
 
 	# ========================== M05: SHATTERED SPIRE ==========================
 
@@ -739,6 +1397,22 @@ func _run() -> void:
 	await _wait_frames(5)
 	_check(spire.enemy_count() == 0, "spire camps idle before approach")
 	_check(spire.boss_portal.locked, "spire exit sealed before the boss")
+	_check(MusicDirector.instance != null and MusicDirector.instance.zone_key() == "spire"
+		and (MusicDirector.instance._sync as AudioStreamSynchronized).stream_count == 2, "the Spire plays its own two-layer theme")
+	# M06 C4: interior look + Spire kit on the unchanged layout.
+	_check(spire.look != null and spire.look.interior, "spire uses the interior ZoneLook (no sky, no sun disc)")
+	_check(spire.dressing().find_children("*", "CollisionObject3D", true, false).is_empty(),
+		"spire dressing adds no collision")
+	var beacons_high := true
+	var beacon_count := 0
+	for child in spire.dressing().get_children():
+		if child.name.begins_with("sp_beacon"):
+			beacon_count += 1
+			beacons_high = beacons_high and (child as Node3D).global_position.y - 0.42 >= 2.05
+	_check(beacon_count == 17 and beacons_high, "torches v2 float above head height (%d beacons)" % beacon_count)
+	var spire_floor := (spire.world.find_children("*", "StaticBody3D", true, false)[0].get_child(0) as MeshInstance3D).mesh.surface_get_material(0) as ShaderMaterial
+	_check(spire_floor != null and int(spire_floor.get_shader_parameter(&"rune_lines")) >= 12,
+		"spire floor carries the rune channels (lines, no rings)")
 
 	# --- hollow warden: frontal block ---
 	var warden := HollowWarden.new()
@@ -775,6 +1449,29 @@ func _run() -> void:
 	spire.player.god_mode = true
 	spire.player.health.heal_full()
 
+	# --- M06 fix: blink anchors stay inside the 10.75 m-deep boss chamber ---
+	var anchors_inside := true
+	for anchor: Vector3 in spire.blink_anchors():
+		if anchor.z < SpireZone.CHAMBER_MIN_Z + 1.2 or anchor.z > SpireZone.CHAMBER_MAX_Z - 1.2 \
+				or absf(anchor.x) > SpireZone.WIDTH * 0.5 - 2.2:
+			anchors_inside = false
+	_check(anchors_inside, "vessel blink anchors lie inside the boss chamber")
+
+	# --- M06 fix: the east ramp actually reaches its platform (top y 1.8) ---
+	spire.player.global_position = Vector3(1.2, 0.2, 2.75)
+	spire.player.velocity = Vector3.ZERO
+	spire.camera_rig._yaw = -PI / 2.0  # camera-forward = +X, up the ramp
+	await _wait_frames(3)
+	Input.action_press(&"move_forward")
+	await _wait_frames(80)
+	Input.action_release(&"move_forward")
+	var on_platform := spire.player.global_position
+	_check(on_platform.y > 1.7 and on_platform.x > 8.5,
+		"player walks up the gallery ramp onto the east platform (at %s)" % on_platform)
+	spire.camera_rig._yaw = 0.0
+	spire.kill_all_enemies()
+	await _wait_frames(20)
+
 	# --- boss fight ---
 	spire.player.global_position = Vector3(0, 0.2, -20)
 	await _wait_frames(10)
@@ -787,7 +1484,8 @@ func _run() -> void:
 		await _wait_frames(10)
 		_check(spire.enemy_count() >= before_adds + 2, "vessel summons adds in phase 1")
 		# Phase transition at 50%.
-		vessel.take_hit(HitInfo.create(760.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, spire.player.global_position))
+		vessel.take_hit(HitInfo.create(vessel.health.max_health * 0.55, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT,
+			spire.player.global_position))
 		await _wait_frames(3)
 		_check(vessel.health.invulnerable, "shatter transition grants brief invulnerability")
 		await _wait_frames(80)
@@ -825,6 +1523,20 @@ func _run() -> void:
 			if child is Portal:
 				portal_count += 1
 		_check(portal_count == 3, "hub gains the spire shortcut portal")
+		# M06 C6: a legendary weapon shows on the hero (the blade surface swaps).
+		var cm := ItemData.new()
+		cm.slot = ItemData.Slot.WEAPON
+		cm.rarity = ItemData.Rarity.LEGENDARY
+		cm.legendary_id = &"cindermaw"
+		cm.display_name = "Cindermaw"
+		hub2.player.equipment.add_item(cm)
+		hub2.player.equipment.equip(cm)
+		var blade_mat := hub2.player._rig_mesh.get_surface_override_material(2) if hub2.player._rig_mesh != null else null
+		_check(blade_mat != null and blade_mat == hub2.player._cindermaw_mat, "Cindermaw equipped: the hero's blade turns molten")
+		hub2.player.equipment.unequip(ItemData.Slot.WEAPON)
+		_check(hub2.player._rig_mesh.get_surface_override_material(2) == hub2.player._body_mat, "unequipped: rune steel again")
+		_check(UiTheme.item_icon(cm) != null and UiTheme.item_icon(cm).resource_path.ends_with("cindermaw.png"),
+			"inventory shows the legendary's own icon")
 
 	SaveGame.wipe()
 	print("== %d failures ==" % _failures.size())

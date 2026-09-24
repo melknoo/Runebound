@@ -1,0 +1,26 @@
+{
+	"zone": "res://scenes/combat_lab.tscn",
+	"out": "captures_shots/c12_rigs",
+	"comment": "M06 C1/C2/C4 enemy rigs in the training grounds: cast lineup from above the hero, then each windup caught mid-telegraph.",
+	"shots": [
+		{"name": "lineup", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.42, "zoom": 7.5,
+			"spawn": [{"id": "rusher", "at": [-5.2, 0.2, 0], "freeze": true, "face": 0.25},
+			          {"id": "caster", "at": [-2.6, 0.2, -0.4], "freeze": true, "face": 0.1},
+			          {"id": "brute", "at": [0, 0.2, -0.8], "freeze": true, "face": 0.0},
+			          {"id": "assassin", "at": [2.6, 0.2, -0.4], "freeze": true, "face": -0.1},
+			          {"id": "warden", "at": [5.2, 0.2, 0], "freeze": true, "face": -0.25}], "settle": 0.5},
+		{"name": "bosses", "player": [0, 0.2, 10], "yaw": 0.0, "pitch": -0.3, "zoom": 8.0,
+			"spawn": [{"id": "colossus", "at": [-3.5, 0.2, 0], "freeze": true, "face": 0.3},
+			          {"id": "vessel", "at": [3.5, 0.2, 0], "freeze": true, "face": -0.3}], "settle": 0.5},
+		{"name": "brute_slam", "player": [-2.4, 0.2, 5], "yaw": 0.0, "pitch": -0.25, "zoom": 5.5,
+			"spawn": [{"id": "brute", "at": [0, 0.2, 0.5], "freeze": true, "face": -0.4, "call": "_start_windup"}], "settle": 0.55},
+		{"name": "stalker_stab", "player": [-1.8, 0.2, 4.2], "yaw": 0.0, "pitch": -0.2, "zoom": 4.2,
+			"spawn": [{"id": "assassin", "at": [0, 0.2, 1.6], "freeze": true, "face": -0.5, "call": "_start_windup"}], "settle": 0.22},
+		{"name": "warden_back", "player": [-2.0, 0.2, -3.5], "yaw": 3.1, "pitch": -0.22, "zoom": 5.0,
+			"spawn": [{"id": "warden", "at": [0, 0.2, 0], "freeze": true, "face": 0.0}], "settle": 0.4},
+		{"name": "colossus_slam", "player": [-3.5, 0.2, 7], "yaw": 0.0, "pitch": -0.2, "zoom": 7.5,
+			"spawn": [{"id": "colossus", "at": [0, 0.2, 1.5], "freeze": true, "face": -0.5, "call": "_start_slam"}], "settle": 0.55},
+		{"name": "colossus_charge", "player": [-4, 0.2, 7], "yaw": 0.0, "pitch": -0.3, "zoom": 8.0,
+			"spawn": [{"id": "colossus", "at": [2, 0.2, -2], "freeze": true, "face": 0.0, "call": "_start_charge"}], "settle": 0.45}
+	]
+}

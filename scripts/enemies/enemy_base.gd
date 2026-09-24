@@ -4,6 +4,9 @@ extends CharacterBody3D
 ## Subclasses implement _ai_process() and _build_body().
 
 signal enemy_died(enemy: EnemyBase)
+## Presentation hook (M06 CharacterAnimator): fires on every state entry,
+## including re-entering STAGGER, which polling ai_state would miss.
+signal state_entered(state: AIState)
 
 enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT }
 
@@ -22,7 +25,17 @@ var player: Player = null
 var health: HealthComponent
 var status: StatusEffectComponent
 var is_elite: bool = false
+## M07: set by the zone before the enemy enters the tree (1 = base balance).
+var level: int = 1
+## Base XP for a kill (docs/PROGRESSION_DESIGN.md); x4 for elites, +15 %/level.
+var xp_value: int = 20
 var visual: Node3D
+
+const HP_PER_LEVEL := 0.08
+
+
+func xp_reward() -> int:
+	return int(round(float(xp_value) * (4.0 if is_elite else 1.0) * (1.0 + 0.15 * (level - 1))))
 ## Squash/death tweens scale relative to this — bosses and elites are bigger
 ## than 1.0, and a hit must never reset them to man-size.
 var base_visual_scale: Vector3 = Vector3.ONE
@@ -39,10 +52,17 @@ var _hitstop_left: float = 0.0
 static var all_enemies: Array[EnemyBase] = []
 
 
+## Registered on every tree entry, not just in _ready: a reparent (debug style A
+## moves the whole world into a SubViewport) exits and re-enters the tree, and
+## _ready never runs twice.
+func _enter_tree() -> void:
+	if not all_enemies.has(self):
+		all_enemies.append(self)
+
+
 func _ready() -> void:
 	collision_layer = 0b100
 	collision_mask = 0b011  # world + player; NOT other enemies
-	all_enemies.append(self)
 	var col := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.45
@@ -52,7 +72,7 @@ func _ready() -> void:
 	add_child(col)
 
 	health = HealthComponent.new()
-	health.max_health = max_health
+	health.max_health = max_health * (1.0 + HP_PER_LEVEL * (level - 1))
 	add_child(health)
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
@@ -123,6 +143,7 @@ func _ai_process(_delta: float) -> void:
 func _enter_state(new_state: AIState) -> void:
 	ai_state = new_state
 	_state_timer = 0.0
+	state_entered.emit(new_state)
 
 
 func distance_to_player() -> float:
@@ -159,6 +180,8 @@ func brake(delta: float) -> void:
 func take_hit(hit: HitInfo) -> bool:
 	if ai_state == AIState.DEAD:
 		return false
+	if hit.from_player and player != null and is_instance_valid(player):
+		hit.damage *= player.talent_damage_mult(hit, self)  # M07: Galvanize, Fuel the Fire, Searing Lance
 	hit.damage *= status.damage_taken_multiplier()
 	if not health.apply_hit(hit):
 		return false
@@ -246,6 +269,53 @@ func _setup_model_visual(path: String) -> bool:
 	return true
 
 
+## M06 rigged body: instances the GLB under `visual` (same space as the old
+## models), binds the per-instance atlas material (hit-flash list) and glow
+## material (never flashed), and starts a CharacterAnimator. Surface 2, if
+## present, is the telegraph weapon: returned for the subclass to own (its
+## glow ramp must never be switched off by a hit flash). Returns null when the
+## GLB is missing so callers keep their legacy visuals.
+var animator: CharacterAnimator = null
+## Weak list of live rig meshes for the "enemy_shadows" look/perf switch.
+static var _rig_meshes: Array[WeakRef] = []
+static var _shadow_switch_ready: bool = false
+
+
+static func _apply_enemy_shadows(on: bool) -> void:
+	var live: Array[WeakRef] = []
+	for ref in _rig_meshes:
+		var m := ref.get_ref() as MeshInstance3D
+		if m != null:
+			m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			live.append(ref)
+	_rig_meshes = live
+
+
+func _setup_rigged_visual(path: String, atlas_id: String, clip_profile: Dictionary, glow: Color) -> MeshInstance3D:
+	var scene := ArtKit.rig_scene(path)
+	if scene == null:
+		return null
+	var model := scene.instantiate() as Node3D
+	model.rotation.y = PI
+	var rig_root := Node3D.new()
+	rig_root.name = "RigRoot"  # flinches go here, never on `visual` (gameplay facing)
+	visual.add_child(rig_root)
+	rig_root.add_child(model)
+	var mesh := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	var body_mat := ArtKit.character_material(atlas_id)
+	mesh.set_surface_override_material(0, body_mat)
+	_flash_mats.append(body_mat)
+	if mesh.mesh.get_surface_count() > 1:
+		mesh.set_surface_override_material(1, ArtKit.glow_material(glow, ArtKit.number("emissive_caps.character_eyes", 3.0)))
+	animator = CharacterAnimator.create(self, model, clip_profile)
+	if not _shadow_switch_ready:
+		_shadow_switch_ready = true
+		LookDev.register(&"enemy_shadows", func(v: Variant) -> void: EnemyBase._apply_enemy_shadows(bool(v)), true)
+	_rig_meshes.append(weakref(mesh))
+	_apply_enemy_shadows(bool(LookDev.get_value(&"enemy_shadows", true)))
+	return mesh
+
+
 func _flash_white() -> void:
 	# Pop every non-emissive body material to white for a few frames.
 	if _flash_tween != null and _flash_tween.is_running():
@@ -271,7 +341,8 @@ func _flash_white() -> void:
 	_flash_tween.tween_callback(func() -> void:
 		for mat in mats:
 			mat.emission_energy_multiplier = 0.0
-			mat.emission_enabled = false
+			if not mat.has_meta(ArtKit.KEEP_EMISSION):
+				mat.emission_enabled = false
 	)
 
 
@@ -287,6 +358,9 @@ func _on_interrupted() -> void:
 
 
 func _on_died() -> void:
+	# M07 Wildfire: a Burning enemy's death spreads its Burn.
+	if status.has_burn() and player != null and is_instance_valid(player) and player.has_power(&"wildfire"):
+		_spread_burn()
 	_enter_state(AIState.DEAD)
 	collision_layer = 0
 	set_physics_process(false)
@@ -297,6 +371,18 @@ func _on_died() -> void:
 	var tw := create_tween()
 	tw.tween_property(visual, "scale", base_visual_scale * 0.05, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	tw.tween_callback(queue_free)
+
+
+const WILDFIRE_RADIUS := 3.0
+
+
+func _spread_burn() -> void:
+	VFX.ground_ring(get_tree().current_scene, global_position, ArtKit.color("color_roles.fire.body"), WILDFIRE_RADIUS, 0.3)
+	var dps := StatusEffectComponent.BURN_DPS * (1.0 + player.stat(&"burn_pct") / 100.0)
+	for other in all_enemies:
+		if other != self and is_instance_valid(other) and other.ai_state != AIState.DEAD \
+				and other.global_position.distance_to(global_position) <= WILDFIRE_RADIUS:
+			other.status.apply_burn(dps)
 
 
 ## Shared helper: chunky material.

@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"chain_spark"
 display_name = "Chain Spark"
+description = "Bolt that jumps between enemies, one jump further through Shocked targets."
 cooldown = 3.0
 resonance_cost = 0.0
 resonance_gain_per_hit = 4.0

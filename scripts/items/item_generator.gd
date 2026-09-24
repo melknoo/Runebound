@@ -7,14 +7,40 @@ const PREFIXES := ["Ashen", "Runic", "Storm-Kissed", "Duskforged", "Emberlit",
 const WEAPON_NOUNS := ["Blade", "Cleaver", "Edge", "Fang", "Riftbrand"]
 const ARMOR_NOUNS := ["Cuirass", "Bulwark", "Shell", "Plating", "Aegis"]
 const RELIC_NOUNS := ["Sigil", "Idol", "Talisman", "Focus", "Runestone"]
+const HELM_NOUNS := ["Helm", "Visor", "Crown", "Greathelm", "Cowl"]
+const GLOVES_NOUNS := ["Gauntlets", "Grips", "Fists", "Handguards"]
+const BOOTS_NOUNS := ["Greaves", "Treads", "Striders", "Sabatons"]
+const RING_NOUNS := ["Band", "Loop", "Seal", "Circlet"]
 const SUFFIXES := ["of Echoes", "of the Highlands", "of Sparks", "of Cinders",
 	"of the Spire", "of Resonance", "of the Long Dusk", ""]
+
+
+## M07 item level: numeric "safe" affixes grow +6 % per level above 1;
+## behavioral affixes and cooldown / speed / crit stay fixed (their value is
+## the mechanic, or stacking them would break the kit).
+const SCALED_STATS: Array[StringName] = [&"damage_pct", &"max_hp", &"resonance_pct"]
+const ILVL_SCALE := 0.06
+
+
+static func apply_item_level(item: ItemData, lvl: int) -> void:
+	item.item_level = maxi(lvl, 1)
+	if item.item_level <= 1:
+		return
+	var mult := 1.0 + ILVL_SCALE * (item.item_level - 1)
+	for affix in item.affixes:
+		if not SCALED_STATS.has(StringName(affix["stat"])):
+			continue
+		var value := roundf(float(affix["value"]) * mult)
+		affix["value"] = value
+		for def in AffixPool.DEFS:
+			if def["id"] == StringName(affix["id"]) and "%d" in String(def["template"]):
+				affix["label"] = String(def["template"]) % int(value)
 
 
 ## rarity_bias: 0 = normal enemy, 1 = brute, 2 = elite (min RARE).
 static func generate(rarity_bias: int = 0) -> ItemData:
 	var item := ItemData.new()
-	item.slot = randi() % 3 as ItemData.Slot
+	item.slot = randi() % ItemData.SLOT_COUNT as ItemData.Slot
 	item.rarity = _roll_rarity(rarity_bias)
 	if item.rarity == ItemData.Rarity.LEGENDARY:
 		return _make_legendary(item)
@@ -92,10 +118,18 @@ static func _roll_affixes(item: ItemData, count: int) -> void:
 static func _roll_name(slot: ItemData.Slot) -> String:
 	var noun: String
 	match slot:
-		ItemData.Slot.ARMOR:
+		ItemData.Slot.CHEST:
 			noun = ARMOR_NOUNS.pick_random()
-		ItemData.Slot.RELIC:
+		ItemData.Slot.AMULET:
 			noun = RELIC_NOUNS.pick_random()
+		ItemData.Slot.HELM:
+			noun = HELM_NOUNS.pick_random()
+		ItemData.Slot.GLOVES:
+			noun = GLOVES_NOUNS.pick_random()
+		ItemData.Slot.BOOTS:
+			noun = BOOTS_NOUNS.pick_random()
+		ItemData.Slot.RING:
+			noun = RING_NOUNS.pick_random()
 		_:
 			noun = WEAPON_NOUNS.pick_random()
 	var name := "%s %s" % [PREFIXES.pick_random(), noun]

@@ -1,0 +1,9 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/gear_slots",
+	"shots": [
+		{"name": "inventory_7_slots", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"do": "loot"}, {"do": "loot"}, {"do": "loot"}, {"do": "loot"}, {"do": "loot"}, {"do": "loot"},
+			            {"wait": 0.3}, {"press": "move_forward", "for": 0.6}, {"wait": 0.4}, {"do": "inventory"}, {"wait": 0.3}], "settle": 0.1}
+	]
+}

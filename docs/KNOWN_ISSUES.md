@@ -47,7 +47,83 @@
 - Warden frontal block: does the spark/clink feedback read as "go around"?
 - Spire gallery casters on platforms: fair with the camera at range?
 
+## Fixed in M06 (Step 0b, user-approved gameplay fixes)
+- Dodge during Storm Step skipped the dash's end: collision mask stayed 0b001
+  (player phased through enemies) and the path zap was lost. The dash now
+  resolves on a dodge cancel (`Player._resolve_storm_step`).
+- Debug style A (V) reparents the world; enemies dropped out of
+  `EnemyBase.all_enemies` (Tab targeting, Chain Spark jumps, separation broke
+  until reload). Registration moved to `_enter_tree`.
+- Spire gallery ramp rose away from its platform (unreachable); rebuilt along
+  +X onto the east platform's west edge (~19 deg). Vessel blink anchors (r 7
+  circle) left the 10.75 m-deep chamber; now an ellipse (7 x 3.5) inside it.
+
+## M06 open items (after Phase C)
+- Style Gate and §71 gate verdicts are the user's, on the captures and in
+  the final playtest. Implementer notes to look at:
+  - The Spire's darkness needs judging in motion.
+  - Runehold's cloud cover may still be busy.
+- The Veilstalker's strafe and retreat loops play at a fixed rate (not
+  speed-matched like run). They look right at the design speeds only.
+- Legendary looks: only Cindermaw shows on the hero. Conductor's Oath and
+  Glacier Heart have unique drop models and icons; visible armor and relics
+  on the character are M07+.
+- Warm-up enemies (frozen, under the floor, freed after 0.3 s) register in
+  `EnemyBase.all_enemies` meanwhile. They are IDLE, so music and targeting
+  ignore them, but a Tab press in the first 0.3 s of a zone could cycle
+  onto one.
+- Headless exit logs "N resources still in use" for audio streams still
+  playing when the smoke test quits (zone music, ambience). Cosmetic.
+- First fight of a session: 1–2 hitches of 50–140 ms; later fights stay
+  under 25–50 ms worst frame. `perf_probe` now attributes spikes (fight step,
+  GPU / render CPU / script time, pipeline compiles; `--prefire=` bisects).
+  - The first Chain Spark compiles about 6 pipelines (Forward+ variants
+    drawn for the first time; the Intel driver compiles synchronously).
+  - The first Storm Step end shows up to ~100 ms of physics-side main-thread
+    time, with no compiles. Intermittent, cause not isolated.
+  - Already fixed (they were the bigger part):
+    - CPU bursts, so no particle process shaders compile
+    - a warm-up drawn inside the view frustum (VFX, bolt, an omni light,
+      the rigged enemy types)
+    - hit flash and telegraph glow change energy only
+    - rig scenes kept loaded
+  - Next idea: a short black load hold that renders a scripted fight burst
+    before the zone fades in.
+- Music: Highlands, Runehold and Spire each have explore and combat
+  layers; bosses use their zone's combat layer and a victory stinger. None
+  of it has been heard by a human yet. Mix levels are start values, to be
+  set at the listening checkpoint.
+- Camp tents are deferred: M06 adds no collision and a tent you can walk
+  through breaks the rule — the M08 open zone gets POIs with collision.
+- Headless only: freeing the lab's initial-wave Marauders while alive and
+  animating (debug `reset_lab`, style-A reparent) logs `Parameter "material"
+  is null` from the dummy renderer once per enemy. Normal deaths (animator
+  stops, 0.22 s tween, then free) and freshly spawned rigs don't trigger it;
+  the M05 model doesn't either. Cosmetic log line, cause not isolated yet.
+- Test note: Highlands camp 1 triggers the moment the player lands at spawn
+  (exactly 13.0 m = its radius, M04 design); the smoke test now checks that
+  no far camp wakes up instead of relying on the airborne frames.
+
+## M07 open items (implementer proposal, needs the user's playtest)
+- With the F3 debug overlay open, number keys 1–6 both trigger their debug
+  action (spawn, kill all ...) and cast their ability (debug keys are only
+  active while the overlay shows).
+- Seven slots mean more affixes in total, so the hero gets stronger than
+  with three. Affix values are unchanged and need a balance pass in
+  playtests.
+- The XP curve, the XP values, the level cap and all 24 talents are start
+  values.
+- Enemy levels raise health only (+8 %/level). Damage scaling is an open
+  design question.
+- Tab targeting can't be used while the talent panel is open (input
+  locked), like the inventory.
+
 ## Technical
+- Two game instances at once on the dev iGPU crashed the one in the
+  background with "Vulkan device was lost" (Windows GPU resets,
+  LiveKernelEvent, 2026-09-23). Play and measure with one instance; the
+  Godot editor alone is fine. `run_godot.ps1` warns when another game is
+  running.
 - Mass spawn of ~26 enemies in one frame spikes ~100ms (stress test only).
   If real encounters spawn waves, stagger spawns or pool enemies.
 - `TIME_PHYSICS_PROCESS` monitor readings look implausible (>frame time);

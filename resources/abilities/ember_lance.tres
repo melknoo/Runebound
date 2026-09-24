@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"ember_lance"
 display_name = "Ember Lance"
+description = "Fast fire lance that sets its target ablaze (Burn)."
 cooldown = 0.5
 resonance_cost = 0.0
 resonance_gain_per_hit = 4.0

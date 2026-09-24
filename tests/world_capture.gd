@@ -75,6 +75,7 @@ func _run_highlands() -> void:
 			chest = child
 			break
 	zone.player.global_position = chest.global_position + Vector3(0, 0.2, 3.5)
+	chest.open(zone)  # M07: chests open on the interact key
 	_aim(0.0, -0.3)
 	await _wait(0.8)
 	await _shot("06_chest_loot")

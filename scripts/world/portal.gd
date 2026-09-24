@@ -11,12 +11,93 @@ var locked: bool = false
 
 var _ring: MeshInstance3D
 var _ring_mat: StandardMaterial3D
+var _gate_mat: ShaderMaterial  # M06 gate (art pass); null on the legacy look
+var _frame: Node3D
+
+const GATE_SHADER := preload("res://shaders/portal_gate.gdshader")
 var _light: OmniLight3D
 var _label: Label3D
 var _cooldown: float = 1.5  # grace period so arrivals don't instantly re-trigger
+var _prompt: InteractPrompt
 
 
 func _ready() -> void:
+	var zone := _zone()
+	if zone != null and zone.look != null and zone.look.art_pass:
+		_build_gate()
+	else:
+		_build_ring()
+	_light = OmniLight3D.new()
+	_light.omni_range = 4.0
+	_light.shadow_enabled = false
+	_light.position = Vector3(0, 1.0, 0)
+	add_child(_light)
+
+	_label = Label3D.new()
+	_label.text = label_text
+	_label.font_size = 48
+	_label.pixel_size = 0.004
+	_label.outline_size = 12
+	_label.outline_modulate = Color(0.05, 0.03, 0.08)
+	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_label.position = Vector3(0, 3.7 if _gate_mat != null else 2.0, 0)
+	# Pixelify, not Jacquard: the blackletter face was unreadable as a world label
+	UiTheme.label3d(_label, UiTheme.BIG)
+	add_child(_label)
+	_prompt = InteractPrompt.create(self, 1.2)
+	_add_motes()
+	_apply_lock_visuals()
+	_add_hum()
+
+
+## The zone this portal belongs to (it is a child of the zone's world; the
+## tree's current_scene may still be the loader while zones build).
+func _zone() -> ZoneBase:
+	var n := get_parent()
+	while n != null and not n is ZoneBase:
+		n = n.get_parent()
+	return n as ZoneBase
+
+
+## M06 C5 gate: flush octagonal rune plate, an upright swirling oval and
+## floating arch stones (all >= 2.2 m) turned to face the zone's centre.
+func _build_gate() -> void:
+	SetPieces.prop(self, "portal_plate", global_position)
+	_frame = Node3D.new()
+	_frame.name = "Frame"
+	add_child(_frame)
+	SetPieces.prop(_frame, "portal_arch", Vector3.ZERO)
+	var arch := _frame.get_child(0) as Node3D
+	if arch != null:
+		arch.position = Vector3.ZERO
+		var bob := arch.create_tween().set_loops()
+		bob.tween_property(arch, "position:y", 0.06, 1.8).set_trans(Tween.TRANS_SINE)
+		bob.tween_property(arch, "position:y", -0.02, 1.8).set_trans(Tween.TRANS_SINE)
+	var gate := MeshInstance3D.new()
+	gate.name = "Gate"
+	var quad := QuadMesh.new()
+	quad.size = Vector2(2.5, 3.1)
+	_gate_mat = ShaderMaterial.new()
+	_gate_mat.shader = GATE_SHADER
+	_gate_mat.set_shader_parameter(&"core_color", ArtKit.color("color_roles.player_accent.body"))
+	quad.material = _gate_mat
+	gate.mesh = quad
+	gate.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	gate.position = Vector3(0, 1.45, 0)
+	_frame.add_child(gate)
+	_face_centre.call_deferred()
+
+
+## Positions are set right after add_child: turn once they are.
+func _face_centre() -> void:
+	if _frame == null:
+		return
+	var to := -Vector3(global_position.x, 0.0, global_position.z)
+	if to.length() > 0.5:
+		_frame.rotation.y = atan2(to.x, to.z)
+
+
+func _build_ring() -> void:
 	_ring = MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(2.6, 2.6)
@@ -33,22 +114,8 @@ func _ready() -> void:
 	_ring.position = Vector3(0, 0.08, 0)
 	add_child(_ring)
 
-	_light = OmniLight3D.new()
-	_light.omni_range = 4.0
-	_light.shadow_enabled = false
-	_light.position = Vector3(0, 1.0, 0)
-	add_child(_light)
 
-	_label = Label3D.new()
-	_label.text = label_text
-	_label.font_size = 48
-	_label.pixel_size = 0.004
-	_label.outline_size = 12
-	_label.outline_modulate = Color(0.05, 0.03, 0.08)
-	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	_label.position = Vector3(0, 2.0, 0)
-	add_child(_label)
-
+func _add_motes() -> void:
 	# Rising motes.
 	var motes := GPUParticles3D.new()
 	motes.amount = 12
@@ -81,19 +148,14 @@ func _ready() -> void:
 	motes.draw_pass_1 = quad
 	add_child(motes)
 
-	_apply_lock_visuals()
-	_add_hum()
-
 
 func _add_hum() -> void:
 	var path := "res://assets/sfx/portal_hum_01.wav"
 	if not ResourceLoader.exists(path):
 		return
-	var stream := (load(path) as AudioStreamWAV).duplicate() as AudioStreamWAV
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_end = stream.data.size() / 2
 	var p := AudioStreamPlayer3D.new()
-	p.stream = stream
+	p.stream = load(path)  # loops via its .import (edit/loop_mode = Forward)
+	p.bus = &"Ambience"
 	p.volume_db = -14.0
 	p.max_distance = 14.0
 	p.autoplay = true
@@ -107,7 +169,10 @@ func set_locked(value: bool) -> void:
 
 func _apply_lock_visuals() -> void:
 	var color := Color(0.35, 0.35, 0.4) if locked else Color(0.35, 0.95, 0.85)
-	_ring_mat.albedo_color = color
+	if _ring_mat != null:
+		_ring_mat.albedo_color = color
+	if _gate_mat != null:
+		_gate_mat.set_shader_parameter(&"lit", 0.0 if locked else 1.0)
 	_light.light_color = color
 	_light.light_energy = 0.4 if locked else 1.4
 	_label.modulate = color
@@ -115,15 +180,21 @@ func _apply_lock_visuals() -> void:
 
 
 func _process(delta: float) -> void:
-	_ring.rotate_y(delta * 0.8)
+	if _ring != null:
+		_ring.rotate_y(delta * 0.8)
+	var zone := get_tree().current_scene as ZoneBase
+	if zone == null or zone.player == null or not is_instance_valid(zone.player):
+		_prompt.update(false, "")
+		return
+	var near := zone.player.global_position.distance_to(global_position) <= TRIGGER_RANGE
+	if locked:
+		_prompt.update(near, "Sealed")
+		return
+	_prompt.update(near and _cooldown <= 0.0, "Travel")
 	if _cooldown > 0.0:
 		_cooldown -= delta
 		return
-	if locked:
-		return
-	var zone := get_tree().current_scene as ZoneBase
-	if zone == null or zone.player == null or not is_instance_valid(zone.player):
-		return
-	if zone.player.global_position.distance_to(global_position) <= TRIGGER_RANGE:
+	# M07 feedback: travel on the interact key, never by walking in by accident.
+	if _prompt.pressed(zone.player):
 		zone.travel_to(destination_scene)
 		_cooldown = 10.0

@@ -7,6 +7,8 @@ signal health_changed(current: float, maximum: float)
 signal resonance_changed(current: float, maximum: float)
 signal cooldowns_changed
 signal player_died
+## Presentation hook (M06 CharacterAnimator): an ability just started.
+signal action_started(action: StringName)
 
 enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP }
 
@@ -37,6 +39,7 @@ var camera_rig: CameraRig = null
 var targeting: TargetingSystem = null
 var health: HealthComponent
 var equipment: Equipment
+var progression: Progression
 
 # Ability tuning (assigned in _ready from resources, overridable in tests).
 var cleave: AbilityData
@@ -45,6 +48,14 @@ var earthbreaker: AbilityData
 var storm_step: AbilityData
 var chain_spark: AbilityData
 var fracture_rune: AbilityData
+var runic_guard: AbilityData        # M07 talent ability 7 (key 5)
+var resonance_burst: AbilityData    # M07 talent ability 8 (key 6)
+
+## M07 barrier (Runic Guard, Unbroken): absorbs damage before health.
+var barrier: float = 0.0
+var _barrier_time: float = 0.0
+const UNBROKEN_BARRIER := 15.0
+const UNBROKEN_COOLDOWN := 8.0
 
 var _cooldowns: Dictionary = {}  # id -> seconds remaining
 var _state_timer: float = 0.0
@@ -83,6 +94,10 @@ func _ready() -> void:
 	equipment.name = "Equipment"
 	equipment.player = self
 	add_child(equipment)
+	progression = Progression.new()
+	progression.name = "Progression"
+	add_child(progression)
+	progression.talents_changed.connect(equipment._apply_max_hp)  # levels + Runic Plate
 
 	Hurtbox.create(self, 0b1000, 0.5, 1.75, 0.85)
 
@@ -98,12 +113,16 @@ func _load_abilities() -> void:
 	storm_step = load("res://resources/abilities/storm_step.tres")
 	chain_spark = load("res://resources/abilities/chain_spark.tres")
 	fracture_rune = load("res://resources/abilities/fracture_rune.tres")
+	runic_guard = load("res://resources/abilities/runic_guard.tres")
+	resonance_burst = load("res://resources/abilities/resonance_burst.tres")
 
 
 func _build_visual() -> void:
 	_visual = Node3D.new()
 	_visual.name = "Visual"
 	add_child(_visual)
+	if _build_rigged_visual():
+		return
 
 	const MODEL_PATH := "res://assets/models/player_runebreaker.glb"
 	if ResourceLoader.exists(MODEL_PATH):
@@ -181,6 +200,92 @@ func _build_visual() -> void:
 	_build_weapon()
 
 
+const RIG_PATH := "res://assets/models/chars/runebreaker.glb"
+var animator: CharacterAnimator = null
+var _rune_glow: StandardMaterial3D
+
+
+## M06 rigged Runebreaker (sword is part of the skinned mesh on hand.R). The
+## rig sits on a RigRoot below `_visual` — flinches go there, never on
+## `_visual`, whose yaw is the gameplay facing. `_weapon_pivot` becomes an
+## invisible stand-in so the legacy ability tweens stay untouched. Returns
+## false when the GLB is missing (legacy visuals then).
+func _build_rigged_visual() -> bool:
+	var scene := ArtKit.rig_scene(RIG_PATH)
+	if scene == null:
+		return false
+	var model := scene.instantiate() as Node3D
+	model.rotation.y = PI
+	var rig_root := Node3D.new()
+	rig_root.name = "RigRoot"
+	_visual.add_child(rig_root)
+	rig_root.add_child(model)
+	var mesh := model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
+	_body_mat = ArtKit.character_material("runebreaker")
+	mesh.set_surface_override_material(0, _body_mat)
+	_rune_glow = ArtKit.glow_material(ArtKit.color("color_roles.resonance.body"), 1.2)
+	mesh.set_surface_override_material(1, _rune_glow)
+	if mesh.mesh.get_surface_count() > 2:
+		_rig_mesh = mesh
+		equipment.changed.connect(_refresh_blade)
+		_refresh_blade()
+	resonance_changed.connect(_on_resonance_glow)
+	animator = CharacterAnimator.create(self, model, {
+		"idle": &"idle", "run": &"run", "run_speed": MAX_SPEED, "layered": true,
+		"actions": {&"dodge": &"dodge", &"cleave_l": &"cleave_l", &"cleave_r": &"cleave_r",
+			&"ember": &"ember", &"earthbreaker": &"earthbreaker_rise",
+			&"earthbreaker_impact": &"earthbreaker_impact", &"storm_step": &"storm_step",
+			&"resonance_burst": &"resonance_burst"},
+		# instant casts keep the legs running: upper-body layer only
+		"upper": {&"chain_spark": &"chain_spark", &"fracture_rune": &"fracture_rune", &"runic_guard": &"runic_guard"},
+		"flinch": &"flinch",
+		# back in MOVE and moving: the run takes over an action's follow-through
+		"free": func() -> bool: return state == State.MOVE,
+	})
+	if animator != null:
+		animator.full_rate = true  # the hero never drops animation rate
+		health.damaged.connect(func(_hit: HitInfo) -> void: animator.flinch())
+	_weapon_pivot = Node3D.new()
+	_weapon_pivot.name = "WeaponPivotStandIn"
+	_visual.add_child(_weapon_pivot)
+	return true
+
+
+var _body_mat: StandardMaterial3D
+var _rig_mesh: MeshInstance3D
+var _cindermaw_mat: StandardMaterial3D
+
+
+## M06 C6: the blade surface shows the equipped legendary weapon — Cindermaw's
+## basalt blade with a molten, breathing edge; any other weapon the rune steel.
+func _refresh_blade() -> void:
+	if _rig_mesh == null:
+		return
+	var weapon: ItemData = equipment.equipped.get(ItemData.Slot.WEAPON)
+	if weapon != null and weapon.legendary_id == &"cindermaw":
+		if _cindermaw_mat == null:
+			_cindermaw_mat = StandardMaterial3D.new()
+			_cindermaw_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+			_cindermaw_mat.albedo_color = ArtKit.color("palettes.highlands.basalt.2")
+			_cindermaw_mat.emission_enabled = true
+			_cindermaw_mat.emission = ArtKit.color("color_roles.fire.body")
+			_cindermaw_mat.emission_energy_multiplier = 0.9
+			_cindermaw_mat.set_meta(ArtKit.KEEP_EMISSION, true)
+			var breathe := create_tween().set_loops()
+			breathe.tween_property(_cindermaw_mat, "emission_energy_multiplier", 1.5, 0.8).set_trans(Tween.TRANS_SINE)
+			breathe.tween_property(_cindermaw_mat, "emission_energy_multiplier", 0.7, 0.9).set_trans(Tween.TRANS_SINE)
+		_rig_mesh.set_surface_override_material(2, _cindermaw_mat)
+	else:
+		_rig_mesh.set_surface_override_material(2, _body_mat)
+
+
+## The armor runes are the in-world Resonance meter: dim when empty, bright
+## rune gold when full.
+func _on_resonance_glow(current: float, maximum: float) -> void:
+	if _rune_glow != null:
+		_rune_glow.emission_energy_multiplier = lerpf(0.9, 3.2, clampf(current / maximum, 0.0, 1.0))
+
+
 ## Broad rune blade on the right hand, swung via pivot tweens. Always
 ## code-built: abilities animate this pivot directly.
 func _build_weapon() -> void:
@@ -233,6 +338,10 @@ func _physics_process(delta: float) -> void:
 		return
 	for key: StringName in _cooldowns.keys():
 		_cooldowns[key] = maxf(_cooldowns[key] - delta, 0.0)
+	if _barrier_time > 0.0:
+		_barrier_time -= delta
+		if _barrier_time <= 0.0:
+			barrier = 0.0
 	if _buffer_timer > 0.0:
 		_buffer_timer -= delta
 		if _buffer_timer <= 0.0:
@@ -263,22 +372,51 @@ func _physics_process(delta: float) -> void:
 
 
 ## Central ability hit roll: applies equipment damage and crit bonuses.
+## Summed value of a stat key from equipment and progression (level bonuses,
+## talents). Every ability hook reads stats through here.
+func stat(key: StringName) -> float:
+	return equipment.stat(key) + (progression.stat(key) if progression != null else 0.0)
+
+
+## Legendary power (equipment) or behavior talent (progression).
+func has_power(id: StringName) -> bool:
+	return equipment.has_power(id) or (progression != null and progression.has_power(id))
+
+
 func roll_ability_hit(data: AbilityData) -> HitInfo:
-	var damage_mult := 1.0 + equipment.stat(&"damage_pct") / 100.0
-	var bonus_crit := equipment.stat(&"crit_pct") / 100.0
-	return data.roll_hit(global_position, damage_mult, bonus_crit)
+	var damage_mult := 1.0 + stat(&"damage_pct") / 100.0
+	var bonus_crit := stat(&"crit_pct") / 100.0
+	var hit := data.roll_hit(global_position, damage_mult, bonus_crit)
+	hit.from_player = true
+	hit.ability = data.id
+	hit.burn_mult = 1.0 + stat(&"burn_pct") / 100.0
+	return hit
+
+
+## M07 conditional talent damage, applied when a player hit lands.
+func talent_damage_mult(hit: HitInfo, enemy: EnemyBase) -> float:
+	var pct := 0.0
+	if enemy.status.has_shock():
+		pct += stat(&"shocked_dmg_pct")
+	if enemy.status.has_burn():
+		pct += stat(&"burning_dmg_pct")
+	if hit.ability == &"ember_lance":
+		pct += stat(&"ember_dmg_pct")
+	return 1.0 + pct / 100.0
 
 
 ## Central cooldown setter: applies global (and dodge-specific) reduction.
 func _set_cooldown(id: StringName, base: float) -> void:
-	var mult := 1.0 - equipment.stat(&"cooldown_pct") / 100.0
+	var mult := 1.0 - stat(&"cooldown_pct") / 100.0
 	if id == &"dodge":
-		mult *= 1.0 - equipment.stat(&"dodge_cd_pct") / 100.0
+		mult *= 1.0 - stat(&"dodge_cd_pct") / 100.0
+	elif id == &"storm_step":
+		mult *= 1.0 - stat(&"storm_cd_pct") / 100.0
 	_cooldowns[id] = base * clampf(mult, 0.35, 1.0)
 
 
 func earthbreaker_cost() -> float:
-	return maxf(earthbreaker.resonance_cost - equipment.stat(&"eb_cost_reduce"), 10.0)
+	return maxf(earthbreaker.resonance_cost - stat(&"eb_cost_reduce"), 10.0)
 
 
 func _read_action_input() -> void:
@@ -298,6 +436,10 @@ func _read_action_input() -> void:
 		_try_or_buffer(&"chain_spark")
 	if Input.is_action_just_pressed(&"ability_f"):
 		_try_or_buffer(&"fracture_rune")
+	if InputMap.has_action(&"ability_runic_guard") and Input.is_action_just_pressed(&"ability_runic_guard"):
+		_try_or_buffer(&"runic_guard")
+	if InputMap.has_action(&"ability_resonance_burst") and Input.is_action_just_pressed(&"ability_resonance_burst"):
+		_try_or_buffer(&"resonance_burst")
 
 
 func _try_or_buffer(action: StringName) -> void:
@@ -330,6 +472,10 @@ func _try_action(action: StringName) -> bool:
 			return try_chain_spark()
 		&"fracture_rune":
 			return try_fracture_rune()
+		&"runic_guard":
+			return try_runic_guard()
+		&"resonance_burst":
+			return try_resonance_burst()
 	return false
 
 
@@ -347,7 +493,7 @@ func _move_input_dir() -> Vector3:
 
 func _process_move(delta: float) -> void:
 	var dir := _move_input_dir()
-	var target_vel := dir * MAX_SPEED * (1.0 + equipment.stat(&"move_pct") / 100.0)
+	var target_vel := dir * MAX_SPEED * (1.0 + stat(&"move_pct") / 100.0)
 	var rate := ACCEL if dir != Vector3.ZERO else DECEL
 	velocity.x = move_toward(velocity.x, target_vel.x, rate * delta)
 	velocity.z = move_toward(velocity.z, target_vel.z, rate * delta)
@@ -390,6 +536,11 @@ func aim_direction() -> Vector3:
 		return facing()
 	var exclude: Array[RID] = [get_rid()]
 	var aim_point := camera_rig.get_aim_point(exclude)
+	# The camera looks down at the hero, so its ray meets the floor a few
+	# metres ahead: aim at muzzle height above that spot instead of into it
+	# (user feedback 2026-09-24). Level on flat ground, follows slopes.
+	if camera_rig.last_aim_on_floor:
+		aim_point.y += MUZZLE_HEIGHT
 	var from := muzzle_position()
 	var dir := aim_point - from
 	if dir.length() < 1.0:
@@ -398,8 +549,11 @@ func aim_direction() -> Vector3:
 	return dir.normalized()
 
 
+const MUZZLE_HEIGHT := 1.2
+
+
 func muzzle_position() -> Vector3:
-	return global_position + Vector3(0, 1.2, 0) + facing() * 0.5
+	return global_position + Vector3(0, MUZZLE_HEIGHT, 0) + facing() * 0.5
 
 
 func _footsteps(delta: float) -> void:
@@ -419,6 +573,10 @@ func try_dodge() -> bool:
 	# Dodge cancels melee recovery and cast startup — the trust rule.
 	if state == State.SLAM and _state_timer < earthbreaker.startup + earthbreaker.active:
 		return false
+	# Dodging out of a Storm Step still ends the dash properly (collision mask,
+	# path zap) — otherwise the player kept phasing through enemies.
+	if state == State.STORM_STEP:
+		_resolve_storm_step()
 	var dir := _move_input_dir()
 	if dir == Vector3.ZERO:
 		dir = facing()
@@ -431,6 +589,7 @@ func try_dodge() -> bool:
 	VFX.dodge_dust(get_tree().current_scene, global_position, dir)
 	Sfx.play("dodge", global_position, -4.0)
 	cooldowns_changed.emit()
+	action_started.emit(&"dodge")
 	return true
 
 
@@ -466,6 +625,7 @@ func try_melee() -> bool:
 	_face_melee_target()
 	_animate_cleave()
 	Sfx.play("swing", global_position, -2.0, 0.1)
+	action_started.emit(&"cleave_l" if _melee_flip else &"cleave_r")
 	return true
 
 
@@ -496,7 +656,7 @@ func _process_melee(delta: float) -> void:
 func _do_cleave_hit() -> void:
 	var fwd := facing()
 	var center := global_position + Vector3(0, 1.0, 0) + fwd * 1.2
-	var radius := 1.5 * (1.0 + equipment.stat(&"cleave_radius_pct") / 100.0)
+	var radius := 1.5 * (1.0 + stat(&"cleave_radius_pct") / 100.0)
 	var hits := _query_hurtboxes(center, radius)
 	var scene := get_tree().current_scene
 	# Slash arc regardless of contact — the swing itself must read.
@@ -549,6 +709,7 @@ func try_ember() -> bool:
 	VFX.ember_cast(get_tree().current_scene, muzzle_position())
 	Sfx.play("ember_cast", global_position, -3.0)
 	cooldowns_changed.emit()
+	action_started.emit(&"ember")
 	return true
 
 
@@ -595,6 +756,7 @@ func try_earthbreaker() -> bool:
 	velocity.y = 7.0
 	Sfx.play("earthbreaker_windup", global_position, -3.0)
 	cooldowns_changed.emit()
+	action_started.emit(&"earthbreaker")
 	return true
 
 
@@ -616,6 +778,7 @@ func _process_slam(delta: float) -> void:
 
 
 func _do_slam_hit() -> void:
+	action_started.emit(&"earthbreaker_impact")  # presentation: landing clip
 	var scene := get_tree().current_scene
 	var pos := global_position
 	VFX.earthbreaker_slam(scene, pos, earthbreaker.aoe_radius)
@@ -625,11 +788,13 @@ func _do_slam_hit() -> void:
 	for enemy: Node in hits:
 		var hit := roll_ability_hit(earthbreaker)
 		hit.source_position = pos
+		if has_power(&"molten_core"):
+			hit.applies_burn = true  # M07 Molten Core
 		enemy.call(&"take_hit", hit)
 	if not hits.is_empty():
 		GameFeel.hitstop(hits, 0.07)
 	# Glacier Heart: the slam leaves a chilling frost field.
-	if equipment.has_power(&"glacier_heart"):
+	if has_power(&"glacier_heart"):
 		var field := FrostField.new()
 		field.position = Vector3(pos.x, 0.02, pos.z)
 		scene.add_child(field)
@@ -683,6 +848,7 @@ func try_storm_step() -> bool:
 	VFX.flash(get_tree().current_scene, global_position + Vector3(0, 1.0, 0), Color(0.8, 0.9, 1.0), 1.0, 0.1)
 	Sfx.play("storm_step", global_position, -1.0, 0.08)
 	cooldowns_changed.emit()
+	action_started.emit(&"storm_step")
 	return true
 
 
@@ -705,14 +871,23 @@ func _process_storm_step(delta: float) -> void:
 
 
 func _finish_storm_step() -> void:
-	collision_mask = 0b101
 	state = State.MOVE
+	_resolve_storm_step()
+	_consume_buffer()
+
+
+## Ends the dash itself: restores collision and zaps everything on the path.
+## Shared by the normal finish and a dodge cancel (which must not consume the
+## input buffer mid-dodge).
+func _resolve_storm_step() -> void:
+	collision_mask = 0b101
 	var scene := get_tree().current_scene
 	VFX.storm_trail(scene, _dash_start, global_position)
 	# Everything the dash passed through gets zapped and shocked.
 	var path := global_position - _dash_start
 	var center := _dash_start + path * 0.5 + Vector3(0, 1.0, 0)
 	var hits := _query_hurtboxes(center, maxf(path.length() * 0.5 + 0.5, 1.0))
+	var zapped := 0
 	for enemy: Node in hits:
 		var enemy_3d := enemy as Node3D
 		# Radius covers a sphere; keep only enemies near the actual dash line.
@@ -724,10 +899,21 @@ func _finish_storm_step() -> void:
 		var hit := roll_ability_hit(storm_step)
 		hit.source_position = _dash_start
 		if enemy.has_method(&"take_hit") and enemy.call(&"take_hit", hit):
-			gain_resonance(storm_step.resonance_gain_per_hit)
+			zapped += 1
+			gain_resonance(storm_step.resonance_gain_per_hit, true)
 			VFX.lightning_arc(scene, global_position + Vector3(0, 1.0, 0),
 				enemy_3d.global_position + Vector3(0, 1.0, 0), Color(0.8, 0.9, 1.0))
-	_consume_buffer()
+	# M07 Overload: the landing point Shocks everything around it.
+	if has_power(&"overload"):
+		VFX.ground_ring(scene, global_position, ArtKit.color("color_roles.lightning.body"), OVERLOAD_RADIUS, 0.25)
+		for other in EnemyBase.all_enemies:
+			if is_instance_valid(other) and other.ai_state != EnemyBase.AIState.DEAD \
+					and other.global_position.distance_to(global_position) <= OVERLOAD_RADIUS:
+				other.status.apply_shock()
+	# M07 Eye of the Storm: every enemy on the path refunds 20 % of the cooldown.
+	if has_power(&"eye_of_the_storm") and zapped > 0:
+		_cooldowns[&"storm_step"] = maxf(float(_cooldowns.get(&"storm_step", 0.0)) - storm_step.cooldown * 0.2 * zapped, 0.0)
+		cooldowns_changed.emit()
 
 
 # ---------------------------------------------------------------------------
@@ -763,17 +949,29 @@ func try_chain_spark() -> bool:
 		VFX.flash(scene, chest, Color(1.0, 1.0, 0.75), 0.6, 0.1)
 		var hit := roll_ability_hit(chain_spark)
 		if next.take_hit(hit):
-			gain_resonance(chain_spark.resonance_gain_per_hit)
+			gain_resonance(chain_spark.resonance_gain_per_hit, true)
 			# Conductor's Oath: struck enemies stay charged; later lightning
 			# damage on any Conductor arcs to all others (see EnemyBase).
-			if equipment.has_power(&"conductors_oath"):
+			if has_power(&"conductors_oath"):
 				next.status.apply_conductor()
 		hit_enemies.append(next)
 		from = chest
-		var max_targets := 3 + int(equipment.stat(&"chain_jumps")) + (1 if bonus_jump else 0)
+		var max_targets := 3 + int(stat(&"chain_jumps")) + (1 if bonus_jump else 0)
 		next = null
 		if hit_enemies.size() < max_targets:
 			next = _nearest_chain_candidate(from, hit_enemies)
+	# M07 Thunderclap: the last target bursts onto its neighbours.
+	if has_power(&"thunderclap") and not hit_enemies.is_empty() and is_instance_valid(hit_enemies[-1]):
+		var last := hit_enemies[-1]
+		VFX.ground_ring(scene, last.global_position, ArtKit.color("color_roles.lightning.body"), THUNDERCLAP_RADIUS, 0.25)
+		for other in EnemyBase.all_enemies.duplicate():
+			if other == last or not is_instance_valid(other) or other.ai_state == EnemyBase.AIState.DEAD:
+				continue
+			if other.global_position.distance_to(last.global_position) <= THUNDERCLAP_RADIUS:
+				var splash := roll_ability_hit(chain_spark)
+				splash.damage *= 0.6
+				splash.source_position = last.global_position
+				other.take_hit(splash)
 	Sfx.play("chain_spark", global_position, -1.0, 0.1)
 	GameFeel.camera_impulse(aim_direction(), 0.04)
 	# Weapon flourish: quick raise, snap back.
@@ -782,6 +980,7 @@ func try_chain_spark() -> bool:
 	tw.tween_property(_weapon_pivot, "rotation_degrees", Vector3(-25, 15, 0), 0.25) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	cooldowns_changed.emit()
+	action_started.emit(&"chain_spark")
 	return true
 
 
@@ -818,7 +1017,7 @@ func try_fracture_rune() -> bool:
 		offset = offset.normalized() * FRACTURE_RUNE_MAX_RANGE
 	var rune := FractureRune.new()
 	rune.setup(fracture_rune, self)
-	rune.arm_time = maxf(FractureRune.ARM_TIME - equipment.stat(&"rune_arm_reduce"), 0.5)
+	rune.arm_time = maxf(FractureRune.ARM_TIME - stat(&"rune_arm_reduce"), 0.5)
 	rune.position = origin + offset + Vector3(0, 0.02, 0)
 	get_tree().current_scene.add_child(rune)
 	_face_aim_instant()
@@ -828,6 +1027,7 @@ func try_fracture_rune() -> bool:
 	tw.tween_property(_weapon_pivot, "rotation_degrees", Vector3(-25, 15, 0), 0.3) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	cooldowns_changed.emit()
+	action_started.emit(&"fracture_rune")
 	return true
 
 
@@ -835,8 +1035,8 @@ func try_fracture_rune() -> bool:
 # Resonance / damage intake
 # ---------------------------------------------------------------------------
 
-func gain_resonance(amount: float) -> void:
-	amount *= 1.0 + equipment.stat(&"resonance_pct") / 100.0
+func gain_resonance(amount: float, lightning: bool = false) -> void:
+	amount *= 1.0 + (stat(&"resonance_pct") + (stat(&"lightning_res_pct") if lightning else 0.0)) / 100.0
 	resonance = minf(resonance + amount, MAX_RESONANCE)
 	resonance_changed.emit(resonance, MAX_RESONANCE)
 
@@ -849,6 +1049,18 @@ func spend_resonance(amount: float) -> void:
 func take_hit(hit: HitInfo) -> bool:
 	if god_mode:
 		return false
+	# M07 Unbroken: an attack met inside the dodge's i-frames grants a barrier.
+	if health.invulnerable and not health.is_dead and has_power(&"unbroken") \
+			and float(_cooldowns.get(&"unbroken", 0.0)) <= 0.0:
+		_cooldowns[&"unbroken"] = UNBROKEN_COOLDOWN
+		grant_barrier(UNBROKEN_BARRIER, 3.0)
+	if barrier > 0.0 and not health.invulnerable and not health.is_dead:
+		var absorbed := minf(barrier, hit.damage)
+		barrier -= absorbed
+		hit.damage -= absorbed
+		_on_barrier_absorbed(absorbed)
+		if hit.damage <= 0.01:
+			return false
 	if not health.apply_hit(hit):
 		return false
 	var push := (global_position - hit.source_position)
@@ -867,6 +1079,82 @@ func _on_died() -> void:
 	player_died.emit()
 
 
+# ---------------------------------------------------------------------------
+# M07 talent abilities + barrier
+# ---------------------------------------------------------------------------
+
+const OVERLOAD_RADIUS := 2.5
+const THUNDERCLAP_RADIUS := 2.0
+const BULWARK_RADIUS := 3.0
+
+
+## Absorbs damage before health for `duration` s (the larger barrier wins).
+func grant_barrier(amount: float, duration: float) -> void:
+	barrier = maxf(barrier, amount)
+	_barrier_time = maxf(_barrier_time, duration)
+	VFX.player_ring(self, global_position, 1.1, duration, ArtKit.color("color_roles.player_accent.hot"))
+	VFX.flash(get_tree().current_scene, global_position + Vector3(0, 1.1, 0), ArtKit.color("color_roles.player_accent.hot"), 1.0, 0.12)
+
+
+func _on_barrier_absorbed(amount: float) -> void:
+	var scene := get_tree().current_scene
+	VFX.flash(scene, global_position + Vector3(0, 1.1, 0), ArtKit.color("color_roles.player_accent.body"), 0.8, 0.08)
+	Sfx.play("bolt_impact", global_position, -6.0, 0.1, 1.4)
+	GameFeel.damage_number(global_position + Vector3(0, 2.0, 0), amount, ArtKit.color("color_roles.player_accent.hot"))
+	# M07 Glacial Bulwark: whoever struck the guard up close is Chilled.
+	if has_power(&"glacial_bulwark"):
+		for enemy in EnemyBase.all_enemies:
+			if is_instance_valid(enemy) and enemy.ai_state != EnemyBase.AIState.DEAD \
+					and enemy.global_position.distance_to(global_position) <= BULWARK_RADIUS:
+				enemy.status.apply_chill()
+
+
+func try_runic_guard() -> bool:
+	if not has_power(&"runic_guard") or state != State.MOVE or float(_cooldowns.get(&"runic_guard", 0.0)) > 0.0:
+		return false
+	if resonance < runic_guard.resonance_cost:
+		Sfx.play_ui("ui_denied", -8.0)
+		return false
+	spend_resonance(runic_guard.resonance_cost)
+	_set_cooldown(&"runic_guard", runic_guard.cooldown)
+	grant_barrier(runic_guard.damage + float(progression.level), runic_guard.active)
+	Sfx.play("runic_guard", global_position, -2.0, 0.05)
+	cooldowns_changed.emit()
+	action_started.emit(&"runic_guard")
+	return true
+
+
+func try_resonance_burst() -> bool:
+	if not has_power(&"resonance_burst") or state != State.MOVE or float(_cooldowns.get(&"resonance_burst", 0.0)) > 0.0:
+		return false
+	if resonance < resonance_burst.resonance_cost:
+		Sfx.play_ui("ui_denied", -8.0)
+		return false
+	var spent := resonance
+	spend_resonance(spent)
+	_set_cooldown(&"resonance_burst", resonance_burst.cooldown)
+	var scene := get_tree().current_scene
+	var pos := global_position
+	var gold := ArtKit.color("color_roles.resonance.body")
+	VFX.flash(scene, pos + Vector3(0, 1.0, 0), ArtKit.color("color_roles.resonance.hot"), 2.4, 0.18)
+	VFX.ground_ring(scene, pos, gold, resonance_burst.aoe_radius, 0.35)
+	VFX.burst(scene, pos + Vector3(0, 0.8, 0), {"tex": "shard", "amount": 14, "lifetime": 0.5, "size": 0.16,
+		"spread": 90.0, "vel_min": 4.0, "vel_max": 8.0, "colors": [ArtKit.color("color_roles.resonance.hot"), Color(gold, 0.0)] as Array[Color]})
+	Sfx.play("resonance_burst", pos, 0.0, 0.05)
+	GameFeel.camera_shake(0.45)
+	var hits := _query_hurtboxes(pos + Vector3(0, 0.8, 0), resonance_burst.aoe_radius)
+	for enemy: Node in hits:
+		var hit := roll_ability_hit(resonance_burst)
+		hit.damage *= spent  # 0.7 per point of Resonance spent
+		hit.source_position = pos
+		enemy.call(&"take_hit", hit)
+	if not hits.is_empty():
+		GameFeel.hitstop(hits, 0.08)
+	cooldowns_changed.emit()
+	action_started.emit(&"resonance_burst")
+	return true
+
+
 func cooldown_fraction(id: StringName) -> float:
 	var total: float = 1.0
 	match id:
@@ -876,6 +1164,8 @@ func cooldown_fraction(id: StringName) -> float:
 		&"storm_step": total = storm_step.cooldown
 		&"chain_spark": total = chain_spark.cooldown
 		&"fracture_rune": total = fracture_rune.cooldown
+		&"runic_guard": total = runic_guard.cooldown
+		&"resonance_burst": total = resonance_burst.cooldown
 	return clampf(_cooldowns.get(id, 0.0) / total, 0.0, 1.0)
 
 

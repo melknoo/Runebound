@@ -6,6 +6,7 @@
 script = ExtResource("1")
 id = &"earthbreaker"
 display_name = "Earthbreaker"
+description = "Leaping slam that staggers everything around you. Spends Resonance."
 cooldown = 4.0
 resonance_cost = 40.0
 resonance_gain_per_hit = 0.0

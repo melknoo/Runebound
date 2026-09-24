@@ -1,0 +1,12 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"comment": "Runehold hub, no enemies: the whole settlement kit (walls, huts, hearth, 26 trees, scatter) in view from the spawn.",
+	"player": [0, 0.2, 10],
+	"yaw": 0.0,
+	"pitch": -0.25,
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 8.0,
+	"budget_fps": 60,
+	"wave": []
+}

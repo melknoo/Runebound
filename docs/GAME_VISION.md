@@ -10,7 +10,9 @@ MOVE → AIM → DODGE → ATTACK → IMPACT → LOOT → BUILD → REPEAT
 2. Direct action combat: WASD + mouse aim, dodge positioning
 3. Exceptional spell/impact VFX in a stylized 3D pixel-fantasy world
 4. Exciting loot that changes how abilities behave
-5. Compact dense world, repeatable endgame runs (later phases)
+5. Character progression (levels + talent tree with 3 spec branches)
+6. Several large, freely explorable zones that are open but dense;
+   repeatable endgame runs (later phases)
 
 ## First class: RUNEBREAKER
 Armored magical warrior. Melee (Rune Cleave) builds **Resonance**; heavy rune

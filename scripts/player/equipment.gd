@@ -1,6 +1,6 @@
 class_name Equipment
 extends Node
-## The player's gear: 3 slots + inventory. Aggregates affix stats and
+## The player's gear: 7 slots (ItemData.Slot) + inventory. Aggregates affix stats and
 ## legendary powers; Player reads them at its ability hook points.
 
 signal changed  # equipment or inventory contents changed
@@ -79,6 +79,6 @@ func _apply_max_hp() -> void:
 	var fraction := 1.0
 	if health.max_health > 0.0:
 		fraction = clampf(health.current_health / health.max_health, 0.0, 1.0)
-	health.max_health = BASE_MAX_HP + stat(&"max_hp")
+	health.max_health = BASE_MAX_HP + player.stat(&"max_hp")  # gear + levels + talents
 	health.current_health = health.max_health * fraction
 	health.health_changed.emit(health.current_health, health.max_health)

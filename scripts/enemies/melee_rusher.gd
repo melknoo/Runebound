@@ -14,13 +14,38 @@ var _telegraph_disc: MeshInstance3D
 
 
 func _init() -> void:
+	xp_value = 20
 	display_name = "Cinder Marauder"
 	max_health = 55.0
 	move_speed = 4.3
 	body_color = Color(0.72, 0.32, 0.22)
 
 
+const RIG_PATH := "res://assets/models/chars/cinder_marauder.glb"
+
+
 func _build_body() -> void:
+	var rig_mesh := _setup_rigged_visual(RIG_PATH, "cinder_marauder", {
+		"idle": &"idle", "run": &"run", "run_speed": move_speed,
+		"states": {AIState.WINDUP: &"attack", AIState.STAGGER: &"stagger", AIState.CHASE: &"@loco",
+			AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
+	}, ArtKit.color("palettes.cinder_marauder.eyes"))
+	if rig_mesh != null:
+		# The axe blade (surface 2) keeps the telegraph ramp: code-owned material,
+		# never in the hit-flash list. The pivot is an invisible stand-in so the
+		# existing windup/strike tweens stay untouched (the clip animates the arm).
+		_axe_glow = flat_material(Color(0.62, 0.6, 0.66))
+		# emission stays on at energy 0: the windup ramps energy only, so the
+		# first telegraph never compiles a new shader variant mid-fight
+		_axe_glow.emission_enabled = true
+		_axe_glow.emission = Color(1.0, 0.4, 0.2)
+		_axe_glow.emission_energy_multiplier = 0.0
+		_axe_glow.set_meta(ArtKit.KEEP_EMISSION, true)
+		rig_mesh.set_surface_override_material(2, _axe_glow)
+		_axe_pivot = Node3D.new()
+		_axe_pivot.name = "AxePivotStandIn"
+		visual.add_child(_axe_pivot)
+		return
 	if _setup_model_visual("res://assets/models/enemy_rusher.glb"):
 		_build_axe()
 		return
@@ -157,7 +182,8 @@ func _do_attack() -> void:
 func _reset_glow() -> void:
 	if _axe_glow != null:
 		_axe_glow.emission_energy_multiplier = 0.0
-		_axe_glow.emission_enabled = false
+		if not _axe_glow.has_meta(ArtKit.KEEP_EMISSION):
+			_axe_glow.emission_enabled = false
 
 
 func _on_interrupted() -> void:

@@ -57,9 +57,44 @@ func _ready() -> void:
 	label.outline_modulate = Color(0.05, 0.03, 0.08)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	label.no_depth_test = true
+	UiTheme.label3d(label)
 	# Above the target name plate so both stay readable when Tab-selected.
 	label.position = Vector3(0, enemy.nameplate_height() + 0.5, 0)
 	enemy.add_child(label)
+	_add_aura(color)
+
+
+## M06 C5 elite read: eyes burn in the affix's element colour and element
+## motes rise off the body (no ground shape: discs and rings are taken).
+func _add_aura(color: Color) -> void:
+	var rig_root := enemy.visual.get_node_or_null("RigRoot")
+	if rig_root != null:
+		var meshes := rig_root.find_children("*", "MeshInstance3D", true, false)
+		if not meshes.is_empty() and (meshes[0] as MeshInstance3D).mesh.get_surface_count() > 1:
+			(meshes[0] as MeshInstance3D).set_surface_override_material(1,
+				ArtKit.glow_material(color, ArtKit.number("emissive_caps.character_eyes", 3.0)))
+	var motes := CPUParticles3D.new()
+	motes.name = "EliteMotes"
+	motes.amount = 14
+	motes.lifetime = 1.3
+	motes.local_coords = false
+	motes.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	motes.emission_box_extents = Vector3(0.35, 0.7, 0.35)
+	motes.direction = Vector3.UP
+	motes.spread = 12.0
+	motes.gravity = Vector3(0, 0.9, 0)
+	motes.initial_velocity_min = 0.2
+	motes.initial_velocity_max = 0.6
+	motes.scale_amount_min = 0.6
+	motes.scale_amount_max = 1.0
+	motes.color_ramp = (VFX._gradient([Color(color, 0.0), Color(color, 1.0), Color(color.lightened(0.4), 0.0)]
+		as Array[Color]) as GradientTexture1D).gradient
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.08, 0.08)
+	quad.material = VFX._particle_material(VFX._tex("ember" if kind == Kind.EMBERBOUND else "spark"))
+	motes.mesh = quad
+	motes.position = Vector3(0, 1.0, 0)
+	enemy.add_child(motes)
 
 
 func _physics_process(delta: float) -> void:
@@ -89,7 +124,7 @@ func _charge_nova() -> void:
 	_nova_charging = true
 	var scene := enemy.get_tree().current_scene
 	VFX.telegraph_disc(scene, Vector3(enemy.global_position.x, 0, enemy.global_position.z),
-		NOVA_RADIUS, NOVA_TELEGRAPH, Color(1.0, 0.95, 0.4, 0.35))
+		NOVA_RADIUS, NOVA_TELEGRAPH)
 	Sfx.play("caster_charge", enemy.global_position, -6.0, 0.1, 1.3)
 	await enemy.get_tree().create_timer(NOVA_TELEGRAPH).timeout
 	_nova_charging = false

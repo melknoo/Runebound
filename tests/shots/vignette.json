@@ -1,0 +1,23 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"out": "captures_shots/vignette",
+	"comment": "M06 B1 gold-target vignette: spawn -> funnel -> camp 1. Run again with `legacy` for before/after pairs.",
+	"shots": [
+		{"name": "spawn_north", "player": [0, 0.2, 29], "yaw": 0.0, "pitch": -0.22, "zoom": 6.0, "settle": 0.6},
+		{"name": "funnel_camp1", "player": [1, 0.2, 23], "yaw": 0.0, "pitch": -0.3, "zoom": 5.0,
+			"spawn": [{"id": "rusher", "at": [0, 0.2, 16.5], "freeze": true, "face": 3.14},
+			          {"id": "rusher", "at": [2.2, 0.2, 15.5], "freeze": true, "face": 2.98}], "settle": 0.4},
+		{"name": "camp1_melee", "player": [0.5, 0.2, 18.4], "yaw": 0.0, "pitch": -0.32, "zoom": 4.6,
+			"spawn": [{"id": "rusher", "at": [0.5, 0.2, 16.6]}, {"id": "caster", "at": [-3, 0.2, 11]}],
+			"actions": [{"wait": 0.3}, {"do": "melee"}, {"wait": 0.14}], "settle": 0.0},
+		{"name": "ember_flight", "player": [0.5, 0.2, 22], "yaw": 0.0, "pitch": -0.25, "zoom": 4.6,
+			"spawn": [{"id": "rusher", "at": [0.5, 0.2, 13], "freeze": true}],
+			"actions": [{"wait": 0.3}, {"do": "ember"}, {"wait": 0.3}], "settle": 0.0},
+		{"name": "earthbreaker", "player": [0.5, 0.2, 18.5], "yaw": 0.0, "pitch": -0.35, "zoom": 5.0,
+			"spawn": [{"id": "rusher", "at": [1.5, 0.2, 16.8]}, {"id": "rusher", "at": [-1, 0.2, 16.5]}],
+			"actions": [{"wait": 0.3}, {"do": "earthbreaker"}, {"wait": 0.5}], "settle": 0.0},
+		{"name": "look_west_sun", "player": [0, 0.2, 24], "yaw": 1.3, "pitch": -0.05, "zoom": 5.0, "settle": 0.4},
+		{"name": "look_north_spire", "player": [2, 0.2, 26], "yaw": -0.1, "pitch": 0.08, "zoom": 5.0, "settle": 0.4},
+		{"name": "look_east_ridge", "player": [4, 0.2, 20], "yaw": -1.6, "pitch": -0.18, "zoom": 5.0, "settle": 0.4}
+	]
+}

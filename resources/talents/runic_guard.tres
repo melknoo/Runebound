@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"runic_guard"
+display_name = "Runic Guard"
+branch = 2
+tier = 1
+max_rank = 1
+stat = &""
+per_rank = 0.0
+power = &"runic_guard"
+description = "Unlocks Runic Guard (5): spend 30 Resonance for a barrier that absorbs 40 damage (+1 per level) for 4 s."

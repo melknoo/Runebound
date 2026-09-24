@@ -133,11 +133,16 @@ def gen_glyph():
 
 
 def gen_ring():
+    """Broken ring (8 dashes): shockwaves and the Tab-target ring. The M06
+    VFX rule keeps every player-side ground mark dashed so none can be read
+    as an enemy's filled telegraph disc."""
     img = canvas(64)
-    x, y, r, _ = coords(64)
+    x, y, r, ang = coords(64)
     ringm = (r > 24) & (r < 30)
-    notch = rng.random((64, 64)) > 0.12  # broken pixel edge
-    put(img, ringm & notch, (255, 255, 255, 255))
+    seg = ((ang + np.pi) / (2 * np.pi) * 8.0) % 1.0
+    dash = (seg > 0.16) & (seg < 0.84)
+    notch = rng.random((64, 64)) > 0.08  # chipped pixel edge
+    put(img, ringm & dash & notch, (255, 255, 255, 255))
     save(img, VFX_DIR, "ring")
 
 
