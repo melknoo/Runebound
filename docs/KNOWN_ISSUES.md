@@ -119,8 +119,13 @@
   locked), like the inventory.
 
 ## M07b open items (needs the user's playtest)
-- Learn order and prices (Earthbreaker L2 / 50 g first) and the v2 save
-  migration (trainer abilities up to the saved level are kept) are proposals.
+- Learn order and prices (Earthbreaker L2 / 50 g first) are proposals. The
+  v2 migration refunds the reached abilities as gold instead of granting
+  them (user feedback 2026-09-24).
+- Fixed 2026-09-24 after the first playtest: debug `[9]` kept abilities and
+  gold; `reset` was undone by a still-running game (the script now refuses
+  while the game runs); Jacquard titles were unreadable (Pixelify 40 px
+  everywhere, `UiTheme.TITLE`); every window has an X button now.
 - Fracture Rune now goes through the player's hit roll (gear %, crit, talent
   multipliers): a small buff to check in play.
 - Esc: HeroUI / TrainerUI consume `toggle_cursor` first (later-added nodes

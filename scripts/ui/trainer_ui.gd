@@ -141,6 +141,7 @@ func _build() -> void:
 	_gold_label.add_theme_color_override("font_color", ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 	_gold_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	gold_box.add_child(_gold_label)
+	top.add_child(UiTheme.close_button(close))
 
 	_flavour = Label.new()
 	_flavour.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

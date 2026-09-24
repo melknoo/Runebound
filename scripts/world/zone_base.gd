@@ -890,8 +890,13 @@ func wipe_save() -> void:
 	player.equipment._recompute()
 	player.equipment.changed.emit()
 	player.progression.from_dict({})
+	# M07b: the start kit and an empty purse, like a new character
+	player.known_abilities = player.class_data.starting_abilities.duplicate()
+	player.abilities_changed.emit()
+	player.gold = 0
+	player.gold_changed.emit(0, 0)
 	SaveGame.wipe()
-	hud.toast("Fresh start: save, gear, level and flags wiped", Color(1, 0.4, 0.4))
+	hud.toast("Fresh start: save, gear, level, abilities, gold and flags wiped", Color(1, 0.4, 0.4))
 	if DisplayServer.get_name() != "headless":
 		get_tree().change_scene_to_file.call_deferred("res://scenes/hub.tscn")
 

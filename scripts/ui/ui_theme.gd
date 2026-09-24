@@ -16,7 +16,9 @@ const UI_DIR := "res://assets/ui/"
 const BODY := 20
 const BIG := 40
 const HUGE := 60
-const TITLE := 43
+## Titles use Pixelify at its 40 px crisp size (user, 2026-09-24: the
+## Jacquard blackletter was unreadable everywhere, not only on world labels).
+const TITLE := 40
 const TEXT := Color("#EDE6D6")
 const MUTED := Color("#A9A2B4")
 const INK := Color("#0B0810")
@@ -26,9 +28,10 @@ static var _theme: Theme
 static var _fonts: Dictionary = {}
 
 
-## Shared pixel font (body = Pixelify Sans, title = Jacquard 24).
-static func font(title: bool = false) -> FontFile:
-	var path := TITLE_PATH if title else BODY_PATH
+## Shared pixel font. `title` is kept for the callers but resolves to the
+## same Pixelify Sans: Jacquard 24 (TITLE_PATH) is retired as unreadable.
+static func font(_title: bool = false) -> FontFile:
+	var path := BODY_PATH
 	if not _fonts.has(path):
 		var f: FontFile = load(path) if ResourceLoader.exists(path) else null
 		if f != null:
@@ -95,6 +98,19 @@ static func apply(root: Control) -> void:
 ## a FIXED screen size with one font pixel per screen pixel. A pixel font
 ## scaled by distance drops glyph pixels and turns unreadable, so labels keep
 ## their anchor in the world but not a world size.
+## The "X" in a window's top-right corner (user, 2026-09-24: every window
+## closes by button too, not only by its key or Esc).
+static func close_button(on_close: Callable) -> Button:
+	var btn := Button.new()
+	btn.text = "X"
+	btn.custom_minimum_size = Vector2(44, 44)
+	btn.add_theme_font_size_override("font_size", BODY)
+	btn.add_theme_color_override("font_color", Color("#E08A7A"))
+	btn.tooltip_text = "Close (Esc)"
+	btn.pressed.connect(on_close)
+	return btn
+
+
 static func label3d(label: Label3D, crisp_size: int = BODY, title: bool = false) -> void:
 	var f := font(title)
 	if f == null:

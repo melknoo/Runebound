@@ -126,12 +126,14 @@ SaveGame **v3** (M07b): `{version, world: {zone, flags}, characters:
 [{class_id, known_abilities, gold, inventory, equipped, progression}],
 active}`. `world` is what a co-op server will own; `characters` stay with the
 player. v1 → v2 adds progression; v2 → v3 wraps the single character as a
-Runebreaker with 0 gold and **the trainer abilities its saved level had
-already reached** (a level-1 save becomes a true one-ability start).
+Runebreaker with **the start kit only and the prices of the abilities its
+level had reached refunded as gold** (user, 2026-09-24: every character walks
+the trainer path). Debug `[9]` and `tools\run_godot.cmd reset` (game closed;
+it saves again on quit) give a true fresh start incl. abilities and gold.
 
 ## Open for the user (decisions to confirm)
-0. M07b: Earthbreaker before Ember Lance (L2 / L3); prices; the v2 migration
-   gift; Fracture Rune now gets gear and talent bonuses like every ability.
+0. M07b: Earthbreaker before Ember Lance (L2 / L3); prices; Fracture Rune
+   now gets gear and talent bonuses like every ability.
 1. The cap (25), the curve steepness, and XP per source.
 2. The talent list and names, especially the capstones.
 3. Key bindings (user, 2026-09-24): every ability on the number row:

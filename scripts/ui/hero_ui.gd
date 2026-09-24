@@ -69,10 +69,11 @@ func _build() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar.add_child(spacer)
 	var hint := Label.new()
-	hint.text = "[Esc] Close"
+	hint.text = "[Esc]"
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", UiTheme.MUTED)
 	bar.add_child(hint)
+	bar.add_child(UiTheme.close_button(close))
 
 	var content := MarginContainer.new()
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL

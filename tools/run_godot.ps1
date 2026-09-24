@@ -55,6 +55,13 @@ switch ($Mode) {
 		# Fresh start for testing: deletes the real save (gear, level, talents,
 		# world flags). Scratch saves from test runs are left alone.
 		$save = Join-Path $env:APPDATA "Godot\app_userdata\RUNEBOUND\runebound_save.json"
+		# A running game rewrites the save when it quits, which undoes the reset.
+		$running = @(Get-CimInstance Win32_Process -Filter "Name like 'Godot%'" -ErrorAction SilentlyContinue |
+			Where-Object { $_.CommandLine -notmatch "--editor(\s|$)" -and $_.CommandLine -notmatch "--headless" })
+		if ($running.Count -gt 0) {
+			Write-Warning "The game is still running (PID $($running[0].ProcessId)). Close it first, then reset - it saves again on quit."
+			exit 1
+		}
 		if (Test-Path $save) { Remove-Item $save -Force; Write-Output "Save deleted: $save" }
 		else { Write-Output "No save to delete ($save)" }
 		exit 0

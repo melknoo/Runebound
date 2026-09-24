@@ -47,7 +47,13 @@ on "one player, one class". No netcode yet, only the seams.
   stress, captures) call `debug_learn_all()` unless a shot list sets
   `"fresh_abilities": true`.
 - Open for the user: KNOWN_ISSUES "M07b open items" (learn order/prices,
-  v2 migration gift, Fracture Rune buff, Esc ordering, Sigrun placeholder).
+  Fracture Rune buff, Esc ordering, Sigrun placeholder).
+- **First playtest feedback (2026-09-24), fixed:** Jacquard retired
+  everywhere (titles are Pixelify 40 px, `UiTheme.font(true)` resolves to
+  it); X close buttons on the hero window and the trainer panel; debug `[9]`
+  resets abilities and gold too; `reset` refuses while the game runs; the
+  v2 → v3 migration refunds reached abilities as gold instead of granting
+  them (the user's level-7 save had arrived with five abilities).
 
 ## M06 progress
 - **Step 0 (user request):** ability names only as hover tooltips while the

@@ -217,20 +217,22 @@ static func migrate(data: Dictionary) -> Dictionary:
 		data["progression"] = {"level": 1, "xp": 0, "talents": {}}
 		data["version"] = 2
 		version = 2
-	if version == 2:  # M07b: one Runebreaker; abilities its level had already earned are kept
+	if version == 2:  # M07b: one Runebreaker with the start kit; the abilities its level had
+		# reached are refunded as gold, so the trainer is the first stop (user, 2026-09-24)
 		var prog: Dictionary = data.get("progression", {"level": 1, "xp": 0, "talents": {}})
 		var level := int(prog.get("level", 1))
 		var cls := ClassData.default_class()
 		var known: Array = []
 		for id in cls.starting_abilities:
 			known.append(String(id))
+		var refund := 0
 		for ability in cls.trainer_abilities():
 			if ability.learn_level <= level:
-				known.append(String(ability.id))
+				refund += ability.learn_price
 		data = {
 			"version": 3,
 			"world": {"zone": data.get("zone", "res://scenes/hub.tscn"), "flags": data.get("flags", {})},
-			"characters": [{"class_id": String(cls.id), "known_abilities": known, "gold": 0,
+			"characters": [{"class_id": String(cls.id), "known_abilities": known, "gold": refund,
 				"inventory": data.get("inventory", []), "equipped": data.get("equipped", {}),
 				"progression": prog}],
 			"active": 0,

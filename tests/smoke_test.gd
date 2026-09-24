@@ -278,6 +278,12 @@ func _run() -> void:
 	_check(TrainerUI.deny_reason(player, ember_data) == "Learned" and not lab.trainer_ui.try_buy(ember_data),
 		"an ability is bought once")
 	player.progression.level = saved_level
+	# Debug fresh start (key 9) resets abilities and gold too.
+	player.add_gold(70)
+	lab.wipe_save()
+	_check(player.known_abilities.size() == 1 and player.knows(&"rune_cleave") and not player.knows(&"ember_lance")
+		and player.gold == 0 and lab.hud.ability_names().size() == 2,
+		"debug fresh start returns to the one-ability kit with no gold")
 	player.debug_learn_all()
 	_check(lab.hud.ability_names().size() == 7, "debug_learn_all knows the whole trainer kit (7 slots)")
 	player.resonance = 0.0
@@ -802,11 +808,11 @@ func _run() -> void:
 	var v2 := SaveGame.migrate({"version": 2, "zone": "res://scenes/shattered_spire.tscn", "flags": {"colossus_defeated": true},
 		"inventory": [{"n": "x"}], "equipped": {}, "progression": {"level": 4, "xp": 10, "talents": {"kindling": 2}}})
 	var v2_char: Dictionary = (v2.get("characters", [{}]) as Array)[0]
-	_check(v2_char["class_id"] == "runebreaker" and int(v2_char["gold"]) == 0
-		and v2_char["known_abilities"] == ["rune_cleave", "earthbreaker", "ember_lance", "storm_step"]
+	_check(v2_char["class_id"] == "runebreaker" and int(v2_char["gold"]) == 475
+		and v2_char["known_abilities"] == ["rune_cleave"]
 		and (v2_char["inventory"] as Array).size() == 1 and (v2["world"] as Dictionary)["zone"].ends_with("shattered_spire.tscn")
 		and int(v2.get("active", -1)) == 0,
-		"v2 saves migrate to v3: one Runebreaker keeps gear, gets the abilities its level earned")
+		"v2 saves migrate to v3: one Runebreaker keeps gear, starts with Rune Cleave and the gold its level earned (475 at L4)")
 	_check(SaveGame.active_class_id() == &"runebreaker", "fresh save plays the default class")
 	prog.queue_free()
 	prog_loaded.queue_free()
