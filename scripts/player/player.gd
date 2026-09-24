@@ -14,6 +14,8 @@ signal action_started(action: StringName)
 signal abilities_changed
 signal ability_learned(id: StringName)
 signal gold_changed(total: int, delta: int)
+## M08: a waypoint shrine was attuned ("<zone>:<id>").
+signal waypoint_discovered(id: String)
 
 enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP }
 
@@ -56,6 +58,9 @@ var abilities: Dictionary = {}
 ## are known through their power instead; dodge is always known. See knows().
 var known_abilities: Array[StringName] = []
 var gold: int = 0
+## M08: attuned waypoint shrines and map points seen (per character, saved).
+var discovered_waypoints: PackedStringArray = PackedStringArray()
+var map_discovered: PackedStringArray = PackedStringArray()
 ## action id -> Callable that tries to start it (built in _register_actions).
 var _actions: Dictionary = {}
 ## M07b input seam: Player reads only `intent`, which `input_source` fills
@@ -241,6 +246,37 @@ func feel_impulse(dir: Vector3, strength: float) -> void:
 func ui_denied() -> void:
 	if is_local:
 		Sfx.play_ui("ui_denied", -8.0)
+
+
+func knows_waypoint(id: String) -> bool:
+	return discovered_waypoints.has(id)
+
+
+## Attune a shrine: remembered per character, a little XP, a toast for the
+## local hero. False when it was known already.
+func discover_waypoint(id: String, display_name: String) -> bool:
+	if id == "" or discovered_waypoints.has(id):
+		return false
+	discovered_waypoints.append(id)
+	progression.add_xp(Waypoint.DISCOVER_XP)
+	waypoint_discovered.emit(id)
+	if is_local:
+		var zone := ZoneBase.zone_of(self)
+		if zone != null and zone.hud != null:
+			zone.hud.toast("Waypoint attuned: %s  +%d XP" % [display_name, Waypoint.DISCOVER_XP],
+				ArtKit.color("color_roles.player_accent.body", Color(0.37, 0.88, 0.91)))
+		Sfx.play_ui("rune_place", -4.0)
+	SaveGame.request_save()
+	return true
+
+
+## A point of interest seen (map + compass). False when known already.
+func discover_poi(id: String) -> bool:
+	if id == "" or map_discovered.has(id):
+		return false
+	map_discovered.append(id)
+	SaveGame.request_save()
+	return true
 
 
 func add_gold(amount: int) -> void:

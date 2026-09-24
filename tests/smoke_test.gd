@@ -1492,7 +1492,7 @@ func _run() -> void:
 	# --- M06 C3: Runehold kit on the unchanged hub layout ---
 	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")
 	var hub_bodies := hub.world.find_children("*", "StaticBody3D", true, false)
-	_check(hub_bodies.size() == 20, "hub dressing adds no collision (%d bodies: layout 19 + the trainer's body)" % hub_bodies.size())
+	_check(hub_bodies.size() == 21, "hub dressing adds no collision (%d bodies: layout 19 + the trainer + the M08 shrine)" % hub_bodies.size())
 	var wall_trims := 0
 	var sod_roofs := 0
 	var roofs_fit := true
@@ -1807,6 +1807,46 @@ func _run() -> void:
 		"v3 saves migrate to v4: camps in the world, waypoints per character")
 	highlands.player.god_mode = false
 
+	# --- M08 waypoints + fast travel ---
+	var wp := highlands.waypoints["wp_ashford"] as Waypoint
+	_check(wp != null and highlands.waypoints.size() == 5 and not highlands.player.knows_waypoint(wp.id)
+		and wp.id == "ashen_highlands:wp_ashford" and not wp.is_lit(),
+		"five waypoint shrines stand in the Highlands, none attuned on a fresh character")
+	_check(WaypointRegistry.all().size() == 6 and WaypointRegistry.all()[0]["key"] == WaypointRegistry.HUB_KEY,
+		"the waypoint registry lists Runehold plus the five Highlands shrines")
+	var xp_before_wp := highlands.player.progression.xp + highlands.player.progression.level * 100000
+	highlands.player.global_position = highlands.ground_point(wp.global_position + Vector3(0, 0, 3.0), 0.3)
+	highlands.player.velocity = Vector3.ZERO
+	await _wait_frames(5)
+	for i in 4:
+		await get_tree().process_frame
+	var xp_after_wp := highlands.player.progression.xp + highlands.player.progression.level * 100000
+	_check(highlands.player.knows_waypoint(wp.id) and wp.is_lit() and xp_after_wp > xp_before_wp,
+		"walking up to a shrine attunes it: remembered, lit, XP paid")
+	SaveGame.save_now()
+	SaveGame.reload_from_disk()
+	var saved_wps: Array = SaveGame.active_character().get("waypoints", [])
+	_check(saved_wps.has(wp.id), "attuned shrines are saved with the character")
+	highlands.waypoint_ui.open(wp, highlands.player)
+	var listed := highlands.waypoint_ui.listed_keys()
+	_check(highlands.waypoint_ui.visible and highlands.player.input_locked and listed.size() == 2
+		and listed.has(WaypointRegistry.HUB_KEY) and listed.has(wp.id),
+		"the travel list shows Runehold and the attuned shrine only (%s)" % str(listed))
+	highlands.waypoint_ui.close()
+	_check(not highlands.waypoint_ui.visible and not highlands.player.input_locked, "closing the travel list frees the input")
+	highlands.player.discover_waypoint("ashen_highlands:wp_crossroads", "Crossroads Cairn")
+	highlands.fast_travel("ashen_highlands:wp_crossroads")
+	for i in 60:
+		await get_tree().process_frame
+	var cross := highlands.waypoints["wp_crossroads"] as Waypoint
+	_check(highlands.player.global_position.distance_to(cross.global_position) < 4.5 and highlands.player.is_on_floor(),
+		"fast travel within the zone lands the hero beside the target shrine (%.1f m)" % highlands.player.global_position.distance_to(cross.global_position))
+	highlands.player.global_position = highlands.ground_point(cross.global_position + Vector3(20, 0, 0), 0.3)
+	highlands._on_player_died(highlands.player)
+	_check(highlands.player.global_position.distance_to(cross.global_position) < 4.5,
+		"death respawns at the nearest attuned shrine")
+	await _wait_frames(2)
+
 	# Chest opens and pops loot; item level follows the band.
 	var chest := highlands.chests["chest_south"] as TreasureChest
 	_check(chest != null and highlands._enemy_level(null, chest.global_position) == 1
@@ -2003,7 +2043,7 @@ func _run() -> void:
 		_check(legendaries >= 1 and total_drops >= 3, "vessel drops legendary + rares (%d drops)" % total_drops)
 
 	# --- hub shows the spire shortcut once the colossus flag is set ---
-	spire.travel_to("res://scenes/hub.tscn")
+	spire.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate
 	for i in 60:
 		await get_tree().process_frame
 		if get_tree().current_scene is HubZone:
@@ -2016,6 +2056,9 @@ func _run() -> void:
 			if child is Portal:
 				portal_count += 1
 		_check(portal_count == 3, "hub gains the spire shortcut portal")
+		_check(Vector2(hub2.player.global_position.x - HubZone.PORTAL_SPOTS["spire"].x,
+			hub2.player.global_position.z - HubZone.PORTAL_SPOTS["spire"].z).length() < 4.5,
+			"M08 arrival hint: the hero appears at the gate they came through")
 		# M06 C6: a legendary weapon shows on the hero (the blade surface swaps).
 		var cm := ItemData.new()
 		cm.slot = ItemData.Slot.WEAPON

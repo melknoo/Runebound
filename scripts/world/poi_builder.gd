@@ -36,8 +36,10 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 			return {"portal": dungeon(zone, poi)}
 		"elite_patrol":
 			return {"spawner": patrol(zone, poi)}
+		"waypoint":
+			return {"waypoint": waypoint(zone, poi)}
 		_:
-			pass  # spawn (no geometry), waypoint (M08 phase 4)
+			pass  # spawn (no geometry)
 	return {}
 
 
@@ -130,11 +132,25 @@ static func portal(zone: ZoneBase, poi: Dictionary) -> Portal:
 	p.destination_scene = String(DESTINATIONS.get(String(poi.get("dest", "hub")), ""))
 	p.label_text = String(poi.get("label", "PORTAL"))
 	p.face_yaw = yaw_of(poi)
+	p.arrival = String(poi.get("arrival", ""))
 	p.set_meta(&"poi_id", String(poi.get("id", "")))
-	p.set_meta(&"arrival", String(poi.get("arrival", "")))
 	zone.world.add_child(p)
 	p.global_position = pos_of(poi)
 	return p
+
+
+## Waypoint shrine (M08 fast travel); its key is "<zone>:<poi id>".
+static func waypoint(zone: ZoneBase, poi: Dictionary) -> Waypoint:
+	var w := Waypoint.new()
+	var pid := String(poi.get("id", ""))
+	w.id = WaypointRegistry.key_for(zone.scene_file_path, pid)
+	w.display_name = String(poi.get("name", "Waypoint"))
+	w.name = "Waypoint_" + pid
+	w.set_meta(&"poi_id", pid)
+	zone.world.add_child(w)
+	w.global_position = pos_of(poi)
+	w.rotation.y = yaw_of(poi)
+	return w
 
 
 ## Sealed entrance of a later dungeon (M10/M11): a locked gate the map and
@@ -371,8 +387,8 @@ static func arena(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 		var ppos := pos_of(sub)
 		var face := Vector2(centre.x - ppos.x, centre.z - ppos.z)
 		p.face_yaw = atan2(face.x, face.y)
+		p.arrival = String(sub.get("arrival", ""))
 		p.set_meta(&"poi_id", String(sub.get("id", "")))
-		p.set_meta(&"arrival", String(sub.get("arrival", "")))
 		zone.world.add_child(p)
 		p.global_position = ppos
 		(out["portals"] as Array).append(p)

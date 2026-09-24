@@ -9,6 +9,8 @@ const HUTS := [
 	[Vector3(-10, 0, -8), 0.0, false], [Vector3(10, 0, -9), 25.0, false], [Vector3(-11, 0, 6), -20.0, true],
 ]
 const PORTAL_SPOTS := {"highlands": Vector3(0, 0, -13), "lab": Vector3(13, 0, 0), "spire": Vector3(-13, 0, -2)}
+## M08: the Runehold waypoint shrine, by the Highlands gate (always attuned).
+const WAYPOINT_SPOT := Vector3(5.5, 0, -10.5)
 ## M07b: Sigrun stands north of the west hut, by the training gear, facing the hearth.
 const TRAINER_SPOT := Vector3(-14.2, 0, -11.6)
 
@@ -95,8 +97,21 @@ func _build_zone() -> void:
 	var highlands := Portal.new()
 	highlands.destination_scene = "res://scenes/ashen_highlands.tscn"
 	highlands.label_text = "ASHEN HIGHLANDS"
+	highlands.arrival = "gate_south"  # M08: appear at the Highlands' south gate
+	highlands.set_meta(&"poi_id", "gate_highlands")
 	world.add_child(highlands)
 	highlands.global_position = PORTAL_SPOTS["highlands"]
+
+	# M08: the hub's waypoint shrine (fast travel back and forth).
+	var shrine := Waypoint.new()
+	shrine.id = WaypointRegistry.HUB_KEY
+	shrine.display_name = "Runehold"
+	shrine.always_known = true
+	shrine.name = "Waypoint_runehold"
+	shrine.set_meta(&"poi_id", "runehold")
+	world.add_child(shrine)
+	shrine.global_position = WAYPOINT_SPOT
+	shrine.rotation.y = PI * 0.75  # front toward the hearth
 
 	var lab := Portal.new()
 	lab.destination_scene = "res://scenes/combat_lab.tscn"
@@ -109,6 +124,7 @@ func _build_zone() -> void:
 		var spire := Portal.new()
 		spire.destination_scene = "res://scenes/shattered_spire.tscn"
 		spire.label_text = "THE SHATTERED SPIRE"
+		spire.set_meta(&"poi_id", "gate_spire")
 		world.add_child(spire)
 		spire.global_position = PORTAL_SPOTS["spire"]
 

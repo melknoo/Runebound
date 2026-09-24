@@ -24,6 +24,7 @@ var hero_ui: HeroUI
 var inventory_ui: InventoryUI  # the hero window's inventory tab
 var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
+var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
 var look: ZoneLook = null
@@ -89,6 +90,10 @@ func _ready() -> void:
 	add_child(trainer_ui)
 	trainer_ui.setup(player)
 
+	waypoint_ui = WaypointUI.new()  # M08: hidden until a Waypoint opens it
+	add_child(waypoint_ui)
+	waypoint_ui.setup(player)
+
 	style_manager = StyleManager.new()
 	add_child(style_manager)
 	style_manager.setup(self, world)
@@ -147,6 +152,27 @@ func _zone_music() -> String:
 
 func _player_spawn_point() -> Vector3:
 	return Vector3(0, 0.2, 6)
+
+
+## M08: where a hero stands after arriving through the gate / at the shrine
+## with POI id `id`: a step in front of that node (meta "poi_id"), on the
+## ground. Unknown ids fall back to the spawn.
+func _arrival_point(id: String) -> Vector3:
+	if id != "" and world != null:
+		for child in world.get_children():
+			if not child.has_meta(&"poi_id") or String(child.get_meta(&"poi_id")) != id:
+				continue
+			var node := child as Node3D
+			if node == null:
+				continue
+			var yaw := 0.0
+			if node is Portal:
+				yaw = (node as Portal).facing_yaw()
+			elif node is Waypoint:
+				yaw = node.rotation.y
+			var front := Vector3(sin(yaw), 0.0, cos(yaw))
+			return ground_point(node.global_position + front * 2.2, 0.2)
+	return _player_spawn_point()
 
 
 ## M07: level of an enemy spawned at `pos` (1 = base balance). Zones map
@@ -435,7 +461,10 @@ func _spawn_player() -> void:
 	local_player.class_data = ClassData.load_by_id(SaveGame.active_class_id())
 	local_player.is_local = true
 	add_player(local_player)
-	player.global_position = _player_spawn_point()
+	# M08: arrive where the gate or shrine we used points, else at the spawn.
+	var arrival := SaveGame.pending_arrival
+	SaveGame.pending_arrival = ""
+	player.global_position = _arrival_point(arrival) if arrival != "" else _player_spawn_point()
 
 	camera_rig = CameraRig.new()
 	camera_rig.name = "CameraRig"
@@ -974,16 +1003,58 @@ func cycle_style() -> void:
 # Zone travel
 # ---------------------------------------------------------------------------
 
-func travel_to(scene_path: String) -> void:
+## Leave for another zone; `arrival` names the gate / shrine (POI id) the
+## hero appears at over there (M08), "" = that zone's spawn.
+func travel_to(scene_path: String, arrival: String = "") -> void:
 	if _travelling:
 		return
 	_travelling = true
+	SaveGame.pending_arrival = arrival
 	SaveGame.current_zone = scene_path
 	SaveGame.save_now()
 	Sfx.play_ui("portal_travel", -4.0)
 	if MusicDirector.instance != null:
 		MusicDirector.instance.stop(0.5)
-	# Fade out, then swap scenes.
+	_fade_then(func() -> void:
+		get_tree().change_scene_to_file(scene_path)
+	, false)
+
+
+## M08 fast travel to a waypoint key (WaypointRegistry): a fade and a hop
+## inside this zone, a zone change with an arrival hint across zones.
+func fast_travel(key: String) -> void:
+	var entry := WaypointRegistry.find(key)
+	if entry.is_empty() or _travelling:
+		return
+	var scene_path := String(entry["scene"])
+	var poi := String(entry["poi"])
+	if scene_path != scene_file_path:
+		travel_to(scene_path, poi)
+		return
+	_travelling = true
+	Sfx.play_ui("portal_travel", -6.0)
+	_fade_then(func() -> void:
+		var spot := _arrival_point(poi)
+		for p in players:  # the local hero today; co-op moves the party
+			if p != null and is_instance_valid(p):
+				p.global_position = spot
+				p.velocity = Vector3.ZERO
+		if hud != null:
+			hud.toast("Travelled to %s" % String(entry["name"]),
+				ArtKit.color("color_roles.player_accent.body", Color(0.37, 0.88, 0.91)))
+		_travelling = false
+	, true)
+
+
+## A Waypoint's [E]: the travel list.
+func open_waypoints(from: Waypoint) -> void:
+	if waypoint_ui != null:
+		waypoint_ui.open(from, player)
+
+
+## Fade to black over 0.35 s, run `on_black`, and (when `fade_back`) fade in
+## again and drop the layer.
+func _fade_then(on_black: Callable, fade_back: bool) -> void:
 	var fade_layer := CanvasLayer.new()
 	fade_layer.layer = 20
 	add_child(fade_layer)
@@ -993,6 +1064,8 @@ func travel_to(scene_path: String) -> void:
 	fade_layer.add_child(fade)
 	var tw := fade.create_tween()
 	tw.tween_property(fade, "color:a", 1.0, 0.35)
-	tw.tween_callback(func() -> void:
-		get_tree().change_scene_to_file(scene_path)
-	)
+	tw.tween_callback(on_black)
+	if fade_back:
+		tw.tween_interval(0.1)
+		tw.tween_property(fade, "color:a", 0.0, 0.35)
+		tw.tween_callback(fade_layer.queue_free)

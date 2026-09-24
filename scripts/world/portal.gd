@@ -10,6 +10,8 @@ var label_text: String = "PORTAL"
 var locked: bool = false
 ## M08: yaw of the gate frame (NAN = legacy: face the world origin).
 var face_yaw: float = NAN
+## M08: POI id of the gate / shrine the hero appears at in the destination.
+var arrival: String = ""
 
 var _ring: MeshInstance3D
 var _ring_mat: StandardMaterial3D
@@ -91,6 +93,13 @@ func _build_gate() -> void:
 
 
 ## Positions are set right after add_child: turn once they are.
+## The way the gate looks (front = (sin, 0, cos) of this yaw).
+func facing_yaw() -> float:
+	if not is_nan(face_yaw):
+		return face_yaw
+	return atan2(-global_position.x, -global_position.z)
+
+
 func _face_centre() -> void:
 	if _frame == null:
 		return
@@ -201,5 +210,5 @@ func _process(delta: float) -> void:
 		return
 	# M07 feedback: travel on the interact key, never by walking in by accident.
 	if _prompt.pressed(zone.player):
-		zone.travel_to(destination_scene)
+		zone.travel_to(destination_scene, arrival)
 		_cooldown = 10.0

@@ -25,6 +25,9 @@ var flags: Dictionary = {}  # persistent world state, e.g. bosses defeated
 var camps: Dictionary = {}
 ## Index into `characters` of the character being played.
 var active: int = 0
+## M08: where the hero arrives in the next zone (a POI id, "" = the zone's
+## spawn). Transient: set by travel_to / fast_travel, read once by the zone.
+var pending_arrival: String = ""
 
 var _pending_save: bool = false
 var _debounce_left: float = 0.0
@@ -171,6 +174,8 @@ func restore_player(player: Player) -> void:
 				known.append(sid)
 		player.known_abilities = known
 	player.gold = maxi(int(ch.get("gold", 0)), 0)
+	player.discovered_waypoints = PackedStringArray(ch.get("waypoints", []))
+	player.map_discovered = PackedStringArray(ch.get("map_discovered", []))
 	player.equipment._recompute()
 	player.equipment.changed.emit()
 	player.abilities_changed.emit()
@@ -179,7 +184,8 @@ func restore_player(player: Player) -> void:
 
 static func character_dict(player: Player) -> Dictionary:
 	var ch := {"class_id": String(player.class_data.id), "known_abilities": [], "gold": player.gold,
-		"inventory": [], "equipped": {}, "progression": player.progression.to_dict()}
+		"inventory": [], "equipped": {}, "progression": player.progression.to_dict(),
+		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered)}
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for item in player.equipment.inventory:

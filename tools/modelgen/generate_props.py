@@ -771,6 +771,30 @@ def legendary_glacier_heart():
     finish(pm, "legendary_glacier_heart", ROLES["frost"]["body"], 1.0, kit="common")
 
 
+def waypoint_shrine():
+    """M08 waypoint shrine: stepped basalt plinth, a rune pillar with carved
+    channels and a crystal brazier (glow) on top. Wraps a 1.2 x 2.2 x 1.2
+    collider (the plinth steps are wider but only 0.4 m tall: walk-through)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(HL["basalt"], 2, "plate")
+    dark = pm.paint(HL["basalt"], 1)
+    top = pm.paint(HL["ash_top"], 2)
+    pm.box(None, (1.6, 1.6, 0.22), (0, 0, 0.01), paint=stone)
+    pm.box(None, (1.26, 1.26, 0.2), (0, 0, 0.22), paint=dark)
+    pm.box(None, (0.64, 0.64, 1.2), (0, 0, 0.92), paint=stone)
+    pm.box(None, (0.74, 0.74, 0.14), (0, 0, 1.59), paint=top)
+    pm.box(None, (0.5, 0.5, 0.16), (0, 0, 1.74), paint=dark)
+    # carved rune channels on all four faces
+    for (cx, cy, sx, sy) in ((0, -0.33, 0.07, 0.03), (0, 0.33, 0.07, 0.03), (-0.33, 0, 0.03, 0.07), (0.33, 0, 0.03, 0.07)):
+        pm.box(None, (sx, sy, 0.7), (cx, cy, 0.95), mat_index=GLOW)
+        pm.box(None, (sx * 3.0, sy * 3.0 if sy > sx else sy, 0.05), (cx, cy, 1.36), mat_index=GLOW)
+    # crystal brazier: a cluster of shards standing in the top bowl
+    for (dx, dy, h, rz) in ((0, 0, 0.55, 0.0), (0.11, 0.06, 0.38, 0.5), (-0.1, 0.08, 0.32, -0.6), (0.02, -0.12, 0.42, 0.3)):
+        pm.box(None, (0.12, 0.12, h), (dx, dy, 1.82 + h * 0.5), rot=(0.0, 0.0, rz), mat_index=GLOW, taper=0.35)
+    finish(pm, "waypoint_shrine", ROLES["player_accent"]["body"], 0.9, kit="common")
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,
@@ -779,7 +803,7 @@ if __name__ == "__main__":
                sp_crystal_pillar, sp_wall_arch, sp_beacon, sp_shard, sp_crystal_cluster, sp_rubble,
                portal_arch, portal_plate, treasure_chest, loot_blade, loot_armor, loot_relic,
                loot_helm, loot_gloves, loot_boots, loot_ring,
-               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart):
+               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine):
         if not only or fn.__name__ in only:
             fn()
     print("props done.")

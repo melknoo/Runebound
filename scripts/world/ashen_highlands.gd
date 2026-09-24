@@ -18,6 +18,8 @@ var spire_portal: Portal
 var camps: Dictionary = {}
 ## Chests by POI id.
 var chests: Dictionary = {}
+## Waypoint shrines by POI id.
+var waypoints: Dictionary = {}
 var arena_centre: Vector3 = Vector3.ZERO
 var _boss_spawn: Vector3 = Vector3.ZERO
 var _boss_started: bool = false
@@ -129,6 +131,8 @@ func _build_zone() -> void:
 				camps[id] = made["spawner"]
 			"chest":
 				chests[id] = made["chest"]
+			"waypoint":
+				waypoints[id] = made["waypoint"]
 			"ruin":
 				if made.get("chest") != null:
 					chests[id] = made["chest"]
@@ -265,6 +269,27 @@ func _near_route(p: Vector2, segs: Array, margin: float) -> bool:
 		if p.distance_to(a + ab * t) < float(seg[2]) + margin:
 			return true
 	return false
+
+
+## Death: back at the nearest attuned shrine (else the spawn), healed.
+func _on_player_died(p: Player) -> void:
+	p.health.heal_full()
+	p.global_position = _respawn_point(p)
+	p.velocity = Vector3.ZERO
+	p.feel_shake(0.4)
+
+
+func _respawn_point(p: Player) -> Vector3:
+	var best := _player_spawn_point()
+	var best_d := INF
+	for id: String in waypoints:
+		var w := waypoints[id] as Waypoint
+		if w.is_known(p):
+			var d := w.global_position.distance_to(p.global_position)
+			if d < best_d:
+				best_d = d
+				best = _arrival_point(id)
+	return best
 
 
 func _physics_process(_delta: float) -> void:
