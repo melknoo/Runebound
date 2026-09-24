@@ -246,6 +246,24 @@ func _run() -> void:
 		"learn_ability adds a trainer ability once")
 	_check(lab.hud.ability_names().size() == 3 and lab.hud.ability_names().has("Earthbreaker"),
 		"HUD slot appears once the ability is learned")
+	# Trainer: offers, refusal reasons, a purchase.
+	var offers := TrainerUI.offers(player)
+	_check(offers.size() == 5 and offers[offers.size() - 1].id == &"earthbreaker" and offers[0].id == &"ember_lance",
+		"trainer offers the 5 trainer abilities, known ones last")
+	var ember_data := player.ability(&"ember_lance")
+	_check(TrainerUI.deny_reason(player, ember_data) == "Requires level 3", "trainer refuses below the level requirement")
+	var saved_level := player.progression.level
+	player.progression.level = 3
+	player.spend_gold(player.gold)  # earlier kills in this run may have paid some
+	_check(TrainerUI.deny_reason(player, ember_data) == "Need 150 more gold" and not lab.trainer_ui.try_buy(ember_data),
+		"trainer refuses without the gold")
+	player.add_gold(150)
+	_check(TrainerUI.deny_reason(player, ember_data) == "" and lab.trainer_ui.try_buy(ember_data)
+		and player.gold == 0 and player.knows(&"ember_lance") and lab.hud.ability_names().size() == 4,
+		"buying at the trainer spends the gold and teaches the ability")
+	_check(TrainerUI.deny_reason(player, ember_data) == "Learned" and not lab.trainer_ui.try_buy(ember_data),
+		"an ability is bought once")
+	player.progression.level = saved_level
 	player.debug_learn_all()
 	_check(lab.hud.ability_names().size() == 7, "debug_learn_all knows the whole trainer kit (7 slots)")
 	player.resonance = 0.0
@@ -1216,6 +1234,21 @@ func _run() -> void:
 		if child is Portal:
 			hub_portals += 1
 	_check(hub_portals == 2, "hub has both portals")
+	# M07b: Sigrun stands in Runehold; talking opens the trainer panel.
+	var trainer := hub.world.get_node_or_null("Trainer") as TrainerNpc
+	_check(trainer != null and trainer.npc_name.begins_with("Sigrun"), "the trainer stands in Runehold")
+	if trainer != null:
+		var hub_spot := hub.player.global_position
+		hub.player.global_position = trainer.global_position + Vector3(1.2, 0.2, 0.6)
+		await _wait_frames(2)
+		_check(trainer._prompt.visible and trainer._prompt.text.ends_with("Talk"), "trainer shows the [E] Talk prompt up close")
+		hub.trainer_ui.open(trainer)
+		_check(hub.trainer_ui.visible and hub.player.input_locked, "trainer panel opens and locks input")
+		hub.trainer_ui.close()
+		_check(not hub.trainer_ui.visible and not hub.player.input_locked, "trainer panel closes and unlocks input")
+		hub.player.global_position = hub_spot
+		await _wait_frames(2)
+		_check(not trainer._prompt.visible, "trainer prompt hides at a distance")
 	var carried := false
 	for it in hub.player.equipment.inventory:
 		if it.display_name == "Persistence Marker":
@@ -1226,7 +1259,7 @@ func _run() -> void:
 	# --- M06 C3: Runehold kit on the unchanged hub layout ---
 	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")
 	var hub_bodies := hub.world.find_children("*", "StaticBody3D", true, false)
-	_check(hub_bodies.size() == 19, "hub dressing adds no collision (%d bodies, layout had 19)" % hub_bodies.size())
+	_check(hub_bodies.size() == 20, "hub dressing adds no collision (%d bodies: layout 19 + the trainer's body)" % hub_bodies.size())
 	var wall_trims := 0
 	var sod_roofs := 0
 	var roofs_fit := true

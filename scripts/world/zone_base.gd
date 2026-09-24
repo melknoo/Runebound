@@ -13,6 +13,7 @@ var debug_overlay: DebugOverlay
 var style_manager: StyleManager
 var inventory_ui: InventoryUI
 var talent_ui: TalentUI
+var trainer_ui: TrainerUI
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
 var look: ZoneLook = null
@@ -71,6 +72,10 @@ func _ready() -> void:
 	talent_ui = TalentUI.new()
 	add_child(talent_ui)
 	talent_ui.setup(player)
+
+	trainer_ui = TrainerUI.new()  # M07b: hidden until a TrainerNpc opens it
+	add_child(trainer_ui)
+	trainer_ui.setup(player)
 
 	style_manager = StyleManager.new()
 	add_child(style_manager)
