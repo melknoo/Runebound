@@ -8,7 +8,7 @@ signal enemy_died(enemy: EnemyBase)
 ## including re-entering STAGGER, which polling ai_state would miss.
 signal state_entered(state: AIState)
 
-enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT }
+enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT, RETURN }
 
 const GRAVITY := 24.0
 const AGGRO_RANGE := 16.0
@@ -35,6 +35,16 @@ var auto_retarget: bool = false
 const RETARGET_INTERVAL := 0.3
 const LAST_ATTACKER_MEMORY := 4.0
 var _retarget_left: float = 0.0
+## M08 leash: camp members walk back to `home` and heal when the fight drags
+## them further than `leash` (0 = never), when their target is out of reach,
+## or when they have been stuck for a while. Handled here for every subclass
+## (AIState.RETURN); the subclass state machines never see that state.
+var home: Vector3 = Vector3.INF
+var leash: float = 0.0
+const RETURN_ARRIVE := 1.5
+const STUCK_SECONDS := 3.0
+var _stuck_timer: float = 0.0
+var _stuck_from: Vector3 = Vector3.INF
 var _zone: ZoneBase = null
 var health: HealthComponent
 var status: StatusEffectComponent
@@ -137,7 +147,12 @@ func _physics_process(delta: float) -> void:
 		if _retarget_left <= 0.0:
 			_retarget_left = RETARGET_INTERVAL
 			_retarget()
-	if ai_state != AIState.DEAD:
+	if leash > 0.0 and home != Vector3.INF:
+		if ai_state == AIState.RETURN:
+			_return_home(delta)
+		elif ai_state in [AIState.IDLE, AIState.CHASE, AIState.CIRCLE, AIState.RETREAT] and _should_return(delta):
+			_enter_state(AIState.RETURN)
+	if ai_state != AIState.DEAD and ai_state != AIState.RETURN:
 		_ai_process(delta)
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
@@ -167,6 +182,55 @@ func _separation_push() -> Vector3:
 
 func _ai_process(_delta: float) -> void:
 	pass
+
+
+## Leash rules (only while roaming or chasing, never mid-attack).
+func _should_return(delta: float) -> bool:
+	var from_home := global_position.distance_to(home)
+	if from_home > leash:
+		return true
+	if ai_state == AIState.IDLE:
+		return from_home > RETURN_ARRIVE * 2.0 and distance_to_player() >= AGGRO_RANGE  # a roaming pack follows its home
+	# Target gone out of reach: give up once we are well away from home.
+	if distance_to_player() > AGGRO_RANGE * 1.8 and from_home > RETURN_ARRIVE * 3.0:
+		return true
+	# Stuck against geometry while chasing (no progress for STUCK_SECONDS).
+	if ai_state == AIState.CHASE and distance_to_player() > 3.0:
+		_stuck_timer += delta
+		if _stuck_from == Vector3.INF:
+			_stuck_from = global_position
+		if _stuck_timer >= 1.0:
+			var moved := global_position.distance_to(_stuck_from)
+			_stuck_from = global_position
+			_stuck_timer = 0.0
+			_stuck_count = _stuck_count + 1 if moved < 0.5 else 0
+			if _stuck_count >= int(STUCK_SECONDS):
+				_stuck_count = 0
+				return true
+	else:
+		_stuck_timer = 0.0
+		_stuck_count = 0
+		_stuck_from = Vector3.INF
+	return false
+
+
+var _stuck_count: int = 0
+
+
+## Walk home, heal and rest there.
+func _return_home(delta: float) -> void:
+	var d := home - global_position
+	d.y = 0.0
+	if d.length() <= RETURN_ARRIVE:
+		brake(delta)
+		health.heal_full()
+		status.clear_all()
+		_knockback_velocity = Vector3.ZERO
+		_enter_state(AIState.IDLE)
+		return
+	var dir := d.normalized()
+	visual.rotation.y = lerp_angle(visual.rotation.y, atan2(-dir.x, -dir.z), minf(8.0 * delta, 1.0))
+	move_towards(dir, move_speed, delta)
 
 
 func _enter_state(new_state: AIState) -> void:

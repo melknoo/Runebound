@@ -125,7 +125,7 @@ func _build_zone() -> void:
 		var made := PoiBuilder.build(self, poi)
 		var id := String(poi.get("id", ""))
 		match String(poi.get("type", "")):
-			"camp", "ambush":
+			"camp", "ambush", "elite_patrol":
 				camps[id] = made["spawner"]
 			"chest":
 				chests[id] = made["chest"]

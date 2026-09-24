@@ -1700,7 +1700,7 @@ func _run() -> void:
 	var camp1 := highlands.camps["camp_1"] as EncounterSpawner
 	highlands.player.global_position = highlands.ground_point(camp1.global_position + Vector3(0, 0, camp1.trigger_radius - 1.5), 0.3)
 	highlands.player.velocity = Vector3.ZERO
-	await _wait_frames(10)
+	await _wait_frames(45)  # proximity checks tick every 0.5 s, spawns are staggered
 	var camp_count := highlands.enemy_count()
 	_check(camp_count >= 2, "camp spawner triggers on approach")
 	var enemies_grounded := true
@@ -1711,6 +1711,101 @@ func _run() -> void:
 	await _wait_frames(60)
 	_check(director != null and director.combat_mix > 0.3, "combat layer swells in once the camp engages (%.2f)"
 		% (director.combat_mix if director != null else 0.0))
+
+	# --- M08 camps: persistence, respawn timer, leash, ambush, roaming pack ---
+	highlands.player.god_mode = true
+	_check(camp1.state == EncounterSpawner.State.ACTIVE and camp1.pack().size() == camp_count and camp1.camp_id == "camp_1",
+		"camp 1 is ACTIVE with its pack alive and carries its persistence id")
+	for e in camp1.pack():
+		e.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, e.global_position))
+	await _wait_frames(3)
+	_check(camp1.state == EncounterSpawner.State.CLEARED and SaveGame.camp_cleared_at("camp_1") > 0.0,
+		"clearing a camp marks it CLEARED and records the time in the save")
+	SaveGame.save_now()
+	SaveGame.reload_from_disk()
+	_check(SaveGame.camp_cleared_at("camp_1") > 0.0, "camp state survives a save round-trip")
+	var cnow := Time.get_unix_time_from_system()
+	camp1.check_rearm(cnow)
+	_check(camp1.state == EncounterSpawner.State.CLEARED, "a freshly cleared camp stays cleared")
+	camp1._cleared_at = cnow - 11.0 * 60.0  # eleven minutes pass, but a hero still stands on the pad
+	camp1.check_rearm(cnow)
+	_check(camp1.state == EncounterSpawner.State.CLEARED, "a camp never re-arms while a hero stands within its rearm radius")
+	highlands.player.global_position = highlands.ground_point(camp1.global_position + Vector3(0, 0, 70), 0.3)
+	highlands.player.velocity = Vector3.ZERO
+	await _wait_frames(2)
+	camp1.check_rearm(cnow)
+	_check(camp1.state == EncounterSpawner.State.ARMED and SaveGame.camp_cleared_at("camp_1") < 0.0,
+		"after the respawn time, with nobody near, the camp re-arms and drops its save entry")
+	highlands.player.global_position = highlands.ground_point(camp1.global_position + Vector3(0, 0, camp1.trigger_radius - 1.5), 0.3)
+	highlands.player.velocity = Vector3.ZERO
+	for i in 90:
+		await get_tree().physics_frame
+		if highlands.enemy_count() >= camp1.composition.size():
+			break
+	_check(highlands.enemy_count() >= camp1.composition.size(), "a re-armed camp triggers again on approach")
+	var staggered := camp1.spawn_frames.size() == camp1.composition.size()
+	for i in range(1, camp1.spawn_frames.size()):
+		staggered = staggered and camp1.spawn_frames[i] > camp1.spawn_frames[i - 1]
+	_check(staggered, "camp packs spawn one enemy per physics frame, never all in one %s" % str(camp1.spawn_frames))
+	for e in camp1.pack():
+		e.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, e.global_position))
+	await _wait_frames(3)
+	# Leash: a member dragged far from home walks back, rests and heals.
+	var leash_home := highlands.poi_position("camp_2")
+	var runner := highlands.spawn_by_id("rusher", highlands.ground_point(leash_home + Vector3(0, 0, 30), 0.2))
+	runner.home = leash_home
+	runner.leash = 26.0
+	runner.move_speed = 12.0
+	runner.health.current_health = runner.health.max_health * 0.4
+	await _wait_frames(5)
+	_check(runner.ai_state == EnemyBase.AIState.RETURN, "a camp member beyond its leash turns for home")
+	for i in 300:
+		await get_tree().physics_frame
+		if runner.ai_state == EnemyBase.AIState.IDLE:
+			break
+	_check(runner.ai_state == EnemyBase.AIState.IDLE and runner.global_position.distance_to(leash_home) < 3.0
+		and runner.health.current_health == runner.health.max_health, "it arrives home, rests and is fully healed")
+	runner.free()
+	# Ambush: the pack appears on a ring around the hero, not around the spawner.
+	var ambush := highlands.camps["ambush_1"] as EncounterSpawner
+	_check(ambush.around_players and ambush.camp_id == "ambush_1", "ambush spawners surround the hero who walks in")
+	highlands.player.global_position = highlands.ground_point(ambush.global_position, 0.3)
+	highlands.player.velocity = Vector3.ZERO
+	for i in 90:
+		await get_tree().physics_frame
+		if ambush.pack().size() >= ambush.composition.size():
+			break
+	var ring_ok := ambush.pack().size() == ambush.composition.size()
+	for e in ambush.pack():
+		var d := Vector2(e.global_position.x - highlands.player.global_position.x, e.global_position.z - highlands.player.global_position.z).length()
+		ring_ok = ring_ok and d >= 4.5 and d <= 10.5
+	_check(ring_ok, "the ambush pack appears on a 6-9 m ring around the hero (%d enemies)" % ambush.pack().size())
+	for e in ambush.pack():
+		e.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, e.global_position))
+	await _wait_frames(3)
+	# Roaming elite pack: wakes from afar, then its home walks the patrol path.
+	var patrol := highlands.camps["patrol_east"] as EncounterSpawner
+	_check(patrol.patrol.size() == 4 and patrol.trigger_radius > 50.0, "the elite patrol has a 4-point path and a long wake radius")
+	highlands.player.global_position = highlands.ground_point(patrol.global_position + Vector3(0, 0, 40), 0.3)
+	highlands.player.velocity = Vector3.ZERO
+	for i in 90:
+		await get_tree().physics_frame
+		if patrol.pack().size() >= patrol.composition.size():
+			break
+	_check(patrol.state == EncounterSpawner.State.ACTIVE and patrol.pack().size() == 3, "the patrol wakes from 40 m and fields its elite pack")
+	var home0 := patrol.home
+	await _wait_frames(60)
+	_check(patrol.home.distance_to(home0) > 0.5 or patrol._patrol_pause > 0.0, "the pack's home walks its patrol while nobody fights")
+	for e in patrol.pack():
+		e.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, e.global_position))
+	await _wait_frames(3)
+	var v3 := SaveGame.migrate({"version": 3, "world": {"zone": "res://scenes/hub.tscn", "flags": {"a": true}},
+		"characters": [{"class_id": "runebreaker", "known_abilities": ["rune_cleave"], "gold": 5, "inventory": [],
+			"equipped": {}, "progression": {"level": 2, "xp": 0, "talents": {}}}], "active": 0})
+	_check(int(v3.get("version", 0)) == SaveGame.VERSION and (v3["world"] as Dictionary).get("camps", null) is Dictionary
+		and ((v3["characters"] as Array)[0] as Dictionary).has("waypoints"),
+		"v3 saves migrate to v4: camps in the world, waypoints per character")
+	highlands.player.god_mode = false
 
 	# Chest opens and pops loot; item level follows the band.
 	var chest := highlands.chests["chest_south"] as TreasureChest

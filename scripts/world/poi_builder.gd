@@ -34,8 +34,10 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 			return arena(zone, poi)
 		"dungeon":
 			return {"portal": dungeon(zone, poi)}
+		"elite_patrol":
+			return {"spawner": patrol(zone, poi)}
 		_:
-			pass  # spawn (no geometry), waypoint (M08 phase 4), elite_patrol (phase 3)
+			pass  # spawn (no geometry), waypoint (M08 phase 4)
 	return {}
 
 
@@ -160,6 +162,9 @@ static func camp(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 	spawner.name = "Camp_" + String(poi.get("id", ""))
 	spawner.composition = composition_of(poi)
 	spawner.trigger_radius = float(poi.get("radius", 13.0))
+	spawner.camp_id = String(poi.get("id", ""))
+	spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
+	spawner.leash = float(poi.get("leash", 26.0))
 	spawner.set_meta(&"poi_id", String(poi.get("id", "")))
 	zone.world.add_child(spawner)
 	spawner.global_position = pos
@@ -178,13 +183,41 @@ static func camp(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 	return spawner
 
 
-## Ambush at a pass: a tight spawner (M08 phase 3 makes it spawn around the
-## hero who walks in).
+## Ambush at a pass: a tight trigger that spawns its pack on a ring around
+## the hero who walked in (a horn, no telegraph disc).
 static func ambush(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 	var spawner := EncounterSpawner.new()
 	spawner.name = "Ambush_" + String(poi.get("id", ""))
 	spawner.composition = composition_of(poi)
 	spawner.trigger_radius = float(poi.get("radius", 7.0))
+	spawner.around_players = true
+	spawner.camp_id = String(poi.get("id", ""))
+	spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
+	spawner.leash = float(poi.get("leash", 30.0))
+	spawner.set_meta(&"poi_id", String(poi.get("id", "")))
+	zone.world.add_child(spawner)
+	spawner.global_position = pos_of(poi)
+	return spawner
+
+
+## Roaming elite pack: wakes when a hero comes within `wake_radius` of its
+## start, then walks its patrol path (home moves, the pack follows).
+static func patrol(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
+	var spawner := EncounterSpawner.new()
+	spawner.name = "Patrol_" + String(poi.get("id", ""))
+	spawner.composition = composition_of(poi)
+	spawner.trigger_radius = float(poi.get("wake_radius", 55.0))
+	spawner.camp_id = String(poi.get("id", ""))
+	spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
+	spawner.leash = float(poi.get("leash", 40.0))
+	var path := PackedVector3Array()
+	var ys: Array = poi.get("patrol_y", [])
+	var pts: Array = poi.get("patrol", [])
+	for i in pts.size():
+		var p: Array = pts[i]
+		var y := float(ys[i]) if i < ys.size() else zone.ground_y(Vector3(float(p[0]), 0.0, float(p[1])))
+		path.append(Vector3(float(p[0]), y, float(p[1])))
+	spawner.patrol = path
 	spawner.set_meta(&"poi_id", String(poi.get("id", "")))
 	zone.world.add_child(spawner)
 	spawner.global_position = pos_of(poi)
@@ -281,6 +314,9 @@ static func ruin(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 		spawner.name = "Ambush_" + String(poi.get("id", ""))
 		spawner.composition = ambushers
 		spawner.trigger_radius = 6.5
+		spawner.camp_id = String(poi.get("id", ""))
+		spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
+		spawner.leash = 24.0
 		spawner.set_meta(&"poi_id", String(poi.get("id", "")))
 		zone.world.add_child(spawner)
 		spawner.global_position = pos

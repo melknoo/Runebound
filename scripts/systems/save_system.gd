@@ -2,13 +2,14 @@ extends Node
 ## Autoload "SaveGame": versioned JSON persistence for gear and world position.
 ## Corrupt or missing saves always fall back to a fresh start - never crash.
 ##
-## v3 (M07b) layout, see docs/PROGRESSION_DESIGN.md:
-##   {version, world: {zone, flags},
-##    characters: [{class_id, known_abilities, gold, inventory, equipped, progression}],
+## v4 (M08) layout, see docs/PROGRESSION_DESIGN.md:
+##   {version, world: {zone, flags, camps: {id: {cleared_at}}},
+##    characters: [{class_id, known_abilities, gold, inventory, equipped, progression,
+##                  waypoints, map_discovered}],
 ##    active}
 ## `world` is what a co-op server will own; `characters` stay with the player.
 
-const VERSION := 3  # v2 (M07): progression; v3 (M07b): world/characters split
+const VERSION := 4  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map
 const DEBOUNCE := 2.0
 ## Command-line flags (after `--`) that mark an automated capture/perf run.
 const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
@@ -20,6 +21,8 @@ const TEST_RUN_SEED := 1207
 var save_path: String = "user://runebound_save.json"
 var current_zone: String = "res://scenes/hub.tscn"
 var flags: Dictionary = {}  # persistent world state, e.g. bosses defeated
+## M08: cleared camps by id -> {"cleared_at": unix seconds}; they re-arm later.
+var camps: Dictionary = {}
 ## Index into `characters` of the character being played.
 var active: int = 0
 
@@ -64,6 +67,25 @@ func has_flag(flag: StringName) -> bool:
 	return flags.get(String(flag), false)
 
 
+## M08 camp persistence (debounced: a cleared camp is not worth a disk hit).
+func mark_camp_cleared(camp_id: String, at: float) -> void:
+	camps[camp_id] = {"cleared_at": at}
+	request_save()
+
+
+func clear_camp(camp_id: String) -> void:
+	if camps.erase(camp_id):
+		request_save()
+
+
+## Unix seconds the camp was cleared at, -1 when it is live.
+func camp_cleared_at(camp_id: String) -> float:
+	var entry: Variant = camps.get(camp_id)
+	if entry is Dictionary:
+		return float((entry as Dictionary).get("cleared_at", -1.0))
+	return -1.0
+
+
 func _process(delta: float) -> void:
 	if _pending_save:
 		_debounce_left -= delta
@@ -92,6 +114,7 @@ func save_now() -> void:
 func wipe() -> void:
 	_loaded_data = {}
 	flags = {}
+	camps = {}
 	active = 0
 	current_zone = "res://scenes/hub.tscn"
 	if FileAccess.file_exists(save_path):
@@ -109,6 +132,7 @@ func reload_from_disk() -> void:
 	if world.has("zone"):
 		current_zone = world["zone"]
 	flags = world.get("flags", {})
+	camps = world.get("camps", {})
 	active = int(_loaded_data.get("active", 0))
 
 
@@ -173,7 +197,7 @@ func _collect() -> Dictionary:
 			chars.append({})
 		chars[active] = character_dict(player)
 	# no player in this scene: the loaded characters are kept as they were
-	var data := {"version": VERSION, "world": {"zone": current_zone, "flags": flags},
+	var data := {"version": VERSION, "world": {"zone": current_zone, "flags": flags, "camps": camps},
 		"characters": chars, "active": active}
 	_loaded_data = data
 	return data
@@ -238,6 +262,16 @@ static func migrate(data: Dictionary) -> Dictionary:
 			"active": 0,
 		}
 		version = 3
+	if version == 3:  # M08: camp persistence in the world, waypoints and map discovery per character
+		var world3: Dictionary = data.get("world", {})
+		world3["camps"] = {}
+		data["world"] = world3
+		for ch in data.get("characters", []):
+			if ch is Dictionary:
+				(ch as Dictionary)["waypoints"] = []
+				(ch as Dictionary)["map_discovered"] = []
+		data["version"] = 4
+		version = 4
 	if version != VERSION:
 		push_warning("SaveGame: incompatible save version ignored")
 		return {}
