@@ -66,8 +66,8 @@ func _run_highlands() -> void:
 	await _wait(0.8)
 	_aim(0.0, -0.18)
 	await _shot("04_highlands_vista")
-	# First camp fight.
-	zone.player.global_position = Vector3(0, 0.2, 20)
+	# First camp fight (M08: the layout's first camp).
+	zone.player.global_position = zone.ground_point(zone.poi_position("camp_1") + Vector3(0, 0, 9), 0.2)
 	await _wait(1.2)
 	await _shot("05_highlands_camp")
 	# Chest.
@@ -76,14 +76,14 @@ func _run_highlands() -> void:
 		if child is TreasureChest:
 			chest = child
 			break
-	zone.player.global_position = chest.global_position + Vector3(0, 0.2, 3.5)
+	zone.player.global_position = zone.ground_point(chest.global_position + Vector3(0, 0, 3.5), 0.2)
 	chest.open(zone)  # M07: chests open on the interact key
 	_aim(0.0, -0.3)
 	await _wait(0.8)
 	await _shot("06_chest_loot")
 	# Boss: telegraphed charge + boss bar.
 	var highlands := zone as AshenHighlands
-	zone.player.global_position = Vector3(0, 0.2, -18)
+	zone.player.global_position = zone.ground_point(highlands._boss_trigger.global_position, 0.3)
 	_aim(0.0, -0.15)
 	await _wait(1.0)
 	await _shot("07_boss_arena")

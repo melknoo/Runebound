@@ -59,6 +59,10 @@ static func material(role: StringName) -> Material:
 			# Ledge tops read as ash (slope blend), sides as layered rock.
 			mat = terrain_material("hl_ash_top", "hl_ash_a", "hl_strata", {
 				"layer_b_amount": 0.25, "ember_density": 0.0, "slope_top": 0.6})
+		&"highlands_ruin":
+			# M08 ruins: basalt masonry sides under ash-dusted caps.
+			mat = terrain_material("hl_ash_top", "hl_ash_a", "hl_masonry", {
+				"layer_b_amount": 0.3, "ember_density": 0.0, "slope_top": 0.6})
 		&"runehold_ground":
 			# Packed earth with grass patches; plazas/paths via paved().
 			mat = terrain_material("rh_earth", "rh_turf", "rh_masonry", {

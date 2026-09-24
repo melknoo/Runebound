@@ -1,0 +1,24 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"out": "captures_shots/m08_open_world",
+	"comment": "M08 Open World I: the Highlands on the heightmap. Vista, trail, first camp, a ruin, the arena rocks, a sealed dungeon gate, the LOD seam from a ridge.",
+	"shots": [
+		{"name": "vista_from_spawn", "player": {"poi": "spawn", "offset": [0, 0.2, 0]}, "yaw": 0.0, "pitch": -0.08, "zoom": 6.5, "settle": 0.8},
+		{"name": "gate_south", "player": {"poi": "gate_south", "offset": [1.5, 0.2, -6]}, "yaw": 3.2, "pitch": -0.1, "zoom": 5.5, "settle": 0.5},
+		{"name": "trail_to_camp1", "player": {"poi": "camp_1", "offset": [3, 0.2, 22]}, "yaw": 0.15, "pitch": -0.2, "zoom": 6.0, "settle": 0.5},
+		{"name": "camp1_pad", "player": {"poi": "camp_1", "offset": [0, 0.2, 9]}, "yaw": 0.0, "pitch": -0.3, "zoom": 5.5,
+			"spawn": [{"id": "rusher", "at": {"poi": "camp_1", "offset": [0.5, 0.2, 1.5]}, "freeze": true, "face": 3.14},
+			          {"id": "rusher", "at": {"poi": "camp_1", "offset": [-2.0, 0.2, 3.0]}, "face": 3.14}],
+			"actions": [{"wait": 0.3}], "settle": 0.2},
+		{"name": "telegraph_on_slope", "player": {"poi": "camp_1", "offset": [14, 0.2, 14]}, "yaw": -0.7, "pitch": -0.45, "zoom": 5.0,
+			"spawn": [{"id": "rusher", "at": {"poi": "camp_1", "offset": [13.4, 0.2, 12.2]}, "face": 2.4}],
+			"actions": [{"wait": 0.12}], "settle": 0.0},
+		{"name": "ruin_1", "player": {"poi": "ruin_1", "offset": [8, 0.2, 12]}, "yaw": 0.6, "pitch": -0.25, "zoom": 6.0, "settle": 0.5},
+		{"name": "monolith_crossroads", "player": {"poi": "monolith_w", "offset": [6, 0.2, 10]}, "yaw": 0.5, "pitch": -0.15, "zoom": 6.0, "settle": 0.5},
+		{"name": "emberfall_ridge", "player": {"poi": "camp_6", "offset": [0, 0.2, 10]}, "yaw": -0.9, "pitch": -0.05, "zoom": 6.5, "settle": 0.5},
+		{"name": "dungeon_gate_east", "player": {"poi": "dungeon_e", "offset": [-10, 0.2, 2]}, "yaw": -1.5, "pitch": -0.1, "zoom": 5.5, "settle": 0.5},
+		{"name": "arena_plateau", "player": {"poi": "arena", "offset": [0, 0.2, 22]}, "yaw": 0.0, "pitch": -0.12, "zoom": 6.5, "settle": 0.5},
+		{"name": "arena_gates", "player": {"poi": "arena", "offset": [0, 0.2, 6]}, "yaw": 0.0, "pitch": -0.1, "zoom": 6.0, "settle": 0.5},
+		{"name": "lod_seam_from_ridge", "player": {"poi": "wp_eastwatch", "offset": [0, 0.2, 0]}, "yaw": 2.4, "pitch": -0.2, "zoom": 8.0, "settle": 0.5}
+	]
+}

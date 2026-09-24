@@ -394,7 +394,9 @@ func _run() -> void:
 			child.free()
 	var gold_before := player.gold
 	var gold_drop := lab.spawn_gold_drop(37, player.global_position + player.facing() * 0.5)
-	await _wait_frames(3)
+	# pickups run in _process: wait for idle frames (several physics steps can pass in one slow frame)
+	for i in 4:
+		await get_tree().process_frame
 	_check(player.gold == gold_before + 37 and not is_instance_valid(gold_drop), "gold is picked up by walking over it")
 	_check(lab.hud.gold_text() == str(player.gold), "HUD shows the gold total")
 	_check(not player.spend_gold(player.gold + 1) and player.spend_gold(37) and player.gold == gold_before,
@@ -1539,7 +1541,7 @@ func _run() -> void:
 	_check(MusicDirector.instance != null and MusicDirector.instance.zone_key() == "runehold"
 		and MusicDirector.instance.is_playing(), "Runehold plays its own theme")
 
-	# --- highlands ---
+	# --- highlands (M08 open zone on the heightmap) ---
 	hub.travel_to("res://scenes/ashen_highlands.tscn")
 	for i in 60:
 		await get_tree().process_frame
@@ -1552,22 +1554,45 @@ func _run() -> void:
 		get_tree().quit(1)
 		return
 	await _wait_frames(5)
-	# Camp 1 sits exactly 13.0 m (its trigger radius) from the spawn, so it
-	# fires the moment the player lands (float32 distance == 13.0) — existing
-	# M04 design ("triggers almost immediately"). The old check only passed
-	# while the player was still airborne; what must hold is that no FAR camp
-	# wakes up on arrival.
-	var far_camp_enemies := 0
-	for e in highlands.enemies_root.get_children():
-		if Vector2((e as Node3D).global_position.x, (e as Node3D).global_position.z - 16.0).length() > 4.5:
-			far_camp_enemies += 1
-	_check(far_camp_enemies == 0, "highlands: no far camp triggers on arrival")
+	var hl_layout := highlands.layout
+	_check(highlands.terrain != null and highlands.terrain.chunk_count() == 144 and hl_layout.pois.size() >= 26,
+		"highlands: terrain (144 chunks, %d ms) and layout (%d POIs) built" % [highlands.terrain.build_ms, hl_layout.pois.size()])
+	var poi_off_ground := 0
+	for poi in hl_layout.pois:
+		var pp := ZoneLayout.pos_of(poi)
+		if absf(pp.y - highlands.ground_y(pp)) > 0.3:
+			poi_off_ground += 1
+	_check(poi_off_ground == 0, "highlands: every POI's baked height matches the terrain")
+	var hl_spawn := highlands.poi_position("spawn")
+	var camp_too_close := false
+	for camp_id: String in highlands.camps:
+		var sp := highlands.camps[camp_id] as EncounterSpawner
+		if camp_id.begins_with("camp") and sp.global_position.distance_to(hl_spawn) < 40.0:
+			camp_too_close = true
+	_check(highlands.camps.size() >= 10 and not camp_too_close,
+		"highlands: %d camp / ambush spawners, no camp within 40 m of the spawn" % highlands.camps.size())
+	_check(highlands.enemies_root.get_child_count() == 0, "highlands: no camp triggers on arrival")
+	_check(highlands.player.is_on_floor() and absf(highlands.player.global_position.y - highlands.ground_y(highlands.player.global_position)) < 0.6,
+		"highlands: the hero lands on the terrain at the spawn pad")
+	_check(highlands._enemy_level(null, highlands.poi_position("camp_1")) == 1
+		and highlands._enemy_level(null, highlands.poi_position("camp_4")) == 2
+		and highlands._enemy_level(null, highlands.poi_position("camp_7")) == 3,
+		"highlands: level bands south 1 / middle 2 / north 3")
+	_check(highlands.camera_rig.camera.far > 500.0, "highlands: camera far plane opened for the 384 m zone")
+	_check(highlands.boss_portal != null and highlands.spire_portal != null and highlands.boss_portal.locked,
+		"highlands: arena gates built from the layout, sealed while the Colossus lives")
+	var sealed_dungeons := 0
+	for child in highlands.world.get_children():
+		if child is Portal and (child as Portal).locked and (child as Portal).destination_scene == "":
+			sealed_dungeons += 1
+	_check(sealed_dungeons == 2, "highlands: two sealed dungeon gates stand as landmarks")
 
 	# --- M06 look: data-driven environment + dressing never touches collision ---
 	_check(highlands.look != null and highlands.look.art_pass, "highlands uses its ZoneLook (art pass)")
 	var hull_bodies := 0
 	var hull_contains := true
 	var shapes_intact := true
+	var rocks_grounded := true
 	for child in highlands.world.get_children():
 		var body := child as StaticBody3D
 		if body == null or body.get_node_or_null("RockHull") == null:
@@ -1578,19 +1603,30 @@ func _run() -> void:
 		shapes_intact = shapes_intact and box != null and not box_mesh.visible \
 			and box.size == (box_mesh.mesh as BoxMesh).size and body.collision_layer == 1
 		var h := box.size * 0.5
+		# the box bottom sits under the lowest ground of its footprint (no gap on slopes)
+		var span := highlands.terrain.footprint_range(body.global_position, box.size, body.rotation.y)
+		rocks_grounded = rocks_grounded and body.global_position.y - h.y <= span.x + 0.01 and body.global_position.y + h.y > span.y
 		var arrays := ((body.get_node("RockHull") as MeshInstance3D).mesh as ArrayMesh).surface_get_arrays(0)
 		for v: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
 			if absf(v.x) < h.x - 0.001 and absf(v.y) < h.y - 0.001 and absf(v.z) < h.z - 0.001:
 				hull_contains = false
 				break
-	_check(hull_bodies >= 18, "ridges, cliffs and rocks are dressed with rock hulls (%d)" % hull_bodies)
+	_check(hull_bodies >= 40, "ridges, arena and ruins are dressed with rock hulls (%d)" % hull_bodies)
 	_check(shapes_intact, "dressed boxes keep their collider (box shape, layer 1), box mesh hidden")
 	_check(hull_contains, "every rock hull vertex lies outside its collider box")
+	_check(rocks_grounded, "every rock box is sunk below its footprint's lowest ground and clears the highest")
+	var ruin_walls := 0
+	for child in highlands.world.get_children():
+		if child.name.begins_with("RuinWall") and (child as StaticBody3D).collision_layer == 1 \
+				and (child as Node).get_node_or_null("WallTrim") != null:
+			ruin_walls += 1
+	_check(ruin_walls >= 12, "ruin walls are colliders with masonry trim (%d)" % ruin_walls)
 
-	# --- M06 B3: rule-placed scatter + kit props stay out of play space ---
+	# --- M06 B3 / M08: rule-placed scatter + kit props stay out of play space ---
 	var scatter_count := 0
-	var bad := {"shadow": 0, "collider": 0, "spawn": 0, "camp": 0}
+	var bad := {"shadow": 0, "collider": 0, "pad": 0, "float": 0}
 	var obstacles := highlands.scatter_obstacles()
+	var pads := highlands._pads()
 	for child in highlands.dressing().get_children():
 		var mmi := child as MultiMeshInstance3D
 		if mmi == null or not mmi.name.begins_with("Scatter_"):
@@ -1605,14 +1641,14 @@ func _run() -> void:
 			scatter_count += 1
 			if Scatter._inside_any(p2, obstacles):
 				bad["collider"] += 1
-			if p2.distance_to(Vector2(0, 29)) < 2.99:
-				bad["spawn"] += 1
-			for camp: Vector3 in AshenHighlands.CAMPS:
-				if p2.distance_to(Vector2(camp.x, camp.z)) < 3.49:
-					bad["camp"] += 1
-	_check(scatter_count > 300, "scatter hugs the obstacle bases (%d instances)" % scatter_count)
+			for pad in pads:
+				if p2.distance_to(Vector2(pad.x, pad.y)) < pad.z - 0.01:
+					bad["pad"] += 1
+			if scatter_count % 50 == 0 and absf(p.y - highlands.ground_y(p)) > 0.05:
+				bad["float"] += 1
+	_check(scatter_count > 3000, "scatter: obstacle bands plus open-ground fields (%d instances)" % scatter_count)
 	_check(bad.values().all(func(n: int) -> bool: return n == 0),
-		"scatter: no shadows, never inside a collider, camps and spawn kept clear %s" % str(bad))
+		"scatter: no shadows, never inside a collider or a POI pad, sits on the terrain %s" % str(bad))
 	var banner := highlands.dressing().get_node_or_null("banner_pole") as Node3D
 	var banner_sways := false
 	if banner != null:
@@ -1627,7 +1663,17 @@ func _run() -> void:
 			seats += 1
 			var seat_mesh := (child as Node3D).find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
 			seats_low = seats_low and seat_mesh.get_aabb().end.y <= 0.4
-	_check(seats >= 4 and seats_low, "camp log seats are walk-through height (<= 0.4 m, %d seats)" % seats)
+	_check(seats >= 12 and seats_low, "camp log seats are walk-through height (<= 0.4 m, %d seats)" % seats)
+	var trees := 0
+	var tall_without_blocker := 0
+	var blockers := 0
+	for child in highlands.world.get_children():
+		if child.name.begins_with("Blocker"):
+			blockers += 1
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("charred_tree"):
+			trees += 1
+	_check(trees >= 40 and blockers >= trees, "tall props (trees, banners) each stand on a collider (%d trees, %d blockers)" % [trees, blockers])
 
 	# --- M06 audio: mix buses, music layers, looping ambience ---
 	var music_bus := AudioServer.get_bus_index("Music")
@@ -1650,23 +1696,30 @@ func _run() -> void:
 			loops_ok = loops_ok and wav != null and wav.loop_mode == AudioStreamWAV.LOOP_FORWARD
 	_check(ambience_found >= 2 and loops_ok, "ambience loops come from the import (loop mode Forward, %d players)" % ambience_found)
 
-	# First camp triggers once.
-	highlands.player.global_position = Vector3(0, 0.2, 16)
+	# First camp triggers once; its enemies stand on the terrain.
+	var camp1 := highlands.camps["camp_1"] as EncounterSpawner
+	highlands.player.global_position = highlands.ground_point(camp1.global_position + Vector3(0, 0, camp1.trigger_radius - 1.5), 0.3)
+	highlands.player.velocity = Vector3.ZERO
 	await _wait_frames(10)
 	var camp_count := highlands.enemy_count()
 	_check(camp_count >= 2, "camp spawner triggers on approach")
+	var enemies_grounded := true
+	for e in highlands.enemies_root.get_children():
+		var ep := (e as Node3D).global_position
+		enemies_grounded = enemies_grounded and absf(ep.y - highlands.ground_y(ep)) < 0.8
+	_check(enemies_grounded, "camp enemies stand on the terrain pad")
 	await _wait_frames(60)
 	_check(director != null and director.combat_mix > 0.3, "combat layer swells in once the camp engages (%.2f)"
 		% (director.combat_mix if director != null else 0.0))
 
-	# Chest opens and pops loot.
-	var chest: TreasureChest = null
-	for child in highlands.world.get_children():
-		if child is TreasureChest:
-			chest = child
-			break
+	# Chest opens and pops loot; item level follows the band.
+	var chest := highlands.chests["chest_south"] as TreasureChest
+	_check(chest != null and highlands._enemy_level(null, chest.global_position) == 1
+		and highlands._enemy_level(null, (highlands.chests["chest_hidden"] as TreasureChest).global_position) == 3,
+		"chests take their item level from the band (south 1, north 3)")
 	var inv_before_chest := highlands.player.equipment.inventory.size()
-	highlands.player.global_position = chest.global_position + Vector3(1.0, 0.2, 0)
+	highlands.player.global_position = highlands.ground_point(chest.global_position + Vector3(1.0, 0, 0), 0.2)
+	highlands.player.velocity = Vector3.ZERO
 	await _wait_frames(5)
 	_check(not chest.opened and chest._prompt.visible and chest._prompt.text.begins_with("[E]"),
 		"chest waits for the interact key and shows its prompt")
@@ -1692,11 +1745,14 @@ func _run() -> void:
 
 	# Boss: trigger, enrage, kill, unlock.
 	highlands.player.god_mode = true
-	highlands.player.global_position = Vector3(0, 0.2, -19)
+	highlands.player.global_position = highlands.ground_point(highlands._boss_trigger.global_position, 0.3)
+	highlands.player.velocity = Vector3.ZERO
 	await _wait_frames(10)
 	_check(highlands.boss != null, "boss fight starts at the arena")
 	_check(highlands.boss_portal.locked, "north portal sealed while boss lives")
 	var boss := highlands.boss
+	_check(boss != null and absf(boss.global_position.y - highlands.ground_y(boss.global_position)) < 0.8
+		and boss.level == 3, "the Colossus stands on the plateau at level 3")
 	boss.take_hit(HitInfo.create(boss.health.max_health * 0.55, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO))
 	await _wait_frames(3)
 	_check(boss.enraged, "colossus enrages below 50%")

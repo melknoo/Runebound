@@ -1,0 +1,12 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"comment": "M08 environment cost only: the spawn looking north over the whole zone, no enemies.",
+	"player": {"poi": "spawn", "offset": [0, 0.2, 0]},
+	"yaw": 0.0,
+	"pitch": -0.1,
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 8.0,
+	"budget_fps": 60,
+	"wave": []
+}

@@ -30,6 +30,10 @@ const POINTS_META := &"scatter_points"
 ##               scale: Vector2 (min, max),
 ##               cluster: Vector2i (min, max instances per cluster, default 1),
 ##               spread: float (cluster radius in m)}]
+##              M08 fields: {prop, field: true, per_100m2 (clusters per 100 m2
+##               of the area), slope_max (max ground gradient, needs normal_at),
+##               scale, cluster, spread} scatter over the open ground instead
+##               of hugging obstacles (still never inside one or a keep-clear).
 ## Returns the number of instances placed.
 static func populate(zone: ZoneBase, rules: Dictionary) -> int:
 	var rng := RandomNumberGenerator.new()
@@ -49,23 +53,38 @@ static func populate(zone: ZoneBase, rules: Dictionary) -> int:
 		var cluster: Vector2i = item.get("cluster", Vector2i(1, 1))
 		var spread: float = item.get("spread", 0.0)
 		var chunks := {}  # Vector2i -> Array of Transform3D
-		for ob: Dictionary in obstacles:
-			for centre in _around(ob, item, rng):
-				for j in rng.randi_range(cluster.x, cluster.y):
-					# clumps read as growth; a lone row of tufts reads as a pattern
-					var p := centre + Vector2.from_angle(rng.randf() * TAU) * spread * sqrt(rng.randf())
-					if not area.has_point(p) or _inside_any(p, obstacles) or _excluded(p, exclude):
+		var place_cluster := func(centre: Vector2) -> void:
+			for j in rng.randi_range(cluster.x, cluster.y):
+				# clumps read as growth; a lone row of tufts reads as a pattern
+				var p := centre + Vector2.from_angle(rng.randf() * TAU) * spread * sqrt(rng.randf())
+				if not area.has_point(p) or _inside_any(p, obstacles) or _excluded(p, exclude):
+					continue
+				var s := rng.randf_range(scale_range.x, scale_range.y)
+				var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s)
+				if normal_at.is_valid() and tilt > 0.0:
+					var n: Vector3 = normal_at.call(p.x, p.y)
+					if n.dot(Vector3.UP) < 0.9999:
+						basis = Basis(Quaternion(Vector3.UP, Vector3.UP.slerp(n, tilt))) * basis
+				var key := Vector2i(floori(p.x / CHUNK), floori(p.y / CHUNK))
+				if not chunks.has(key):
+					chunks[key] = []
+				(chunks[key] as Array).append(Transform3D(basis, Vector3(p.x, float(height_at.call(p.x, p.y)), p.y)))
+		if item.get("field", false):
+			# M08 open ground: uniform cluster centres, steep slopes skipped.
+			var count := int(area.get_area() / 100.0 * float(item.get("per_100m2", 0.5)))
+			var slope_max := float(item.get("slope_max", 0.6))
+			var min_ny := 1.0 / sqrt(1.0 + slope_max * slope_max)
+			for i in count:
+				var centre := area.position + Vector2(rng.randf(), rng.randf()) * area.size
+				if normal_at.is_valid():
+					var n: Vector3 = normal_at.call(centre.x, centre.y)
+					if n.y < min_ny:
 						continue
-					var s := rng.randf_range(scale_range.x, scale_range.y)
-					var basis := Basis(Vector3.UP, rng.randf_range(0.0, TAU)).scaled(Vector3.ONE * s)
-					if normal_at.is_valid() and tilt > 0.0:
-						var n: Vector3 = normal_at.call(p.x, p.y)
-						if n.dot(Vector3.UP) < 0.9999:
-							basis = Basis(Quaternion(Vector3.UP, Vector3.UP.slerp(n, tilt))) * basis
-					var key := Vector2i(floori(p.x / CHUNK), floori(p.y / CHUNK))
-					if not chunks.has(key):
-						chunks[key] = []
-					(chunks[key] as Array).append(Transform3D(basis, Vector3(p.x, float(height_at.call(p.x, p.y)), p.y)))
+				place_cluster.call(centre)
+		else:
+			for ob: Dictionary in obstacles:
+				for centre in _around(ob, item, rng):
+					place_cluster.call(centre)
 		for key: Vector2i in chunks:
 			placed += _emit_chunk(zone, key, chunks[key], mesh, String(item["prop"]))
 	return placed

@@ -77,7 +77,7 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 		for child in _zone.enemies_root.get_children():
 			child.free()
 	if shot.has("player"):
-		player.global_position = _vec3(shot["player"])
+		player.global_position = _pos(_zone, shot["player"])
 		player.velocity = Vector3.ZERO
 	if shot.has("face"):
 		player._visual.rotation.y = float(shot["face"])
@@ -94,9 +94,9 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 		var enemy: EnemyBase
 		if id in ["colossus", "vessel"]:  # bosses: not in spawn_by_id (zones script them)
 			enemy = ZoneBase.make_enemy(id)
-			_zone.call(&"_spawn_enemy", enemy, _vec3(spec.get("at", [0, 0.2, 0])))
+			_zone.call(&"_spawn_enemy", enemy, _pos(_zone, spec.get("at", [0, 0.2, 0])))
 		else:
-			enemy = _zone.spawn_by_id(id, _vec3(spec.get("at", [0, 0.2, 0])))
+			enemy = _zone.spawn_by_id(id, _pos(_zone, spec.get("at", [0, 0.2, 0])))
 		if spec.has("call"):
 			calls.append([enemy, StringName(spec["call"])])
 		if spec.has("face"):
@@ -221,3 +221,19 @@ static func _ensure_gdignore(dir: String) -> void:
 static func _vec3(v: Variant) -> Vector3:
 	var a := v as Array
 	return Vector3(float(a[0]), float(a[1]), float(a[2]))
+
+
+## M08: a position is either [x, y, z] or {"poi": id, "offset": [dx, dy, dz]}
+## (offset y = lift above the ground under the point).
+static func _pos(zone: ZoneBase, v: Variant) -> Vector3:
+	if v is Dictionary:
+		var d := v as Dictionary
+		var base := zone.poi_position(String(d.get("poi", "")))
+		if base == Vector3.INF:
+			push_warning("unknown poi '%s'" % str(d.get("poi", "")))
+			base = Vector3.ZERO
+		var off := _vec3(d.get("offset", [0, 0, 0]))
+		var p := base + Vector3(off.x, 0.0, off.z)
+		p.y = zone.ground_y(p) + off.y
+		return p
+	return _vec3(v)

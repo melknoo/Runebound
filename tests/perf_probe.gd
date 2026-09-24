@@ -121,12 +121,12 @@ func _run() -> void:
 	for r in int(_scn.get("repeats", 3)):
 		for child in _zone.enemies_root.get_children():
 			child.free()
-		player.global_position = _vec3(_scn.get("player", [0, 0.2, 6]))
+		player.global_position = _pos(_zone, _scn.get("player", [0, 0.2, 6]))
 		player.velocity = Vector3.ZERO
 		_zone.camera_rig._yaw = float(_scn.get("yaw", 0.0))
 		_zone.camera_rig._pitch = float(_scn.get("pitch", -0.3))
 		for spec: Array in _scn.get("wave", []):
-			var enemy := _zone.spawn_by_id(str(spec[0]), player.global_position + _vec3(spec[1]))
+			var enemy := _zone.spawn_by_id(str(spec[0]), _zone.ground_point(player.global_position + _vec3(spec[1]), 0.2))
 			if _scn.get("immortal_wave", true):
 				# Constant load: the wave survives the whole window, so repeats
 				# measure the same fight instead of however fast it died.
@@ -209,12 +209,12 @@ func _measure_repeat() -> Dictionary:
 	var player := _zone.player
 	for child in _zone.enemies_root.get_children():
 		child.free()
-	player.global_position = _vec3(_scn.get("player", [0, 0.2, 6]))
+	player.global_position = _pos(_zone, _scn.get("player", [0, 0.2, 6]))
 	player.velocity = Vector3.ZERO
 	_zone.camera_rig._yaw = float(_scn.get("yaw", 0.0))
 	_zone.camera_rig._pitch = float(_scn.get("pitch", -0.3))
 	for spec: Array in _scn.get("wave", []):
-		var enemy := _zone.spawn_by_id(str(spec[0]), player.global_position + _vec3(spec[1]))
+		var enemy := _zone.spawn_by_id(str(spec[0]), _zone.ground_point(player.global_position + _vec3(spec[1]), 0.2))
 		enemy.health.max_health = 1.0e6
 		enemy.health.heal_full()
 	await _wait(0.5)
@@ -328,3 +328,19 @@ func _append_history(median: Dictionary, passed: bool) -> void:
 static func _vec3(v: Variant) -> Vector3:
 	var a := v as Array
 	return Vector3(float(a[0]), float(a[1]), float(a[2]))
+
+
+## M08: a position is either [x, y, z] or {"poi": id, "offset": [dx, dy, dz]}
+## (offset y = lift above the ground under the point).
+static func _pos(zone: ZoneBase, v: Variant) -> Vector3:
+	if v is Dictionary:
+		var d := v as Dictionary
+		var base := zone.poi_position(String(d.get("poi", "")))
+		if base == Vector3.INF:
+			push_warning("unknown poi '%s'" % str(d.get("poi", "")))
+			base = Vector3.ZERO
+		var off := _vec3(d.get("offset", [0, 0, 0]))
+		var p := base + Vector3(off.x, 0.0, off.z)
+		p.y = zone.ground_y(p) + off.y
+		return p
+	return _vec3(v)

@@ -1,9 +1,9 @@
 {
 	"zone": "res://scenes/ashen_highlands.tscn",
-	"comment": "Gold-target area (M08: the first camp of the open zone): an eight-enemy pull on the camp pad.",
-	"player": {"poi": "camp_1", "offset": [0, 0.2, 7]},
+	"comment": "M08 open zone: camp 4 in the middle of the map, looking north over the plateau; eight-enemy pull.",
+	"player": {"poi": "camp_4", "offset": [0, 0.2, 9]},
 	"yaw": 0.0,
-	"pitch": -0.3,
+	"pitch": -0.25,
 	"warmup": 2.0,
 	"repeats": 3,
 	"duration": 12.0,

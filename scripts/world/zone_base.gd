@@ -161,6 +161,13 @@ func zone_title() -> String:
 	return ""
 
 
+## M08: world position (ground height) of a layout point of interest, so
+## tests, shot lists and perf scenarios address places by id instead of
+## coordinates. Vector3.INF when the zone has no such POI.
+func poi_position(_id: String) -> Vector3:
+	return Vector3.INF
+
+
 const DISCOVERY_XP := 150
 
 

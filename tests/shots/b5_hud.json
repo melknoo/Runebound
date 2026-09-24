@@ -3,17 +3,17 @@
 	"out": "captures_shots/b5_hud",
 	"comment": "M06 B5: HUD v2 (pixel fonts, frames, icons, cooldown sweep), tooltip, world labels.",
 	"shots": [
-		{"name": "hud_combat", "player": [0, 0.2, 24], "yaw": 0.25, "pitch": -0.3, "zoom": 5.0,
-			"spawn": [{"id": "rusher", "at": [0.3, 0.2, 22.3], "freeze": true, "face": 3.14},
-			          {"id": "rusher", "at": [-1.2, 0.2, 21.8], "freeze": true, "face": 3.14}],
+		{"name": "hud_combat", "player": {"poi": "camp_1", "offset": [0, 0.2, 8]}, "yaw": 0.25, "pitch": -0.3, "zoom": 5.0,
+			"spawn": [{"id": "rusher", "at": {"poi": "camp_1", "offset": [0.3, 0.2, 6.3]}, "freeze": true, "face": 3.14},
+			          {"id": "rusher", "at": {"poi": "camp_1", "offset": [-1.2, 0.2, 5.8]}, "freeze": true, "face": 3.14}],
 			"actions": [{"wait": 0.2}, {"do": "melee"}, {"wait": 0.5}, {"do": "melee"}, {"wait": 0.5}, {"do": "ember"},
 			            {"do": "chain_spark"}, {"wait": 0.15}], "settle": 0.0},
-		{"name": "target_plate", "player": [0, 0.2, 24], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
-			"spawn": [{"id": "caster", "at": [1.5, 0.2, 18.0], "freeze": true, "face": 3.14}],
+		{"name": "target_plate", "player": {"poi": "camp_1", "offset": [0, 0.2, 8]}, "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"spawn": [{"id": "caster", "at": {"poi": "camp_1", "offset": [1.5, 0.2, 2]}, "freeze": true, "face": 3.14}],
 			"actions": [{"wait": 0.2}, {"do": "tab"}, {"do": "bossbar"}, {"wait": 0.3}], "settle": 0.0},
-		{"name": "loot_labels", "player": [0, 0.2, 24], "yaw": 0.0, "pitch": -0.35, "zoom": 5.0,
+		{"name": "loot_labels", "player": {"poi": "camp_1", "offset": [0, 0.2, 8]}, "yaw": 0.0, "pitch": -0.35, "zoom": 5.0,
 			"actions": [{"do": "loot"}, {"wait": 0.2}, {"do": "dodge"}, {"wait": 0.5}, {"do": "loot"}, {"wait": 0.6}], "settle": 0.0},
-		{"name": "inventory_tooltip", "player": [0, 0.2, 24], "yaw": 0.0, "pitch": -0.3, "zoom": 5.0,
+		{"name": "inventory_tooltip", "player": {"poi": "camp_1", "offset": [0, 0.2, 8]}, "yaw": 0.0, "pitch": -0.3, "zoom": 5.0,
 			"actions": [{"do": "inventory"}, {"wait": 0.2}, {"hover": "earthbreaker"}, {"wait": 0.3}], "settle": 0.0}
 	]
 }
