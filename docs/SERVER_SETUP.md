@@ -1,58 +1,122 @@
 # RUNEBOUND — Server-Laptop
 
-Stand: 2026-09-25. Der Laptop zuhause ist das Deployment-Ziel für den dedizierten
-Server (M09). Er baut nichts, sondern zieht per `git pull` von `main`.
-Erreichbar ist er vorerst über Tailscale. Nichts im Server hängt an Tailscale
-außer der Firewall-Regel.
+Stand: 2026-09-25 (M09b). Der Laptop zuhause ist der dedizierte Koop-Server.
+Er baut nichts, sondern zieht per `git pull` von `main`. Freunde erreichen ihn
+**ohne Tailscale** über Tailscale Funnel und kommen nur mit einem persönlichen
+Einladungscode herein. Du selbst verwaltest den Laptop weiter über Tailscale
+(SSH).
+
+## Wie Freunde reinkommen
+```
+Freund ──HTTPS/WebSocket──▶ Funnel-Relais ──Tailscale (vom Laptop aufgebaut)──▶ Laptop
+Du (im Tailnet) ──────── dieselbe Adresse, direkt übers Tailnet ───────────────▶ Laptop
+                         Laptop: tailscaled :443 → 127.0.0.1:7780 → Spielserver
+```
+- **Warum Funnel:** Starlink lässt von außen nichts rein. IPv4 läuft über CGNAT, und der Router blockt eingehendes IPv6 ohne Einstellmöglichkeit. Funnel gibt dem Laptop unter seinem `.ts.net`-Namen eine öffentliche HTTPS-Adresse. Die Verbindung dorthin baut der Laptop selbst nach außen auf. Funnel ist im Gratis-Plan von Tailscale enthalten.
+- **Funnel kann nur TCP**, deshalb spricht der Server WebSocket (`RUNEBOUND_TRANSPORT=ws`) auf `127.0.0.1:7780`. tailscaled beendet TLS auf dem Laptop und reicht die Verbindung dorthin weiter.
+- **Einladungscodes:** Wer keinen gültigen Code hat, wird im Handshake abgewiesen, bevor der Server irgendetwas von ihm liest. Details stehen in TECHNICAL_ARCHITECTURE „Access (M09b)“.
+- **Die Adresse** ist dieselbe für alle: der MagicDNS-Name des Laptops. `tailscale funnel status` zeigt ihn an. Im Spiel trägt man sie ohne Port ein; ein Name ohne Port bedeutet dort WebSocket über HTTPS. Aus deinem Tailnet geht die Verbindung direkt, ohne Relais.
+
+## Einrichtung (einmalig)
+1. **Tailscale-Admin-Konsole:**
+   - DNS → **HTTPS Certificates** aktivieren.
+   - **Funnel** für den Laptop freischalten (Policy-Attribut `funnel`).
+   - Beim Laptop **„Disable key expiry“** wählen.
+2. **Auf dem Laptop:** `sudo tailscale set --operator=melvin`. Danach darf `melvin` Funnel ohne sudo steuern, auch per SSH vom Dev-PC aus.
+3. **Umzug auf den abgeschotteten Dienst:**
+   ```bash
+   cd ~/Repositories/Runebound && git pull
+   sudo tools/server/setup-service.sh
+   ```
+   Das Skript ist wiederholbar und erledigt Folgendes:
+   - legt den Systembenutzer `runebound` an (ohne Passwort, ohne Login, ohne sudo/docker)
+   - legt dessen Klon `/var/lib/runebound/Runebound` per HTTPS an (das Repo ist öffentlich, auf dem Server liegt kein Key)
+   - kopiert Godot nach `/opt/godot`
+   - legt `/etc/runebound/invites` an
+   - installiert die Units `runebound-update` und `runebound-server`
+   - übernimmt den Welt-Save
+   - entfernt die alte 7777/udp-Regel
+   - startet den Server
+   - schaltet Funnel ein
+4. **Codes anlegen:** `tools/server/invites.sh add melvin`, `tools/server/invites.sh add anna` und so weiter.
+
+## Einladungscodes
+```bash
+tools/server/invites.sh add NAME      # neuer Code, wird einmal angezeigt
+tools/server/invites.sh show NAME     # Code noch mal anzeigen
+tools/server/invites.sh rotate NAME   # neuer Code, der alte gilt sofort nicht mehr
+tools/server/invites.sh remove NAME   # zurückziehen (ist NAME online, fliegt er raus)
+tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
+```
+- Die Liste ist `/etc/runebound/invites` und gehört dir, der Server kann sie nur lesen. Sie kommt nie ins Repo.
+- Der Server liest sie alle 2 s neu, Änderungen wirken sofort. Das Journal zeigt `invites: N loaded`.
+- Ein Code hat 16 Zeichen (80 Bit). Raten ist aussichtslos. Groß-/Kleinschreibung, Bindestriche und 0/O bzw. 1/I sind beim Eintippen egal.
+- **Ein Code ist geleakt:** `invites.sh rotate NAME` und dem Freund den neuen Code schicken. Wer mit dem alten spielt, fliegt innerhalb von 2 s.
+- Meldet sich derselbe Code ein zweites Mal an, fliegt die ältere Sitzung.
+
+## Für Freunde (zum Weiterleiten)
+> **RUNEBOUND mitspielen:**
+> 1. Godot **4.6.x** installieren (godotengine.org, „Standard“, nicht .NET).
+> 2. Das Spiel holen: `git clone https://github.com/melknoo/Runebound.git` oder auf GitHub „Code → Download ZIP“. Danach in Godot den Ordner importieren und starten (F5).
+> 3. Im Titel „Join co-op“ wählen und diese drei Dinge eintragen:
+>    - deinen Namen
+>    - als Server die Adresse, die ich dir schicke (ohne Port)
+>    - deinen Einladungscode
+>
+>    Das Spiel merkt sich alles.
+> 4. Den Code nicht weitergeben, er gehört nur dir.
+
+## Was ist von außen erreichbar?
+- **Nur die Funnel-Adresse** (HTTPS über die Tailscale-Relais). Dahinter liegt nur der Spielserver auf `127.0.0.1:7780`.
+- **Am Router und am Laptop ist kein Port offen.** ufw: eingehend alles verboten außer 22/tcp auf `tailscale0` (SSH für dich).
+- **Die Heim-IP bleibt verborgen.** Freunde sehen nur die Relais von Tailscale.
+- **Der Spielserver** läuft als `runebound` in einer systemd-Sandbox (`systemd-analyze security runebound-server`: 1,3 „OK“, vorher 9,2 „UNSAFE“):
+  - Netz nur zu localhost, System schreibgeschützt, keine Home-Verzeichnisse, keine Rechte.
+  - Schreiben darf er nur in `/var/lib/runebound`.
+  - Er kommt weder an deinen GitHub-Key noch an docker oder sudo, noch in dein LAN.
+- **Das Update** (`runebound-update`: git pull + Import) läuft vor jedem Start im selben Benutzer. Es darf zu GitHub, ist sonst genauso abgeschottet.
+- **Restrisiken:**
+  - Die Funnel-Adresse ist öffentlich auffindbar (über die Zertifikats-Logs). Scanner treffen dann auf den Einladungs-Handshake.
+  - Andere Dienste auf dem Laptop, die auf localhost lauschen (zum Beispiel `:3000`), wären für den Spielserver erreichbar.
+  - Funnel hängt am Gratis-Angebot von Tailscale.
 
 ## Ist-Zustand
 
 | | |
 |---|---|
-| Hardware | Acer Aspire E5-573G, Intel Pentium 3556U (2 Kerne, 1,7 GHz), 7,7 GiB RAM, 219 GB SSD (141 GB frei), Akku BAT1 |
-| Netz | nur WLAN `wlp3s0` (192.168.1.184), Ethernet `enp2s0` ungenutzt. Die WLAN-Verbindung ist systemweit (verbindet ohne Login) |
-| System | Linux Mint 22.2 Xfce, Kernel 6.8.0-138, systemd 255 |
-| Godot | `~/godot/godot` → `~/godot/Godot_v4.6.3-stable_linux.x86_64`, `4.6.3.stable.official.7d41c59c4` (SHA512 gegen die offizielle `SHA512-SUMS.txt` geprüft) |
-| Repo | `/home/melvin/Repositories/Runebound`, Branch `main` |
-| Smoke-Test | 373 ok / 0 failures, ca. 53 s. Import headless ca. 13 s, ohne Fehler |
-| Starlink IPv4 | extern `145.224.72.22`. Die WAN-IP des Routers ist nicht auslesbar (Hop 2 antwortet nicht) → **vermutlich CGNAT**, noch unbestätigt |
-| Starlink IPv6 | **globale IPv6 vorhanden** (`2a0d:3341:b123:ff08::/64`), ausgehend ok. Eingehend ungetestet |
-| Tailscale | `100.101.57.51`, MagicDNS **`melvin-aspire-e5-573g.tail94658b.ts.net`**, Tailscale SSH an |
-| netcheck | UDP ok, `MappingVariesByDestIP: false` (Hole-Punching klappt), kein Port-Mapping, DERP Frankfurt/Warschau. Der Dev-PC verbindet **direkt** (LAN), nicht über das Relay |
-| Spiel-Port | **7777/udp** (`tools/server/server.env`) |
-| Dienst | `runebound-server.service` installiert, **disabled** (enable erst nach M09) |
-| Firewall | ufw: eingehend deny, ausgehend allow. Erlaubt nur auf `tailscale0`: 22/tcp, 7777/udp |
-| Dauerbetrieb | Deckel ignoriert (logind-Drop-in `/etc/systemd/logind.conf.d/runebound.conf`), `IdleAction=ignore`, sleep/suspend/hibernate/hybrid-sleep maskiert. Xfce: nie schlafen, Deckel = nichts, Bildschirm aus nach 10/15 min |
+| Hardware | Acer Aspire E5-573G, Intel Pentium 3556U (2 Kerne, 1,7 GHz), 7,7 GiB RAM, 219 GB SSD, Akku BAT1 |
+| Netz | nur WLAN `wlp3s0`, Ethernet ungenutzt. Die WLAN-Verbindung ist systemweit (verbindet ohne Login) |
+| System | Linux Mint 22.2 Xfce, Kernel 6.8, systemd 255 |
+| Starlink | Residential: CGNAT (kein eingehendes IPv4), der Router blockt eingehendes IPv6 → Funnel |
+| Godot | Dienst: `/opt/godot/godot` (Kopie). Tests: `~/godot/godot` → `Godot_v4.6.3-stable_linux.x86_64` (SHA512 gegen die offizielle Liste geprüft) |
+| Klone | Dienst: `/var/lib/runebound/Runebound` (Benutzer `runebound`, HTTPS). Deiner: `~/Repositories/Runebound` (Tests, Werkzeuge, SSH-Key) |
+| Tailscale | MagicDNS-Name des Laptops, Tailscale SSH an, Funnel `https://<name>` → `127.0.0.1:7780` |
+| Dienste | `runebound-update` (oneshot vor jedem Start) + `runebound-server` (enabled, startet beim Boot) |
+| Firewall | ufw: eingehend deny, ausgehend allow. Erlaubt nur 22/tcp auf `tailscale0` |
+| Dauerbetrieb | Deckel ignoriert (logind-Drop-in `/etc/systemd/logind.conf.d/runebound.conf`), `IdleAction=ignore`, sleep/suspend/hibernate/hybrid-sleep maskiert |
 | Updates | Mint-Auto-Updates aus, unattended-upgrades nicht installiert → **kein automatischer Neustart** |
 
 ## Dateien (`tools/server/`)
-- `run_godot.sh import | smoke | serve` ist das Gegenstück zu `tools/run_godot.ps1`.
-  - `GODOT` überschreibt den Godot-Pfad (Default `~/godot/godot`).
-  - `smoke`-Exit-Codes: 3 = 8-min-Limit überschritten, 2 = Watchdog des Tests (300 s), 1 = `SCRIPT ERROR`/`Parse Error` im Output, sonst der Godot-Exit-Code.
-- `server.env` enthält `RUNEBOUND_PORT=7777` und `RUNEBOUND_SCENE`. Seit M09 Phase 1 zeigt die Szene auf den echten Server (`res://scenes/dedicated_server.tscn`). Er hat seinen eigenen Welt-Save `~/.local/share/godot/app_userdata/RUNEBOUND/runebound_server.json` und loggt alle 60 s Tick-Zeiten, Spieler, Gegner und Traffic.
-- `run_godot.sh net [szenario]` startet die Mehrprozess-Koop-Tests (Server + Headless-Clients) auch auf dem Laptop, `run_godot.sh serverperf [helden]` misst die Tick-Kosten.
-- `runebound-server.sh` lädt `server.env` und prüft per `git fetch` auf neue Commits. Gibt es welche, verwirft es den Linux-Import-Churn in `.godot/`, macht `git pull --ff-only` und importiert neu. Schlägt der Pull fehl, bricht es laut ab. Danach startet es `exec godot --headless … $RUNEBOUND_SCENE`, den Port reicht es als Umgebungsvariable durch.
-- `runebound-server.service` ist die systemd-Unit. Sie ist **kopiert**, nicht verlinkt, damit ein `git pull` eine root-geladene Unit nicht still ändert.
-- `logind-runebound.conf` ist die Vorlage für den logind-Drop-in.
+- **`setup-service.sh`:** die einmalige Einrichtung (siehe oben), wiederholbar.
+- **`invites.sh`:** verwaltet die Einladungscodes.
+- **`runebound-server.sh update | start`:** `update` macht `git fetch` und `pull --ff-only` und importiert, wenn sich Projektdateien geändert haben. Ohne Netz startet der Server mit dem bisherigen Stand. `start` ersetzt sich durch `godot --headless … $RUNEBOUND_SCENE`.
+- **`runebound-update.service` / `runebound-server.service`:** die Units. Sie werden **kopiert**, nicht verlinkt, damit ein `git pull` keine root-geladene Unit still ändert.
+- **`server.env`:** `RUNEBOUND_TRANSPORT=ws`, `RUNEBOUND_PORT=7780`, `RUNEBOUND_SCENE`, `RUNEBOUND_INVITES` (nur der Pfad).
+- **`run_godot.sh import | ensure-import | smoke | net | serverperf | serve`:** das Gegenstück zu `tools/run_godot.ps1`. `GODOT` überschreibt den Godot-Pfad (Default `~/godot/godot`). `serve` nur benutzen, wenn der Dienst gestoppt ist (derselbe Port).
+- **`logind-runebound.conf`:** die Vorlage für den logind-Drop-in.
 
 ## Bedienung (auf dem Laptop oder per SSH)
 ```bash
-sudo systemctl start runebound-server      # starten (pullt + importiert vorher)
+sudo systemctl restart runebound-server    # Update einspielen: holt den Stand, importiert, startet neu
 sudo systemctl stop runebound-server       # stoppen
-sudo systemctl restart runebound-server    # Update einspielen = neu starten
 systemctl status runebound-server          # Zustand
-journalctl -u runebound-server -f          # Log live
-journalctl -u runebound-server -b          # Log seit dem Boot
+journalctl -u runebound-server -f          # Spiel-Log live
+journalctl -u runebound-update -n 30       # letztes Update (pull, Import)
+tailscale funnel status                    # die öffentliche Adresse
+systemd-analyze security runebound-server  # Sandbox-Bewertung
 ```
-- **Update:** Der Pull passiert beim Start, `restart` reicht also. Seit M09 Phase 1 läuft danach der echte Server dauerhaft (bis `stop`). Koop ist aber erst mit M09 Phase 3+ spielbar.
-- **Nach M09:** `sudo systemctl enable --now runebound-server` (die Szene ist schon umgestellt). Bis dahin startet der Dienst nur von Hand.
-- **Unit geändert:**
-  ```bash
-  sudo install -m 644 tools/server/runebound-server.service /etc/systemd/system/
-  sudo systemctl daemon-reload
-  ```
-- **Smoke-Test von Hand:** `tools/server/run_godot.sh smoke; echo $?` (0 = grün).
-- **Godot updaten** (immer exakt die Version des Dev-Rechners):
+- **Units geändert** (nach einem Pull, der `tools/server/*.service` ändert): `sudo tools/server/setup-service.sh` noch einmal laufen lassen.
+- **Godot updaten** (immer dieselbe Version wie auf dem Dev-Rechner):
   ```bash
   V=4.6.4-stable   # Beispiel
   cd ~/godot
@@ -61,83 +125,44 @@ journalctl -u runebound-server -b          # Log seit dem Boot
   grep "Godot_v${V}_linux.x86_64.zip" SHA512-SUMS.txt | sha512sum -c
   unzip -o Godot_v${V}_linux.x86_64.zip && chmod +x Godot_v${V}_linux.x86_64
   ln -sfn Godot_v${V}_linux.x86_64 godot && ./godot --headless --version
-  cd ~/Repositories/Runebound && tools/server/run_godot.sh import && tools/server/run_godot.sh smoke
+  sudo ~/Repositories/Runebound/tools/server/setup-service.sh   # kopiert es nach /opt/godot
   ```
 
-## Koop-Betrieb (ab M09)
-> **M09b (in Arbeit, 2026-09-25):** Freunde sollen ohne Tailscale über Tailscale Funnel beitreten, mit persönlichen Einladungscodes. `server.env` zeigt schon auf die Einladungsliste `/etc/runebound/invites`. Nach dem nächsten Neustart lässt der Server nur noch Spieler mit Code herein. Die Liste legt `tools/server/setup-service.sh` an (Phase 3 von M09b), die Codes verwaltet `tools/server/invites.sh add|list|show|remove NAME`.
+## Koop-Betrieb
+Der Server hält genau eine Zone (die, in der seine Welt zuletzt war), bis zu 5 Spieler und eine eigene Welt (`/var/lib/runebound/.local/share/godot/app_userdata/RUNEBOUND/runebound_server.json`: Bosse, Camps, Zone). Die Charaktere bleiben auf den Rechnern der Spieler.
 
-Der Server ist seit M09 ein echtes Spiel: `RUNEBOUND_SCENE` startet `res://scenes/dedicated_server.tscn`. Er hält genau eine Zone (die, in der seine Welt zuletzt war), bis 5 Spieler und eine eigene Welt (`~/.local/share/godot/app_userdata/RUNEBOUND/runebound_server.json`: Bosse, Camps, Zone). Die Charaktere bleiben auf den Rechnern der Spieler.
+**Godot-Version:** Server und Spieler brauchen dieselbe Godot-Hauptversion 4.6, die Patch-Version darf abweichen (das Log vermerkt es). Empfohlen ist überall 4.6.3.
 
-**Einschalten (einmalig):**
-```bash
-sudo systemctl enable --now runebound-server
-journalctl -u runebound-server -f      # "listening on *:7777/udp ..." und die Zone
-```
-Danach startet er bei jedem Boot selbst und holt vorher den neuesten Stand (`git pull` + Import).
+**Update einspielen:** `sudo systemctl restart runebound-server`.
+- Alle Spieler fliegen dabei sofort raus und landen mit Begründung im Titel. Ihr Charakter ist gespeichert.
+- Spieler brauchen denselben Stand wie der Server. Bei einer anderen Protokoll- oder Godot-Version lehnt der Server mit einer lesbaren Meldung ab.
+- Ein manuelles `git pull` im Dienst-Klon ist unnötig. Das Update-Skript importiert immer dann, wenn sich seit dem letzten Import Projektdateien geändert haben (Stempel `.godot/runebound_import.stamp`). Kompilieren Skripte trotzdem nicht, beendet sich der Server mit einer klaren Meldung.
 
-**Godot-Version:** Server und Spieler brauchen dieselbe Godot-Hauptversion 4.6, die Patch-Version darf abweichen (4.6.1 kommt auf einen 4.6.3-Server, das Log vermerkt es). Empfohlen ist überall 4.6.3, weil das Projekt damit entwickelt und getestet wird.
+**Log:**
+- Alle 60 s eine Zeile: `tick p50 / p95 / max ms | players | enemies (asleep) | WebSocket | refused N`.
+- Dazu Beitritte (mit dem Namen der Einladung), Abgänge, Kicks, Gruppenreisen und die Einladungsliste.
 
-**Manuelles `git pull` ist in Ordnung:** Beim Start importiert das Skript immer dann, wenn sich seit dem letzten Import Projektdateien geändert haben (Stempel `.godot/runebound_import.stamp`), egal wer gepullt hat. Kompilieren Skripte trotzdem nicht, beendet sich der Server mit einer klaren Meldung, statt halb zu laufen (2026-09-25: ein Pull von Hand direkt vor dem Start ließ die Klassenliste veralten).
+**Welt zurücksetzen** (Bosse wieder da, Camps voll, Start im Hub): Dienst stoppen, `runebound_server.json` löschen (`sudo rm`), Dienst starten.
 
-**Update einspielen:** `sudo systemctl restart runebound-server`. Alle Spieler fliegen dabei sofort raus (der Server meldet sich sauber ab) und landen mit Begründung im Titel; ihr Charakter ist gespeichert. Spieler brauchen denselben Stand wie der Server: Bei anderer Protokoll- oder Godot-Version lehnt der Server mit einer lesbaren Meldung ab („Version mismatch ... git pull“).
-
-**Log:** Alle 60 s eine Zeile `tick p50 / p95 / max ms | players | enemies (asleep) | out / in KB/s`, dazu Beitritte, Abgänge, Gruppenreisen.
-
-**Welt zurücksetzen** (Bosse wieder da, Camps voll, Start im Hub): Dienst stoppen, `runebound_server.json` löschen, Dienst starten.
-
-**Spielen:** Im Titel „Join co-op“ → Name → `melvin-aspire-e5-573g.tail94658b.ts.net` (Port 7777 ist Standard). Die Adresse wird gemerkt.
-
-**Tests auf dem Laptop:** `tools/server/run_godot.sh smoke` (Singleplayer), `tools/server/run_godot.sh net` (Koop, Server + Headless-Clients lokal), `tools/server/run_godot.sh serverperf 5` (Tick-Kosten).
+**Tests auf dem Laptop** (in deinem Klon):
+- `tools/server/run_godot.sh smoke` (Singleplayer)
+- `tools/server/run_godot.sh net` (Koop, Server + Headless-Clients lokal, auch über WebSocket)
+- `tools/server/run_godot.sh serverperf 5` (Tick-Kosten)
 
 ## Vom Dev-Rechner aus
 ```powershell
 ssh -t melvin@melvin-aspire-e5-573g "sudo systemctl restart runebound-server && journalctl -u runebound-server -n 30 --no-pager"
+ssh melvin@melvin-aspire-e5-573g "~/Repositories/Runebound/tools/server/invites.sh add anna"
 ```
-`-t`, weil sudo nach dem Passwort fragt. SSH läuft über Tailscale SSH. Die Tailscale-Policy kann gelegentlich eine Bestätigung im Browser verlangen.
-
-## Freunde (über Tailscale)
-1. Ich teile den Laptop (einmalig in der [Tailscale-Admin-Konsole](https://login.tailscale.com/admin/machines)):
-   - **Machines** → Zeile `melvin-aspire-e5-573g` → Menü **„…“** → **Share…** → Einladung per E-Mail oder Link kopieren und dem Freund schicken.
-   - Im selben Menü **„Disable key expiry“**, sonst fliegt der Laptop am 2026-12-31 aus dem Tailnet.
-2. Der Freund installiert Tailscale (tailscale.com/download), meldet sich an und nimmt die Einladung an.
-3. Im Spiel `melvin-aspire-e5-573g.tail94658b.ts.net:7777` eintragen. Löst der Name nicht auf, geht auch `100.101.57.51:7777`.
-
-Geteilte Nutzer sehen nur diesen einen Rechner und können sich nicht per SSH anmelden. Die Firewall lässt über Tailscale ohnehin nur 22/tcp und 7777/udp durch.
-
-## Später: nativ ohne Tailscale
-Für den Wechsel ändern sich nur zwei Dinge:
-- **im Client** die Serveradresse (Hostname),
-- **auf dem Laptop** eine zusätzliche ufw-Regel.
-
-`runebound-server.sh`, der Dienst und der Port bleiben gleich.
-
-- **(a) Kleiner VPS mit WireGuard-Tunnel zum Laptop, der 7777/udp weiterleitet.**
-  - Vorteil: feste öffentliche IPv4 für alle Freunde, ohne App, unabhängig von Starlink-CGNAT. Kostet ca. 4–5 €/Monat.
-  - Nachteil: ein zusätzlicher Hop (etwas mehr Latenz), und man muss einen VPS pflegen.
-  - Zusatzregel: `sudo ufw allow in on wg0 to any port 7777 proto udp`.
-- **(b) Starlink-Tarif mit öffentlicher IPv4.**
-  - Vorteil: keine zusätzliche Infrastruktur, direkte Verbindung mit der geringsten Latenz.
-  - Nachteil: teurerer Tarif. Die IP kann trotzdem wechseln, dann braucht es einen Namen dafür.
-  - Zusatzregel: `sudo ufw allow in on wlp3s0 to any port 7777 proto udp`, dazu eine Portweiterleitung im Router.
-- **(c) IPv6 direkt** (eine globale IPv6 ist vorhanden, siehe oben).
-  - Vorteil: kostenlos und ohne Weiterleitung.
-  - Nachteil: Jeder Freund braucht selbst funktionierendes IPv6. Das Starlink-Präfix kann wechseln. Ob der Starlink-Router eingehendes IPv6 durchlässt, ist ungetestet.
-  - Zusatzregel wie bei (b), sie gilt für IPv4 und IPv6.
-
-**Anforderungen an M09:**
-- Die Serveradresse im Spiel ist ein Textfeld mit „zuletzt benutzt“. Keine feste IP und kein fester Hostname im Code.
-- Der Port ist Default 7777, im Feld mit `host:port` änderbar.
-- Der Server liest `RUNEBOUND_PORT` und bindet auf alle Interfaces (`*`, IPv4 + IPv6), nicht auf die Tailscale-IP.
+- `-t` braucht es für sudo, weil sudo nach dem Passwort fragt. `invites.sh` braucht kein sudo.
+- SSH läuft über Tailscale SSH. Die Policy kann gelegentlich eine Bestätigung im Browser verlangen.
+- **Funnel-Messung:** `tools\run_godot.cmd wsspike <name>.ts.net` misst Echo-RTT und Download durch Funnel. Der Laptop braucht dafür `tests/ws_spike.gd -- --serve=7780` statt des Dienstes (TECHNICAL_ARCHITECTURE „Access“).
 
 ## Offen / manuell
-- **Tailscale-Admin-Konsole:** den Laptop teilen und die Key-Expiry abschalten (siehe oben).
-- **CGNAT bestätigen:** Starlink-App → Einstellungen → Router → Erweitert / Debug-Daten → WAN-IPv4. Eine Adresse in `100.64.0.0/10` bedeutet CGNAT.
-- **Firewall-Regeln einmal ansehen:** `sudo ufw status verbose`. Erwartet werden zwei ALLOW-Regeln auf `tailscale0` (v4 + v6).
-- **Keine Ladegrenze:** Der Akku kann keine Ladegrenze (`charge_control_end_threshold` fehlt) und steht im Dauerbetrieb auf 100 %. Wer ihn schonen will, lässt ihn einmal auf ~80 % laufen und zieht dann den Stecker nur kurz, oder nimmt ihn raus (der Akku überbrückt dann aber keine Stromausfälle mehr).
-- **Nach Stromausfall:** Ein BIOS-„Power on after AC loss“ hat dieser Acer vermutlich nicht. Nach einem Neustart starten Tailscale und (nach M09) der Dienst von selbst, einen Login braucht es nicht.
-- **Netzwerk:** Nur WLAN. Ein LAN-Kabel am Router wäre stabiler und hätte weniger Latenz-Spitzen. Optional das WLAN-Powersave abschalten (`wifi.powersave = 2` in NetworkManager).
-- **Aus dem LAN gesperrt:** sshd :22 und die `web-ui.js` auf :3000 sind aus dem LAN nicht mehr erreichbar (bewusst). Bei Bedarf: `sudo ufw allow in on tailscale0 to any port 3000 proto tcp`.
+- **Keine Ladegrenze:** Der Akku kann keine Ladegrenze (`charge_control_end_threshold` fehlt) und steht im Dauerbetrieb auf 100 %. Wer ihn schonen will, nimmt ihn heraus. Dann überbrückt er aber keine Stromausfälle mehr.
+- **Nach Stromausfall:** Ein BIOS-„Power on after AC loss“ hat dieser Acer vermutlich nicht. Nach einem Neustart starten Tailscale, Funnel und der Dienst von selbst, ein Login ist nicht nötig.
+- **Netzwerk:** Nur WLAN. Ein LAN-Kabel am Router wäre stabiler. Optional das WLAN-Powersave abschalten (`wifi.powersave = 2` in NetworkManager).
+- **Aus dem LAN gesperrt:** sshd :22 und die `web-ui.js` auf :3000 sind aus dem LAN nicht erreichbar (bewusst).
 - **Docker:** Von Docker veröffentlichte Container-Ports umgehen ufw. Heute laufen keine Container.
-- **`.godot/` ist seit M09 nicht mehr im Repo** (`.gitignore`). Der erste Pull danach löscht die getrackten Cache-Dateien, der anschließende Import baut sie neu (einmalig ca. 15 s). `runebound-server.sh` verwirft Import-Churn nur noch, falls noch getrackte Kopien existieren. `.gitattributes` hält die Server-Dateien auf LF.
 - **System-Updates** laufen manuell: `sudo apt update && sudo apt upgrade`, danach selbst neu starten, wenn nötig.
+- **Die alte Unit** (Benutzer `melvin`, Klon in deinem Home) ersetzt `setup-service.sh`. Dein Klon bleibt für Tests und Werkzeuge.

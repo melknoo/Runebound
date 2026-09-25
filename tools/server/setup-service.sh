@@ -10,8 +10,9 @@
 #      public: no key on the server) and Godot in /opt/godot (a copy of yours)
 #   3. /etc/runebound/invites: yours to edit (tools/server/invites.sh), the
 #      server can only read it
-#   4. the units runebound-update (pull + import, may use the network) and
-#      runebound-server (the game: sandboxed, localhost only) as copies
+#   4. the units runebound-update (pull + import, may use the network),
+#      runebound-server (the game: sandboxed, 127.0.0.1 only) and
+#      runebound-egress (the server user opens no connections on this laptop)
 #   5. Tailscale Funnel: https://<this laptop>.ts.net -> 127.0.0.1:7780
 #   6. moves your world save over (if there is one), drops the old 7777/udp
 #      firewall rule and starts the server
@@ -69,11 +70,25 @@ chown "$admin:runebound" /etc/runebound/invites
 chmod 640 /etc/runebound/invites
 ls -l /etc/runebound/invites
 
-say "4/6 units runebound-update + runebound-server"
-install -m 644 "$here/runebound-update.service" "$here/runebound-server.service" /etc/systemd/system/
+say "4/6 units runebound-egress + runebound-update + runebound-server"
+# Root runs only root-owned copies, never scripts from the server's clone.
+install -o root -g root -m 755 "$here/runebound-egress.sh" /usr/local/sbin/runebound-egress
+install -m 644 "$here/runebound-egress.service" "$here/runebound-update.service" \
+	"$here/runebound-server.service" /etc/systemd/system/
 systemctl daemon-reload
-systemctl enable runebound-server.service >/dev/null
+systemctl enable runebound-egress.service runebound-server.service >/dev/null
+systemctl restart runebound-egress.service
 echo "installed and enabled"
+if runuser -u runebound -- bash -c 'exec 3<>/dev/tcp/127.0.0.1/631' 2>/dev/null; then
+	echo "!! the server user can still open local connections (check: runebound-egress status)"
+else
+	echo "ok: the server user cannot open connections to local services"
+fi
+if runuser -u runebound -- getent hosts github.com >/dev/null; then
+	echo "ok: it can still look up github.com for updates"
+else
+	echo "!! the server user cannot resolve github.com (updates will fail)"
+fi
 
 say "5/6 world save and firewall"
 old_save="$admin_home/$data_rel/runebound_server.json"

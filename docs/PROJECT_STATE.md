@@ -23,13 +23,32 @@ personal **invite codes**. The service moves to its own sandboxed user.
   `RUNEBOUND_INVITES=/etc/runebound/invites` in server.env. Without an invite
   list a server is open and binds 127.0.0.1. Smoke 412, net 17 scenarios
   green (new: `invite`, `invite_live`, `auth_garbage`).
+- **Phase 2 (built):** WebSocket transport next to ENet
+  (TECHNICAL_ARCHITECTURE "Transports (M09b)"): a bare server name means
+  wss://<name>/ (the Funnel address), `host:port` / IPs stay ENet; the WS
+  server binds 127.0.0.1 and needs an invite list; NetWorld draws 150 ms
+  behind over WS; WS clients ping with ECHO. Net scenarios: 21 green (17 over
+  ENet, `handshake`, `invite`, `travel`, `server_gone` also `@ws`), smoke
+  green.
+- **Phase 3 (built, waiting for the user's run):**
+  `sudo tools/server/setup-service.sh` moves the server to the system user
+  `runebound` (own HTTPS clone, Godot in /opt/godot, `/etc/runebound/invites`
+  owned by the user), units `runebound-update` (pull + import) and
+  `runebound-server` (sandbox, `IPAddressAllow=127.0.0.1 ::1`,
+  `systemd-analyze security` offline 1.3 "OK" instead of 9.2 "UNSAFE"),
+  `runebound-egress` (iptables: the server user opens no new localhost
+  connections, only DNS for git), Funnel `--bg 7780`, drops the old
+  7777/udp rule. server.env: `RUNEBOUND_TRANSPORT=ws`, port 7780. Godot
+  runs under the seccomp filter and W^X (tested on the laptop).
+  SERVER_SETUP rewritten; home network details are out of the public docs.
 - **Phase 0 (ready, waiting for Funnel):** `tests/ws_spike.gd`,
   `run_godot wsspike <host> [secs]` (echo 30 x 900 B/s + a 200 KB/s
   download through Funnel; `--via` keeps the Funnel path from a tailnet PC).
+  Localhost baseline: RTT 7 ms, 198 KB/s.
 - **Deploy note:** the laptop keeps running the M09 build until its next
-  restart; after one it waits for its invite list (Phase 3,
-  `tools/server/setup-service.sh`). Games from this commit on speak protocol
-  8 and cannot join an M09 server (and vice versa).
+  restart; after one it serves WebSocket on 127.0.0.1 and waits for its
+  invite list. Games from protocol 8 on cannot join an M09 server (and vice
+  versa).
 
 ## M09 Co-op (2026-09-25)
 Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
@@ -197,11 +216,12 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
      (X cancels) -> fight camp 1 with the buddies (only your loot drops for
      you; everyone near gets full XP) -> a chest (one opening, a purse each)
      -> the Colossus (boss bar, a legendary for each hero).
-  2. On the laptop once: `sudo systemctl enable --now runebound-server`
-     (SERVER_SETUP "Koop-Betrieb"). Title -> Join co-op ->
-     `melvin-aspire-e5-573g.tail94658b.ts.net`.
-  3. With a friend: share the laptop in Tailscale (SERVER_SETUP "Freunde"),
-     they join with the same address.
+  2. On the laptop once (M09b): SERVER_SETUP "Einrichtung" (Funnel in the
+     Tailscale console, `sudo tools/server/setup-service.sh`, codes with
+     `tools/server/invites.sh add NAME`). Title -> Join co-op -> the
+     laptop's name (no port) + your code.
+  3. With a friend: send them SERVER_SETUP "Für Freunde", the address and
+     their code; no Tailscale needed.
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

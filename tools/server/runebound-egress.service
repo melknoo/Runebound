@@ -1,0 +1,16 @@
+# RUNEBOUND (M09b): no new localhost connections from the server user (see
+# runebound-egress.sh). Installed as a copy by tools/server/setup-service.sh.
+# After firewall changes (ufw disable/enable): sudo systemctl restart runebound-egress
+[Unit]
+Description=RUNEBOUND: the server user opens no connections on this laptop
+After=ufw.service network-pre.target
+Before=runebound-update.service runebound-server.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/runebound-egress start
+ExecStop=/usr/local/sbin/runebound-egress stop
+
+[Install]
+WantedBy=multi-user.target

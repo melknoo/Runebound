@@ -369,6 +369,29 @@ never `DisplayServer` (headless bot clients are clients).
   (plain ENet noise never reaches the handshake). Tests: `--invite=` (client),
   `--auth=junk|junk_magic|old|silent` (hand-made answers), net scenarios
   `invite`, `invite_live`, `auth_garbage` (codes in `tests/net_test_codes.gd`).
+- **Transports (M09b):** `Net.transport` is ENET (UDP: tests, LAN,
+  `run_godot coop`) or WS (WebSocket) for friends coming through Tailscale
+  Funnel, which carries HTTPS/TCP only. `Net.host(port, players, invites,
+  over_ws)`: a WS server binds 127.0.0.1 (tailscaled terminates TLS and
+  forwards `https://<laptop>.ts.net` there) and refuses to start without an
+  invite list, since through Funnel everyone looks local. Clients pick the
+  transport from `NetAddress.parse`: a bare name (no port) is a Funnel address
+  (`url` wss://name/), wss:// / https:// / ws:// likewise, `host:port` and IPs
+  stay ENet. `WebSocketMultiplayerPeer` with 2 MB buffers, 16384 queued
+  packets, 10 s handshake (a full buffer would drop messages). Over TCP the
+  unreliable channels arrive late instead of not at all, so NetWorld draws
+  remote things 150 ms behind (ENet 100). WS clients ping with ECHO and a
+  negative sequence number every 2 s (`ping_ms`); the 60 s server line says
+  "WebSocket" instead of KB/s. Tests: `net_test --scenario=ws` or
+  `<name>@ws` (handshake, invite, travel, server_gone over ws://127.0.0.1;
+  roles without a code get a generated one). Deployment
+  (docs/SERVER_SETUP.md): server.env `RUNEBOUND_TRANSPORT=ws`,
+  `RUNEBOUND_PORT=7780`; `tools/server/setup-service.sh` moves the server to
+  the system user `runebound` (own HTTPS clone, Godot in /opt/godot), units
+  `runebound-update` (pull + import, network allowed) and `runebound-server`
+  (systemd sandbox, `IPAddressAllow=localhost`), and turns on
+  `tailscale funnel --bg 7780`. `tests/ws_spike.gd` measures a WebSocket
+  through Funnel (`run_godot wsspike <host>`).
 - **ENet:** bind `*` (or 127.0.0.1 when open), peer
   timeouts 15-30 s (zone builds block the main loop), packet throttle off
   (`throttle_configure(5000, 32, 0)`). After a zone build ENet may still drop

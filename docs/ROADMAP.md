@@ -1,8 +1,9 @@
 # RUNEBOUND — Roadmap
 
 Stand: 2026-09-25 · M01–M09 gebaut (M07/M07b abgenommen am 24.09., M08 angespielt: kleine Notizen
-folgen nach M09). **M09 Co-op ist fertig gebaut, Gate beim Spieler.** Server-Laptop steht
-(`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve.
+folgen nach M09). **M09 Co-op ist gebaut und mit einem Freund angespielt.** Server-Laptop steht
+(`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve. **M09b (Freunde
+ohne Tailscale) läuft.**
 
 ## Nordstern (aktualisiert 2026-09-24)
 RUNEBOUND wird ein **Koop-Action-RPG für 2–5 Spieler** in einer stilisierten Pixel-Fantasy-Welt:
@@ -78,6 +79,25 @@ Stand 2026-09-25: alle Phasen gebaut. Smoke 401 grün, 13 Mehrprozess-Netztests 
 
 Nicht in M09: Listen-Host, Passwort (Tailscale regelt den Zugang; kommt mit „nativ ohne
 Tailscale“), Chat, Interest-Management, Prediction.
+
+### M09b — Freunde ohne Tailscale — in Arbeit
+Plan vom 2026-09-25 (vom Spieler freigegeben): Der Laptop bleibt der Server, kein Mietserver, kein
+Tunnel-Dienst. Starlink lässt nichts herein (CGNAT, Router blockt eingehendes IPv6), deshalb:
+- **Tailscale Funnel** gibt dem Laptop eine öffentliche HTTPS-Adresse. Freunde brauchen kein
+  Tailscale, am Laptop öffnet sich kein Port, die Heim-IP bleibt verborgen.
+- **WebSocket-Weg** neben ENet, weil Funnel nur TCP kann. Ein Servername ohne Port bedeutet
+  `wss://`.
+- **Einladungscodes statt Accounts:** ein persönlicher Code pro Freund
+  (`tools/server/invites.sh`), HMAC-Challenge-Response im Handshake. Zurückziehen wirkt sofort.
+- **Abgeschotteter Dienst:** eigener Benutzer `runebound`, systemd-Sandbox, Netz nur 127.0.0.1.
+Phasen:
+0. Funnel messen (RTT, Hänger, Bandbreite).
+1. Einladungscodes (gebaut).
+2. WebSocket (gebaut).
+3. Dienst + Funnel (Skript gebaut, Lauf auf dem Laptop offen).
+4. Doku, Freunde einladen, Gate: Ein Freund spielt ohne Tailscale.
+Nicht in M09b: direktes UDP per Hole-Punching (nur falls Funnel zu langsam ist), IPv6 direkt,
+Accounts.
 
 ### M08 — Open World I: Ashen Highlands, offen (angespielt; Notizen folgen nach M09)
 Sichtbar:

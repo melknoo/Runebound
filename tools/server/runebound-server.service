@@ -1,20 +1,60 @@
-# RUNEBOUND dedicated server. Installed as a copy (not a symlink):
-#   sudo install -m 644 tools/server/runebound-server.service /etc/systemd/system/
-#   sudo systemctl daemon-reload
-# Enable only after M09 ships a real server scene (see docs/SERVER_SETUP.md).
+# RUNEBOUND dedicated server (M09b: its own user, sandboxed, localhost only).
+# Installed as a copy (not a symlink) by tools/server/setup-service.sh, so a
+# git pull never changes a unit that root loads. After editing this file:
+#   sudo install -m 644 tools/server/runebound-*.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl restart runebound-server
+# Friends reach it through Tailscale Funnel: tailscaled takes the HTTPS
+# connection and hands it to the game on 127.0.0.1:7780 (WebSocket), so the
+# game needs no network beyond localhost. Check: systemd-analyze security runebound-server
 [Unit]
-Description=RUNEBOUND dedicated server (Godot headless)
-Wants=network-online.target
-After=network-online.target tailscaled.service
+Description=RUNEBOUND dedicated server (Godot headless, behind Tailscale Funnel)
+Wants=runebound-egress.service runebound-update.service network-online.target
+After=runebound-egress.service runebound-update.service network-online.target tailscaled.service
 
 [Service]
 Type=simple
-User=melvin
-WorkingDirectory=/home/melvin/Repositories/Runebound
-EnvironmentFile=/home/melvin/Repositories/Runebound/tools/server/server.env
-ExecStart=/home/melvin/Repositories/Runebound/tools/server/runebound-server.sh
+User=runebound
+Group=runebound
+WorkingDirectory=/var/lib/runebound/Runebound
+EnvironmentFile=/var/lib/runebound/Runebound/tools/server/server.env
+Environment=GODOT=/opt/godot/godot
+ExecStart=/var/lib/runebound/Runebound/tools/server/runebound-server.sh start
 Restart=on-failure
 RestartSec=5
+# Network: 127.0.0.1 only (tailscaled hands players over there) - not even
+# the resolver; runebound-egress also stops new connections to other local
+# services, so the game can answer but not call anything.
+IPAddressDeny=any
+IPAddressAllow=127.0.0.1 ::1
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# Nothing to escalate to, nothing else to see.
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/runebound
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0027
+MemoryMax=2G
+TasksMax=256
 
 [Install]
 WantedBy=multi-user.target

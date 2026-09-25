@@ -1,0 +1,42 @@
+# RUNEBOUND: bring the server's clone up to date before every start (git
+# fetch + fast-forward pull over HTTPS, import when files changed). Pulled in
+# by runebound-server.service; a failed fetch still lets the server start
+# with what it has. Installed as a copy by tools/server/setup-service.sh.
+[Unit]
+Description=RUNEBOUND server update (git pull + import)
+Wants=network-online.target runebound-egress.service
+After=network-online.target runebound-egress.service
+
+[Service]
+Type=oneshot
+User=runebound
+Group=runebound
+WorkingDirectory=/var/lib/runebound/Runebound
+Environment=GODOT=/opt/godot/godot
+ExecStart=/var/lib/runebound/Runebound/tools/server/runebound-server.sh update
+TimeoutStartSec=20min
+# It may reach GitHub; the rest of the system stays out of reach.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ReadWritePaths=/var/lib/runebound
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+UMask=0027
