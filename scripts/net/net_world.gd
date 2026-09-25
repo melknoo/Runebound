@@ -85,12 +85,15 @@ func setup(z: ZoneBase) -> void:
 		NetMsg.BOLT: _on_bolt_msg, NetMsg.BOLT_POP: _on_bolt_pop_msg,
 		NetMsg.HIT: _on_hit_msg, NetMsg.STATUS: _on_status_msg, NetMsg.HURT: _on_hurt_msg,
 		NetMsg.ENEMY_FX: _on_enemy_fx_msg, NetMsg.HAZARD: _on_hazard_msg, NetMsg.ENEMY_SCALE: _on_enemy_scale_msg,
+		NetMsg.GRANT: _on_grant_msg, NetMsg.CHEST_OPEN: _on_chest_open_msg, NetMsg.CHEST_OPENED: _on_chest_opened_msg,
+		NetMsg.FLAG: _on_flag_msg,
 	}
 	for kind: int in _enemy_handlers:
 		Net.on(kind, _enemy_handlers[kind] as Callable)
 	if Net.is_dedicated():
 		Net.peer_ready.connect(_on_peer_ready)
 		Net.peer_left.connect(_on_peer_left)
+		SaveGame.flag_set.connect(_on_flag_set)
 
 
 ## Client: hook the local hero once the zone has spawned it.
@@ -119,6 +122,8 @@ func _exit_tree() -> void:
 		Net.peer_ready.disconnect(_on_peer_ready)
 	if Net.peer_left.is_connected(_on_peer_left):
 		Net.peer_left.disconnect(_on_peer_left)
+	if SaveGame.flag_set.is_connected(_on_flag_set):
+		SaveGame.flag_set.disconnect(_on_flag_set)
 
 
 func _physics_process(delta: float) -> void:
@@ -154,6 +159,8 @@ func _on_peer_ready(peer: int) -> void:
 		if other != peer:
 			Net.send_to_peer(peer, NetMsg.HERO_SPAWN, _spawn_payload(other))
 	Net.broadcast_zone(NetMsg.HERO_SPAWN, _spawn_payload(peer), Net.CH_EVENTS, peer)
+	for key in _opened_chests:  # and the chests already opened this session
+		Net.send_to_peer(peer, NetMsg.CHEST_OPENED, [key])
 	for id: int in enemies:  # the newcomer gets every enemy alive right now
 		var e := enemies[id] as EnemyBase
 		if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
@@ -782,3 +789,93 @@ func _on_enemy_scale_msg(_from: int, payload: Array) -> void:
 	if e != null and payload.size() >= 2:
 		e.health.max_health = maxf(float(payload[1]), 1.0)
 		e.health.health_changed.emit(e.health.current_health, e.health.max_health)
+
+
+# ---------------------------------------------------------------------------
+# M09 phase 4: rewards, chests, world flags
+# ---------------------------------------------------------------------------
+
+var _opened_chests: Array[String] = []  # server: this session's opened chests
+## Client (tests): GRANT messages received / those carrying gold or items.
+var grants_received: int = 0
+var loot_grants_received: int = 0
+
+
+## Server: `hero`'s own reward goes to its owner, who spawns the drops.
+func send_grant(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
+		note: String, float_xp: bool) -> void:
+	var dicts: Array = []
+	for item in items:
+		dicts.append(item.to_dict())
+	Net.send_to_peer(hero.peer_id, NetMsg.GRANT, [xp, gold, piles, dicts, pos, note, float_xp])
+
+
+func _on_grant_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 7 or zone.player == null:
+		return
+	var items: Array[ItemData] = []
+	for d in payload[3] as Array:
+		if d is Dictionary:
+			items.append(ItemData.from_dict(d as Dictionary))
+	grants_received += 1
+	if int(payload[1]) > 0 or not items.is_empty():
+		loot_grants_received += 1
+	zone.receive_reward(zone.player, int(payload[0]), int(payload[1]), int(payload[2]), items,
+		payload[4] as Vector3, str(payload[5]), bool(payload[6]))
+	SaveGame.request_save()
+
+
+## Client: our hero pressed [E] at a chest.
+func request_chest(chest: TreasureChest) -> void:
+	Net.send_to_server(NetMsg.CHEST_OPEN, [chest.net_key()])
+
+
+## Server: a chest opened (TreasureChest.open): every client swings its lid.
+func chest_opened(chest: TreasureChest) -> void:
+	if not Net.is_dedicated():
+		return
+	var key := chest.net_key()
+	if not _opened_chests.has(key):
+		_opened_chests.append(key)
+	Net.broadcast_zone(NetMsg.CHEST_OPENED, [key])
+
+
+func _find_chest(key: String) -> TreasureChest:
+	for node in zone.world.find_children("*", "Node3D", true, false):
+		var chest := node as TreasureChest
+		if chest != null and chest.net_key() == key:
+			return chest
+	return null
+
+
+func _on_chest_open_msg(from: int, payload: Array) -> void:
+	if not Net.is_dedicated() or payload.is_empty():
+		return
+	var chest := _find_chest(str(payload[0]))
+	var proxy := heroes.get(from) as Player
+	if chest == null or proxy == null or chest.opened:
+		return
+	if proxy.global_position.distance_to(chest.global_position) > TreasureChest.PARTY_RANGE:
+		return
+	chest.open(zone)
+
+
+func _on_chest_opened_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.is_empty():
+		return
+	var chest := _find_chest(str(payload[0]))
+	if chest != null:
+		chest.present_open()
+
+
+## Server: SaveGame set a world flag (a boss fell): every client hears it.
+func _on_flag_set(flag: StringName) -> void:
+	Net.broadcast_zone(NetMsg.FLAG, [String(flag)])
+
+
+func _on_flag_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.is_empty():
+		return
+	var flag := StringName(str(payload[0]))
+	SaveGame.flags[String(flag)] = true  # the session world only; our own stays on disk
+	zone.apply_world_flag(flag)

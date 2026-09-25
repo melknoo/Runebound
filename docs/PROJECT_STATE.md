@@ -115,6 +115,26 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
     bosses as puppets, all killed with credit, fx sent, boss bar, x1.7
     health for two heroes). Windowed look: the colossus fight (bar, slam
     telegraph and impact, a hero dying and snapping back) reads on a client.
+- **Phase 4 (rewards and world):**
+  - One reward path, `ZoneBase.give_reward(hero, xp, gold, piles, items,
+    pos, note)`: the local hero gets it at once, a co-op proxy's owner gets
+    a GRANT and spawns the drops as its own personal loot. Kills pay every
+    hero within 60 m full XP plus its own gold and item rolls (class and
+    level of that hero); singleplayer keeps "the killer".
+  - Chests open once (server), every hero within 12 m gets its own purse;
+    clients ask with CHEST_OPEN, all lids swing (CHEST_OPENED, replayed to
+    late joiners). Camp bonuses and boss loot (a legendary per hero, plus
+    two rares in the Spire) go to the whole party.
+  - World flags: `SaveGame.flag_set` -> FLAG to clients; zones react in
+    `apply_world_flag` (boss bar away, victory stinger, gates unseal) on
+    the server and every client.
+  - **SaveGame v5:** zone discovery XP is remembered per character
+    (`discovered`), migrated from the old world flags.
+  - Tests: smoke 401 (+ v4 -> v5 migration, local reward path, discovery
+    per character); net scenario `rewards` (Highlands: c1 clears camp_1
+    and opens chest_south, c2 108 m away gets only the party's camp bonus,
+    no loot and no drops, and sees the chest open; the server spawns no
+    drops of its own).
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

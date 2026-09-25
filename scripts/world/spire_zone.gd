@@ -415,18 +415,27 @@ func _on_boss_summon(pos: Vector3) -> void:
 
 
 func _on_boss_died(_enemy: EnemyBase) -> void:
+	SaveGame.set_flag(&"spire_cleansed")  # co-op: the server tells every client (FLAG)
+	apply_world_flag(&"spire_cleansed")
+	# One legendary and two rares per hero (M09 personal loot).
+	for hero in party():
+		var items: Array[ItemData] = []
+		var legendary := ItemGenerator.generate_legendary()
+		ItemGenerator.apply_item_level(legendary, 4)
+		items.append(legendary)
+		for i in 2:
+			var rare := ItemGenerator.generate(2, hero.class_data.id)
+			ItemGenerator.apply_item_level(rare, 4)
+			items.append(rare)
+		give_reward(hero, 0, 0, 0, items, boss_portal.global_position + Vector3(0, 0, 3))
+
+
+func apply_world_flag(flag: StringName) -> void:
+	if flag != &"spire_cleansed":
+		return
 	if hud != null:
 		hud.hide_boss_bar()
+		hud.toast("The Shattered Rune falls silent", Color(0.8, 0.6, 1.0))
 	if MusicDirector.instance != null:
 		MusicDirector.instance.stinger("victory")
 	boss_portal.set_locked(false)
-	SaveGame.set_flag(&"spire_cleansed")
-	var legendary := ItemGenerator.generate_legendary()
-	ItemGenerator.apply_item_level(legendary, 4)
-	spawn_item_drop(legendary, boss_portal.global_position + Vector3(-2, 0, 3))
-	for i in 2:
-		var rare := ItemGenerator.generate(2)
-		ItemGenerator.apply_item_level(rare, 4)
-		spawn_item_drop(rare, boss_portal.global_position + Vector3(1 + i * 1.5, 0, 3))
-	if hud != null:
-		hud.toast("The Shattered Rune falls silent", Color(0.8, 0.6, 1.0))

@@ -27,7 +27,7 @@ func update(in_range: bool, text: String) -> void:
 
 
 func pressed(player: Player) -> bool:
-	return visible and player != null and not player.input_locked \
+	return visible and player != null and player.is_local and not player.input_locked \
 		and InputMap.has_action(ACTION) and Input.is_action_just_pressed(ACTION)
 
 

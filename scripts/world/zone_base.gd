@@ -62,11 +62,11 @@ func _ready() -> void:
 	enemies_root.name = "Enemies"
 	world.add_child(enemies_root)
 
-	_build_zone()
-	if Net.is_online():
+	if Net.is_online():  # before the build: chests, hazards and spawners look for it
 		net_world = NetWorld.new()
 		net_world.setup(self)
 		add_child(net_world)
+	_build_zone()
 	if not Net.has_view():
 		_zone_ready()
 		Net.zone_entered(scene_file_path)
@@ -240,17 +240,20 @@ func compass_markers() -> Array[Dictionary]:
 const DISCOVERY_XP := 150
 
 
-## Title card on every arrival; the first visit also pays discovery XP.
+## Title card on every arrival; this character's first visit also pays
+## discovery XP (M09 save v5: remembered per character, so a co-op session
+## on someone else's server counts too, once).
 func _discover() -> void:
 	var title := zone_title()
 	if title == "":
 		return
-	var flag := StringName("discovered_" + scene_file_path.get_file().get_basename())
-	var first := not SaveGame.has_flag(flag)
+	var key := scene_file_path.get_file().get_basename()
+	var first := not player.discovered_zones.has(key)
 	hud.title_card(title, "DISCOVERED  +%d XP" % DISCOVERY_XP if first else "")
 	if first:
-		SaveGame.set_flag(flag)
+		player.discovered_zones.append(key)
 		player.progression.add_xp(DISCOVERY_XP)
+		SaveGame.save_now()
 
 
 ## Opt-in data-driven presentation (M06). Returning a ZoneLook switches the
@@ -907,32 +910,103 @@ func _resolve_spawn_pos(pos: Vector3) -> Vector3:
 	return ground_point(player.global_position + Vector3(cos(angle) * dist, 0.0, sin(angle) * dist), 0.2)
 
 
+## M09 co-op rewards (user, 2026-09-25): every hero within this distance of a
+## kill gets the full XP and rolls its own gold and loot (personal loot).
+const REWARD_RADIUS := 60.0
+
+
 func _on_enemy_died(enemy: EnemyBase) -> void:
-	# M07b: XP, gold and loot go to whoever landed the last hit (the local
-	# player when nobody did, e.g. hazards). Party-share rules come with co-op.
-	var killer := enemy.last_attacker()
-	if killer == null and player != null and is_instance_valid(player):
-		killer = player
-	if killer != null:
-		var xp := enemy.xp_reward()
-		killer.progression.add_xp(xp)
-		GameFeel.float_text(enemy.global_position + Vector3(0, 2.2, 0), "+%d XP" % xp,
-			ArtKit.color("color_roles.experience.body", Color("#9FB4FF")))
-	var item: ItemData = null
-	var cid: StringName = killer.class_data.id if killer != null else &""  # M07b: drops fit the killer's class
-	if enemy.is_elite:
-		item = ItemGenerator.generate(2, cid)
-	elif enemy is Brute:
-		if randf() < 0.6:
-			item = ItemGenerator.generate(1, cid)
-	elif randf() < 0.2:
-		item = ItemGenerator.generate(0, cid)
-	if item != null:
-		ItemGenerator.apply_item_level(item, enemy.level)
-		spawn_item_drop(item, enemy.global_position, killer)
+	# Singleplayer: whoever landed the last hit (the local hero when nobody
+	# did, e.g. hazards). Co-op: every hero near the kill, each its own rolls.
+	var heroes: Array[Player] = []
+	if Net.is_online():
+		heroes = heroes_near(enemy.global_position, REWARD_RADIUS)
+	else:
+		var killer := enemy.last_attacker()
+		if killer == null and player != null and is_instance_valid(player):
+			killer = player
+		if killer != null:
+			heroes.append(killer)
 	# M07b: every kill pays gold; bosses scatter theirs into several piles.
 	var piles := 4 if enemy is ShatteredVessel else (3 if enemy is AshveinColossus else 1)
-	spawn_gold_piles(enemy.gold_reward(), enemy.global_position, piles, killer)
+	for hero in heroes:
+		var items: Array[ItemData] = []
+		var item := _roll_kill_item(enemy, hero.class_data.id)  # M07b: drops fit the hero's class
+		if item != null:
+			items.append(item)
+		give_reward(hero, enemy.xp_reward(), enemy.gold_reward(), piles, items, enemy.global_position, "", true)
+
+
+func _roll_kill_item(enemy: EnemyBase, class_id: StringName) -> ItemData:
+	var item: ItemData = null
+	if enemy.is_elite:
+		item = ItemGenerator.generate(2, class_id)
+	elif enemy is Brute:
+		if randf() < 0.6:
+			item = ItemGenerator.generate(1, class_id)
+	elif randf() < 0.2:
+		item = ItemGenerator.generate(0, class_id)
+	if item != null:
+		ItemGenerator.apply_item_level(item, enemy.level)
+	return item
+
+
+## Every hero (alive or not) within `radius` of `pos`: co-op reward range.
+func heroes_near(pos: Vector3, radius: float) -> Array[Player]:
+	var out: Array[Player] = []
+	for p in players:
+		if p != null and is_instance_valid(p) and p.global_position.distance_to(pos) <= radius:
+			out.append(p)
+	return out
+
+
+## The heroes a party-wide reward goes to (boss loot, camp bonus): every hero
+## in the zone; offline the local one.
+func party() -> Array[Player]:
+	var out: Array[Player] = []
+	for p in players:
+		if p != null and is_instance_valid(p):
+			out.append(p)
+	return out
+
+
+## Hands `hero` a reward: right here when it is this machine's hero, to its
+## owner when it is a co-op proxy (GRANT; the client spawns the drops as its
+## own personal loot). `note` becomes a toast for the local hero.
+func give_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
+		note: String = "", float_xp: bool = false) -> void:
+	if hero == null or not is_instance_valid(hero):
+		return
+	if hero.net_role == Player.NetRole.PROXY:
+		if net_world != null:
+			net_world.send_grant(hero, xp, gold, piles, items, pos, note, float_xp)
+		return
+	receive_reward(hero, xp, gold, piles, items, pos, note, float_xp)
+
+
+func receive_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
+		note: String = "", float_xp: bool = false) -> void:
+	if xp > 0:
+		hero.progression.add_xp(xp)
+		if float_xp:
+			GameFeel.float_text(pos + Vector3(0, 2.2, 0), "+%d XP" % xp,
+				ArtKit.color("color_roles.experience.body", Color("#9FB4FF")))
+	if gold > 0:
+		spawn_gold_piles(gold, pos, piles, hero)
+	for i in items.size():
+		var offset := Vector3.ZERO
+		if items.size() > 1:
+			var a := TAU * float(i) / float(items.size()) + randf_range(-0.3, 0.3)
+			offset = Vector3(cos(a), 0.0, sin(a)) * randf_range(0.9, 1.6)
+		spawn_item_drop(items[i], pos + offset, hero)
+	if note != "" and hud != null and hero.is_local:
+		hud.toast(note, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
+
+
+## M09: a world flag the server set (bosses) reached this zone; zones show
+## what it changes (portals unseal). The authority calls it too.
+func apply_world_flag(_flag: StringName) -> void:
+	pass
 
 
 ## `owner` picks it up (null = the local player).

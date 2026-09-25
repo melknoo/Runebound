@@ -58,6 +58,11 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
 		"timeout": 180.0,
 	},
+	"rewards": {
+		"server": ["--zone=res://scenes/ashen_highlands.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5}],
+		"timeout": 180.0,
+	},
 	"dns": {
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--connect=nohost.invalid:7777"]}],
 		"timeout": 45.0,

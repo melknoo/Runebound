@@ -265,6 +265,67 @@ class Driver extends Node:
 					return
 				await _seconds(2.0)
 				_finish("ok")
+			"rewards":
+				# c1 clears camp_1 and opens chest_south; c2 waits 108 m away.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				var world := zone.net_world
+				var chest := (zone as AshenHighlands).chests["chest_south"] as TreasureChest
+				var hero := zone.player
+				hero.god_mode = true
+				hero.input_source = InputSource.new()
+				var spot := zone.poi_position("camp_1" if role == "c1" else "grove_se") + Vector3(4, 0, 4)
+				hero.global_position = zone.ground_point(spot, 0.2)
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return Net.roster.size() == 2, 30.0, "both heroes"):
+					return
+				if role == "c2":
+					if not await _until(func() -> bool: return chest.opened, 120.0, "c1's chest to open here too"):
+						return
+					await _seconds(3.0)
+					var drops := 0
+					for child in zone.world.get_children():
+						if child is ItemDrop or child is GoldDrop:
+							drops += 1
+					if world.loot_grants_received != 0 or drops != 0:
+						_finish("fail: the far hero got loot (%d grants, %d drops)" % [world.loot_grants_received, drops])
+						return
+					if world.grants_received < 1:
+						_finish("fail: the party's camp bonus never arrived")
+						return
+					_finish("ok")
+					return
+				var bot := BotInputSource.new(13)
+				bot.engage_radius = 30.0
+				hero.camera_rig = null
+				hero.targeting = null
+				hero.debug_learn_all()
+				hero.input_source = bot
+				if not await _until(func() -> bool: return world.loot_grants_received >= 2, 90.0, "loot for the camp kills"):
+					return
+				if not await _until(func() -> bool:
+					return world.grants_received >= world.loot_grants_received + 1, 30.0, "the camp bonus"):
+					return
+				hero.input_source = InputSource.new()
+				hero.global_position = zone.ground_point(chest.global_position + Vector3(1.2, 0, 0), 0.2)
+				hero.velocity = Vector3.ZERO
+				await _seconds(0.5)
+				var before := world.loot_grants_received
+				world.request_chest(chest)
+				if not await _until(func() -> bool: return chest.opened and world.loot_grants_received > before,
+						20.0, "the chest to open with our purse"):
+					return
+				await _seconds(2.0)
+				var mine := 0
+				for child in zone.world.get_children():
+					if child is ItemDrop and (child as ItemDrop).player == hero:
+						mine += 1
+				if mine < 1 and hero.equipment.inventory.is_empty():
+					_finish("fail: the purse spawned no items for us")
+					return
+				await _seconds(4.0)  # c2 checks meanwhile
+				_finish("ok")
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")

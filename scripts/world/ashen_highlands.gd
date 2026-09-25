@@ -432,16 +432,22 @@ func _start_boss_fight() -> void:
 
 
 func _on_boss_died(_enemy: EnemyBase) -> void:
+	SaveGame.set_flag(&"colossus_defeated")  # co-op: the server tells every client (FLAG)
+	apply_world_flag(&"colossus_defeated")
+	# Guaranteed legendary on top of the regular drop roll, one per hero (M09).
+	for hero in party():
+		var legendary := ItemGenerator.generate_legendary()
+		ItemGenerator.apply_item_level(legendary, 3)
+		give_reward(hero, 0, 0, 0, [legendary] as Array[ItemData], boss_portal.global_position + Vector3(1.5, 0, 3))
+
+
+func apply_world_flag(flag: StringName) -> void:
+	if flag != &"colossus_defeated":
+		return
 	if hud != null:
 		hud.hide_boss_bar()
+		hud.toast("The Shattered Spire stands unsealed", Color(0.7, 0.55, 1.0))
 	if MusicDirector.instance != null:
 		MusicDirector.instance.stinger("victory")
 	boss_portal.set_locked(false)
 	spire_portal.set_locked(false)
-	SaveGame.set_flag(&"colossus_defeated")
-	# Guaranteed legendary on top of the regular drop roll.
-	var legendary := ItemGenerator.generate_legendary()
-	ItemGenerator.apply_item_level(legendary, 3)
-	spawn_item_drop(legendary, boss_portal.global_position + Vector3(1.5, 0, 3))
-	if hud != null:
-		hud.toast("The Shattered Spire stands unsealed", Color(0.7, 0.55, 1.0))

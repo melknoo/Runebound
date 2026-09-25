@@ -1,15 +1,18 @@
 extends Node
 ## Autoload "SaveGame": versioned JSON persistence for gear and world position.
+
+## M09: a world flag was set (the co-op server tells its clients).
+signal flag_set(flag: StringName)
 ## Corrupt or missing saves always fall back to a fresh start - never crash.
 ##
 ## v4 (M08) layout, see docs/PROGRESSION_DESIGN.md:
 ##   {version, world: {zone, flags, camps: {id: {cleared_at}}},
 ##    characters: [{class_id, known_abilities, gold, inventory, equipped, progression,
-##                  waypoints, map_discovered}],
+##                  waypoints, map_discovered, discovered}],
 ##    active}
 ## `world` is what a co-op server will own; `characters` stay with the player.
 
-const VERSION := 4  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map
+const VERSION := 5  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map; v5 (M09): discovered zones per character
 const DEBOUNCE := 2.0
 ## Command-line flags (after `--`) that mark an automated capture/perf run.
 const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
@@ -104,6 +107,7 @@ func end_online_session() -> void:
 func set_flag(flag: StringName) -> void:
 	flags[String(flag)] = true
 	save_now()
+	flag_set.emit(flag)
 
 
 func has_flag(flag: StringName) -> bool:
@@ -230,6 +234,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 		player.known_abilities = known
 	player.gold = maxi(int(ch.get("gold", 0)), 0)
 	player.discovered_waypoints = PackedStringArray(ch.get("waypoints", []))
+	player.discovered_zones = PackedStringArray(ch.get("discovered", []))
 	player.map_discovered = PackedStringArray(ch.get("map_discovered", []))
 	player.equipment._recompute()
 	player.equipment.changed.emit()
@@ -240,7 +245,8 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 static func character_dict(player: Player) -> Dictionary:
 	var ch := {"class_id": String(player.class_data.id), "known_abilities": [], "gold": player.gold,
 		"inventory": [], "equipped": {}, "progression": player.progression.to_dict(),
-		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered)}
+		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered),
+		"discovered": Array(player.discovered_zones)}
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for item in player.equipment.inventory:
@@ -335,6 +341,17 @@ static func migrate(data: Dictionary) -> Dictionary:
 				(ch as Dictionary)["map_discovered"] = []
 		data["version"] = 4
 		version = 4
+	if version == 4:  # M09: zone discovery moves from the world flags into each character
+		var world4: Dictionary = data.get("world", {})
+		var found: Array = []
+		for key: String in (world4.get("flags", {}) as Dictionary):
+			if key.begins_with("discovered_"):
+				found.append(key.trim_prefix("discovered_"))
+		for ch in data.get("characters", []):
+			if ch is Dictionary:
+				(ch as Dictionary)["discovered"] = found.duplicate()
+		data["version"] = 5
+		version = 5
 	if version != VERSION:
 		push_warning("SaveGame: incompatible save version ignored")
 		return {}

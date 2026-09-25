@@ -8,6 +8,9 @@ const CHEST_GOLD := Vector2i(40, 60)  # M07b, scaled by item level
 
 var min_rarity_bias: int = 0
 var opened: bool = false
+## M09: in co-op every hero this close gets its own purse when the chest opens.
+const PARTY_RANGE := 12.0
+var _requested: bool = false
 
 var _lid: MeshInstance3D
 var _prompt: InteractPrompt
@@ -90,12 +93,49 @@ func _process(_delta: float) -> void:
 	if opened or zone == null or zone.player == null:
 		_prompt.update(false, "")
 		return
-	_prompt.update(zone.player.global_position.distance_to(global_position) <= OPEN_RANGE, "Open")
+	_prompt.update(zone.player.global_position.distance_to(global_position) <= OPEN_RANGE and not _requested, "Open")
 	if _prompt.pressed(zone.player):  # M07 feedback: opened on the interact key
-		open(zone)
+		if Net.is_client():
+			_requested = true  # the server opens it (once, for everyone) and sends our purse
+			zone.net_world.request_chest(self)
+		else:
+			open(zone)
 
 
+## M09: the same id on every peer (zones build deterministically).
+func net_key() -> String:
+	return "%d_%d" % [roundi(global_position.x * 10.0), roundi(global_position.z * 10.0)]
+
+
+## Opens the chest (authority): its look, then a purse for the local hero,
+## or in co-op for every hero within PARTY_RANGE (personal loot, own rolls).
 func open(zone: ZoneBase) -> void:
+	if opened:
+		return
+	present_open()
+	var heroes: Array[Player] = []
+	if Net.is_online():
+		heroes = zone.heroes_near(global_position, PARTY_RANGE)
+	elif zone.player != null:
+		heroes.append(zone.player)
+	var ilvl := zone._enemy_level(null, global_position)
+	var front := global_position + Vector3(0, 0, 1.3)
+	for hero in heroes:
+		var items: Array[ItemData] = []
+		for i in 2 + (randi() % 2):
+			var item := ItemGenerator.generate(min_rarity_bias, hero.class_data.id)
+			ItemGenerator.apply_item_level(item, ilvl)
+			items.append(item)
+		# M07b: a purse of gold, scaled like the items are.
+		var gold := int(round(float(randi_range(CHEST_GOLD.x, CHEST_GOLD.y)) * (1.0 + 0.15 * float(ilvl - 1))))
+		zone.give_reward(hero, CHEST_XP, gold, 1, items, front)
+	if zone.net_world != null:
+		zone.net_world.chest_opened(self)
+
+
+## The lid swings open (the authority, and every co-op client when the
+## server says so).
+func present_open() -> void:
 	if opened:
 		return
 	opened = true
@@ -104,14 +144,3 @@ func open(zone: ZoneBase) -> void:
 	tw.tween_property(_lid, "rotation_degrees:x", -70.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_glow_mat.emission_energy_multiplier = 0.2
 	VFX.flash(get_tree().current_scene, global_position + Vector3(0, 0.8, 0), Color(1.0, 0.9, 0.6), 1.2, 0.15)
-	zone.player.progression.add_xp(CHEST_XP)
-	var count := 2 + (randi() % 2)
-	var ilvl := zone._enemy_level(null, global_position)
-	# M07b: a purse of gold, scaled like the items are.
-	var gold := int(round(float(randi_range(CHEST_GOLD.x, CHEST_GOLD.y)) * (1.0 + 0.15 * float(ilvl - 1))))
-	zone.spawn_gold_drop(gold, global_position + Vector3(0, 0, 1.3))
-	for i in count:
-		var item := ItemGenerator.generate(min_rarity_bias)
-		ItemGenerator.apply_item_level(item, ilvl)
-		var offset := Vector3(randf_range(-1.2, 1.2), 0, randf_range(0.8, 1.8))
-		zone.spawn_item_drop(item, global_position + offset)

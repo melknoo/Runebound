@@ -60,3 +60,12 @@ const ENEMY_FX := 22
 const HAZARD := 23
 ## server -> client: [id, hp_max] - health rescaled (a hero joined or left)
 const ENEMY_SCALE := 24
+## server -> one client: [xp, gold, piles, items (ItemData.to_dict), pos, note, float_xp]
+## - that client's own reward (personal loot: its drops exist only there)
+const GRANT := 25
+## client -> server: [chest key] - our hero opens this chest
+const CHEST_OPEN := 26
+## server -> client: [chest key] - that chest is open (the lid; purses come as GRANTs)
+const CHEST_OPENED := 27
+## server -> client: [flag] - a world flag was set (bosses): zones react
+const FLAG := 28

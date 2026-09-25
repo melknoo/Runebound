@@ -61,6 +61,8 @@ var gold: int = 0
 ## M08: attuned waypoint shrines and map points seen (per character, saved).
 var discovered_waypoints: PackedStringArray = PackedStringArray()
 var map_discovered: PackedStringArray = PackedStringArray()
+## M09 (save v5): zones this character has discovered (their discovery XP).
+var discovered_zones: PackedStringArray = PackedStringArray()
 ## action id -> Callable that tries to start it (built in _register_actions).
 var _actions: Dictionary = {}
 ## M07b input seam: Player reads only `intent`, which `input_source` fills

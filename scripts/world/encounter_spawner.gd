@@ -160,11 +160,8 @@ func _on_pack_member_died(_e: EnemyBase, zone: ZoneBase) -> void:
 	cleared.emit()
 	var bonus := CLEAR_XP_PER_ENEMY * composition.size()
 	if is_instance_valid(zone):
-		for hero in zone.players:  # M07b: the camp bonus goes to the whole party
-			if hero != null and is_instance_valid(hero):
-				hero.progression.add_xp(bonus)
-		if zone.hud != null:
-			zone.hud.toast("Camp cleared  +%d XP" % bonus, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
+		for hero in zone.party():  # M07b: the camp bonus goes to the whole party (M09: through its owner)
+			zone.give_reward(hero, bonus, 0, 0, [], _home(), "Camp cleared  +%d XP" % bonus)
 
 
 ## Re-arm once the respawn time has passed and nobody is close.

@@ -37,7 +37,7 @@ func _on_roster() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if scenario in ["heroes", "enemies", "enemy_types", "look_boss"] and Engine.get_physics_frames() % 30 == 0:
+	if scenario in ["heroes", "enemies", "enemy_types", "look_boss", "rewards"] and Engine.get_physics_frames() % 30 == 0:
 		_update()
 
 
@@ -197,6 +197,25 @@ func _update() -> void:
 				_types_spawned = true
 				zone._spawn_enemy(ZoneBase.make_enemy("colossus"), Vector3(0, 0.2, -8))
 			verdict = "ok"
+		"rewards":
+			var zone := get_tree().current_scene as AshenHighlands
+			if zone == null:
+				verdict = "fail: the server is not in the Highlands"
+			else:
+				var camp := zone.camps.get("camp_1") as EncounterSpawner
+				var chest := zone.chests["chest_south"] as TreasureChest
+				var server_drops := 0
+				for child in zone.world.get_children():
+					if child is ItemDrop or child is GoldDrop:
+						server_drops += 1
+				if camp == null or camp.state != EncounterSpawner.State.CLEARED:
+					verdict = "fail: camp_1 not cleared"
+				elif not chest.opened:
+					verdict = "fail: chest_south still closed"
+				elif server_drops > 0:
+					verdict = "fail: the server spawned %d drops of its own" % server_drops
+				else:
+					verdict = "ok"
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
 		"full":

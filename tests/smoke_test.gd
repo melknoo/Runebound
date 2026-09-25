@@ -2281,6 +2281,42 @@ func _run() -> void:
 	await _wait_frames(30)
 	_check(not is_instance_valid(ghost), "the server's death removes the puppet")
 
+	# --- M09 phase 4: rewards, save v5 ---
+	var v4 := {"version": 4, "world": {"zone": "res://scenes/hub.tscn", "flags": {"discovered_hub": true,
+		"discovered_ashen_highlands": true, "colossus_defeated": true}, "camps": {}},
+		"characters": [{"class_id": "runebreaker", "known_abilities": ["rune_cleave"], "gold": 3, "inventory": [],
+		"equipped": {}, "progression": {"level": 2, "xp": 0, "talents": {}}, "waypoints": [], "map_discovered": []}],
+		"active": 0}
+	var v5 := SaveGame.migrate(v4)
+	var migrated: Array = ((v5.get("characters", []) as Array)[0] as Dictionary).get("discovered", [])
+	_check(int(v5.get("version", 0)) == 5 and migrated.has("hub") and migrated.has("ashen_highlands")
+		and migrated.size() == 2, "save v4 -> v5: zone discovery moves into the character")
+	var rewardee := zone_now.player
+	var reward_xp0 := rewardee.progression.xp
+	var reward_lv0 := rewardee.progression.level
+	var reward_drops0 := 0
+	for child in zone_now.world.get_children():
+		if child is ItemDrop or child is GoldDrop:
+			reward_drops0 += 1
+	var loot: Array[ItemData] = [ItemGenerator.generate(0), ItemGenerator.generate(0)]
+	var far_spot := rewardee.global_position + Vector3(30, 0, 0)  # out of pickup reach
+	zone_now.give_reward(rewardee, 7, 25, 2, loot, far_spot)
+	var reward_drops1 := 0
+	for child in zone_now.world.get_children():
+		if child is ItemDrop or child is GoldDrop:
+			reward_drops1 += 1
+	_check(reward_drops1 - reward_drops0 == 4 and (rewardee.progression.xp != reward_xp0 or rewardee.progression.level != reward_lv0),
+		"a reward for the local hero: XP at once, gold piles and items on the ground")
+	_check(zone_now.heroes_near(rewardee.global_position, 1.0).has(rewardee) and zone_now.party().has(rewardee),
+		"the local hero is in reward range and in the party")
+	_check(rewardee.discovered_zones.has(zone_now.scene_file_path.get_file().get_basename())
+		and SaveGame.character_dict(rewardee).has("discovered"),
+		"zone discovery is remembered per character (save v5)")
+	for child in zone_now.world.get_children():
+		if child is ItemDrop or child is GoldDrop:
+			if child.global_position.distance_to(far_spot) < 3.0:
+				child.free()
+
 	SaveGame.wipe()
 	print("== %d failures ==" % _failures.size())
 	get_tree().quit(0 if _failures.is_empty() else 1)

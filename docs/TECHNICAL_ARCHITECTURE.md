@@ -396,6 +396,16 @@ never `DisplayServer` (headless bot clients are clients).
   its owner; the owner applies it through its own `take_hit` (so dodge
   i-frames refuse it) unless its hero is more than `HURT_MARGIN` (1.2 m)
   outside the struck area.
+- **Rewards and world state:** `ZoneBase.give_reward` is the only way to
+  hand a hero XP, gold or items (`receive_reward` on the machine that owns
+  the hero; GRANT with `ItemData.to_dict` for proxies). Recipients:
+  `heroes_near(pos, REWARD_RADIUS 60)` for kills in co-op, the killer
+  offline; `party()` for camp bonuses and boss loot; chests use
+  `heroes_near(chest, 12)`. Chests are keyed by `net_key()` (position,
+  identical on every peer). `SaveGame.set_flag` emits `flag_set`; the server
+  sends FLAG, clients set the session flag and call the zone's
+  `apply_world_flag(flag)`, which the authority calls itself after a boss.
+  Save v5 keeps `discovered` zones per character.
 - **AI sleep** (`EnemyBase.SLEEP_RADIUS` 60 m): idle, standing enemies with no
   hero near skip `_physics_process`; checks every 0.5 s (spread by instance
   id), a hit wakes them.
