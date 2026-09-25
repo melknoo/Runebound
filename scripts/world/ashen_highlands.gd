@@ -432,7 +432,8 @@ func _start_boss_fight() -> void:
 
 
 func _on_boss_died(_enemy: EnemyBase) -> void:
-	hud.hide_boss_bar()
+	if hud != null:
+		hud.hide_boss_bar()
 	if MusicDirector.instance != null:
 		MusicDirector.instance.stinger("victory")
 	boss_portal.set_locked(false)
@@ -442,4 +443,5 @@ func _on_boss_died(_enemy: EnemyBase) -> void:
 	var legendary := ItemGenerator.generate_legendary()
 	ItemGenerator.apply_item_level(legendary, 3)
 	spawn_item_drop(legendary, boss_portal.global_position + Vector3(1.5, 0, 3))
-	hud.toast("The Shattered Spire stands unsealed", Color(0.7, 0.55, 1.0))
+	if hud != null:
+		hud.toast("The Shattered Spire stands unsealed", Color(0.7, 0.55, 1.0))

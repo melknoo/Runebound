@@ -108,9 +108,18 @@ func _ai_process(delta: float) -> void:
 
 func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
-	var fwd := -visual.global_transform.basis.z
+	_present_windup()
+
+
+func _present_state(s: AIState) -> void:
+	super(s)
+	if s == AIState.WINDUP:
+		_present_windup()
+
+
+func _present_windup() -> void:
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		global_position + fwd * 1.4,
+		present_origin() + present_forward() * 1.4,
 		SLAM_RADIUS, WINDUP_TIME)
 	var tw := _arms_pivot.create_tween()
 	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(-130, 0, 0), WINDUP_TIME * 0.85) \
@@ -120,8 +129,16 @@ func _start_windup() -> void:
 
 func _slam() -> void:
 	_enter_state(AIState.RECOVER)
+	play_fx(&"slam")
 	var fwd := -visual.global_transform.basis.z
 	var impact_center := global_position + fwd * 1.4
+	_slam_hit(impact_center)
+
+
+func _present_fx(fx: StringName) -> void:
+	if fx != &"slam":
+		return
+	var impact_center := present_origin() + present_forward() * 1.4
 	var tw := _arms_pivot.create_tween()
 	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(40, 0, 0), 0.08) \
 		.set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
@@ -131,6 +148,8 @@ func _slam() -> void:
 	Sfx.play("earthbreaker_impact", impact_center, -4.0, 0.1, 0.9)
 	GameFeel.camera_shake(0.25)
 
+
+func _slam_hit(impact_center: Vector3) -> void:
 	var space := get_world_3d().direct_space_state
 	var shape := SphereShape3D.new()
 	shape.radius = SLAM_RADIUS
@@ -145,8 +164,9 @@ func _slam() -> void:
 		if hb != null and hb.owner_entity is Player:
 			var hit := HitInfo.create(SLAM_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position)
 			hit.knockback = 8.0
-			(hb.owner_entity as Player).take_hit(hit)
-			break
+			hit.area_center = impact_center + Vector3(0, 0.5, 0)
+			hit.area_radius = SLAM_RADIUS
+			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero in the slam
 
 
 func _on_interrupted() -> void:

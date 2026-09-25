@@ -7,6 +7,9 @@ signal enemy_died(enemy: EnemyBase)
 ## Presentation hook (M06 CharacterAnimator): fires on every state entry,
 ## including re-entering STAGGER, which polling ai_state would miss.
 signal state_entered(state: AIState)
+## M09: an action's look that is not a state of its own (play_fx); the co-op
+## server repeats it on the puppets.
+signal fx_played(fx: StringName)
 
 enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT, RETURN }
 
@@ -309,6 +312,45 @@ func present_forward() -> Vector3:
 	return Vector3(-sin(yaw), 0.0, -cos(yaw))
 
 
+## An action's look that is not a state of its own (a stab that starts a
+## retreat, a slam, a nova, a blink): plays here, and the co-op server sends
+## it to the puppets (ENEMY_FX), which play the same `_present_fx`.
+func play_fx(fx: StringName) -> void:
+	_present_fx(fx)
+	_present_affix_fx(fx)
+	fx_played.emit(fx)
+
+
+## The elite affix presents its own actions (nova) through the same channel.
+func _present_affix_fx(fx: StringName) -> void:
+	var modifier := get_node_or_null(^"EliteModifier") as EliteModifier
+	if modifier != null:
+		modifier.present_fx(fx)
+
+
+## The rigged body under `visual` (flinches and puppet-only spins go here,
+## never on `visual`, whose yaw is the gameplay facing).
+func rig_root() -> Node3D:
+	return visual.get_node_or_null(^"RigRoot") as Node3D
+
+
+## Subclasses present their named actions here (see play_fx).
+func _present_fx(_fx: StringName) -> void:
+	pass
+
+
+## M09 puppet: the server's enemy played `fx` at `pos` facing `yaw`.
+func net_play_fx(fx: StringName, pos: Vector3, yaw: float) -> void:
+	if ai_state == AIState.DEAD:
+		return
+	_net_origin = pos
+	_net_yaw = yaw
+	_net_pose_valid = true
+	_present_fx(fx)
+	_present_affix_fx(fx)
+	_net_pose_valid = false
+
+
 ## Subclasses present their own states and call super().
 func _present_state(s: AIState) -> void:
 	if s == AIState.STAGGER:
@@ -335,7 +377,10 @@ func apply_net_pose(pos: Vector3, yaw: float, vel: Vector3, hp: float, bits: int
 	global_position = pos
 	visual.rotation.y = yaw
 	velocity = vel
-	health.current_health = clampf(hp, 0.0, health.max_health)
+	var new_hp := clampf(hp, 0.0, health.max_health)
+	if not is_equal_approx(new_hp, health.current_health):
+		health.current_health = new_hp
+		health.health_changed.emit(new_hp, health.max_health)  # boss bars, target plates
 	health.invulnerable = bits & NetCodec.ST_INVULNERABLE != 0
 	status.set_net_bits(bits)
 

@@ -1474,6 +1474,8 @@ func _run() -> void:
 		var hub_spot := hub.player.global_position
 		hub.player.global_position = trainer.global_position + Vector3(1.2, 0.2, 0.6)
 		await _wait_frames(2)
+		await get_tree().process_frame  # the prompt updates in _process, not per physics step
+		await get_tree().process_frame
 		_check(trainer._prompt.visible and trainer._prompt.text.ends_with("Talk"), "trainer shows the [E] Talk prompt up close")
 		hub.trainer_ui.open(trainer)
 		_check(hub.trainer_ui.visible and hub.player.input_locked, "trainer panel opens and locks input")
@@ -1481,6 +1483,8 @@ func _run() -> void:
 		_check(not hub.trainer_ui.visible and not hub.player.input_locked, "trainer panel closes and unlocks input")
 		hub.player.global_position = hub_spot
 		await _wait_frames(2)
+		await get_tree().process_frame
+		await get_tree().process_frame
 		_check(not trainer._prompt.visible, "trainer prompt hides at a distance")
 	var carried := false
 	for it in hub.player.equipment.inventory:

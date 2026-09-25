@@ -131,9 +131,18 @@ func _ai_process(delta: float) -> void:
 
 func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
-	var fwd := -visual.global_transform.basis.z
+	_present_windup()
+
+
+func _present_state(s: AIState) -> void:
+	super(s)
+	if s == AIState.WINDUP:
+		_present_windup()
+
+
+func _present_windup() -> void:
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		global_position + fwd * 0.9,
+		present_origin() + present_forward() * 0.9,
 		1.0, WINDUP_TIME)
 	var tw := _blade_pivot.create_tween()
 	tw.tween_property(_blade_pivot, "rotation_degrees", Vector3(0, 0, 90), WINDUP_TIME * 0.8)
@@ -142,12 +151,8 @@ func _start_windup() -> void:
 
 func _stab() -> void:
 	_enter_state(AIState.RETREAT)
+	play_fx(&"stab")  # a retreat after a stagger looks different: the stab is its own fx
 	var fwd := -visual.global_transform.basis.z
-	var tw := _blade_pivot.create_tween()
-	tw.tween_property(_blade_pivot, "position:z", -0.6, 0.06)
-	tw.tween_property(_blade_pivot, "position:z", 0.0, 0.2)
-	tw.parallel().tween_property(_blade_pivot, "rotation_degrees", Vector3.ZERO, 0.2)
-	Sfx.play("swing", global_position, -8.0, 0.15, 1.5)
 
 	var space := get_world_3d().direct_space_state
 	var shape := SphereShape3D.new()
@@ -163,9 +168,20 @@ func _stab() -> void:
 		if hb != null and hb.owner_entity is Player:
 			var hit := HitInfo.create(STAB_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, global_position)
 			hit.knockback = 2.0
+			hit.area_center = global_position + Vector3(0, 0.9, 0) + fwd * 1.0
+			hit.area_radius = 0.9
 			(hb.owner_entity as Player).take_hit(hit)
 			VFX.enemy_hit(get_tree().current_scene, hb.owner_entity.global_position + Vector3(0, 1.0, 0))
-			break
+
+
+func _present_fx(fx: StringName) -> void:
+	if fx != &"stab":
+		return
+	var tw := _blade_pivot.create_tween()
+	tw.tween_property(_blade_pivot, "position:z", -0.6, 0.06)
+	tw.tween_property(_blade_pivot, "position:z", 0.0, 0.2)
+	tw.parallel().tween_property(_blade_pivot, "rotation_degrees", Vector3.ZERO, 0.2)
+	Sfx.play("swing", global_position, -8.0, 0.15, 1.5)
 
 
 func _on_interrupted() -> void:

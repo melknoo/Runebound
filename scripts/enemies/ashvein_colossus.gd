@@ -54,7 +54,7 @@ func _ready() -> void:
 			hb_col.position.y = 1.5
 	health.health_changed.connect(func(c: float, m: float) -> void:
 		boss_health_changed.emit(c, m)
-		if not enraged and c <= m * 0.5:
+		if not enraged and not net_puppet and c <= m * 0.5:  # a puppet learns it from the server
 			_enrage()
 	)
 
@@ -143,7 +143,7 @@ func _ai_process(delta: float) -> void:
 			brake(delta)
 			if distance_to_player() < 22.0:
 				_enter_state(AIState.CHASE)
-				Sfx.play("boss_roar", global_position, 2.0)
+				play_fx(&"roar")
 		AIState.CHASE:
 			face_player(delta, 4.0)
 			var dist := distance_to_player()
@@ -183,25 +183,14 @@ func _ai_process(delta: float) -> void:
 func _start_slam() -> void:
 	_attack_kind = "slam"
 	_enter_state(AIState.WINDUP)
-	var fwd := -visual.global_transform.basis.z
-	_telegraph = VFX.telegraph_disc(get_tree().current_scene,
-		global_position + fwd * 1.8, SLAM_RADIUS, _slam_windup)
-	var tw := _arms_pivot.create_tween()
-	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(-130, 0, 0), _slam_windup * 0.85) \
-		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	Sfx.play("earthbreaker_windup", global_position, -3.0, 0.1, 0.7)
+	play_fx(&"slam_windup")
 
 
 func _do_slam() -> void:
 	_enter_state(AIState.RECOVER)
+	play_fx(&"slam")
 	var fwd := -visual.global_transform.basis.z
 	var center := global_position + fwd * 1.8
-	var tw := _arms_pivot.create_tween()
-	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(40, 0, 0), 0.08)
-	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3.ZERO, 0.5)
-	VFX.earthbreaker_slam(get_tree().current_scene, center, SLAM_RADIUS)
-	Sfx.play("earthbreaker_impact", center, 0.0, 0.08, 0.8)
-	GameFeel.camera_shake(0.4)
 	_hit_player_in_radius(center, SLAM_RADIUS, SLAM_DAMAGE, 9.0, HitInfo.Weight.HEAVY)
 
 
@@ -212,17 +201,49 @@ func _start_charge() -> void:
 	_enter_state(AIState.WINDUP)
 	_charge_dir = dir_to_player()
 	visual.rotation.y = atan2(-_charge_dir.x, -_charge_dir.z)
-	# Line telegraph: the shared threat language as a lane, filling from the
-	# colossus to the far end over the 0.8 s charge windup (see WINDUP above).
-	_telegraph = VFX.telegraph_lane(get_tree().current_scene, global_position, _charge_dir, CHARGE_MAX, 3.0, 0.8)
-	Sfx.play("charge_horn", global_position, 0.0)
+	play_fx(&"charge_windup")
 
 
 func _begin_charge_run() -> void:
 	_enter_state(AIState.ATTACK)
-	if _telegraph != null and is_instance_valid(_telegraph):
-		_telegraph.queue_free()
-	Sfx.play("boss_roar", global_position, -2.0, 0.1, 1.2)
+	play_fx(&"charge_run")
+
+
+## M09 presentation of the colossus's actions (see EnemyBase.play_fx).
+func _present_fx(fx: StringName) -> void:
+	var scene := get_tree().current_scene
+	var fwd := present_forward()
+	match fx:
+		&"roar":
+			Sfx.play("boss_roar", global_position, 2.0)
+		&"slam_windup":
+			_telegraph = VFX.telegraph_disc(scene, present_origin() + fwd * 1.8, SLAM_RADIUS, _slam_windup)
+			var tw := _arms_pivot.create_tween()
+			tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(-130, 0, 0), _slam_windup * 0.85) \
+				.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			Sfx.play("earthbreaker_windup", global_position, -3.0, 0.1, 0.7)
+		&"slam":
+			var center := present_origin() + fwd * 1.8
+			var tw := _arms_pivot.create_tween()
+			tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(40, 0, 0), 0.08)
+			tw.tween_property(_arms_pivot, "rotation_degrees", Vector3.ZERO, 0.5)
+			VFX.earthbreaker_slam(scene, center, SLAM_RADIUS)
+			Sfx.play("earthbreaker_impact", center, 0.0, 0.08, 0.8)
+			GameFeel.camera_shake(0.4)
+		&"charge_windup":
+			# Line telegraph: the shared threat language as a lane, filling from the
+			# colossus to the far end over the 0.8 s charge windup.
+			_telegraph = VFX.telegraph_lane(scene, present_origin(), fwd, CHARGE_MAX, 3.0, 0.8)
+			Sfx.play("charge_horn", global_position, 0.0)
+		&"charge_run":
+			if _telegraph != null and is_instance_valid(_telegraph):
+				_telegraph.queue_free()
+			Sfx.play("boss_roar", global_position, -2.0, 0.1, 1.2)
+		&"wall":
+			VFX.earthbreaker_slam(scene, present_origin() + fwd * 1.5, 2.0)
+			GameFeel.camera_shake(0.35)
+		&"enrage":
+			_present_enrage()
 
 
 func _charge_contact_check() -> void:
@@ -239,6 +260,8 @@ func _charge_contact_check() -> void:
 		for victim in victims:
 			var hit := HitInfo.create(CHARGE_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position - _charge_dir)
 			hit.knockback = 10.0
+			hit.area_center = global_position + Vector3(0, 0.9, 0)
+			hit.area_radius = 2.0
 			victim.take_hit(hit)
 			VFX.melee_impact(get_tree().current_scene, victim.global_position + Vector3(0, 1.0, 0), _charge_dir)
 
@@ -247,8 +270,7 @@ func _end_charge(hit_wall: bool) -> void:
 	_enter_state(AIState.RECOVER)
 	velocity = Vector3.ZERO
 	if hit_wall:
-		VFX.earthbreaker_slam(get_tree().current_scene, global_position + _charge_dir * 1.5, 2.0)
-		GameFeel.camera_shake(0.35)
+		play_fx(&"wall")
 		_state_timer = -0.8  # extra stun for slamming the wall
 
 
@@ -267,13 +289,19 @@ func _hit_player_in_radius(center: Vector3, radius: float, damage: float, knockb
 		if hb != null and hb.owner_entity is Player:
 			var hit := HitInfo.create(damage, HitInfo.DamageType.PHYSICAL, weight, global_position)
 			hit.knockback = knockback
-			(hb.owner_entity as Player).take_hit(hit)
-			break
+			hit.area_center = center + Vector3(0, 0.5, 0)
+			hit.area_radius = radius
+			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero inside
 
 
 func _enrage() -> void:
-	enraged = true
 	move_speed = 3.4
+	play_fx(&"enrage")
+
+
+## Enraged looks (and the quicker slam windup the telegraphs use).
+func _present_enrage() -> void:
+	enraged = true
 	_slam_windup = 0.65
 	if _veins != null:
 		create_tween().tween_property(_veins, "emission_energy_multiplier", VEIN_ENRAGED, 0.4)

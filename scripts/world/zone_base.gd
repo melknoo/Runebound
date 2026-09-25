@@ -850,6 +850,20 @@ func _spawn_enemy(enemy: EnemyBase, pos: Vector3) -> void:
 		net_world.register_enemy.call_deferred(enemy)  # deferred: an elite's modifier is added right after
 
 
+## M09 co-op client: a puppet enemy just arrived from the server. Bosses show
+## their bar here (on the authority the zone's boss fight does it); zones add
+## what their bosses need (the Spire gives the Vessel its arena).
+func setup_enemy_puppet(e: EnemyBase) -> void:
+	if hud == null or not e.has_signal(&"boss_health_changed"):
+		return
+	hud.show_boss_bar(e.display_name.to_upper())
+	hud.update_boss_bar(e.health.current_health, e.health.max_health)
+	e.connect(&"boss_health_changed", hud.update_boss_bar)
+	e.tree_exiting.connect(func() -> void:
+		if hud != null:
+			hud.hide_boss_bar())
+
+
 func spawn_by_id(id: String, pos: Vector3) -> EnemyBase:
 	if id == "elite":
 		return spawn_elite(-1, pos)

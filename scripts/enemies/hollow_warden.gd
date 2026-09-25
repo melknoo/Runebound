@@ -61,13 +61,7 @@ func take_hit(hit: HitInfo) -> bool:
 		var fwd := -visual.global_transform.basis.z
 		if to_source.length() > 0.05 and fwd.angle_to(to_source.normalized()) <= FRONT_BLOCK_ANGLE:
 			hit.damage *= FRONT_DAMAGE_MULT
-			# Feedback: metallic sparks + clink so the halving reads as a block.
-			VFX.burst(get_tree().current_scene, global_position + Vector3(0, 1.0, 0) + fwd * 0.6, {
-				"tex": "spark", "amount": 5, "lifetime": 0.2, "size": 0.14,
-				"direction": fwd, "spread": 60.0, "vel_min": 2.0, "vel_max": 4.0,
-				"colors": [Color(0.8, 0.85, 0.9), Color(0.5, 0.55, 0.6, 0.0)] as Array[Color],
-			})
-			Sfx.play("bolt_impact", global_position, -8.0, 0.1, 0.7)
+			play_fx(&"block")  # sparks + clink so the halving reads as a block
 	return super(hit)
 
 
@@ -98,11 +92,22 @@ func _ai_process(delta: float) -> void:
 
 func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
-	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		global_position, SPIN_RADIUS, WINDUP_TIME)
-	Sfx.play("telegraph", global_position, -6.0, 0.1, 0.8)
+	_present_windup()
+	# The wind-back turns the gameplay facing (the front block follows it).
 	var tw := visual.create_tween()
 	tw.tween_property(visual, "rotation:y", visual.rotation.y - 0.7, WINDUP_TIME * 0.85)
+
+
+func _present_state(s: AIState) -> void:
+	super(s)
+	if s == AIState.WINDUP:
+		_present_windup()
+
+
+func _present_windup() -> void:
+	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
+		present_origin(), SPIN_RADIUS, WINDUP_TIME)
+	Sfx.play("telegraph", global_position, -6.0, 0.1, 0.8)
 
 
 func _spin() -> void:
@@ -110,8 +115,7 @@ func _spin() -> void:
 	var tw := visual.create_tween()
 	tw.tween_property(visual, "rotation:y", visual.rotation.y + TAU + 0.7, 0.3) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	VFX.ground_ring(get_tree().current_scene, global_position, ArtKit.color("color_roles.physical.body"), SPIN_RADIUS, 0.3)
-	Sfx.play("swing", global_position, -4.0, 0.1, 0.7)
+	play_fx(&"spin")
 	var space := get_world_3d().direct_space_state
 	var shape := SphereShape3D.new()
 	shape.radius = SPIN_RADIUS
@@ -126,8 +130,29 @@ func _spin() -> void:
 		if hb != null and hb.owner_entity is Player:
 			var hit := HitInfo.create(SPIN_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
 			hit.knockback = 5.0
-			(hb.owner_entity as Player).take_hit(hit)
-			break
+			hit.area_center = global_position + Vector3(0, 0.9, 0)
+			hit.area_radius = SPIN_RADIUS
+			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero in the spin
+
+
+func _present_fx(fx: StringName) -> void:
+	match fx:
+		&"spin":
+			VFX.ground_ring(get_tree().current_scene, present_origin(), ArtKit.color("color_roles.physical.body"), SPIN_RADIUS, 0.3)
+			Sfx.play("swing", global_position, -4.0, 0.1, 0.7)
+			var rig := rig_root()
+			if net_puppet and rig != null:  # a puppet's facing comes from snapshots: spin the rig instead
+				var tw := rig.create_tween()
+				tw.tween_property(rig, "rotation:y", TAU, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+				tw.tween_callback(func() -> void: rig.rotation.y = 0.0)
+		&"block":
+			var fwd := present_forward()
+			VFX.burst(get_tree().current_scene, global_position + Vector3(0, 1.0, 0) + fwd * 0.6, {
+				"tex": "spark", "amount": 5, "lifetime": 0.2, "size": 0.14,
+				"direction": fwd, "spread": 60.0, "vel_min": 2.0, "vel_max": 4.0,
+				"colors": [Color(0.8, 0.85, 0.9), Color(0.5, 0.55, 0.6, 0.0)] as Array[Color],
+			})
+			Sfx.play("bolt_impact", global_position, -8.0, 0.1, 0.7)
 
 
 func _on_interrupted() -> void:

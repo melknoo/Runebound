@@ -67,7 +67,7 @@ func _ready() -> void:
 			hb_col.position.y = 1.6
 	health.health_changed.connect(func(c: float, m: float) -> void:
 		boss_health_changed.emit(c, m)
-		if phase == 1 and not _shattering and c <= m * 0.5:
+		if phase == 1 and not _shattering and not net_puppet and c <= m * 0.5:  # a puppet learns it from the server
 			_begin_shatter()
 	)
 
@@ -130,8 +130,7 @@ func _phase1(delta: float) -> void:
 			brake(delta)
 			if distance_to_player() < 26.0:
 				_enter_state(AIState.CHASE)
-				Sfx.play("vessel_roar", global_position, 4.0)
-				GameFeel.camera_shake(0.35)
+				play_fx(&"roar")
 		AIState.CHASE:
 			face_player(delta, 4.0)
 			move_towards(dir_to_player(), move_speed, delta)
@@ -154,25 +153,19 @@ func _phase1(delta: float) -> void:
 
 func _start_slam() -> void:
 	_enter_state(AIState.WINDUP)
-	var fwd := -visual.global_transform.basis.z
-	VFX.telegraph_disc(get_tree().current_scene,
-		global_position + fwd * 1.6, SLAM_RADIUS, SLAM_WINDUP)
-	Sfx.play("earthbreaker_windup", global_position, -4.0, 0.1, 0.75)
+	play_fx(&"slam_windup")
 
 
 func _do_slam() -> void:
 	_enter_state(AIState.RECOVER)
+	play_fx(&"slam")
 	var fwd := -visual.global_transform.basis.z
 	var center := global_position + fwd * 1.6
-	VFX.earthbreaker_slam(get_tree().current_scene, center, SLAM_RADIUS)
-	VFX.light_pop(get_tree().current_scene, center, Color(0.7, 0.4, 1.0), 4.0, 6.0, 0.25)
-	Sfx.play("earthbreaker_impact", center, -2.0, 0.1, 0.85)
-	GameFeel.camera_shake(0.3)
 	_hit_player_in_radius(center, SLAM_RADIUS, SLAM_DAMAGE, 8.0)
 
 
 func _summon_adds() -> void:
-	Sfx.play("vessel_roar", global_position, -4.0, 0.1, 1.3)
+	play_fx(&"summon")
 	for i in 2:
 		var offset := Vector3(randf_range(-4.0, 4.0), 0, randf_range(-4.0, 4.0))
 		summon_requested.emit(global_position + offset)
@@ -189,18 +182,7 @@ func _begin_shatter() -> void:
 	_shattering = true
 	health.invulnerable = true
 	_enter_state(AIState.RECOVER)
-	var scene := get_tree().current_scene
-	VFX.flash(scene, global_position + Vector3(0, 2.0, 0), Color(0.85, 0.6, 1.0), 3.0, 0.3)
-	VFX.burst(scene, global_position + Vector3(0, 1.8, 0), {
-		"tex": "shard", "amount": 30, "lifetime": 0.8, "size": 0.28,
-		"spread": 90.0, "vel_min": 5.0, "vel_max": 10.0, "gravity": Vector3(0, -10, 0),
-		"emission_radius": 0.8,
-		"colors": [Color(0.95, 0.8, 1.0), Color(0.65, 0.35, 1.0), Color(0.3, 0.15, 0.55, 0.0)] as Array[Color],
-	})
-	Sfx.play("shatter_burst", global_position, 4.0)
-	GameFeel.camera_shake(0.6)
-	if animator != null:
-		animator.play_one_shot(&"shatter")
+	play_fx(&"shatter")
 	await get_tree().create_timer(1.0).timeout
 	if not is_instance_valid(self) or health.is_dead:
 		return
@@ -209,13 +191,17 @@ func _begin_shatter() -> void:
 	phase = 2
 	move_speed = 0.0
 	_enter_state(AIState.CIRCLE)
-	Sfx.play("vessel_roar", global_position, 2.0, 0.05, 1.2)
+	play_fx(&"phase2")
 
 
 # --- Phase 2: shattered — blinks and barrages ------------------------------
 
 func _phase2(delta: float) -> void:
 	brake(delta)
+	if ai_state == AIState.STAGGER:  # M09 fix: a heavy stagger in phase 2 used to last forever
+		if _state_timer >= 0.0:
+			_enter_state(AIState.CIRCLE)
+		return
 	face_player(delta, 6.0)
 	_blink_timer -= delta
 	_fan_timer -= delta
@@ -236,21 +222,13 @@ func _phase2(delta: float) -> void:
 
 
 func _blink() -> void:
-	var scene := get_tree().current_scene
 	var from := global_position
 	var anchor: Vector3 = blink_anchors.pick_random()
 	if anchor.distance_to(from) < 2.0 and blink_anchors.size() > 1:
 		anchor = blink_anchors[(blink_anchors.find(anchor) + 1) % blink_anchors.size()]
-	VFX.flash(scene, from + Vector3(0, 1.5, 0), Color(0.7, 0.4, 1.0), 1.6, 0.2)
-	VFX.burst(scene, from + Vector3(0, 1.2, 0), {
-		"tex": "spark", "amount": 10, "lifetime": 0.3, "size": 0.16,
-		"spread": 90.0, "vel_min": 2.0, "vel_max": 4.0,
-		"colors": [Color(0.9, 0.7, 1.0), Color(0.5, 0.25, 0.8, 0.0)] as Array[Color],
-	})
+	play_fx(&"blink_out")
 	global_position = anchor
-	VFX.flash(scene, anchor + Vector3(0, 1.5, 0), Color(0.85, 0.6, 1.0), 2.0, 0.2)
-	VFX.light_pop(scene, anchor + Vector3(0, 1.5, 0), Color(0.7, 0.4, 1.0), 3.0, 6.0, 0.2)
-	Sfx.play("boss_blink", anchor, 0.0, 0.08)
+	play_fx(&"blink_in")  # a puppet snaps here instead of sliding across the arena
 
 
 func _fire_fan() -> void:
@@ -263,9 +241,7 @@ func _fire_fan() -> void:
 		bolt.setup(dir, 12.0, 10.0)
 		bolt.position = origin + dir * 1.2
 		get_tree().current_scene.add_child(bolt)
-	Sfx.play("bolt_fire", global_position, -2.0, 0.1, 0.85)
-	if animator != null:
-		animator.play_one_shot(&"fan")
+	play_fx(&"fan")
 
 
 func _place_runes(count: int) -> void:
@@ -283,6 +259,7 @@ func _place_runes(count: int) -> void:
 func _expanding_ring() -> void:
 	var scene := get_tree().current_scene
 	Sfx.play("caster_charge", arena_center, -2.0, 0.05, 0.7)
+	fx_played.emit(&"ring")  # puppets draw their own ring (_present_fx); here the ring below is gameplay
 	# Shared threat language (crimson band + bright rims), exactly the band
 	# the hit test below uses (+- 0.8 m around the growing radius).
 	var ring := VFX.threat_ring(scene, arena_center, RING_MAX_RADIUS, 0.8)
@@ -322,5 +299,69 @@ func _hit_player_in_radius(center: Vector3, radius: float, damage: float, knockb
 		if hb != null and hb.owner_entity is Player:
 			var hit := HitInfo.create(damage, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position)
 			hit.knockback = knockback
-			(hb.owner_entity as Player).take_hit(hit)
-			break
+			hit.area_center = center + Vector3(0, 0.5, 0)
+			hit.area_radius = radius
+			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero inside
+
+
+## M09 presentation of the Vessel's actions (see EnemyBase.play_fx).
+func _present_fx(fx: StringName) -> void:
+	var scene := get_tree().current_scene
+	var here := present_origin()
+	match fx:
+		&"roar":
+			Sfx.play("vessel_roar", global_position, 4.0)
+			GameFeel.camera_shake(0.35)
+		&"slam_windup":
+			VFX.telegraph_disc(scene, here + present_forward() * 1.6, SLAM_RADIUS, SLAM_WINDUP)
+			Sfx.play("earthbreaker_windup", global_position, -4.0, 0.1, 0.75)
+		&"slam":
+			var center := here + present_forward() * 1.6
+			VFX.earthbreaker_slam(scene, center, SLAM_RADIUS)
+			VFX.light_pop(scene, center, Color(0.7, 0.4, 1.0), 4.0, 6.0, 0.25)
+			Sfx.play("earthbreaker_impact", center, -2.0, 0.1, 0.85)
+			GameFeel.camera_shake(0.3)
+		&"summon":
+			Sfx.play("vessel_roar", global_position, -4.0, 0.1, 1.3)
+		&"shatter":
+			VFX.flash(scene, here + Vector3(0, 2.0, 0), Color(0.85, 0.6, 1.0), 3.0, 0.3)
+			VFX.burst(scene, here + Vector3(0, 1.8, 0), {
+				"tex": "shard", "amount": 30, "lifetime": 0.8, "size": 0.28,
+				"spread": 90.0, "vel_min": 5.0, "vel_max": 10.0, "gravity": Vector3(0, -10, 0),
+				"emission_radius": 0.8,
+				"colors": [Color(0.95, 0.8, 1.0), Color(0.65, 0.35, 1.0), Color(0.3, 0.15, 0.55, 0.0)] as Array[Color],
+			})
+			Sfx.play("shatter_burst", global_position, 4.0)
+			GameFeel.camera_shake(0.6)
+			if animator != null:
+				animator.play_one_shot(&"shatter")
+		&"phase2":
+			phase = 2  # puppets too: the phase-2 looks key off it
+			Sfx.play("vessel_roar", global_position, 2.0, 0.05, 1.2)
+		&"blink_out":
+			VFX.flash(scene, here + Vector3(0, 1.5, 0), Color(0.7, 0.4, 1.0), 1.6, 0.2)
+			VFX.burst(scene, here + Vector3(0, 1.2, 0), {
+				"tex": "spark", "amount": 10, "lifetime": 0.3, "size": 0.16,
+				"spread": 90.0, "vel_min": 2.0, "vel_max": 4.0,
+				"colors": [Color(0.9, 0.7, 1.0), Color(0.5, 0.25, 0.8, 0.0)] as Array[Color],
+			})
+		&"blink_in":
+			VFX.flash(scene, here + Vector3(0, 1.5, 0), Color(0.85, 0.6, 1.0), 2.0, 0.2)
+			VFX.light_pop(scene, here + Vector3(0, 1.5, 0), Color(0.7, 0.4, 1.0), 3.0, 6.0, 0.2)
+			Sfx.play("boss_blink", here, 0.0, 0.08)
+		&"fan":
+			Sfx.play("bolt_fire", global_position, -2.0, 0.1, 0.85)
+			if animator != null:
+				animator.play_one_shot(&"fan")
+		&"ring":
+			if net_puppet:  # the authority draws the gameplay ring in _expanding_ring
+				_present_ring()
+
+
+## A puppet's copy of the expanding ring: the same band on the same timing.
+func _present_ring() -> void:
+	Sfx.play("caster_charge", arena_center, -2.0, 0.05, 0.7)
+	var ring := VFX.threat_ring(get_tree().current_scene, arena_center, RING_MAX_RADIUS, 0.8)
+	var tw := ring.create_tween()
+	tw.tween_method(func(r: float) -> void: VFX.set_threat_ring(ring, r), 0.5, RING_MAX_RADIUS, RING_EXPAND_TIME)
+	tw.tween_callback(ring.queue_free)

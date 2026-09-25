@@ -62,6 +62,10 @@ const MAX_HIT_RANGE := 45.0
 ## A forwarded hit still counts this far outside its area (the proxy lags the
 ## owner a little; the owner's own screen decides the rest).
 const HURT_MARGIN := 1.2
+## Enemy health per hero beyond the first (user decision 2026-09-25: +70 %).
+## Damage stays; applied at spawn and again, keeping the fraction, whenever a
+## hero joins or leaves.
+const HP_PER_EXTRA_HERO := 0.7
 var _enemy_handlers: Dictionary = {}  # NetMsg kind -> handler (registered in setup)
 
 
@@ -80,6 +84,7 @@ func setup(z: ZoneBase) -> void:
 		NetMsg.ENEMY_DEATH: _on_enemy_death_msg, NetMsg.ENEMY_DESPAWN: _on_enemy_despawn_msg,
 		NetMsg.BOLT: _on_bolt_msg, NetMsg.BOLT_POP: _on_bolt_pop_msg,
 		NetMsg.HIT: _on_hit_msg, NetMsg.STATUS: _on_status_msg, NetMsg.HURT: _on_hurt_msg,
+		NetMsg.ENEMY_FX: _on_enemy_fx_msg, NetMsg.HAZARD: _on_hazard_msg, NetMsg.ENEMY_SCALE: _on_enemy_scale_msg,
 	}
 	for kind: int in _enemy_handlers:
 		Net.on(kind, _enemy_handlers[kind] as Callable)
@@ -143,6 +148,7 @@ func _process(_delta: float) -> void:
 
 func _on_peer_ready(peer: int) -> void:
 	var proxy := _ensure_proxy(peer)
+	_rescale_enemies()
 	# The newcomer gets every other hero; the others get the newcomer.
 	for other: int in heroes:
 		if other != peer:
@@ -163,6 +169,7 @@ func _on_peer_left(peer: int) -> void:
 		zone.remove_player(proxy)
 		proxy.queue_free()
 	Net.broadcast_zone(NetMsg.HERO_DESPAWN, [peer])
+	_rescale_enemies()
 
 
 func _ensure_proxy(peer: int) -> Player:
@@ -460,7 +467,9 @@ func register_enemy(e: EnemyBase) -> void:
 	e.net_id = _next_enemy_id
 	_next_enemy_id = _next_enemy_id % 65000 + 1  # u16 on the wire, reused only after 65k spawns
 	enemies[e.net_id] = e
+	_scale_health(e, false)
 	e.state_entered.connect(_on_enemy_state.bind(e))
+	e.fx_played.connect(_on_enemy_fx.bind(e))
 	e.health.damaged.connect(_on_enemy_damaged.bind(e))
 	e.health.dot_damaged.connect(_on_enemy_dot.bind(e))
 	e.enemy_died.connect(_on_enemy_killed)
@@ -606,13 +615,14 @@ func _on_enemy_spawn(_from: int, payload: Array) -> void:
 	e.state_seq = int(payload[9])
 	enemies[id] = e
 	_enemy_samples[id] = []
+	zone.setup_enemy_puppet(e)
 
 
 func _puppet(payload: Array) -> EnemyBase:
 	if not Net.is_client() or payload.is_empty():
 		return null
-	var e := enemies.get(int(payload[0])) as EnemyBase
-	return e if e != null and is_instance_valid(e) else null
+	var entry: Variant = enemies.get(int(payload[0]))
+	return entry as EnemyBase if is_instance_valid(entry) else null  # never cast a freed node
 
 
 func _on_enemy_state_msg(_from: int, payload: Array) -> void:
@@ -667,9 +677,12 @@ func _on_bolt_msg(_from: int, payload: Array) -> void:
 func _on_bolt_pop_msg(_from: int, payload: Array) -> void:
 	if not Net.is_client() or payload.size() < 2:
 		return
-	var bolt := _bolts.get(int(payload[0])) as EnemyBolt
+	var entry: Variant = _bolts.get(int(payload[0]))
 	_bolts.erase(int(payload[0]))
-	if bolt != null and is_instance_valid(bolt):
+	if not is_instance_valid(entry):
+		return  # the copy already popped against a wall on its own
+	var bolt := entry as EnemyBolt
+	if bolt != null:
 		bolt.global_position = payload[1] as Vector3
 		bolt.net_pop()
 
@@ -693,3 +706,79 @@ func _on_hurt_msg(_from: int, payload: Array) -> void:
 		hurts_taken += 1
 	else:
 		hurts_dodged += 1
+
+
+# ---------------------------------------------------------------------------
+# M09 phase 3b: named actions, hazards, health scaling
+# ---------------------------------------------------------------------------
+
+func _on_enemy_fx(fx: StringName, e: EnemyBase) -> void:
+	Net.broadcast_zone(NetMsg.ENEMY_FX, [e.net_id, String(fx), e.global_position, e.visual.rotation.y])
+
+
+## Server: a ground hazard appeared (FirePatch / ShadowRune _ready).
+func register_hazard(kind: StringName, pos: Vector3) -> void:
+	if Net.is_dedicated():
+		Net.broadcast_zone(NetMsg.HAZARD, [String(kind), pos])
+
+
+func _hp_scale() -> float:
+	return 1.0 + HP_PER_EXTRA_HERO * float(maxi(heroes.size() - 1, 0))
+
+
+## Scales an enemy's health to the party size, keeping its fraction.
+func _scale_health(e: EnemyBase, announce: bool) -> void:
+	if not e.has_meta(&"base_max_health"):
+		e.set_meta(&"base_max_health", e.health.max_health)
+	var target := float(e.get_meta(&"base_max_health")) * _hp_scale()
+	if is_equal_approx(target, e.health.max_health):
+		return
+	var fraction := e.health.current_health / maxf(e.health.max_health, 1.0)
+	e.health.max_health = target
+	e.health.current_health = target * fraction
+	e.health.health_changed.emit(e.health.current_health, target)
+	if announce:
+		Net.broadcast_zone(NetMsg.ENEMY_SCALE, [e.net_id, target])
+
+
+func _rescale_enemies() -> void:
+	for id: int in enemies:
+		var e := enemies[id] as EnemyBase
+		if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
+			_scale_health(e, true)
+
+
+func _on_enemy_fx_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e == null or payload.size() < 4:
+		return
+	var fx := StringName(str(payload[1]))
+	var pos := payload[2] as Vector3
+	if fx == &"blink_in":
+		_enemy_samples[e.net_id] = []  # snap to the new spot instead of sliding there
+		e.global_position = pos
+	e.net_play_fx(fx, pos, float(payload[3]))
+
+
+func _on_hazard_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 2:
+		return
+	var pos := payload[1] as Vector3
+	match str(payload[0]):
+		"fire_patch":
+			var patch := FirePatch.new()
+			patch.visual_only = true
+			patch.position = pos
+			zone.add_child(patch)
+		"shadow_rune":
+			var rune := ShadowRune.new()
+			rune.visual_only = true
+			rune.position = pos
+			zone.add_child(rune)
+
+
+func _on_enemy_scale_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e != null and payload.size() >= 2:
+		e.health.max_health = maxf(float(payload[1]), 1.0)
+		e.health.health_changed.emit(e.health.current_health, e.health.max_health)

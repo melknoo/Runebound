@@ -96,6 +96,25 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
     with netsim: puppets appear, all three enemies die with kill credit to a
     player, enemy hits reach the owners). Windowed look: telegraph discs,
     hit flashes, the caster's charge and bolt all show on a client.
+- **Phase 3b (every enemy, hazards, bosses, scaling):**
+  - `EnemyBase.play_fx(name)`: a named action's look (stab, slam, spin,
+    block, nova, charge, enrage, shatter, blink, fan, ring) plays locally
+    and goes to the puppets as ENEMY_FX. Brute, assassin, hollow warden
+    (block sparks; a puppet's spin turns its rig, not its facing), the elite
+    nova, the Ashvein Colossus and the Vessel moved their looks into
+    `_present_state` / `_present_fx`. The Vessel's blink snaps puppets.
+  - Every enemy attack now hits every hero inside and carries its area.
+  - Fire patches and shadow runes are server hazards; clients get visual
+    copies (HAZARD).
+  - Enemy health scales with the party: +70 % per hero beyond the first,
+    kept as a fraction when heroes join or leave (ENEMY_SCALE).
+  - Boss puppets bring their boss bar on the client
+    (`ZoneBase.setup_enemy_puppet`; the Spire hands the Vessel its arena).
+  - Fixed on the way: a heavy stagger in the Vessel's phase 2 lasted forever.
+  - Tests: net scenario `enemy_types` (every type incl. both elites and both
+    bosses as puppets, all killed with credit, fx sent, boss bar, x1.7
+    health for two heroes). Windowed look: the colossus fight (bar, slam
+    telegraph and impact, a hero dying and snapping back) reads on a client.
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

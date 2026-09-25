@@ -399,6 +399,12 @@ func _start_boss_fight() -> void:
 	GameFeel.camera_shake(0.4)
 
 
+func setup_enemy_puppet(e: EnemyBase) -> void:
+	super(e)
+	if e is ShatteredVessel:
+		(e as ShatteredVessel).setup_arena(_arena_center, blink_anchors())  # the puppet's ring needs the centre
+
+
 func _on_boss_summon(pos: Vector3) -> void:
 	var add := spawn_by_id("rusher", pos)
 	VFX.flash(get_tree().current_scene, pos + Vector3(0, 1.0, 0), Color(0.7, 0.4, 1.0), 1.2, 0.2)
@@ -409,7 +415,8 @@ func _on_boss_summon(pos: Vector3) -> void:
 
 
 func _on_boss_died(_enemy: EnemyBase) -> void:
-	hud.hide_boss_bar()
+	if hud != null:
+		hud.hide_boss_bar()
 	if MusicDirector.instance != null:
 		MusicDirector.instance.stinger("victory")
 	boss_portal.set_locked(false)
@@ -421,4 +428,5 @@ func _on_boss_died(_enemy: EnemyBase) -> void:
 		var rare := ItemGenerator.generate(2)
 		ItemGenerator.apply_item_level(rare, 4)
 		spawn_item_drop(rare, boss_portal.global_position + Vector3(1 + i * 1.5, 0, 3))
-	hud.toast("The Shattered Rune falls silent", Color(0.8, 0.6, 1.0))
+	if hud != null:
+		hud.toast("The Shattered Rune falls silent", Color(0.8, 0.6, 1.0))

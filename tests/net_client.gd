@@ -221,6 +221,50 @@ class Driver extends Node:
 					world.hurts_dodged])
 				await _seconds(2.0)
 				_finish("ok")
+			"enemy_types":
+				# The server spawns every enemy type (low health) once both heroes are in.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				var world := zone.net_world
+				var seen: Dictionary = {}
+				var elites: Dictionary = {}
+				var boss_bar := [false]
+				var watch := func() -> void:
+					for id: int in world.enemies:
+						var e := world.enemies[id] as EnemyBase
+						if is_instance_valid(e):
+							seen[e.type_id] = true
+							var m := e.get_node_or_null(^"EliteModifier") as EliteModifier
+							if m != null:
+								elites[int(m.kind)] = true
+					if zone.hud._boss_root != null and zone.hud._boss_root.visible:
+						boss_bar[0] = true
+				var bot := BotInputSource.new(5 if role == "c1" else 9)
+				bot.engage_radius = 60.0
+				zone.player.input_source = bot
+				zone.player.camera_rig = null
+				zone.player.targeting = null
+				zone.player.debug_learn_all()
+				zone.player.god_mode = true  # the bosses' hits must not end the run
+				var wanted: Array[String] = ["rusher", "caster", "brute", "assassin", "warden", "colossus", "vessel"]
+				var all_seen := func() -> bool:
+					watch.call()
+					for t in wanted:
+						if not seen.has(t):
+							return false
+					return elites.size() == 2
+				if not await _until(all_seen, 60.0, "every enemy type as a puppet (seen %s)" % [seen.keys()]):
+					return
+				if not await _until(func() -> bool:
+					watch.call()
+					return world.enemies.is_empty(), 100.0, "every enemy dead"):
+					return
+				if not boss_bar[0]:
+					_finish("fail: no boss bar while a boss was up")
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")

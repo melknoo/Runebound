@@ -7,8 +7,15 @@ const ARM_TIME := 1.2
 const RADIUS := 2.5
 const DAMAGE := 18.0
 
+## M09: a co-op client's copy of a server rune: arms and bursts for show only.
+var visual_only: bool = false
+
 
 func _ready() -> void:
+	if not visual_only:
+		var zone := ZoneBase.zone_of(self)
+		if zone != null and zone.net_world != null:
+			zone.net_world.register_hazard(&"shadow_rune", global_position)
 	var glyph := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(1.4, 1.4)
@@ -53,9 +60,11 @@ func _detonate() -> void:
 	Sfx.play("rune_detonate", global_position, -4.0, 0.1, 0.8)
 
 	var zone := get_tree().current_scene as ZoneBase
-	if zone != null:
+	if zone != null and not visual_only:
 		for victim in zone.players_within(global_position, RADIUS):  # M07b: every hero on the rune
 			var hit := HitInfo.create(DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
 			hit.knockback = 4.0
+			hit.area_center = global_position + Vector3(0, 0.9, 0)
+			hit.area_radius = RADIUS
 			victim.take_hit(hit)
 	queue_free()

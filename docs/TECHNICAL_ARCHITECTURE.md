@@ -382,6 +382,16 @@ never `DisplayServer` (headless bot clients are clients).
   `_present_state` (or a `present_*` helper), using `present_origin()` /
   `present_forward()`; simulation stays in the state machine. Attacks set
   `hit.area_center / area_radius` and hit every hero inside.
+- **Named actions and hazards:** `play_fx(fx)` runs `_present_fx(fx)` (and
+  the elite affix's `present_fx`) locally and emits `fx_played`, which the
+  server sends as ENEMY_FX (with the pose); puppets run the same
+  presentation (`net_play_fx`). Use it for looks that are not a state of
+  their own. `blink_in` makes the client snap the puppet. FirePatch and
+  ShadowRune register as hazards on the server (HAZARD) and exist as
+  `visual_only` copies on clients. Health scaling (`HP_PER_EXTRA_HERO` 0.7)
+  lives in NetWorld (`base_max_health` meta, ENEMY_SCALE on joins/leaves).
+  `ZoneBase.setup_enemy_puppet(e)` gives boss puppets their bar (zones
+  extend it: the Spire sets the Vessel's arena).
 - **Enemy hits on heroes:** a PROXY's `take_hit` forwards the hit (HURT) to
   its owner; the owner applies it through its own `take_hit` (so dodge
   i-frames refuse it) unless its hero is more than `HURT_MARGIN` (1.2 m)

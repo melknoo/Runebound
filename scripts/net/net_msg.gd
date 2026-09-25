@@ -54,3 +54,9 @@ const STATUS := 20
 ## server -> the hero's owner: [hit] - an enemy attack struck its proxy; the
 ## owner takes it unless its own hero dodged (i-frames) or left the area
 const HURT := 21
+## server -> client: [id, fx, pos, yaw] - an enemy's named action (play_fx)
+const ENEMY_FX := 22
+## server -> client: [kind, pos] - a ground hazard (fire_patch, shadow_rune) to copy
+const HAZARD := 23
+## server -> client: [id, hp_max] - health rescaled (a hero joined or left)
+const ENEMY_SCALE := 24

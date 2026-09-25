@@ -11,12 +11,18 @@ const TICK_INTERVAL := 0.5
 var _age: float = 0.0
 var _tick_accum: float = 0.0
 var _emitter: GPUParticles3D
+## M09: a co-op client's copy of a server patch: burns for show only.
+var visual_only: bool = false
 
 
 func _ready() -> void:
 	collision_layer = 0
-	collision_mask = 0b1000  # player hurtbox
-	monitoring = true
+	collision_mask = 0 if visual_only else 0b1000  # player hurtbox
+	monitoring = not visual_only
+	if not visual_only:
+		var zone := ZoneBase.zone_of(self)
+		if zone != null and zone.net_world != null:
+			zone.net_world.register_hazard(&"fire_patch", global_position)
 	var col := CollisionShape3D.new()
 	var shape := CylinderShape3D.new()
 	shape.radius = RADIUS
@@ -73,11 +79,12 @@ func _physics_process(delta: float) -> void:
 		queue_free()
 		return
 	_tick_accum += delta
-	if _tick_accum >= TICK_INTERVAL:
+	if _tick_accum >= TICK_INTERVAL and not visual_only:
 		_tick_accum = 0.0
-		for area in get_overlapping_areas():
+		for area in get_overlapping_areas():  # M09: every hero standing in it
 			var hb := area as Hurtbox
 			if hb != null and hb.owner_entity is Player:
 				var hit := HitInfo.create(TICK_DAMAGE, HitInfo.DamageType.FIRE, HitInfo.Weight.LIGHT, global_position)
+				hit.area_center = global_position + Vector3(0, 0.6, 0)
+				hit.area_radius = RADIUS + 0.5
 				(hb.owner_entity as Player).take_hit(hit)
-				break
