@@ -34,6 +34,9 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(driver)
 
 
+const COMPANION_NAMES: Array[String] = ["Sigmund", "Brynja", "Halvard", "Yrsa"]
+
+
 class Driver extends Node:
 	var scenario := ""
 	var role := ""
@@ -176,6 +179,86 @@ class Driver extends Node:
 					i += 1
 					await _seconds(1.6)
 					goto.queue.append(&"dodge" if i % 3 == 0 else &"rune_cleave")
+				_finish("ok")
+			"companion":
+				# A co-op buddy for playtests (run_godot coop): follows the first
+				# non-bot hero, fights what comes near, follows party travel.
+				if not await _in_zone():
+					return
+				var end := Time.get_ticks_msec() + int(_arg_float("--duration=", 7200.0) * 1000.0)
+				var bound: ZoneBase = null
+				var bot: BotInputSource = null
+				while Net.is_client() and Time.get_ticks_msec() < end:
+					var zone := get_tree().current_scene as ZoneBase
+					if zone != null and zone != bound and zone.player != null and zone.net_world != null:
+						bound = zone
+						bot = BotInputSource.new(hash(player_name))
+						bot.engage_radius = 18.0
+						zone.player.input_source = bot
+						zone.player.camera_rig = null
+						zone.player.targeting = null
+						zone.player.debug_learn_all()
+					if bound != null and is_instance_valid(bound) and bot != null:
+						bot.leader = null
+						for peer: int in bound.net_world.heroes:
+							var hero_name := str((Net.roster.get(peer, {}) as Dictionary).get("name", ""))
+							if not NetClient.COMPANION_NAMES.has(hero_name.get_slice(" ", 0)):
+								bot.leader = bound.net_world.heroes[peer] as Player
+								break
+					await _seconds(0.5)
+				_finish("ok")
+			"lead":
+				# The human stand-in for the companions scenario: waits for its two
+				# buddies, takes the party to the Highlands, stands at camp_1.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				zone.player.input_source = InputSource.new()
+				if not await _until(func() -> bool: return zone.net_world.heroes.size() >= 2, 40.0, "two companions"):
+					return
+				await _seconds(2.0)
+				zone.travel_to("res://scenes/ashen_highlands.tscn", "gate_south")
+				if not await _until(func() -> bool:
+					var z := get_tree().current_scene as ZoneBase
+					return z is AshenHighlands and z.player != null and z.net_world != null 						and z.net_world.heroes.size() >= 2, 40.0, "the party in the Highlands"):
+					return
+				var hl := get_tree().current_scene as ZoneBase
+				hl.player.input_source = InputSource.new()
+				hl.player.god_mode = true
+				hl.player.global_position = hl.ground_point(hl.poi_position("camp_1") + Vector3(3, 0, 3), 0.2)
+				hl.player.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return hl.net_world.loot_grants_received >= 1, 90.0,
+						"loot from the companions' kills near us"):
+					return
+				_finish("ok")
+			"roam":
+				# Load and soak tests: fight at the given camps in turn (god mode),
+				# a minute each, for --duration seconds. --watch only follows.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				var camps := _arg("--camps=", "camp_1").split(",")
+				var hero := zone.player
+				hero.god_mode = true
+				hero.camera_rig = null if not "--watch" in OS.get_cmdline_user_args() else hero.camera_rig
+				hero.targeting = null
+				hero.debug_learn_all()
+				var bot := BotInputSource.new(hash(role))
+				bot.engage_radius = 30.0
+				hero.input_source = InputSource.new() if "--watch" in OS.get_cmdline_user_args() else bot
+				var end := Time.get_ticks_msec() + int(_arg_float("--duration=", 600.0) * 1000.0)
+				var i := 0
+				while Net.is_client() and Time.get_ticks_msec() < end:
+					var spot := zone.poi_position(camps[i % camps.size()])
+					if spot != Vector3.INF:
+						hero.global_position = zone.ground_point(spot + Vector3(5, 0, 5), 0.2)
+						hero.velocity = Vector3.ZERO
+					i += 1
+					await _seconds(60.0)
+				if not Net.is_client():
+					_finish("fail: lost the server during the run")
+					return
+				print("[test %s] hits sent %d, grants %d" % [role, zone.net_world.hits_sent, zone.net_world.grants_received])
 				_finish("ok")
 			"watch":
 				# Windowed look at the other heroes: a screenshot to `--snap=`.

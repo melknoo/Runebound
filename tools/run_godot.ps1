@@ -12,6 +12,7 @@
 #   .\tools\run_godot.ps1 serverperf [heroes]    # M09: headless Highlands tick cost with bot heroes
 #   .\tools\run_godot.ps1 net [scenario]        # M09: multi-process co-op tests (server + headless clients)
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
+#   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
@@ -118,12 +119,32 @@ switch ($Mode) {
 		$p = Start-Process -FilePath $godot -ArgumentList "--headless", "--path", "`"$proj`"", "res://tests/net_test.tscn", "--", "--scenario=$scenario" `
 			-NoNewWindow -PassThru
 		$handle = $p.Handle
-		if (-not $p.WaitForExit(600000)) {
+		if (-not $p.WaitForExit(1200000)) {
 			Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-			Write-Output "== net test timed out after 10 min =="
+			Write-Output "== net test timed out after 20 min =="
 			exit 3
 		}
 		exit $p.ExitCode
+	}
+	"coop"    {
+		# M09 solo co-op playtest: a local dedicated server, N companion bots
+		# (headless; they follow you, fight with you and travel with you) and
+		# this game window, joined automatically. Closing the window ends all.
+		$bots = if ($Name) { [int]$Name } else { 2 }
+		$port = 7780
+		$srv = Start-Process -FilePath $godot -PassThru -WindowStyle Hidden -ArgumentList "--headless", "--path", "`"$proj`"",
+			"res://scenes/dedicated_server.tscn", "--", "--port=$port", "--save=user://local_server.json"
+		Start-Sleep -Seconds 4
+		$names = @("Sigmund", "Brynja", "Halvard", "Yrsa")
+		$procs = @($srv)
+		for ($i = 0; $i -lt [Math]::Min($bots, 4); $i++) {
+			$procs += Start-Process -FilePath $godot -PassThru -WindowStyle Hidden -ArgumentList "--headless", "--path", "`"$proj`"",
+				"res://tests/net_client.tscn", "--", "--connect=127.0.0.1:$port", "--net-test=companion", "--role=bot$i",
+				"--name=$($names[$i])", "--duration=14400", "--save=user://companion_$i.json", "--result=user://companion_$i.result"
+		}
+		& $godot --path $proj -- "--connect=127.0.0.1:$port"
+		foreach ($p in $procs) { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }
+		exit 0
 	}
 	"server"  {
 		# M09: a local dedicated server on port 7777 (or the given port) for

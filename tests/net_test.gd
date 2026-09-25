@@ -74,6 +74,27 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}],
 		"timeout": 90.0,
 	},
+	"companions": {
+		"server": [],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--net-test=companion", "--name=Sigmund", "--duration=80"]},
+			{"role": "c2", "delay": 0.5, "args": ["--net-test=companion", "--name=Brynja", "--duration=80"]},
+			{"role": "c3", "delay": 1.0, "args": ["--net-test=lead", "--name=Melvin"]}],
+		"timeout": 180.0,
+	},
+	"soak": {
+		# 10 minutes: four bots fight at four camps (cycling), one windowed
+		# client watches; the server's node and orphan counts must stay flat.
+		"server": ["--zone=res://scenes/ashen_highlands.tscn"],
+		"clients": [
+			{"role": "c1", "delay": 0.0, "args": ["--net-test=roam", "--camps=camp_1,camp_2", "--duration=600"]},
+			{"role": "c2", "delay": 1.0, "args": ["--net-test=roam", "--camps=camp_3,camp_4", "--duration=600", "--netsim=100,20,2"]},
+			{"role": "c3", "delay": 2.0, "args": ["--net-test=roam", "--camps=camp_5,camp_6", "--duration=600"]},
+			{"role": "c4", "delay": 3.0, "args": ["--net-test=roam", "--camps=camp_7,camp_8", "--duration=600"]},
+			{"role": "w1", "delay": 4.0, "windowed": true, "args": ["--net-test=roam", "--camps=camp_1", "--duration=600", "--watch"]},
+		],
+		"timeout": 800.0,
+		"only_named": true,
+	},
 	"dns": {
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--connect=nohost.invalid:7777"]}],
 		"timeout": 45.0,
@@ -96,7 +117,7 @@ func _run() -> void:
 	print("== RUNEBOUND net test (%s) ==" % wanted)
 	var index := 0
 	for scenario: String in SCENARIOS:
-		if wanted == "all" or wanted == scenario:
+		if wanted == scenario or (wanted == "all" and not bool((SCENARIOS[scenario] as Dictionary).get("only_named", false))):
 			await _run_scenario(scenario, SCENARIOS[scenario] as Dictionary, BASE_PORT + index)
 		index += 1
 	if _failures.is_empty():
@@ -135,6 +156,8 @@ func _run_scenario(scenario: String, spec: Dictionary, port: int) -> void:
 		var args: Array = ["res://tests/net_client.tscn", "--", "--connect=127.0.0.1:%d" % port,
 			"--save=user://net_test/%s_save.json" % role, "--name=%s" % role.to_upper()]
 		args.append_array(c.get("args", []) as Array)
+		if bool(c.get("windowed", false)):
+			args.insert(0, "--windowed-client")  # _launch drops --headless for it
 		_clean(role)
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(DIR + role + "_save.json"))
 		procs[role] = _launch(role, scenario, args)
@@ -169,11 +192,23 @@ func _run_scenario(scenario: String, spec: Dictionary, port: int) -> void:
 func _launch(role: String, scenario: String, args: Array) -> int:
 	var full: PackedStringArray = ["--headless", "--path", ProjectSettings.globalize_path("res://"),
 		"--log-file", ProjectSettings.globalize_path(DIR + role + ".log")]
+	if not args.is_empty() and str(args[0]) == "--windowed-client":
+		args = args.slice(1)
+		full[0] = "--resolution"
+		full.insert(1, "1280x720")
+	# The scenario's own flags go right after "--", the per-process args after
+	# them: the driver takes the last value, so a client can play another part
+	# (companions: --net-test=companion / lead).
+	var fixed: Array[String] = ["--net-test=%s" % scenario, "--role=%s" % role, "--result=%s" % (DIR + role + ".result")]
+	var inserted := false
 	for a in args:
 		full.append(str(a))
-	full.append("--net-test=%s" % scenario)
-	full.append("--role=%s" % role)
-	full.append("--result=%s" % (DIR + role + ".result"))
+		if str(a) == "--" and not inserted:
+			full.append_array(PackedStringArray(fixed))
+			inserted = true
+	if not inserted:
+		full.append("--")
+		full.append_array(PackedStringArray(fixed))
 	return OS.create_process(OS.get_executable_path(), full)
 
 

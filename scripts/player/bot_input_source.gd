@@ -12,6 +12,8 @@ const ENGAGE_RADIUS := 35.0   # enemies farther than this are ignored
 const MELEE_REACH := 2.2      # cleave when the target is this close
 const STAND_OFF := 1.4        # stop walking inside this distance
 const FOLLOW_DISTANCE := 5.0  # trail the leader at about this distance
+## With a leader: never fight further than this from it (run back instead).
+const LEADER_LEASH := 22.0
 
 var leader: Player = null
 var engage_radius: float = ENGAGE_RADIUS
@@ -38,6 +40,9 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 	if _retarget_left <= 0.0 or not _alive(target):
 		_retarget_left = RETARGET_EVERY
 		target = _nearest_enemy(player.global_position)
+	if leader != null and is_instance_valid(leader) and leader != player \
+			and leader.global_position.distance_to(player.global_position) > LEADER_LEASH:
+		target = null  # too far from the leader: catch up first
 	if target == null:
 		_follow(intent, player)
 		return

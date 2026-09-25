@@ -5,6 +5,10 @@ extends Node
 ## server-side expectations hold, else "fail: <why so far>"). The orchestrator
 ## reads it after the clients are done and then stops the server.
 
+## Scenarios whose server-side verdict is re-checked twice a second.
+const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "enemy_types", "look_boss", "rewards",
+	"travel", "companions", "soak", "load"]
+
 var scenario := ""
 var result_path := ""
 var _max_roster := 0
@@ -37,7 +41,7 @@ func _on_roster() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if scenario in ["heroes", "enemies", "enemy_types", "look_boss", "rewards", "travel"] and Engine.get_physics_frames() % 30 == 0:
+	if scenario in LIVE_SCENARIOS and Engine.get_physics_frames() % 30 == 0:
 		_update()
 
 
@@ -157,6 +161,55 @@ func _spawn_roster(zone: ZoneBase) -> void:
 
 
 var _quitting := false
+## Load test (the server laptop with remote bots): cleared camps come back
+## after LOAD_REARM seconds and every enemy has LOAD_HEALTH x its health, so
+## the heroes fight without pause. Run: dedicated_server.tscn -- --net-test=load
+const LOAD_REARM := 5.0
+const LOAD_HEALTH := 10.0
+var _load_hooked := false
+var _load_tough: Dictionary = {}
+
+
+func _load_tick() -> String:
+	var zone := get_tree().current_scene as AshenHighlands
+	if zone == null:
+		return "ok"
+	if not _load_hooked:
+		_load_hooked = true
+		for sp: EncounterSpawner in zone.camps.values():
+			sp.cleared.connect(func() -> void:
+				await get_tree().create_timer(LOAD_REARM).timeout
+				if is_instance_valid(sp):
+					sp.reset()
+					sp.trigger(zone, null))
+	for e in EnemyBase.all_enemies:
+		if is_instance_valid(e) and not _load_tough.has(e.get_instance_id()) and e.net_id != 0:
+			_load_tough[e.get_instance_id()] = true
+			e.health.max_health *= LOAD_HEALTH
+			e.health.current_health = e.health.max_health
+	return "ok"
+
+
+var _soak_base_nodes := -1
+var _soak_last := ""
+
+
+func _soak_verdict() -> String:
+	var t := Time.get_ticks_msec() / 1000.0
+	var nodes := int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
+	var orphans := int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
+	if _soak_base_nodes < 0 and t > 90.0:
+		_soak_base_nodes = nodes
+	var line := "t %.0f s: nodes %d (base %d), orphans %d, enemies %d" % [t, nodes, _soak_base_nodes, orphans,
+		EnemyBase.all_enemies.size()]
+	if int(t) % 60 < 1 and line != _soak_last:
+		_soak_last = line
+		print("[soak] " + line)
+	if orphans > 100:
+		return "fail: %d orphan nodes (a leak)" % orphans
+	if _soak_base_nodes > 0 and nodes > _soak_base_nodes * 1.3 + 200:
+		return "fail: nodes grew from %d to %d" % [_soak_base_nodes, nodes]
+	return "ok"
 var _saw_both := false
 var _saw_level := false
 
@@ -232,6 +285,13 @@ func _update() -> void:
 			if _ready_peers >= 1 and not _quitting:
 				_quitting = true
 				get_tree().create_timer(2.0).timeout.connect(func() -> void: get_tree().quit())
+		"companions":
+			var zone := get_tree().current_scene as ZoneBase
+			verdict = "ok" if zone is AshenHighlands else "fail: the party never reached the Highlands"
+		"soak":
+			verdict = _soak_verdict()
+		"load":
+			verdict = _load_tick()
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
 		"full":

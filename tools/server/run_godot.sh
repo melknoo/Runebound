@@ -51,7 +51,7 @@ case "$mode" in
 		;;
 	net)
 		# M09: a dedicated server and headless test clients per scenario.
-		timeout --kill-after=10 600 "$godot" --headless --path "$proj" res://tests/net_test.tscn \
+		timeout --kill-after=10 1200 "$godot" --headless --path "$proj" res://tests/net_test.tscn \
 			-- "--scenario=${2:-all}"
 		;;
 	serverperf)

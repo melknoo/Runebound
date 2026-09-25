@@ -64,6 +64,26 @@ journalctl -u runebound-server -b          # Log seit dem Boot
   cd ~/Repositories/Runebound && tools/server/run_godot.sh import && tools/server/run_godot.sh smoke
   ```
 
+## Koop-Betrieb (ab M09)
+Der Server ist seit M09 ein echtes Spiel: `RUNEBOUND_SCENE` startet `res://scenes/dedicated_server.tscn`. Er hält genau eine Zone (die, in der seine Welt zuletzt war), bis 5 Spieler und eine eigene Welt (`~/.local/share/godot/app_userdata/RUNEBOUND/runebound_server.json`: Bosse, Camps, Zone). Die Charaktere bleiben auf den Rechnern der Spieler.
+
+**Einschalten (einmalig):**
+```bash
+sudo systemctl enable --now runebound-server
+journalctl -u runebound-server -f      # "listening on *:7777/udp ..." und die Zone
+```
+Danach startet er bei jedem Boot selbst und holt vorher den neuesten Stand (`git pull` + Import).
+
+**Update einspielen:** `sudo systemctl restart runebound-server`. Alle Spieler fliegen dabei sofort raus (der Server meldet sich sauber ab) und landen mit Begründung im Titel; ihr Charakter ist gespeichert. Spieler brauchen denselben Stand wie der Server: Bei anderer Protokoll- oder Godot-Version lehnt der Server mit einer lesbaren Meldung ab („Version mismatch ... git pull“).
+
+**Log:** Alle 60 s eine Zeile `tick p50 / p95 / max ms | players | enemies (asleep) | out / in KB/s`, dazu Beitritte, Abgänge, Gruppenreisen.
+
+**Welt zurücksetzen** (Bosse wieder da, Camps voll, Start im Hub): Dienst stoppen, `runebound_server.json` löschen, Dienst starten.
+
+**Spielen:** Im Titel „Join co-op“ → Name → `melvin-aspire-e5-573g.tail94658b.ts.net` (Port 7777 ist Standard). Die Adresse wird gemerkt.
+
+**Tests auf dem Laptop:** `tools/server/run_godot.sh smoke` (Singleplayer), `tools/server/run_godot.sh net` (Koop, Server + Headless-Clients lokal), `tools/server/run_godot.sh serverperf 5` (Tick-Kosten).
+
 ## Vom Dev-Rechner aus
 ```powershell
 ssh -t melvin@melvin-aspire-e5-573g "sudo systemctl restart runebound-server && journalctl -u runebound-server -n 30 --no-pager"

@@ -18,6 +18,8 @@ var _connect_btn: Button
 var _back_btn: Button
 var _status: Label
 var _main_status: Label
+## `--connect=` joins (run_godot coop) keep the player's saved name and server.
+var _auto: bool = false
 
 
 func _ready() -> void:
@@ -37,6 +39,7 @@ func _ready() -> void:
 		elif arg.begins_with("--name="):
 			auto_name = arg.trim_prefix("--name=")
 	if auto_connect != "" and Net.last_reason == "":
+		_auto = true
 		_show_join()
 		_address_edit.text = auto_connect
 		if auto_name != "":
@@ -207,8 +210,9 @@ func _connect() -> void:
 		_say(_status, String(parsed["error"]), WARN)
 		return
 	var player_name := Net.clean_name(_name_edit.text)
-	ClientSettings.set_value("name", player_name)
-	ClientSettings.set_value("last_server", address)
+	if not _auto:
+		ClientSettings.set_value("name", player_name)
+		ClientSettings.set_value("last_server", address)
 	var ch := SaveGame.active_character()
 	var level := int((ch.get("progression", {}) as Dictionary).get("level", 1))
 	_set_busy(true)
