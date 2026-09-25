@@ -1,0 +1,20 @@
+# RUNEBOUND dedicated server. Installed as a copy (not a symlink):
+#   sudo install -m 644 tools/server/runebound-server.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+# Enable only after M09 ships a real server scene (see docs/SERVER_SETUP.md).
+[Unit]
+Description=RUNEBOUND dedicated server (Godot headless)
+Wants=network-online.target
+After=network-online.target tailscaled.service
+
+[Service]
+Type=simple
+User=melvin
+WorkingDirectory=/home/melvin/Repositories/Runebound
+EnvironmentFile=/home/melvin/Repositories/Runebound/tools/server/server.env
+ExecStart=/home/melvin/Repositories/Runebound/tools/server/runebound-server.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
