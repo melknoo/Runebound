@@ -292,6 +292,9 @@ func _update() -> void:
 			verdict = _soak_verdict()
 		"load":
 			verdict = _load_tick()
+		"godot_versions":
+			verdict = "ok" if _max_roster == 1 and _ready_peers >= 1 else \
+				"fail: expected the 4.6.0 client in and the 4.5.2 one out (max roster %d)" % _max_roster
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
 		"full":

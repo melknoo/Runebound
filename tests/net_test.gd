@@ -95,6 +95,12 @@ const SCENARIOS := {
 		"timeout": 800.0,
 		"only_named": true,
 	},
+	"godot_versions": {
+		"server": [],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--godot=4.6.0-stable (official)"]},
+			{"role": "c2", "delay": 3.0, "args": ["--godot=4.5.2-stable (official)"]}],
+		"timeout": 90.0,
+	},
 	"dns": {
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--connect=nohost.invalid:7777"]}],
 		"timeout": 45.0,

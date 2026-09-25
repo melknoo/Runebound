@@ -480,6 +480,14 @@ class Driver extends Node:
 					_finish("fail: ended with \"%s\" (online save %s)" % [ended[0], SaveGame.online])
 					return
 				_finish("ok")
+			"godot_versions":
+				if role == "c1":  # another 4.6 patch release: welcome
+					if not await _in_zone():
+						return
+					await _seconds(6.0)  # stay while c2 is refused
+					_finish("ok")
+				elif await _until(func() -> bool: return _failed_reason != "", 30.0, "a refusal"):
+					_expect_reason("Use Godot 4.6.x")
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")

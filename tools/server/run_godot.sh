@@ -2,6 +2,7 @@
 # Linux counterpart of tools/run_godot.ps1 for the headless server laptop.
 # Usage:
 #   tools/server/run_godot.sh import   # import assets headless
+#   tools/server/run_godot.sh ensure-import  # import only if project files changed since the last one
 #   tools/server/run_godot.sh smoke    # headless smoke test (fails on SCRIPT ERROR too)
 #   tools/server/run_godot.sh serve    # run RUNEBOUND_SCENE from server.env headless
 #   tools/server/run_godot.sh serverperf [heroes]  # M09: Highlands tick cost with bot heroes
@@ -19,11 +20,39 @@ if [[ ! -x "$godot" ]]; then
 	exit 1
 fi
 
+# A new class_name script, scene or asset is unknown to a headless run until
+# an import has rescanned the project. The stamp marks the last import; any
+# project file newer than it (git pull, by hand or by the service) triggers
+# one before the run.
+stamp="$proj/.godot/runebound_import.stamp"
+
+do_import() {
+	local code=0
+	"$godot" --headless --path "$proj" --import || code=$?  # set -e: keep going to write the stamp
+	mkdir -p "$proj/.godot" && touch "$stamp"
+	return $code
+}
+
+ensure_import() {
+	if [[ -f "$stamp" ]] && [[ -z "$(find "$proj/assets" "$proj/scenes" "$proj/scripts" "$proj/resources" \
+			"$proj/shaders" "$proj/tests" "$proj/project.godot" -newer "$stamp" -type f -print -quit 2>/dev/null)" ]]; then
+		return 0
+	fi
+	echo "RUNEBOUND: project files changed since the last import: importing first"
+	do_import > /dev/null 2>&1
+}
+
 case "$mode" in
 	import)
-		exec "$godot" --headless --path "$proj" --import
+		do_import
+		exit $?
+		;;
+	ensure-import)
+		ensure_import
+		exit $?
 		;;
 	smoke)
+		ensure_import
 		# Script errors don't fail an assertion by themselves; surface them.
 		# Hard 8-minute limit: when a script fails to compile, the test's own
 		# 300 s watchdog never starts and a headless run would idle forever.
@@ -50,11 +79,13 @@ case "$mode" in
 		exit "$code"
 		;;
 	net)
+		ensure_import
 		# M09: a dedicated server and headless test clients per scenario.
 		timeout --kill-after=10 1200 "$godot" --headless --path "$proj" res://tests/net_test.tscn \
 			-- "--scenario=${2:-all}"
 		;;
 	serverperf)
+		ensure_import
 		# M09 Spike A: every frame is exactly one physics tick (--fixed-fps),
 		# so the wall time per frame is the tick cost on this machine.
 		exec "$godot" --headless --fixed-fps 60 --path "$proj" --quit-after 20000 \
@@ -69,10 +100,11 @@ case "$mode" in
 			set +a
 		fi
 		export RUNEBOUND_PORT
+		ensure_import
 		exec "$godot" --headless --path "$proj" "$RUNEBOUND_SCENE"
 		;;
 	*)
-		echo "unknown mode $mode (import | smoke | net | serverperf | serve)" >&2
+		echo "unknown mode $mode (import | ensure-import | smoke | net | serverperf | serve)" >&2
 		exit 1
 		;;
 esac

@@ -74,6 +74,10 @@ journalctl -u runebound-server -f      # "listening on *:7777/udp ..." und die Z
 ```
 Danach startet er bei jedem Boot selbst und holt vorher den neuesten Stand (`git pull` + Import).
 
+**Godot-Version:** Server und Spieler brauchen dieselbe Godot-Hauptversion 4.6, die Patch-Version darf abweichen (4.6.1 kommt auf einen 4.6.3-Server, das Log vermerkt es). Empfohlen ist überall 4.6.3, weil das Projekt damit entwickelt und getestet wird.
+
+**Manuelles `git pull` ist in Ordnung:** Beim Start importiert das Skript immer dann, wenn sich seit dem letzten Import Projektdateien geändert haben (Stempel `.godot/runebound_import.stamp`), egal wer gepullt hat. Kompilieren Skripte trotzdem nicht, beendet sich der Server mit einer klaren Meldung, statt halb zu laufen (2026-09-25: ein Pull von Hand direkt vor dem Start ließ die Klassenliste veralten).
+
 **Update einspielen:** `sudo systemctl restart runebound-server`. Alle Spieler fliegen dabei sofort raus (der Server meldet sich sauber ab) und landen mit Begründung im Titel; ihr Charakter ist gespeichert. Spieler brauchen denselben Stand wie der Server: Bei anderer Protokoll- oder Godot-Version lehnt der Server mit einer lesbaren Meldung ab („Version mismatch ... git pull“).
 
 **Log:** Alle 60 s eine Zeile `tick p50 / p95 / max ms | players | enemies (asleep) | out / in KB/s`, dazu Beitritte, Abgänge, Gruppenreisen.

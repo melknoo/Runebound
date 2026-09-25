@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # RUNEBOUND dedicated server start (systemd: runebound-server.service).
-# Pulls the latest commit (fast-forward only), re-imports if something came
-# in, then replaces itself with a headless Godot running RUNEBOUND_SCENE.
+# Pulls the latest commit (fast-forward only), re-imports when project files
+# changed since the last import, then replaces itself with a headless Godot
+# running RUNEBOUND_SCENE.
 set -euo pipefail
 
 here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
@@ -33,10 +34,13 @@ if [[ "$(git rev-parse HEAD)" != "$upstream" ]]; then
 	fi
 	git pull --ff-only || fail "git pull --ff-only failed (local changes or diverged history?)"
 	echo "RUNEBOUND: updated to $(git log --oneline -1)"
-	GODOT="$godot" "$here/run_godot.sh" import || fail "import after update failed"
 else
 	echo "RUNEBOUND: up to date at $(git log --oneline -1)"
 fi
+# Import whenever project files changed since the last import - also after a
+# manual `git pull` (2026-09-25: a pull by hand right before the start left the
+# class cache stale and the server ran without its co-op scripts).
+GODOT="$godot" "$here/run_godot.sh" ensure-import || fail "import failed"
 
 export RUNEBOUND_PORT
 echo "RUNEBOUND: starting $RUNEBOUND_SCENE (port $RUNEBOUND_PORT/udp)"

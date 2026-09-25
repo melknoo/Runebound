@@ -335,7 +335,16 @@ never `DisplayServer` (headless bot clients are clients).
   ZONE_READY for the current zone epoch; stale-epoch messages are dropped.
   Channels: 0 reliable events, 1 unreliable hero state, 2 unreliable
   snapshots. Bump `Net.PROTOCOL` with any message change: the auth handshake
-  refuses other versions before any RPC runs.
+  refuses other versions before any RPC runs. Godot versions must share
+  major.minor (`Net.godot_minor`: 4.6.1 joins a 4.6.3 server; patch
+  releases are network compatible); `--godot=` / `--protocol=` fake them in
+  tests. `Net.broken_scripts()` (REQUIRED_SCRIPTS that fail to compile) stops
+  the dedicated server and greys out the title screen with a hint.
+- **Imports before runs:** a new class_name script, scene or asset is unknown
+  to a game or headless run until an import rescans the project. `run_godot`
+  (ps1 and sh, every mode but import/reset) and `runebound-server.sh` import
+  first whenever a project file is newer than `.godot/runebound_import.stamp`
+  (written after each import).
 - **ENet:** bind `*`, one extra slot so a full server can say so, peer
   timeouts 15-30 s (zone builds block the main loop), packet throttle off
   (`throttle_configure(5000, 32, 0)`). After a zone build ENet may still drop

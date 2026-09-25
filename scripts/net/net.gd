@@ -16,9 +16,10 @@ extends Node
 ## messages carry the zone epoch and are dropped when stale; the server sends
 ## zone messages to a client only after it reported ZONE_READY.
 ##
-## Handshake: SceneMultiplayer auth (raw bytes before any RPC): protocol and
-## Godot version, player count. A version mismatch is refused with a readable
-## reason instead of failing on RPC ids.
+## Handshake: SceneMultiplayer auth (raw bytes before any RPC): the exact
+## protocol, the same Godot major.minor (patch releases talk to each other:
+## 4.6.1 joins a 4.6.3 server), the player count. A mismatch is refused with a
+## readable reason instead of failing on RPC ids.
 
 signal session_started(welcome: Dictionary)  # client: accepted, the zone loads next
 signal session_failed(reason: String)        # client: could not join
@@ -60,6 +61,17 @@ var last_reason: String = ""
 var pending_spawn: Vector3 = Vector3.INF
 ## Tests: pretend to speak another protocol (`-- --protocol=N`).
 var protocol_override: int = -1
+## Tests: pretend to run another Godot version (`-- --godot=4.5.2-stable`).
+var godot_override: String = ""
+## Server: peers told "no", dropped shortly after unless they already left.
+var _refused: Dictionary = {}
+
+## Scripts nothing works without. A new class_name script is unknown to a game
+## or headless run until an import has rescanned the project (the run_godot
+## wrappers and the server script import whenever project files changed); if
+## one still fails to compile, the title screen and the server say so.
+const REQUIRED_SCRIPTS: Array[String] = ["res://scripts/net/net_world.gd", "res://scripts/world/zone_base.gd",
+	"res://scripts/player/player.gd", "res://scripts/enemies/enemy_base.gd"]
 ## Zone-bound messages dropped because their epoch was stale (tests, stats).
 var dropped_stale: int = 0
 
@@ -123,6 +135,8 @@ func _ready() -> void:
 			print("[net] netsim: rtt %.0f ms, jitter %.0f ms, loss %.0f %%" % [_sim_rtt, _sim_jitter, _sim_loss * 100.0])
 		elif arg.begins_with("--protocol="):
 			protocol_override = arg.trim_prefix("--protocol=").to_int()
+		elif arg.begins_with("--godot="):
+			godot_override = arg.trim_prefix("--godot=")
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +171,24 @@ func my_id() -> int:
 
 static func godot_version() -> String:
 	return str(Engine.get_version_info().get("string", "?"))
+
+
+## "4.6.3-stable (official)" -> "4.6": what server and clients must share.
+static func godot_minor(version: String) -> String:
+	var parts := version.split(".")
+	if parts.size() < 2:
+		return version
+	return "%s.%s" % [parts[0], parts[1].get_slice("-", 0)]
+
+
+## REQUIRED_SCRIPTS that failed to compile (empty = all good).
+static func broken_scripts() -> Array[String]:
+	var out: Array[String] = []
+	for path in REQUIRED_SCRIPTS:
+		var script := load(path) as GDScript
+		if script == null or not script.can_instantiate():
+			out.append(path)
+	return out
 
 
 # ---------------------------------------------------------------------------
@@ -194,7 +226,8 @@ func join(address: String, player_name: String, class_id: StringName, level: int
 	var host_name := String(parsed["host"])
 	var port := int(parsed["port"])
 	_hello = {"protocol": PROTOCOL if protocol_override < 0 else protocol_override,
-		"godot": godot_version(), "name": clean_name(player_name), "class_id": String(class_id), "level": level}
+		"godot": godot_version() if godot_override == "" else godot_override,
+		"name": clean_name(player_name), "class_id": String(class_id), "level": level}
 	_join = {"host": host_name, "port": port, "resolve": -1, "stage": "resolve"}
 	mode = Mode.CLIENT
 	_connect_left = CONNECT_TIMEOUT
@@ -298,19 +331,26 @@ func _server_check_hello(id: int, hello: Dictionary) -> void:
 	if their_protocol != PROTOCOL:
 		reason = "Version mismatch: the server speaks protocol %d, your game %d. Update your game (git pull)." % [
 			PROTOCOL, their_protocol]
-	elif str(hello.get("godot", "")) != godot_version():
-		reason = "Version mismatch: the server runs Godot %s, you run %s." % [godot_version(), str(hello.get("godot", "?"))]
+	elif godot_minor(str(hello.get("godot", "?"))) != godot_minor(godot_version()):
+		reason = "Version mismatch: the server runs Godot %s, you run %s. Use Godot %s.x." % [
+			godot_version(), str(hello.get("godot", "?")), godot_minor(godot_version())]
 	elif roster.size() >= max_players:
 		reason = "The server is full (%d/%d)." % [roster.size(), max_players]
 	var sm := _scene_multiplayer()
 	if reason != "":
 		log_line("refused peer %d: %s" % [id, reason])
 		sm.send_auth(id, var_to_bytes({"ok": false, "reason": reason}))
+		_refused[id] = true
 		get_tree().create_timer(0.5, true, false, true).timeout.connect(func() -> void:
-			if _enet != null and mode == Mode.SERVER:
+			# The refused client usually hangs up by itself first (then ENet has
+			# forgotten the peer and a disconnect would only log an error).
+			if _refused.has(id) and _enet != null and mode == Mode.SERVER:
+				_refused.erase(id)
 				_enet.disconnect_peer(id)
 		)
 		return
+	if str(hello.get("godot", "")) != godot_version():
+		log_line("note: peer %d runs Godot %s (server %s)" % [id, str(hello.get("godot", "?")), godot_version()])
 	hello["name"] = _unique_name(clean_name(str(hello.get("name", ""))))
 	_pending[id] = hello
 	var spawn_at := Vector3.INF  # late joiners appear next to the party
@@ -338,6 +378,7 @@ func _unique_name(wanted: String) -> String:
 
 func _on_auth_failed(id: int) -> void:
 	_pending.erase(id)
+	_refused.erase(id)
 	if mode == Mode.CLIENT and id == 1 and last_reason == "":
 		_fail("The handshake with the server timed out.")
 
@@ -356,6 +397,7 @@ func _on_peer_connected(id: int) -> void:
 
 func _on_peer_disconnected(id: int) -> void:
 	_pending.erase(id)
+	_refused.erase(id)
 	if mode != Mode.SERVER or not roster.has(id):
 		return
 	var who := str((roster[id] as Dictionary).get("name", "?"))
@@ -479,6 +521,7 @@ func _close() -> void:
 	mode = Mode.OFFLINE
 	roster.clear()
 	_pending.clear()
+	_refused.clear()
 	_ready_epoch.clear()
 	_sim_queue.clear()
 	_sim_last_due.clear()

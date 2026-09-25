@@ -31,6 +31,13 @@ func _ready() -> void:
 	Net.session_failed.connect(_on_failed)
 	if Net.last_reason != "":
 		_say(_main_status, Net.last_reason, WARN)
+	var broken := Net.broken_scripts()
+	if not broken.is_empty():
+		_continue_btn.disabled = true
+		_connect_btn.disabled = true
+		_say(_main_status, "This game's scripts failed to compile (%s). Run tools\\run_godot.cmd import or open the project in the Godot editor once, then start again." % [
+			broken[0].get_file()], WARN)
+		return
 	var auto_connect := ""
 	var auto_name := ""
 	for arg in OS.get_cmdline_user_args():

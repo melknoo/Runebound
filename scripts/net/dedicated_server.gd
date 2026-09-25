@@ -10,6 +10,13 @@ extends Node
 
 func _ready() -> void:
 	Engine.max_fps = 60  # a headless main loop is uncapped: it would spin a core at 100 %
+	var broken := Net.broken_scripts()
+	if not broken.is_empty():
+		# Never serve a half-compiled world (a stale class cache did exactly that).
+		printerr("[net] scripts failed to compile: %s. Run tools/server/run_godot.sh import (new scripts need a rescan)." % [
+			", ".join(broken)])
+		get_tree().quit(1)
+		return
 	var port := Net.DEFAULT_PORT
 	var env_port := OS.get_environment("RUNEBOUND_PORT")
 	if env_port.is_valid_int():

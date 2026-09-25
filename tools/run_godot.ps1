@@ -46,6 +46,32 @@ function Get-ListZone([string]$jsonPath) {
 	return "res://scenes/combat_lab.tscn"
 }
 
+# A new class_name script, scene or asset is unknown to a game or headless run
+# until an import has rescanned the project (the editor does it by itself).
+# Import first whenever a project file is newer than the last import: after a
+# git pull, after edits, on a fresh clone. The stamp lives in .godot/.
+$importStamp = Join-Path $proj ".godot\runebound_import.stamp"
+function Invoke-Import {
+	& $godot --headless --path $proj --import 2>&1 | Out-Null
+	$code = $LASTEXITCODE
+	New-Item -ItemType Directory -Force (Split-Path $importStamp) | Out-Null
+	Set-Content -Path $importStamp -Value (Get-Date -Format o) -Encoding ascii
+	return $code
+}
+function Update-Import {
+	$since = if (Test-Path $importStamp) { (Get-Item $importStamp).LastWriteTime } else { [datetime]::MinValue }
+	$dirs = @("assets", "scenes", "scripts", "resources", "shaders", "tests") |
+		ForEach-Object { Join-Path $proj $_ } | Where-Object { Test-Path $_ }
+	$changed = @(Get-ChildItem -Path $dirs -Recurse -File -ErrorAction SilentlyContinue |
+		Where-Object { $_.LastWriteTime -gt $since } | Select-Object -First 1)
+	if ((Get-Item (Join-Path $proj "project.godot")).LastWriteTime -gt $since) { $changed += @(Get-Item (Join-Path $proj "project.godot")) }
+	if ($changed.Count -gt 0) {
+		Write-Output ("Project files changed since the last import ({0}): importing first ..." -f $changed[0].Name)
+		Invoke-Import | Out-Null
+	}
+}
+if ($Mode -notin @("import", "reset")) { Update-Import }
+
 if ($Mode -notin @("import", "smoke", "net", "server", "serverperf")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
@@ -54,7 +80,7 @@ if ($Mode -notin @("import", "smoke", "net", "server", "serverperf")) { Show-Oth
 $cap = @("--quit-after", "30000")
 
 switch ($Mode) {
-	"import"  { & $godot --headless --path $proj --import }
+	"import"  { exit (Invoke-Import) }
 	"reset"   {
 		# Fresh start for testing: deletes the real save (gear, level, talents,
 		# world flags). Scratch saves from test runs are left alone.

@@ -2156,6 +2156,10 @@ func _run() -> void:
 		"bad addresses are refused with a reason")
 	_check(NetAddress.format("2a0d::1", 7777) == "[2a0d::1]:7777" and NetAddress.format("host", 1) == "host:1",
 		"addresses print back (IPv6 in brackets)")
+	_check(Net.godot_minor("4.6.3-stable (official)") == "4.6" and Net.godot_minor("4.6-stable (official)") == "4.6"
+		and Net.godot_minor("4.10.1-rc1") == "4.10" and Net.godot_minor(Net.godot_version()) != "",
+		"server and clients compare Godot by major.minor (patch releases may differ)")
+	_check(Net.broken_scripts().is_empty(), "every script co-op needs compiles (title and server check this)")
 	SaveGame.flags = {"colossus_defeated": true}
 	SaveGame.camps = {"camp_1": {"cleared_at": 5.0}}
 	SaveGame.current_zone = "res://scenes/hub.tscn"
