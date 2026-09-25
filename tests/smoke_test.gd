@@ -2146,13 +2146,21 @@ func _run() -> void:
 	var a2 := NetAddress.parse(" 100.101.57.51:7780 ", 7777)
 	var a3 := NetAddress.parse("[2a0d:3341::1]:7001", 7777)
 	var a4 := NetAddress.parse("2a0d:3341::1", 7777)
-	_check(a1["host"] == "melvin-laptop.tail94658b.ts.net" and int(a1["port"]) == 7777
-		and a2["host"] == "100.101.57.51" and int(a2["port"]) == 7780
-		and a3["host"] == "2a0d:3341::1" and int(a3["port"]) == 7001
-		and a4["host"] == "2a0d:3341::1" and int(a4["port"]) == 7777,
-		"server addresses parse: host, host:port, [v6]:port, bare v6")
+	_check(str(a1["url"]) == "wss://melvin-laptop.tail94658b.ts.net/"
+		and a2["host"] == "100.101.57.51" and int(a2["port"]) == 7780 and str(a2["url"]) == ""
+		and a3["host"] == "2a0d:3341::1" and int(a3["port"]) == 7001 and str(a3["url"]) == ""
+		and a4["host"] == "2a0d:3341::1" and int(a4["port"]) == 7777 and str(a4["url"]) == "",
+		"server addresses parse: a bare name (Funnel, WebSocket), host:port, [v6]:port, bare v6 (ENet)")
+	var w1 := NetAddress.parse("wss://Laptop.tail9.ts.net/rb", 7777)
+	var w2 := NetAddress.parse("ws://127.0.0.1:17840", 7777)
+	var w3 := NetAddress.parse(" https://laptop.tail9.ts.net ", 7777)
+	var w4 := NetAddress.parse("127.0.0.1", 7777)
+	_check(str(w1["url"]) == "wss://Laptop.tail9.ts.net/rb" and str(w2["url"]) == "ws://127.0.0.1:17840/"
+		and str(w3["url"]) == "wss://laptop.tail9.ts.net/" and str(w4["url"]) == "" and int(w4["port"]) == 7777,
+		"M09b: wss://, https:// and ws:// go over WebSocket, a bare IP stays ENet")
 	_check(String(NetAddress.parse("", 7777)["error"]) != "" and String(NetAddress.parse("host:99999", 7777)["error"]) != ""
-		and String(NetAddress.parse("host:abc", 7777)["error"]) != "" and String(NetAddress.parse("[::1", 7777)["error"]) != "",
+		and String(NetAddress.parse("host:abc", 7777)["error"]) != "" and String(NetAddress.parse("[::1", 7777)["error"]) != ""
+		and String(NetAddress.parse("wss://", 7777)["error"]) != "",
 		"bad addresses are refused with a reason")
 	_check(NetAddress.format("2a0d::1", 7777) == "[2a0d::1]:7777" and NetAddress.format("host", 1) == "host:1",
 		"addresses print back (IPv6 in brackets)")

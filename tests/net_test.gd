@@ -15,6 +15,11 @@ extends Node
 const BASE_PORT := 17780
 const DIR := "user://net_test/"
 const SERVER_BOOT_TIMEOUT := 60.0
+## M09b: these also run over WebSocket (the Tailscale Funnel path) as
+## "<name>@ws": part of "all", or all of them with `--scenario=ws`. The server
+## then needs an invite list; roles without a code of their own get one.
+const WS_SCENARIOS: Array[String] = ["handshake", "invite", "travel", "server_gone"]
+const WS_PORT_OFFSET := 60
 
 ## role "srv" = the dedicated server (omit `server` for a client-only case).
 const SCENARIOS := {
@@ -153,6 +158,10 @@ func _run() -> void:
 		if wanted == scenario or (wanted == "all" and not bool((SCENARIOS[scenario] as Dictionary).get("only_named", false))):
 			await _run_scenario(scenario, SCENARIOS[scenario] as Dictionary, BASE_PORT + index)
 		index += 1
+	for i in WS_SCENARIOS.size():
+		var ws_name := WS_SCENARIOS[i] + "@ws"
+		if wanted == ws_name or wanted == "all" or wanted == "ws":
+			await _run_scenario(ws_name, SCENARIOS[WS_SCENARIOS[i]] as Dictionary, BASE_PORT + WS_PORT_OFFSET + i)
 	if _failures.is_empty():
 		print("== net test: all scenarios passed ==")
 		get_tree().quit(0)
@@ -165,25 +174,35 @@ func _run() -> void:
 
 func _run_scenario(scenario: String, spec: Dictionary, port: int) -> void:
 	print("-- %s (port %d)" % [scenario, port])
+	var over_ws := scenario.ends_with("@ws")
+	var test_name := scenario.trim_suffix("@ws")  # what the children play
 	var procs: Dictionary = {}  # role -> pid
 	var roles: Array[String] = []
 	var has_server := spec.has("server")
+	var invites: Dictionary = (spec.get("invites", {}) as Dictionary).duplicate()
+	var role_codes: Dictionary = {}  # role -> a code made up for it (WebSocket needs invites)
+	if over_ws and invites.is_empty():
+		for c: Dictionary in spec["clients"]:
+			var code := NetAuth.generate_code()
+			invites[String(c["role"])] = code
+			role_codes[String(c["role"])] = code
 	if has_server:
 		var srv_args: Array = ["res://scenes/dedicated_server.tscn", "--", "--port=%d" % port,
 			"--save=user://net_test/srv_save.json"]
-		if spec.has("invites"):
+		if not invites.is_empty():
 			var lines := "# net test invites\n"
-			var invites: Dictionary = spec["invites"]
 			for invite_name: String in invites:
 				lines += "%s\t%s\ttest\n" % [invite_name, str(invites[invite_name])]
 			var f := FileAccess.open(DIR + "invites.txt", FileAccess.WRITE)
 			f.store_string(lines)
 			f.close()
 			srv_args.append("--invites=" + DIR + "invites.txt")
+		if over_ws:
+			srv_args.append("--transport=ws")
 		srv_args.append_array(spec["server"] as Array)
 		_clean("srv")
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(DIR + "srv_save.json"))
-		procs["srv"] = _launch("srv", scenario, srv_args)
+		procs["srv"] = _launch("srv", test_name, srv_args)
 		roles.append("srv")
 		if not await _wait_for_log("srv", "(epoch 1)", SERVER_BOOT_TIMEOUT):
 			_fail(scenario, "srv", "the server did not start")
@@ -195,14 +214,17 @@ func _run_scenario(scenario: String, spec: Dictionary, port: int) -> void:
 		var delay := float(c.get("delay", 0.0))
 		while float(Time.get_ticks_msec() - started) / 1000.0 < delay:
 			await get_tree().process_frame
-		var args: Array = ["res://tests/net_client.tscn", "--", "--connect=127.0.0.1:%d" % port,
+		var target := ("ws://127.0.0.1:%d" if over_ws else "127.0.0.1:%d") % port
+		var args: Array = ["res://tests/net_client.tscn", "--", "--connect=" + target,
 			"--save=user://net_test/%s_save.json" % role, "--name=%s" % role.to_upper()]
+		if role_codes.has(role):
+			args.append("--invite=" + str(role_codes[role]))
 		args.append_array(c.get("args", []) as Array)
 		if bool(c.get("windowed", false)):
 			args.insert(0, "--windowed-client")  # _launch drops --headless for it
 		_clean(role)
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(DIR + role + "_save.json"))
-		procs[role] = _launch(role, scenario, args)
+		procs[role] = _launch(role, test_name, args)
 		roles.append(role)
 	# Clients finish on their own; the server runs until it is told to stop.
 	var deadline := Time.get_ticks_msec() + int(float(spec["timeout"]) * 1000.0)

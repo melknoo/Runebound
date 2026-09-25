@@ -14,6 +14,9 @@ extends Node
 const SNAPSHOT_EVERY := 1.0 / 20.0  # seconds between server snapshots
 const HERO_SEND_EVERY := 2          # physics ticks (60 Hz -> 30 Hz)
 const INTERP_DELAY_MS := 100.0
+## Over WebSocket (TCP) a lost segment holds the next ones back instead of
+## losing them: a bigger cushion keeps remote things smooth through that.
+const INTERP_DELAY_WS_MS := 150.0
 const MAX_EXTRAPOLATE_MS := 150.0
 const BUFFER_MS := 1000.0
 ## Further than this between two sends (1/30 s) is a jump, not a walk.
@@ -396,7 +399,8 @@ func _on_snapshot(_from: int, payload: Array) -> void:
 func _pose_puppets() -> void:
 	if not _clock_ready:
 		return
-	var render_t := float(Time.get_ticks_msec()) + _clock_offset - INTERP_DELAY_MS
+	var delay := INTERP_DELAY_WS_MS if Net.transport == Net.Transport.WS else INTERP_DELAY_MS
+	var render_t := float(Time.get_ticks_msec()) + _clock_offset - delay
 	for peer: int in heroes:
 		var p := heroes[peer] as Player
 		if p == null or not is_instance_valid(p):

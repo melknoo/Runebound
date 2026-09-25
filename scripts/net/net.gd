@@ -28,6 +28,13 @@ extends Node
 ## changed code ends that session (KICK), and a code joining again replaces its
 ## older session. Without an invite list the server is open and ENet binds
 ## 127.0.0.1 only (tests, tools/run_godot coop).
+##
+## Transports: ENet over UDP (tests, LAN, tools/run_godot coop) or, M09b,
+## WebSocket for friends coming through Tailscale Funnel (TCP only): the
+## server listens on 127.0.0.1 where tailscaled hands the connections over;
+## clients reach it at wss://<laptop>.ts.net/. Everything above the transport
+## is the same; over TCP the unreliable channels simply arrive late instead
+## of not at all.
 
 signal session_started(welcome: Dictionary)  # client: accepted, the zone loads next
 signal session_failed(reason: String)        # client: could not join
@@ -37,6 +44,7 @@ signal peer_ready(peer_id: int)  # server: a client finished loading the current
 signal peer_left(peer_id: int)   # server: a client left
 
 enum Mode { OFFLINE, SERVER, CLIENT }
+enum Transport { ENET, WS }
 
 const PROTOCOL := 8
 const DEFAULT_PORT := 7777
@@ -64,9 +72,19 @@ const PEER_TIMEOUT_MIN_MS := 15000
 const PEER_TIMEOUT_MAX_MS := 30000
 const TITLE_SCENE := "res://scenes/title.tscn"
 const STATS_EVERY := 60.0
+## M09b: the WebSocket server's port (tailscaled's Funnel forwards to it).
+const WS_PORT := 7780
+## Join bursts (every enemy, flag and hero at once) and a few seconds of a
+## stalled TCP link must fit: a full WebSocket buffer drops the message.
+const WS_BUFFER := 1 << 21
+const WS_QUEUE := 16384
+const WS_HANDSHAKE_TIMEOUT := 10.0
+## WebSocket clients measure their round trip themselves (ENet does it inside).
+const PING_EVERY := 2.0
 const NAME_MAX := 16
 
 var mode: Mode = Mode.OFFLINE
+var transport: Transport = Transport.ENET
 var max_players: int = MAX_PLAYERS
 var zone_epoch: int = 0
 var zone_scene: String = ""
@@ -105,6 +123,10 @@ var dropped_stale: int = 0
 
 var _handlers: Dictionary = {}  # kind -> Array of Callables
 var _enet: ENetMultiplayerPeer = null
+var _ws: WebSocketMultiplayerPeer = null
+var _ws_rtt_ms: int = -1            # client over WebSocket: the last ping
+var _ping_left: float = 0.0
+var _ping_seq: int = 0              # pings ride ECHO with negative sequence numbers
 var _hello: Dictionary = {}         # client: what it sends in the handshake
 var _welcome: Dictionary = {}       # client: the server's answer
 var _pending: Dictionary = {}       # server: peer -> hello, until auth completes
@@ -237,24 +259,41 @@ static func broken_scripts() -> Array[String]:
 # Session: host / join / leave
 # ---------------------------------------------------------------------------
 
-## Dedicated server at `port`. With an invite list it listens on every
-## interface (IPv4 + IPv6) and lets in listed codes only; without one it is
-## open and binds 127.0.0.1 (only this machine can join).
-func host(port: int, players: int = MAX_PLAYERS, invites: String = "") -> Error:
+## Dedicated server at `port`. ENet (UDP): with an invite list on every
+## interface (IPv4 + IPv6) and listed codes only; without one open and bound
+## to 127.0.0.1 (only this machine can join). WebSocket (M09b, `over_ws`):
+## always 127.0.0.1, where tailscaled hands over the Funnel connections, and
+## only with an invite list (through Funnel everyone looks local).
+func host(port: int, players: int = MAX_PLAYERS, invites: String = "", over_ws: bool = false) -> Error:
 	_close()
-	var peer := ENetMultiplayerPeer.new()
-	var bind := "*" if invites != "" else "127.0.0.1"
-	peer.set_bind_ip(bind)
-	var err := peer.create_server(port, players + ENET_SPARE, CHANNELS)
-	if err != OK:
-		return err
-	_enet = peer
-	multiplayer.multiplayer_peer = peer
+	var where := ""
+	if over_ws:
+		if invites == "":
+			log_line("refusing to serve WebSocket without an invite list: through Tailscale Funnel everyone looks local")
+			return ERR_UNAUTHORIZED
+		var ws := _new_ws_peer()
+		var ws_err := ws.create_server(port, "127.0.0.1")
+		if ws_err != OK:
+			return ws_err
+		_ws = ws
+		transport = Transport.WS
+		multiplayer.multiplayer_peer = ws
+		where = "ws://127.0.0.1:%d (for Tailscale Funnel)" % port
+	else:
+		var peer := ENetMultiplayerPeer.new()
+		var bind := "*" if invites != "" else "127.0.0.1"
+		peer.set_bind_ip(bind)
+		var err := peer.create_server(port, players + ENET_SPARE, CHANNELS)
+		if err != OK:
+			return err
+		_enet = peer
+		multiplayer.multiplayer_peer = peer
+		where = "%s:%d/udp" % [bind, port]
 	mode = Mode.SERVER
 	max_players = players
 	invites_path = invites
 	roster.clear()
-	log_line("listening on %s:%d/udp, up to %d players, protocol %d, Godot %s" % [bind, port, players,
+	log_line("listening on %s, up to %d players, protocol %d, Godot %s" % [where, players,
 		PROTOCOL, godot_version()])
 	if invites == "":
 		log_line("open: no invite list, only this machine can join")
@@ -263,9 +302,10 @@ func host(port: int, players: int = MAX_PLAYERS, invites: String = "") -> Error:
 	return OK
 
 
-## Client: join the server at `address` ("host", "host:port", "[v6]:port")
-## with the invite code the host gave us ("" for an open server). The answer
-## comes as session_started or session_failed.
+## Client: join the server at `address` (NetAddress: a bare name or wss://
+## goes over WebSocket, "host:port" / "[v6]:port" / an IP over ENet) with the
+## invite code the host gave us ("" for an open server). The answer comes as
+## session_started or session_failed.
 func join(address: String, player_name: String, class_id: StringName, level: int, invite: String = "") -> void:
 	_close()
 	last_reason = ""
@@ -279,10 +319,13 @@ func join(address: String, player_name: String, class_id: StringName, level: int
 	_hello = {"protocol": PROTOCOL if protocol_override < 0 else protocol_override,
 		"godot": godot_version() if godot_override == "" else godot_override,
 		"name": clean_name(player_name), "class_id": String(class_id), "level": level}
-	_join = {"host": host_name, "port": port, "resolve": -1, "stage": "resolve"}
+	var url := String(parsed.get("url", ""))
+	_join = {"host": host_name, "port": port, "url": url, "resolve": -1, "stage": "resolve"}
 	mode = Mode.CLIENT
 	_connect_left = CONNECT_TIMEOUT
-	if host_name.is_valid_ip_address():
+	if url != "":
+		_open_ws_client(url)
+	elif host_name.is_valid_ip_address():
 		_open_client(host_name, port)
 	else:
 		_join["resolve"] = IP.resolve_hostname_queue_item(host_name, IP.TYPE_ANY)
@@ -323,9 +366,48 @@ func _open_client(ip: String, port: int) -> void:
 	log_line("connecting to %s ..." % NetAddress.format(ip, port))
 
 
+## Client: WebSocket to a Funnel address (wss://, TLS checked against the
+## name) or, in tests, ws://127.0.0.1. The peer resolves the name itself.
+func _open_ws_client(url: String) -> void:
+	var ws := _new_ws_peer()
+	var tls: TLSOptions = TLSOptions.client() if url.begins_with("wss://") else null
+	var err := ws.create_client(url, tls)
+	if err != OK:
+		_fail("Could not open a connection to %s (%s)." % [url, error_string(err)])
+		return
+	_ws = ws
+	transport = Transport.WS
+	multiplayer.multiplayer_peer = ws
+	_join["stage"] = "connect"
+	_connect_left = CONNECT_TIMEOUT
+	log_line("connecting to %s ..." % url)
+
+
+func _new_ws_peer() -> WebSocketMultiplayerPeer:
+	var ws := WebSocketMultiplayerPeer.new()
+	ws.outbound_buffer_size = WS_BUFFER
+	ws.inbound_buffer_size = WS_BUFFER
+	ws.max_queued_packets = WS_QUEUE
+	ws.handshake_timeout = WS_HANDSHAKE_TIMEOUT
+	return ws
+
+
+## What the player typed, for messages ("host:port" or the WebSocket URL).
+func _join_target() -> String:
+	if String(_join.get("url", "")) != "":
+		return String(_join["url"])
+	return NetAddress.format(String(_join.get("host", "?")), int(_join.get("port", DEFAULT_PORT)))
+
+
 func _process(delta: float) -> void:
 	if not _join.is_empty():
 		_poll_join(delta)
+	elif mode == Mode.CLIENT and _ws != null:
+		_ping_left -= delta
+		if _ping_left <= 0.0:
+			_ping_left = PING_EVERY
+			_ping_seq += 1
+			send_to_server(NetMsg.ECHO, [-_ping_seq, Time.get_ticks_usec()], CH_EVENTS, false)
 	if not _sim_queue.is_empty():
 		_flush_sim()
 	if mode == Mode.SERVER:
@@ -342,7 +424,7 @@ func _process(delta: float) -> void:
 
 func _poll_join(delta: float) -> void:
 	_connect_left -= delta
-	var target := NetAddress.format(String(_join["host"]), int(_join["port"]))
+	var target := _join_target()
 	if String(_join["stage"]) == "resolve":
 		var id := int(_join["resolve"])
 		match IP.get_resolve_item_status(id):
@@ -501,11 +583,11 @@ func _refuse(id: int, reason: String, why: String = "") -> void:
 func _drop_later(id: int) -> void:
 	_refused[id] = true
 	get_tree().create_timer(0.5, true, false, true).timeout.connect(func() -> void:
-		# The client usually hangs up by itself first (then ENet has forgotten
-		# the peer and a disconnect would only log an error).
-		if _refused.has(id) and _enet != null and mode == Mode.SERVER:
+		# The client usually hangs up by itself first (then the transport has
+		# forgotten the peer and a disconnect would only log an error).
+		if _refused.has(id) and mode == Mode.SERVER and multiplayer.multiplayer_peer != null:
 			_refused.erase(id)
-			_enet.disconnect_peer(id)
+			multiplayer.multiplayer_peer.disconnect_peer(id)
 	)
 
 
@@ -526,7 +608,8 @@ func _evict_oldest_pending() -> void:
 	_scene_multiplayer().disconnect_peer(oldest)
 
 
-## Server: " from 1.2.3.4" for the log ("" when unknown).
+## Server: " from 1.2.3.4" for the log ("" when unknown; over WebSocket
+## everyone arrives from tailscaled on 127.0.0.1).
 func _peer_from(id: int) -> String:
 	if _enet == null:
 		return ""
@@ -657,8 +740,7 @@ func _on_connected() -> void:
 
 func _on_connection_failed() -> void:
 	if mode == Mode.CLIENT and last_reason == "":
-		var target := NetAddress.format(String(_join.get("host", "?")), int(_join.get("port", DEFAULT_PORT)))
-		_fail("No answer from %s. Is the server running, and is the address right?" % target)
+		_fail("No answer from %s. Is the server running, and is the address right?" % _join_target())
 
 
 func _on_server_disconnected() -> void:
@@ -750,6 +832,11 @@ func _close() -> void:
 	if _enet != null:
 		_enet.close()
 		_enet = null
+	if _ws != null:
+		_ws.close()
+		_ws = null
+	transport = Transport.ENET
+	_ws_rtt_ms = -1
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	mode = Mode.OFFLINE
 	roster.clear()
@@ -767,11 +854,14 @@ func _close() -> void:
 
 
 func _exit_tree() -> void:
-	if mode == Mode.SERVER and _enet != null:
-		for id: int in roster:
-			_enet.disconnect_peer(id)  # clients hear "gone" now, not after the 15-30 s timeout
-		if _enet.host != null:
-			_enet.host.flush()
+	if mode != Mode.SERVER or multiplayer.multiplayer_peer == null:
+		return
+	for id: int in roster:
+		multiplayer.multiplayer_peer.disconnect_peer(id)  # clients hear "gone" now, not after a timeout
+	if _enet != null and _enet.host != null:
+		_enet.host.flush()
+	if _ws != null:
+		_ws.poll()  # sends the close frames
 
 
 func _scene_multiplayer() -> SceneMultiplayer:
@@ -821,10 +911,13 @@ func _on_zone_ready(from: int, payload: Array) -> void:
 	peer_ready.emit(from)
 
 
-## Connection test: the server bounces the packet straight back.
+## Connection test: the server bounces the packet straight back. Negative
+## sequence numbers are a WebSocket client's own pings (ping_ms).
 func _on_echo(from: int, payload: Array) -> void:
 	if mode == Mode.SERVER:
 		send_to_peer(from, NetMsg.ECHO, payload, CH_SNAPSHOT, false)
+	elif mode == Mode.CLIENT and payload.size() >= 2 and int(payload[0]) < 0:
+		_ws_rtt_ms = int(float(Time.get_ticks_usec() - int(payload[1])) / 1000.0)
 
 
 ## Server: a client's level changed (its character arrived or it levelled).
@@ -910,11 +1003,8 @@ func _send(to: int, channel: int, epoch: int, kind: int, payload: Array) -> void
 
 
 func _send_now(to: int, channel: int, epoch: int, kind: int, payload: Array) -> void:
-	if _enet == null:
-		return
-	var peer := _enet.get_peer(to)
-	if peer == null or peer.get_state() != ENetPacketPeer.STATE_CONNECTED:
-		return  # leaving (ENet is tearing it down): sending would only log errors
+	if not _peer_open(to):
+		return  # leaving (the transport is tearing it down): sending would only log errors
 	match channel:
 		CH_HERO:
 			_rx_hero.rpc_id(to, epoch, kind, payload)
@@ -922,6 +1012,15 @@ func _send_now(to: int, channel: int, epoch: int, kind: int, payload: Array) -> 
 			_rx_snapshot.rpc_id(to, epoch, kind, payload)
 		_:
 			_rx_event.rpc_id(to, epoch, kind, payload)
+
+
+func _peer_open(id: int) -> bool:
+	if _enet != null:
+		var peer := _enet.get_peer(id)
+		return peer != null and peer.get_state() == ENetPacketPeer.STATE_CONNECTED
+	if _ws != null:
+		return multiplayer.get_peers().has(id)
+	return false
 
 
 @rpc("any_peer", "call_remote", "reliable", 0)
@@ -1015,8 +1114,10 @@ func _tick_end() -> void:
 
 ## Round-trip time to the server in ms (clients; -1 when unknown).
 func ping_ms() -> int:
-	if mode != Mode.CLIENT or _enet == null:
+	if mode != Mode.CLIENT:
 		return -1
+	if _enet == null:
+		return _ws_rtt_ms
 	var p := _enet.get_peer(1)
 	return int(p.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME)) if p != null else -1
 
@@ -1038,7 +1139,8 @@ func _log_stats() -> void:
 	if _enet != null and _enet.host != null:
 		sent = float(_enet.host.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA)) / STATS_EVERY / 1024.0
 		received = float(_enet.host.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA)) / STATS_EVERY / 1024.0
+	var traffic := "out %.1f KB/s, in %.1f KB/s" % [sent, received] if _enet != null else "WebSocket"
 	var refused := (" | refused %d" % _refusals) if _refusals > 0 else ""
 	_refusals = 0
-	log_line("tick p50 %.2f / p95 %.2f / max %.2f ms | players %d | enemies %d (%d asleep) | out %.1f KB/s, in %.1f KB/s%s" % [
-		p50, p95, worst, roster.size(), EnemyBase.all_enemies.size(), asleep, sent, received, refused])
+	log_line("tick p50 %.2f / p95 %.2f / max %.2f ms | players %d | enemies %d (%d asleep) | %s%s" % [
+		p50, p95, worst, roster.size(), EnemyBase.all_enemies.size(), asleep, traffic, refused])

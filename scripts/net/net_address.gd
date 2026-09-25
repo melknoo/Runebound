@@ -1,18 +1,33 @@
 class_name NetAddress
 extends Object
 ## M09: the co-op server address as the player types it. Accepted:
-##   host            -> default port        melvin-laptop.tail94658b.ts.net
-##   host:port                              100.101.57.51:7777
+##   name            -> WebSocket (M09b)   melvin-laptop.tail94658b.ts.net = wss://<name>/
+##   wss:// / https:// / ws://              wss://melvin-laptop.tail94658b.ts.net/
+##   host:port       -> ENet (UDP)         100.101.57.51:7777
+##   bare IP         -> ENet, default port 127.0.0.1
 ##   [v6]:port / [v6]                       [2a0d:3341::1]:7777
 ##   bare IPv6 (two or more colons)         2a0d:3341::1  (default port)
+## A bare name is a Tailscale Funnel address (HTTPS on 443, the way friends
+## reach the laptop); LAN and test servers give a port or an IP.
 ## Never a hard-coded server: the title screen keeps the last used one.
 
 
-## {"host": String, "port": int, "error": String} ("" = valid).
+## {"host": String, "port": int, "url": String, "error": String} ("" = valid);
+## "url" is set when the server is reached over WebSocket.
 static func parse(text: String, default_port: int) -> Dictionary:
 	var s := text.strip_edges()
 	if s == "":
 		return _bad("Enter a server address (host or host:port).")
+	var lower := s.to_lower()
+	for scheme: String in ["wss://", "https://", "ws://"]:
+		if lower.begins_with(scheme):
+			var rest := s.substr(scheme.length())
+			var host_port := rest.get_slice("/", 0)
+			if host_port == "" or host_port.contains(" "):
+				return _bad("That is not a server address.")
+			var secure: bool = scheme != "ws://"
+			var url := ("wss://" if secure else "ws://") + rest + ("" if rest.contains("/") else "/")
+			return {"host": host_port, "port": 443 if secure else 80, "url": url, "error": ""}
 	var host := s
 	var port_text := ""
 	if s.begins_with("["):
@@ -37,7 +52,9 @@ static func parse(text: String, default_port: int) -> Dictionary:
 		return _bad("The port must be between 1 and 65535.")
 	if host == "" or host.contains(" "):
 		return _bad("That is not a server address.")
-	return {"host": host, "port": port, "error": ""}
+	if port_text == "" and not host.is_valid_ip_address():
+		return {"host": host, "port": 443, "url": "wss://%s/" % host, "error": ""}  # a Funnel name
+	return {"host": host, "port": port, "url": "", "error": ""}
 
 
 ## Back to text (IPv6 in brackets).
@@ -46,4 +63,4 @@ static func format(host: String, port: int) -> String:
 
 
 static func _bad(reason: String) -> Dictionary:
-	return {"host": "", "port": 0, "error": reason}
+	return {"host": "", "port": 0, "url": "", "error": reason}

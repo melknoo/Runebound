@@ -592,6 +592,8 @@ class Driver extends Node:
 		var rtts: Array[float] = []  # an Array: the lambda below must append to this one, not a copy
 		var seqs: Array[int] = []
 		var handler := func(_from: int, payload: Array) -> void:
+			if int(payload[0]) < 0:
+				return  # Net's own WebSocket ping
 			rtts.append(float(Time.get_ticks_usec() - int(payload[1])) / 1000.0)
 			seqs.append(int(payload[0]))
 		Net.on(NetMsg.ECHO, handler)

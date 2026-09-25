@@ -5,9 +5,11 @@ extends Node
 ## enters the zone that save is in; from then on it is the zone running in
 ## Net's SERVER mode. The invite list (M09b: RUNEBOUND_INVITES, or
 ## `-- --invites=`) decides who gets in; without one the server is open to this
-## machine only.
+## machine only. RUNEBOUND_TRANSPORT=ws (or `--transport=ws`) serves WebSocket
+## on 127.0.0.1 for Tailscale Funnel instead of ENet.
 ##   godot --headless --path . res://scenes/dedicated_server.tscn -- [--port=7777] [--max-players=5]
-##     [--invites=/etc/runebound/invites] [--save=user://x.json] [--zone=res://scenes/<zone>.tscn]
+##     [--invites=/etc/runebound/invites] [--transport=ws|enet] [--save=user://x.json]
+##     [--zone=res://scenes/<zone>.tscn]
 
 
 func _ready() -> void:
@@ -19,7 +21,12 @@ func _ready() -> void:
 			", ".join(broken)])
 		get_tree().quit(1)
 		return
-	var port := Net.DEFAULT_PORT
+	var transport := OS.get_environment("RUNEBOUND_TRANSPORT")
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--transport="):
+			transport = arg.trim_prefix("--transport=")
+	var over_ws := transport == "ws"
+	var port := Net.WS_PORT if over_ws else Net.DEFAULT_PORT
 	var env_port := OS.get_environment("RUNEBOUND_PORT")
 	if env_port.is_valid_int():
 		port = env_port.to_int()
@@ -33,7 +40,7 @@ func _ready() -> void:
 		elif arg.begins_with("--invites="):
 			invites = arg.trim_prefix("--invites=")
 	SaveGame.use_server_save()
-	var err := Net.host(port, players, invites)
+	var err := Net.host(port, players, invites, over_ws)
 	if err != OK:
 		printerr("[net] cannot listen on port %d: %s" % [port, error_string(err)])
 		get_tree().quit(1)
