@@ -171,6 +171,18 @@
 - Debug overlay keys (F1) unchanged; M is the map. F, G, H, T, Z, X, B, P
   stay free.
 
+## M09 open items (co-op in progress)
+- Co-op clients cannot travel yet (portals and shrines say so); party travel
+  with the countdown comes in phase 5.
+- A client sees no enemies yet (phase 3 replicates them); chests still open
+  locally on a client (personal loot, phase 4 makes them server-side).
+- Zone discovery XP uses world flags: in co-op a client gets it again each
+  session until save v5 moves it into the character (phase 4).
+- ENet can drop up to ~1 s of unreliable packets right after a zone build
+  (throttle recovering); harmless for snapshots, the join state is reliable.
+- The work network reaches the laptop only through Tailscale's DERP relay
+  (Frankfurt, pings 40-208 ms); home connections are expected to go direct.
+
 ## Technical
 - Two game instances at once on the dev iGPU crashed the one in the
   background with "Vulkan device was lost" (Windows GPU resets,

@@ -8,9 +8,47 @@ accepted on 2026-09-24. The co-op server laptop is set up:
 disabled until M09 ships).
 
 ## M09 Co-op (2026-09-25, in progress)
+Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
+"Co-op (M09)".
 - **Phase 0:** `.godot/` is no longer tracked (`.gitignore`; run
-  `toolsun_godot.cmd import` after a fresh clone, the server script imports
+  `tools\run_godot.cmd import` after a fresh clone, the server script imports
   after every pull). `.gitattributes` keeps the server files LF.
+  **Spike A** (`run_godot serverperf [heroes]`: headless Highlands, bot
+  heroes at different camps, `--fixed-fps 60` so wall time per frame = tick
+  cost): the laptop (Pentium 3556U) needed p50 16.3 / p95 20.9 ms per tick
+  with 5 heroes (budget 16.7) and 12.7 ms with one. Ablation on the dev PC:
+  the base load was the ~36 idle camp enemies (animation 0.6 ms, UI 0.6 ms,
+  idle enemies 3.4 of 4.7 ms).
+- **Phase 1 (network foundation):**
+  - **AI sleep** (`EnemyBase.sleeping`): an idle, standing enemy with no hero
+    within 60 m skips its tick; a hit wakes it (singleplayer benefits too).
+  - **`Net` autoload** (`scripts/net/net.gd`): modes OFFLINE / SERVER /
+    CLIENT, ENet on `*` (IPv4 + IPv6), async host name lookup, `host:port` /
+    `[v6]:port` (`NetAddress`), SceneMultiplayer auth handshake (protocol +
+    Godot version, player limit, readable refusals), roster, zone epochs +
+    ZONE_READY, three channels (events / hero / snapshots), netsim
+    (`-- --netsim=rtt,jitter,loss`), server tick + traffic log every 60 s,
+    ENet throttling off (it dropped 23 % of unreliable packets on localhost).
+  - **Dedicated server** `scenes/dedicated_server.tscn` (`server.env` now
+    points at it): its own world save `user://runebound_server.json`, zones
+    boot without local hero, camera, UI, music, rigs, particles, sounds or
+    floating text. Clients run no camps, boss triggers or lab spawns.
+  - **SaveGame online session:** the server's flags in memory, the client's
+    own world (zone, flags, camps) untouched on disk.
+  - **Title screen** (new main scene): Continue / Join co-op (name + server
+    address, last one remembered in `user://settings.cfg`) / Quit; shows why
+    a session ended. Zone travel is blocked for co-op clients until phase 5.
+  - **Tests:** smoke 384 checks (+ sleep, address parsing, offline role,
+    online save session, local dispatch). `run_godot net [scenario]`
+    (`tests/net_test.tscn`, also `run_godot.sh net` on the laptop) starts a
+    real dedicated server and headless clients per scenario: handshake +
+    leave, version refused, server full, client in the Highlands (no local
+    camps), echo (20 Hz x 900 B: loss after the first second 0 %), unknown
+    host. `run_godot server [port]` runs a local server to join from the
+    title screen.
+  - **Server cost after phase 1** (`serverperf --dedicated`, dev PC):
+    1 hero p50 0.8 / p95 1.5 ms, 5 bot heroes with ~13 enemies fighting
+    p50 2.4 / p95 4.0 ms (about x3 on the laptop: inside the budget).
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

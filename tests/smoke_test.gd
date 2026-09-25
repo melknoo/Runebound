@@ -2120,6 +2120,64 @@ func _run() -> void:
 		_check(UiTheme.item_icon(cm) != null and UiTheme.item_icon(cm).resource_path.ends_with("cindermaw.png"),
 			"inventory shows the legendary's own icon")
 
+		# --- M09 AI sleep: idle enemies with no hero near skip their tick ---
+		var hero := hub2.player
+		hub2.remove_player(hero)  # nobody in the zone: the new enemy has no one to hunt
+		var sleeper := hub2.spawn_by_id("rusher", hero.global_position + Vector3(0, 0.2, -6))
+		await _wait_frames(70)
+		_check(sleeper.sleeping and sleeper.ai_state == EnemyBase.AIState.IDLE,
+			"M09: an idle enemy with no hero within 60 m sleeps")
+		var slept_at := sleeper.global_position
+		await _wait_frames(20)
+		_check(sleeper.global_position.distance_to(slept_at) < 0.01, "a sleeping enemy does not move")
+		sleeper.take_hit(HitInfo.create(1.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, sleeper.global_position))
+		_check(not sleeper.sleeping, "a hit wakes a sleeping enemy")
+		hub2.add_player(hero)
+		sleeper.free()
+
+	# --- M09 co-op foundations (offline side; tests/net_test.tscn runs the rest) ---
+	_check(Net.mode == Net.Mode.OFFLINE and Net.is_authority() and Net.has_view() and not Net.is_client()
+		and multiplayer.multiplayer_peer is OfflineMultiplayerPeer, "M09: singleplayer is the offline authority (no socket)")
+	var a1 := NetAddress.parse("melvin-laptop.tail94658b.ts.net", 7777)
+	var a2 := NetAddress.parse(" 100.101.57.51:7780 ", 7777)
+	var a3 := NetAddress.parse("[2a0d:3341::1]:7001", 7777)
+	var a4 := NetAddress.parse("2a0d:3341::1", 7777)
+	_check(a1["host"] == "melvin-laptop.tail94658b.ts.net" and int(a1["port"]) == 7777
+		and a2["host"] == "100.101.57.51" and int(a2["port"]) == 7780
+		and a3["host"] == "2a0d:3341::1" and int(a3["port"]) == 7001
+		and a4["host"] == "2a0d:3341::1" and int(a4["port"]) == 7777,
+		"server addresses parse: host, host:port, [v6]:port, bare v6")
+	_check(String(NetAddress.parse("", 7777)["error"]) != "" and String(NetAddress.parse("host:99999", 7777)["error"]) != ""
+		and String(NetAddress.parse("host:abc", 7777)["error"]) != "" and String(NetAddress.parse("[::1", 7777)["error"]) != "",
+		"bad addresses are refused with a reason")
+	_check(NetAddress.format("2a0d::1", 7777) == "[2a0d::1]:7777" and NetAddress.format("host", 1) == "host:1",
+		"addresses print back (IPv6 in brackets)")
+	SaveGame.flags = {"colossus_defeated": true}
+	SaveGame.camps = {"camp_1": {"cleared_at": 5.0}}
+	SaveGame.current_zone = "res://scenes/hub.tscn"
+	SaveGame.save_now()
+	SaveGame.begin_online_session({"spire_cleansed": true})
+	_check(SaveGame.has_flag(&"spire_cleansed") and not SaveGame.has_flag(&"colossus_defeated") and SaveGame.camps.is_empty(),
+		"online: the server's flags replace ours in memory")
+	SaveGame.current_zone = "res://scenes/ashen_highlands.tscn"
+	SaveGame.set_flag(&"server_side")  # writes the save at once
+	var disk_world: Dictionary = SaveGame._read_file().get("world", {})
+	var disk_flags: Dictionary = disk_world.get("flags", {})
+	_check(disk_flags.has("colossus_defeated") and not disk_flags.has("server_side") and not disk_flags.has("spire_cleansed")
+		and (disk_world.get("camps", {}) as Dictionary).has("camp_1") and str(disk_world.get("zone", "")) == "res://scenes/hub.tscn",
+		"online saves keep our own world (flags, camps, zone) on disk")
+	SaveGame.end_online_session()
+	_check(SaveGame.has_flag(&"colossus_defeated") and not SaveGame.has_flag(&"spire_cleansed")
+		and SaveGame.camps.has("camp_1") and SaveGame.current_zone == "res://scenes/hub.tscn",
+		"leaving co-op restores our own world")
+	var got: Array = []
+	var probe := func(from: int, payload: Array) -> void: got.append([from, payload])
+	Net.on(9999, probe)
+	Net.send_to_server(9999, ["hi"])
+	Net.off(9999, probe)
+	_check(got.size() == 1 and int((got[0] as Array)[0]) == 1 and str(((got[0] as Array)[1] as Array)[0]) == "hi",
+		"offline: send_to_server runs the handler right here (never an RPC to itself)")
+
 	SaveGame.wipe()
 	print("== %d failures ==" % _failures.size())
 	get_tree().quit(0 if _failures.is_empty() else 1)

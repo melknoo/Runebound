@@ -306,8 +306,8 @@ func _physics_process(delta: float) -> void:
 	if _discover_left <= 0.0:
 		_discover_left = DISCOVER_INTERVAL
 		_discover_tick()
-	# Once beaten, the colossus stays beaten (world flag).
-	if _boss_started or _boss_trigger == null or players.is_empty() or SaveGame.has_flag(&"colossus_defeated"):
+	# Once beaten, the colossus stays beaten (world flag). M09: the server starts it.
+	if Net.is_client() or _boss_started or _boss_trigger == null or players.is_empty() or SaveGame.has_flag(&"colossus_defeated"):
 		return
 	if not players_within(_boss_trigger.global_position, _boss_trigger.trigger_radius).is_empty():  # M07b: any hero
 		_start_boss_fight()
@@ -424,8 +424,9 @@ func _start_boss_fight() -> void:
 	_boss_started = true
 	boss = AshveinColossus.new()
 	_spawn_enemy(boss, ground_point(_boss_spawn, 0.2))
-	hud.show_boss_bar("ASHVEIN COLOSSUS")
-	boss.boss_health_changed.connect(hud.update_boss_bar)
+	if hud != null:
+		hud.show_boss_bar("ASHVEIN COLOSSUS")
+		boss.boss_health_changed.connect(hud.update_boss_bar)
 	boss.enemy_died.connect(_on_boss_died)
 	GameFeel.camera_shake(0.3)
 

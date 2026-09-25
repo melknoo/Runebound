@@ -5,6 +5,7 @@
 #   tools/server/run_godot.sh smoke    # headless smoke test (fails on SCRIPT ERROR too)
 #   tools/server/run_godot.sh serve    # run RUNEBOUND_SCENE from server.env headless
 #   tools/server/run_godot.sh serverperf [heroes]  # M09: Highlands tick cost with bot heroes
+#   tools/server/run_godot.sh net [scenario]       # M09: multi-process co-op tests
 # Godot comes from $GODOT (default ~/godot/godot).
 set -euo pipefail
 
@@ -48,6 +49,11 @@ case "$mode" in
 		fi
 		exit "$code"
 		;;
+	net)
+		# M09: a dedicated server and headless test clients per scenario.
+		timeout --kill-after=10 600 "$godot" --headless --path "$proj" res://tests/net_test.tscn \
+			-- "--scenario=${2:-all}"
+		;;
 	serverperf)
 		# M09 Spike A: every frame is exactly one physics tick (--fixed-fps),
 		# so the wall time per frame is the tick cost on this machine.
@@ -66,7 +72,7 @@ case "$mode" in
 		exec "$godot" --headless --path "$proj" "$RUNEBOUND_SCENE"
 		;;
 	*)
-		echo "unknown mode $mode (import | smoke | serverperf | serve)" >&2
+		echo "unknown mode $mode (import | smoke | net | serverperf | serve)" >&2
 		exit 1
 		;;
 esac

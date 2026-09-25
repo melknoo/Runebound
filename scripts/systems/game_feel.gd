@@ -43,6 +43,8 @@ func camera_shake(amount: float) -> void:
 ## M07: small rising text (XP on kills). Same fixed-size pixel label as the
 ## damage numbers, slower and quieter.
 func float_text(pos: Vector3, text: String, color: Color) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	if not damage_numbers_enabled:
 		return
 	var root := get_tree().current_scene
@@ -64,6 +66,8 @@ func float_text(pos: Vector3, text: String, color: Color) -> void:
 
 
 func damage_number(pos: Vector3, amount: float, color: Color = Color.WHITE, crit: bool = false) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	if not damage_numbers_enabled:
 		return
 	var root := get_tree().current_scene

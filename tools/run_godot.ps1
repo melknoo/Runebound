@@ -10,6 +10,8 @@
 #   .\tools\run_godot.ps1 perf <scenario> [label] # scripted fight: tests/perf/<scenario>.json
 #   .\tools\run_godot.ps1 stress                 # lab stress test (exit 1 below budget)
 #   .\tools\run_godot.ps1 serverperf [heroes]    # M09: headless Highlands tick cost with bot heroes
+#   .\tools\run_godot.ps1 net [scenario]        # M09: multi-process co-op tests (server + headless clients)
+#   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
@@ -109,6 +111,26 @@ switch ($Mode) {
 		& $godot --path $proj @cap --resolution 1600x900 $zone -- "--perf=$scenario" "--label=$Label"
 	}
 	"stress"  { & $godot --path $proj @cap --resolution 1600x900 res://tests/stress_test.tscn -- --stress }
+	"net"     {
+		# M09 multi-process co-op tests: a dedicated server and headless test
+		# clients per scenario (tests/net_test.gd). Optional scenario name.
+		$scenario = if ($Name) { $Name } else { "all" }
+		$p = Start-Process -FilePath $godot -ArgumentList "--headless", "--path", "`"$proj`"", "res://tests/net_test.tscn", "--", "--scenario=$scenario" `
+			-NoNewWindow -PassThru
+		$handle = $p.Handle
+		if (-not $p.WaitForExit(600000)) {
+			Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+			Write-Output "== net test timed out after 10 min =="
+			exit 3
+		}
+		exit $p.ExitCode
+	}
+	"server"  {
+		# M09: a local dedicated server on port 7777 (or the given port) for
+		# joining from the title screen ("Join co-op" -> 127.0.0.1).
+		$port = if ($Name) { $Name } else { "7777" }
+		& $godot --headless --path $proj res://scenes/dedicated_server.tscn -- "--port=$port" "--save=user://local_server.json"
+	}
 	"serverperf" {
 		# M09 Spike A: headless tick cost of the Highlands with N bot heroes
 		# (default 5). --fixed-fps 60 makes every frame exactly one tick.

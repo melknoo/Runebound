@@ -317,6 +317,48 @@ copy the pattern.
 - **Not in M08:** navmesh (open pads + leash instead), fog-of-war on the
   map, per-portal arrival in the Spire.
 
+## Co-op (M09)
+Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**
+(singleplayer = OFFLINE with a local hero; the dedicated server = SERVER
+without one) and **client** (a hero in the server's world). Game code asks
+`Net.is_authority()` / `is_client()` / `is_dedicated()` / `has_view()`,
+never `DisplayServer` (headless bot clients are clients).
+- **Hybrid authority:** the server owns enemies, camps, bosses, world flags,
+  chests, reward rolls and zone changes; each client owns its hero (movement,
+  abilities, hit detection against enemy puppets, its own HP, its character
+  from its own save). Enemy hits on a hero are confirmed by its owner.
+- **`Net`** is the only RPC endpoint (`/root/Net` exists on every peer;
+  code-built nodes are addressed by net id / POI id, never by path). Kinds in
+  `NetMsg`, payloads are plain Arrays; `Net.on(kind, handler(from, payload))`.
+  `send_to_server` runs the handler locally on the authority (no RPC to
+  itself), `send_to_peer` / `broadcast_zone` only reach clients that reported
+  ZONE_READY for the current zone epoch; stale-epoch messages are dropped.
+  Channels: 0 reliable events, 1 unreliable hero state, 2 unreliable
+  snapshots. Bump `Net.PROTOCOL` with any message change: the auth handshake
+  refuses other versions before any RPC runs.
+- **ENet:** bind `*`, one extra slot so a full server can say so, peer
+  timeouts 15-30 s (zone builds block the main loop), packet throttle off
+  (`throttle_configure(5000, 32, 0)`). After a zone build ENet may still drop
+  up to about a second of unreliable packets until its throttle sees a fresh
+  RTT sample; the join state therefore always goes reliable.
+- **Dedicated server:** `scenes/dedicated_server.tscn` (`tools/server/
+  server.env`), `Engine.max_fps = 60`, world save `user://runebound_server
+  .json` (`SaveGame.use_server_save`). ZoneBase skips environment, hero,
+  camera, UI, music and warm-up; VFX effects, `Sfx.play`, floating text and
+  enemy rigs return early (telegraph markers stay: gameplay reads them).
+  Logs `tick p50/p95/max`, players, enemies (asleep), KB/s every 60 s.
+- **SaveGame online session:** `begin_online_session(flags)` swaps in the
+  server's flags; `_collect()` writes the stashed own world while `online`;
+  `end_online_session()` restores it.
+- **AI sleep** (`EnemyBase.SLEEP_RADIUS` 60 m): idle, standing enemies with no
+  hero near skip `_physics_process`; checks every 0.5 s (spread by instance
+  id), a hit wakes them.
+- **Tests:** `tests/net_test.tscn` (orchestrator, one process per role via
+  `OS.create_process`, logs in `user://net_test/`), `tests/net_client.gd`
+  (headless client driver that survives the zone change),
+  `tests/net_server_probe.gd` (server side). `tests/server_perf.tscn`
+  (`--heroes=N --dedicated --strip=anim,ui,sleep,enemies --tanky=K`).
+
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
 Melee hits = shape queries against hurtbox layers; projectiles = Area3D.

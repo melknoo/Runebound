@@ -25,6 +25,14 @@ const TANKY_DEFAULT := 25.0
 var heroes: int = 5
 var seconds: float = 60.0
 var tanky: float = TANKY_DEFAULT
+## --strip=anim,ui,enemies,sleep: switch parts off to see what the base load
+## is made of (animation, HUD/UI/camera, all enemies, idle enemies far from
+## every hero).
+var strip: PackedStringArray = PackedStringArray()
+## --dedicated: the zone boots in Net's SERVER mode (no local hero, camera,
+## UI, rigs, particles, sounds) and every hero is a bot, like the real server.
+var dedicated: bool = false
+var _sleep_left: float = 0.0
 var zone: AshenHighlands
 
 var _samples := PackedFloat32Array()
@@ -44,6 +52,10 @@ func _ready() -> void:
 			heroes = clampi(arg.trim_prefix("--heroes=").to_int(), 1, 8)
 		elif arg.begins_with("--seconds="):
 			seconds = maxf(arg.trim_prefix("--seconds=").to_float(), 5.0)
+		elif arg == "--dedicated":
+			dedicated = true
+		elif arg.begins_with("--strip="):
+			strip = arg.trim_prefix("--strip=").split(",", false)
 		elif arg.begins_with("--tanky="):
 			tanky = maxf(arg.trim_prefix("--tanky=").to_float(), 1.0)
 	_run.call_deferred()
@@ -56,6 +68,9 @@ func _run() -> void:
 		Engine.physics_ticks_per_second])
 	SaveGame.save_path = "user://server_perf_save.json"  # never touch the real save
 	SaveGame.wipe()
+	if dedicated:
+		Net.mode = Net.Mode.SERVER  # no socket needed: only the zone's role matters here
+		Engine.max_fps = 0  # --fixed-fps measures back-to-back ticks
 	var t0 := Time.get_ticks_msec()
 	var scene: Node = (load("res://scenes/ashen_highlands.tscn") as PackedScene).instantiate()
 	get_tree().root.add_child(scene)
@@ -65,14 +80,29 @@ func _run() -> void:
 		await get_tree().physics_frame
 	print("zone built in %d ms" % (Time.get_ticks_msec() - t0))
 	_setup_party()
-	_spawn_every_camp()
+	if "enemies" in strip:
+		for sp: EncounterSpawner in zone.camps.values():
+			sp.process_mode = Node.PROCESS_MODE_DISABLED
+	else:
+		_spawn_every_camp()
+	if "ui" in strip and not dedicated:
+		for n: Node in [zone.hud, zone.hero_ui, zone.trainer_ui, zone.waypoint_ui, zone.map_ui,
+				zone.debug_overlay, zone.camera_rig, zone.targeting]:
+			if n != null:
+				n.process_mode = Node.PROCESS_MODE_DISABLED
+				if n is CanvasLayer:
+					(n as CanvasLayer).visible = false
+	if not strip.is_empty():
+		print("stripped: %s" % ", ".join(strip))
 	_phase = "warmup"
 	_last_us = Time.get_ticks_usec()
 
 
 func _setup_party() -> void:
-	var party: Array[Player] = [zone.player]
-	for i in heroes - 1:
+	var party: Array[Player] = []
+	if not dedicated:
+		party.append(zone.player)
+	for i in heroes - party.size():
 		var p := Player.new()
 		p.is_local = false
 		p.input_source = BotInputSource.new(i + 2)  # before add_child: never the keyboard
@@ -80,9 +110,10 @@ func _setup_party() -> void:
 		party.append(p)
 	# The local hero turns into a bot too; without camera or targeting every
 	# ability aims along its facing, exactly like the others.
-	zone.player.input_source = BotInputSource.new(1)
-	zone.player.camera_rig = null
-	zone.player.targeting = null
+	if zone.player != null:
+		zone.player.input_source = BotInputSource.new(1)
+		zone.player.camera_rig = null
+		zone.player.targeting = null
 	var camp_ids: Array[String] = []
 	for id: String in zone.camps.keys():
 		var sp := zone.camps[id] as EncounterSpawner
@@ -125,6 +156,18 @@ func _process(delta: float) -> void:
 	# (`health.invulnerable` does not survive the dodge's i-frames).
 	for h in zone.players:
 		h.health.current_health = h.health.max_health
+	if "anim" in strip:
+		for e in EnemyBase.all_enemies:
+			if is_instance_valid(e) and e.animator != null and e.animator.is_physics_processing():
+				e.animator.set_physics_process(false)
+	if "sleep" in strip:
+		_sleep_left -= delta
+		if _sleep_left <= 0.0:
+			_sleep_left = 0.5
+			for e in EnemyBase.all_enemies:
+				if is_instance_valid(e) and e.ai_state == EnemyBase.AIState.IDLE:
+					var near := not zone.players_within(e.global_position, 60.0).is_empty()
+					e.process_mode = Node.PROCESS_MODE_INHERIT if near else Node.PROCESS_MODE_DISABLED
 	if _phase == "warmup":
 		for e in EnemyBase.all_enemies:
 			if is_instance_valid(e):

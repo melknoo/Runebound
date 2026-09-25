@@ -15,6 +15,8 @@ const DEBOUNCE := 2.0
 const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
 const TEST_SAVE_PATH := "user://capture_save.json"
 const TEST_RUN_SEED := 1207
+## M09: the dedicated server's world (flags, camps, zone); no characters.
+const SERVER_SAVE_PATH := "user://runebound_server.json"
 
 ## Overridable so tests can run against a scratch file without touching
 ## the real save.
@@ -28,6 +30,12 @@ var active: int = 0
 ## M08: where the hero arrives in the next zone (a POI id, "" = the zone's
 ## spawn). Transient: set by travel_to / fast_travel, read once by the zone.
 var pending_arrival: String = ""
+## M09 co-op: while a client is online the server owns the world. The
+## server's flags replace the local ones in memory for the session; saves
+## write the characters next to the untouched singleplayer world (zone,
+## flags, camps) stashed when the session began.
+var online: bool = false
+var _offline_world: Dictionary = {}
 
 var _pending_save: bool = false
 var _debounce_left: float = 0.0
@@ -59,6 +67,38 @@ static func is_test_run() -> bool:
 			if arg == flag or arg.begins_with(flag + "="):
 				return true
 	return false
+
+
+## Dedicated server: its own world save (no characters) unless `--save=` names one.
+func use_server_save() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--save="):
+			return  # already applied in _ready
+	save_path = SERVER_SAVE_PATH
+	reload_from_disk()
+
+
+## Client joined a server: its world (flags) replaces ours until the session ends.
+func begin_online_session(server_flags: Dictionary) -> void:
+	if not online:
+		_offline_world = {"zone": current_zone, "flags": flags.duplicate(true), "camps": camps.duplicate(true)}
+	online = true
+	flags = server_flags.duplicate(true)
+	camps = {}
+	pending_arrival = ""
+
+
+## Back to singleplayer: the stashed world returns (the characters were saved
+## all along).
+func end_online_session() -> void:
+	if not online:
+		return
+	online = false
+	current_zone = str(_offline_world.get("zone", current_zone))
+	flags = (_offline_world.get("flags", {}) as Dictionary).duplicate(true)
+	camps = (_offline_world.get("camps", {}) as Dictionary).duplicate(true)
+	pending_arrival = ""
+	_offline_world = {}
 
 
 func set_flag(flag: StringName) -> void:
@@ -115,6 +155,8 @@ func save_now() -> void:
 
 
 func wipe() -> void:
+	online = false
+	_offline_world = {}
 	_loaded_data = {}
 	flags = {}
 	camps = {}
@@ -203,8 +245,10 @@ func _collect() -> Dictionary:
 			chars.append({})
 		chars[active] = character_dict(player)
 	# no player in this scene: the loaded characters are kept as they were
-	var data := {"version": VERSION, "world": {"zone": current_zone, "flags": flags, "camps": camps},
-		"characters": chars, "active": active}
+	var world := {"zone": current_zone, "flags": flags, "camps": camps}
+	if online:  # M09: the session world is the server's; keep our own on disk
+		world = _offline_world.duplicate(true)
+	var data := {"version": VERSION, "world": world, "characters": chars, "active": active}
 	_loaded_data = data
 	return data
 

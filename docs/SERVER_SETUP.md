@@ -29,7 +29,8 @@ außer der Firewall-Regel.
 - `run_godot.sh import | smoke | serve` ist das Gegenstück zu `tools/run_godot.ps1`.
   - `GODOT` überschreibt den Godot-Pfad (Default `~/godot/godot`).
   - `smoke`-Exit-Codes: 3 = 8-min-Limit überschritten, 2 = Watchdog des Tests (300 s), 1 = `SCRIPT ERROR`/`Parse Error` im Output, sonst der Godot-Exit-Code.
-- `server.env` enthält `RUNEBOUND_PORT=7777` und `RUNEBOUND_SCENE`. Die Szene ist bis M09 ein Platzhalter (der Smoke-Test). Mit M09 ändert sich nur diese Zeile.
+- `server.env` enthält `RUNEBOUND_PORT=7777` und `RUNEBOUND_SCENE`. Seit M09 Phase 1 zeigt die Szene auf den echten Server (`res://scenes/dedicated_server.tscn`). Er hat seinen eigenen Welt-Save `~/.local/share/godot/app_userdata/RUNEBOUND/runebound_server.json` und loggt alle 60 s Tick-Zeiten, Spieler, Gegner und Traffic.
+- `run_godot.sh net [szenario]` startet die Mehrprozess-Koop-Tests (Server + Headless-Clients) auch auf dem Laptop, `run_godot.sh serverperf [helden]` misst die Tick-Kosten.
 - `runebound-server.sh` lädt `server.env` und prüft per `git fetch` auf neue Commits. Gibt es welche, verwirft es den Linux-Import-Churn in `.godot/`, macht `git pull --ff-only` und importiert neu. Schlägt der Pull fehl, bricht es laut ab. Danach startet es `exec godot --headless … $RUNEBOUND_SCENE`, den Port reicht es als Umgebungsvariable durch.
 - `runebound-server.service` ist die systemd-Unit. Sie ist **kopiert**, nicht verlinkt, damit ein `git pull` eine root-geladene Unit nicht still ändert.
 - `logind-runebound.conf` ist die Vorlage für den logind-Drop-in.
@@ -43,8 +44,8 @@ systemctl status runebound-server          # Zustand
 journalctl -u runebound-server -f          # Log live
 journalctl -u runebound-server -b          # Log seit dem Boot
 ```
-- **Update:** Der Pull passiert beim Start, `restart` reicht also. Bis M09 läuft dabei nur einmal der Smoke-Test, danach ist der Dienst wieder `inactive`. Das ist korrekt so.
-- **Nach M09:** `RUNEBOUND_SCENE` in `server.env` umstellen, committen, dann `sudo systemctl enable --now runebound-server`. **Nicht vorher enablen**, sonst läuft bei jedem Boot der Smoke-Test.
+- **Update:** Der Pull passiert beim Start, `restart` reicht also. Seit M09 Phase 1 läuft danach der echte Server dauerhaft (bis `stop`). Koop ist aber erst mit M09 Phase 3+ spielbar.
+- **Nach M09:** `sudo systemctl enable --now runebound-server` (die Szene ist schon umgestellt). Bis dahin startet der Dienst nur von Hand.
 - **Unit geändert:**
   ```bash
   sudo install -m 644 tools/server/runebound-server.service /etc/systemd/system/

@@ -376,7 +376,9 @@ func _add_camp(pos: Vector3, composition: Array[String], radius: float) -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if _boss_started or player == null or SaveGame.has_flag(&"spire_cleansed"):
+	if Net.is_client():
+		return  # M09: the server starts the boss
+	if _boss_started or players.is_empty() or SaveGame.has_flag(&"spire_cleansed"):
 		if not _boss_started and SaveGame.has_flag(&"spire_cleansed") and boss_portal.locked:
 			boss_portal.set_locked(false)
 		return
@@ -389,8 +391,9 @@ func _start_boss_fight() -> void:
 	boss = ShatteredVessel.new()
 	boss.setup_arena(_arena_center, blink_anchors())
 	_spawn_enemy(boss, _arena_center)
-	hud.show_boss_bar("VESSEL OF THE SHATTERED RUNE")
-	boss.boss_health_changed.connect(hud.update_boss_bar)
+	if hud != null:
+		hud.show_boss_bar("VESSEL OF THE SHATTERED RUNE")
+		boss.boss_health_changed.connect(hud.update_boss_bar)
 	boss.summon_requested.connect(_on_boss_summon)
 	boss.enemy_died.connect(_on_boss_died)
 	GameFeel.camera_shake(0.4)

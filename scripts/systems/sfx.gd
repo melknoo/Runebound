@@ -99,6 +99,8 @@ func has_sound(key: String) -> bool:
 
 
 func play(key: String, pos: Vector3, volume_db: float = 0.0, pitch_variation: float = 0.08, pitch_base: float = 1.0) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var variants: Array = _library.get(key, [])
 	if variants.is_empty():
 		return
@@ -114,6 +116,8 @@ func play(key: String, pos: Vector3, volume_db: float = 0.0, pitch_variation: fl
 
 
 func play_ui(key: String, volume_db: float = 0.0, pitch_variation: float = 0.05) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var variants: Array = _library.get(key, [])
 	if variants.is_empty():
 		return

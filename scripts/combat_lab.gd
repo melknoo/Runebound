@@ -127,7 +127,8 @@ func _dress_training_grounds(walls: Array[StaticBody3D], blocks: Array[StaticBod
 
 
 func _zone_ready() -> void:
-	_spawn_initial_enemies()
+	if Net.is_authority():  # M09: a co-op client sees the server's enemies
+		_spawn_initial_enemies()
 	if "--capture" in OS.get_cmdline_user_args():
 		var capture: Node = (load("res://tests/playtest_capture.gd") as GDScript).new()
 		add_child(capture)

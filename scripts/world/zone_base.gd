@@ -49,16 +49,21 @@ func _ready() -> void:
 	look = _zone_look()
 	if "--legacy-look" in OS.get_cmdline_user_args():
 		look = null  # before/after captures with identical framing
-	if look != null:
-		_build_look_environment(look)
-	else:
-		_build_environment()
+	if Net.has_view():  # M09: the dedicated server draws nothing
+		if look != null:
+			_build_look_environment(look)
+		else:
+			_build_environment()
 
 	enemies_root = Node3D.new()
 	enemies_root.name = "Enemies"
 	world.add_child(enemies_root)
 
 	_build_zone()
+	if not Net.has_view():
+		_zone_ready()
+		Net.zone_entered(scene_file_path)
+		return  # M09 dedicated server: the world without a local hero, camera or UI
 	_spawn_player()
 	if look != null and look.ash_fall > 0.0:
 		_add_ash_fall(look.ash_fall)
@@ -118,6 +123,7 @@ func _ready() -> void:
 		var capture: Node = (load("res://tests/world_capture.gd") as GDScript).new()
 		add_child(capture)
 	_attach_test_runners()
+	Net.zone_entered(scene_file_path)  # M09: a client reports it has loaded the zone
 
 
 ## `-- --shots=<json>` / `-- --perf=<json>`: data-driven capture and perf runs
@@ -1033,6 +1039,9 @@ func cycle_style() -> void:
 func travel_to(scene_path: String, arrival: String = "") -> void:
 	if _travelling:
 		return
+	if Net.is_client():
+		_party_travel_unavailable()
+		return
 	_travelling = true
 	SaveGame.pending_arrival = arrival
 	SaveGame.current_zone = scene_path
@@ -1056,6 +1065,9 @@ func fast_travel(key: String) -> void:
 	if scene_path != scene_file_path:
 		travel_to(scene_path, poi)
 		return
+	if Net.is_client():
+		_party_travel_unavailable()
+		return
 	_travelling = true
 	Sfx.play_ui("portal_travel", -6.0)
 	_fade_then(func() -> void:
@@ -1069,6 +1081,13 @@ func fast_travel(key: String) -> void:
 				ArtKit.color("color_roles.player_accent.body", Color(0.37, 0.88, 0.91)))
 		_travelling = false
 	, true)
+
+
+## M09: zone changes in co-op move the whole party through the server; until
+## that flow exists a client stays where the server is.
+func _party_travel_unavailable() -> void:
+	if hud != null:
+		hud.toast("Travel is not available in co-op yet", UiTheme.MUTED)
 
 
 ## A Waypoint's [E]: the travel list.

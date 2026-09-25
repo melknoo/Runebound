@@ -110,6 +110,8 @@ static func _quad(tex_name: String, size: float) -> QuadMesh:
 
 ## Generic one-shot burst. Returns the emitter (already added + self-freeing).
 static func burst(root: Node, pos: Vector3, cfg: Dictionary) -> Node3D:
+	if not Net.has_view():
+		return null  # M09: the dedicated server draws nothing
 	_ensure_lookdev()
 	if use_cpu:
 		return _burst_cpu(root, pos, cfg)
@@ -181,6 +183,8 @@ static func _burst_gpu(root: Node, pos: Vector3, cfg: Dictionary) -> GPUParticle
 
 ## Quick unshaded flash quad that pops and fades. Sells the first frame of impact.
 static func flash(root: Node, pos: Vector3, color: Color, size: float = 0.7, duration: float = 0.12, tex_name: String = "flash") -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var m := MeshInstance3D.new()
 	var quad := QuadMesh.new()
 	quad.size = Vector2(size, size)
@@ -214,6 +218,8 @@ static var _active_light_pops: int = 0
 
 ## Brief point light for hot impacts.
 static func light_pop(root: Node, pos: Vector3, color: Color, energy: float = 3.0, radius: float = 5.0, duration: float = 0.18) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	if _active_light_pops >= MAX_LIGHT_POPS:
 		return
 	_active_light_pops += 1
@@ -234,6 +240,8 @@ static func light_pop(root: Node, pos: Vector3, color: Color, energy: float = 3.
 ## happened (never a telegraph: dashed, short-lived, opacity capped). Drawn by
 ## the player_ring shader so the dashes stay crisp at any radius.
 static func ground_ring(root: Node, pos: Vector3, color: Color, max_radius: float, duration: float = 0.35) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var m := _ring_plane(max_radius, Color(color, minf(color.a, PLAYER_GROUND_ALPHA)))
 	m.name = "Shockwave"
 	root.add_child(m)
@@ -313,6 +321,8 @@ static func _place_ground(m: Node3D, pos: Vector3, lift: float, yaw: float = 0.0
 ## Persistent ground decal (scorch marks, cracks) that slowly fades.
 ## Always snapped onto the floor below `pos`.
 static func decal(root: Node, pos: Vector3, tex_name: String, size: float, color: Color = Color.WHITE, life: float = 6.0) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	pos = _ground_point(root, pos)
 	var m := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
@@ -341,6 +351,8 @@ static func decal(root: Node, pos: Vector3, tex_name: String, size: float, color
 
 ## Horizontal slash arc following the swing plane — reads as the sweep itself.
 static func melee_slash(root: Node, pos: Vector3, dir: Vector3, flip: bool) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var m := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(3.2, 3.2)
@@ -370,6 +382,8 @@ static func melee_slash(root: Node, pos: Vector3, dir: Vector3, flip: bool) -> v
 	tw.chain().tween_callback(m.queue_free)
 
 static func melee_impact(root: Node, pos: Vector3, dir: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos, Color(1.0, 0.98, 0.9), 1.0, 0.1)
 	light_pop(root, pos, Color(1.0, 0.85, 0.5), 2.0, 3.5, 0.14)
 	burst(root, pos, {
@@ -387,6 +401,8 @@ static func melee_impact(root: Node, pos: Vector3, dir: Vector3) -> void:
 
 
 static func enemy_hit(root: Node, pos: Vector3, color: Color = Color(1.0, 0.35, 0.3)) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos, Color(1, 1, 1), 0.35, 0.08)
 	burst(root, pos, {
 		"tex": "spark", "amount": 6, "lifetime": 0.25, "size": 0.12,
@@ -398,6 +414,8 @@ static func enemy_hit(root: Node, pos: Vector3, color: Color = Color(1.0, 0.35, 
 ## Death = the 0.22 s gameplay shrink dressed as burning out: body-coloured
 ## shards drop, pixel ash drifts up with a few embers (no soft smoke clouds).
 static func death_burst(root: Node, pos: Vector3, color: Color) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos, color.lightened(0.4), 1.0, 0.14)
 	light_pop(root, pos, color, 2.0, 3.5, 0.2)
 	burst(root, pos, {
@@ -422,6 +440,8 @@ static func death_burst(root: Node, pos: Vector3, color: Color) -> void:
 
 
 static func dodge_dust(root: Node, pos: Vector3, dir: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	burst(root, pos + Vector3(0, 0.15, 0), {
 		"tex": "dust", "amount": 8, "lifetime": 0.4, "size": 0.28,
 		"direction": (-dir + Vector3.UP * 0.4).normalized(), "spread": 35.0,
@@ -431,6 +451,8 @@ static func dodge_dust(root: Node, pos: Vector3, dir: Vector3) -> void:
 
 
 static func ember_cast(root: Node, pos: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos, Color(1.0, 0.7, 0.3), 0.5, 0.1, "glyph")
 	burst(root, pos, {
 		"tex": "ember", "amount": 6, "lifetime": 0.3, "size": 0.1,
@@ -440,6 +462,8 @@ static func ember_cast(root: Node, pos: Vector3) -> void:
 
 
 static func ember_impact(root: Node, pos: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos, Color(1.0, 0.95, 0.7), 1.6, 0.14)
 	flash(root, pos, Color(1.0, 0.6, 0.2, 0.9), 2.4, 0.2)
 	light_pop(root, pos, Color(1.0, 0.55, 0.2), 6.0, 8.0, 0.28)
@@ -465,6 +489,8 @@ static func ember_impact(root: Node, pos: Vector3) -> void:
 
 
 static func burn_tick(root: Node, pos: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	burst(root, pos, {
 		"tex": "ember", "amount": 4, "lifetime": 0.4, "size": 0.1,
 		"direction": Vector3.UP, "spread": 30.0,
@@ -474,6 +500,8 @@ static func burn_tick(root: Node, pos: Vector3) -> void:
 
 
 static func earthbreaker_slam(root: Node, pos: Vector3, radius: float) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos + Vector3(0, 0.3, 0), Color(1.0, 0.9, 0.7), 1.4, 0.14)
 	light_pop(root, pos, Color(1.0, 0.75, 0.4), 5.0, radius * 2.0, 0.3)
 	# physical element: off-white shockwave, a warm inner echo
@@ -547,6 +575,8 @@ static func _arc_line(holder: Node3D, points: Array[Vector3], core_color: Color,
 ## readable element of Chain Spark and Storm Step. Meshes and materials are
 ## shared per colour, so arcs never compile or allocate mid-fight.
 static func lightning_arc(root: Node, from: Vector3, to: Vector3, color: Color = Color(1.0, 0.95, 0.5)) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var length := from.distance_to(to)
 	if length < 0.1:
 		return
@@ -582,6 +612,8 @@ static func lightning_arc(root: Node, from: Vector3, to: Vector3, color: Color =
 
 ## Lightning dash trail: arcs skimming the ground along the dash path.
 static func storm_trail(root: Node, from: Vector3, to: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var steps := maxi(int(from.distance_to(to) / 1.4), 2)
 	for i in steps:
 		var t := float(i) / float(steps - 1)
@@ -598,6 +630,8 @@ static func storm_trail(root: Node, from: Vector3, to: Vector3) -> void:
 
 ## Crystalline frost explosion (Fracture Rune detonation).
 static func frost_burst(root: Node, pos: Vector3, radius: float) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	flash(root, pos + Vector3(0, 0.4, 0), Color(0.8, 0.97, 1.0), 1.6, 0.14)
 	light_pop(root, pos, Color(0.5, 0.85, 1.0), 5.0, radius * 2.0, 0.25)
 	ground_ring(root, pos, Color(0.55, 0.9, 1.0, 0.9), radius, 0.35)
@@ -618,6 +652,8 @@ static func frost_burst(root: Node, pos: Vector3, radius: float) -> void:
 
 
 static func chill_tick(root: Node, pos: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	burst(root, pos, {
 		"tex": "shard", "amount": 3, "lifetime": 0.5, "size": 0.1,
 		"direction": Vector3.UP, "spread": 40.0,
@@ -627,6 +663,8 @@ static func chill_tick(root: Node, pos: Vector3) -> void:
 
 
 static func shock_tick(root: Node, pos: Vector3) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	burst(root, pos, {
 		"tex": "spark", "amount": 3, "lifetime": 0.2, "size": 0.13,
 		"spread": 90.0, "vel_min": 1.5, "vel_max": 3.0,
@@ -637,6 +675,8 @@ static func shock_tick(root: Node, pos: Vector3) -> void:
 ## Attach a looping particle trail to a projectile; freed with its parent.
 ## CPU particles (no process shader to compile on the first cast).
 static func attach_trail(parent: Node3D, tex_name: String, colors: Array[Color], amount: int = 48, size: float = 0.18) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	var p := CPUParticles3D.new()
 	p.amount = amount
 	p.lifetime = 0.45
@@ -657,6 +697,8 @@ static func attach_trail(parent: Node3D, tex_name: String, colors: Array[Color],
 
 
 static func attach_ember_trail(parent: Node3D) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
 	attach_trail(parent, "ember", [ArtKit.color("color_roles.fire.core"), ArtKit.color("color_roles.fire.body"),
 		Color(ArtKit.color("color_roles.fire.edge"), 0.0)] as Array[Color])
 

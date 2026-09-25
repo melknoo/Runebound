@@ -77,6 +77,8 @@ func _home() -> Vector3:
 
 
 func _physics_process(delta: float) -> void:
+	if Net.is_client():
+		return  # M09: camps live on the server; clients see its enemies
 	match state:
 		State.ARMED:
 			_check_left -= delta
@@ -161,7 +163,8 @@ func _on_pack_member_died(_e: EnemyBase, zone: ZoneBase) -> void:
 		for hero in zone.players:  # M07b: the camp bonus goes to the whole party
 			if hero != null and is_instance_valid(hero):
 				hero.progression.add_xp(bonus)
-		zone.hud.toast("Camp cleared  +%d XP" % bonus, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
+		if zone.hud != null:
+			zone.hud.toast("Camp cleared  +%d XP" % bonus, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
 
 
 ## Re-arm once the respawn time has passed and nobody is close.

@@ -137,10 +137,32 @@ func apply_hitstop(duration: float) -> void:
 	_hitstop_left = maxf(_hitstop_left, duration)
 
 
+## M09 AI sleep: an idle enemy standing still with no hero within
+## SLEEP_RADIUS skips its whole tick (AI, separation, move_and_slide). It looks
+## again every SLEEP_CHECK seconds and wakes at once when hit. Idle camp
+## members far from everyone were most of a zone's CPU (M09 Spike A: ~75 % of
+## the Highlands' base tick on the server laptop).
+const SLEEP_RADIUS := 60.0
+const SLEEP_CHECK := 0.5
+var sleeping: bool = false
+## Spread over frames by instance id (randf() would shift the seeded RNG of
+## capture and perf runs).
+var _sleep_check_left: float = float(get_instance_id() % 97) / 97.0 * SLEEP_CHECK
+
+
 func _physics_process(delta: float) -> void:
 	if _hitstop_left > 0.0:
 		_hitstop_left -= delta
 		return
+	if ai_state == AIState.IDLE:
+		_sleep_check_left -= delta
+		if _sleep_check_left <= 0.0:
+			_sleep_check_left = SLEEP_CHECK
+			sleeping = _may_sleep()
+		if sleeping:
+			return
+	else:
+		sleeping = false
 	_state_timer += delta
 	if auto_retarget and ai_state in [AIState.IDLE, AIState.CHASE, AIState.CIRCLE, AIState.RETREAT]:
 		_retarget_left -= delta
@@ -161,6 +183,16 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	velocity -= _knockback_velocity + separation
 	_knockback_velocity = _knockback_velocity.lerp(Vector3.ZERO, minf(6.0 * delta, 1.0))
+
+
+func _may_sleep() -> bool:
+	if not is_on_floor() or velocity.length_squared() > 0.01 or _knockback_velocity.length_squared() > 0.01:
+		return false
+	if _zone == null:
+		_zone = get_tree().current_scene as ZoneBase
+	if _zone == null:
+		return false  # hand-built test enemies outside a zone never sleep
+	return _zone.players_within(global_position, SLEEP_RADIUS).is_empty()
 
 
 func _exit_tree() -> void:
@@ -304,6 +336,8 @@ func last_attacker() -> Player:
 func take_hit(hit: HitInfo) -> bool:
 	if ai_state == AIState.DEAD:
 		return false
+	sleeping = false  # a long shot from beyond the sleep radius wakes it
+	_sleep_check_left = SLEEP_CHECK
 	var attacker := hit.attacker_player()
 	if attacker == null and hit.from_player:
 		attacker = player  # hits built by hand (tests, older code): the assigned player
@@ -378,7 +412,7 @@ var _flash_mats: Array[StandardMaterial3D] = []
 ## without duplication one enemy's hit-flash would light up all of them).
 ## Returns false when the model file is absent so callers keep primitives.
 func _setup_model_visual(path: String) -> bool:
-	if not ResourceLoader.exists(path):
+	if not ResourceLoader.exists(path) or not Net.has_view():  # M09: the server keeps primitives
 		return false
 	var model := (load(path) as PackedScene).instantiate() as Node3D
 	# Blender -Y front maps to Godot +Z; our facing convention is -Z.
@@ -422,6 +456,8 @@ static func _apply_enemy_shadows(on: bool) -> void:
 
 
 func _setup_rigged_visual(path: String, atlas_id: String, clip_profile: Dictionary, glow: Color) -> MeshInstance3D:
+	if not Net.has_view():
+		return null  # M09: no skeletons or animators on the dedicated server (primitive fallback)
 	var scene := ArtKit.rig_scene(path)
 	if scene == null:
 		return null
