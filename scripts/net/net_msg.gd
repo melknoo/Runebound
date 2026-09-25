@@ -83,3 +83,6 @@ const TRAVEL_GO := 33
 ## client -> server: [kind, args]; server -> other clients: [peer, kind, args]
 ## - a hero's action look (HeroFx) for its puppets
 const HERO_FX := 34
+## server -> one client, any epoch: [reason] - you are out (invite revoked or
+## used from another game); the client goes to the title screen with it (M09b)
+const KICK := 35

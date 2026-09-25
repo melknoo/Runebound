@@ -345,7 +345,31 @@ never `DisplayServer` (headless bot clients are clients).
   (ps1 and sh, every mode but import/reset) and `runebound-server.sh` import
   first whenever a project file is newer than `.godot/runebound_import.stamp`
   (written after each import).
-- **ENet:** bind `*`, one extra slot so a full server can say so, peer
+- **Access (M09b, invite codes):** friends reach the server without
+  Tailscale, so the game decides who gets in (`NetAuth`,
+  `scripts/net/net_auth.gd`). Every friend has a personal 16-character
+  base32 code (80 bits) from `tools/server/invites.sh`; the server reads
+  its invite list (`RUNEBOUND_INVITES` / `--invites=`, lines `name code
+  added`, never in the repo) every 2 s. Handshake: on `peer_authenticating`
+  the server sends a challenge (16 random bytes, plus a readable "update your
+  game" reason that protocol-7 games show); the client answers `"RBJ1" |
+  flags | HMAC-SHA256(SHA-256(salt + code), magic + nonce + hello) | hello`;
+  the server checks size (<= 2 KB) and magic, then the MAC against every
+  invite, and only then decodes the hello and runs the old checks. The code
+  never travels, answers cannot be replayed, strangers never reach
+  `bytes_to_var`. A revoked or changed code ends that session (KICK with a
+  reason, the client lands in the title); a code joining again replaces its
+  older session (and does not count against "full"). Without an invite list
+  the server is **open and binds 127.0.0.1** (tests, `run_godot coop` /
+  `server`). Waiting room: at most `PENDING_MAX` 8 unverified connections,
+  a new one pushes the oldest out; `AUTH_TIMEOUT` 8 s; ENet slots players +
+  24; `server_relay` off (clients only talk to the server); refusals logged
+  5 a minute, the rest counted in the 60 s line. ENetMultiplayerPeer resets
+  connections without a peer id >= 2 in the connect data before any of this
+  (plain ENet noise never reaches the handshake). Tests: `--invite=` (client),
+  `--auth=junk|junk_magic|old|silent` (hand-made answers), net scenarios
+  `invite`, `invite_live`, `auth_garbage` (codes in `tests/net_test_codes.gd`).
+- **ENet:** bind `*` (or 127.0.0.1 when open), peer
   timeouts 15-30 s (zone builds block the main loop), packet throttle off
   (`throttle_configure(5000, 32, 0)`). After a zone build ENet may still drop
   up to about a second of unreliable packets until its throttle sees a fresh

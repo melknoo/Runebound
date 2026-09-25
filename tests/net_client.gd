@@ -43,6 +43,7 @@ class Driver extends Node:
 	var address := ""
 	var result_path := ""
 	var player_name := "BOT"
+	var invite := ""
 	var _failed_reason := ""
 	var _started := false
 	var _max_roster := 0
@@ -59,6 +60,8 @@ class Driver extends Node:
 				result_path = arg.trim_prefix("--result=")
 			elif arg.begins_with("--name="):
 				player_name = arg.trim_prefix("--name=")
+			elif arg.begins_with("--invite="):
+				invite = arg.trim_prefix("--invite=")
 		Net.session_failed.connect(func(reason: String) -> void: _failed_reason = reason)
 		Net.session_started.connect(func(_w: Dictionary) -> void: _started = true)
 		Net.roster_changed.connect(func() -> void: _max_roster = maxi(_max_roster, Net.roster.size()))
@@ -66,7 +69,10 @@ class Driver extends Node:
 
 	func _play() -> void:
 		print("[test %s] %s -> %s" % [role, scenario, address])
-		Net.join(address, player_name, SaveGame.active_class_id(), 1)
+		if role == "flood":
+			await _flood(int(_arg("--connections=", "12")), _arg_float("--hold=", 12.0))
+			return
+		Net.join(address, player_name, SaveGame.active_class_id(), 1, invite)
 		match scenario:
 			"handshake":
 				if not await _in_zone():
@@ -491,8 +497,75 @@ class Driver extends Node:
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")
+			"invite":
+				if role == "c1":  # a listed code
+					if not await _in_zone():
+						return
+					await _seconds(6.0)  # stay while the others are turned away
+					_finish("ok")
+				elif await _until(func() -> bool: return _failed_reason != "", 30.0, "a refusal"):
+					_expect_reason("not accepted" if role == "c2" else "needs an invite code")
+			"invite_live":
+				# c1: the host revokes its code. c2 and c3 share one code: c3
+				# joining replaces c2's session.
+				var ended := [""]
+				Net.session_ended.connect(func(reason: String) -> void: ended[0] = reason)
+				if not await _in_zone():
+					return
+				if role == "c3":
+					await _seconds(4.0)
+					_finish("ok" if Net.is_client() else "fail: c3 lost its session: " + Net.last_reason)
+					return
+				if not await _until(func() -> bool: return ended[0] != "", 40.0, "the kick"):
+					return
+				var want := "revoked" if role == "c1" else "another game"
+				_finish("ok" if ended[0].contains(want) else "fail: kicked with \"%s\", expected \"%s\"" % [ended[0], want])
+			"auth_garbage":
+				# Noise and old games get a readable no; c1 still gets in
+				# through the flood's waiting room.
+				if role == "c1":
+					if not await _in_zone():
+						return
+					await _seconds(2.0)
+					_finish("ok")
+				elif await _until(func() -> bool: return _failed_reason != "", 30.0, "a refusal"):
+					_expect_reason("not accepted" if role == "j2" else "newer version")
 			_:
 				_finish("fail: unknown scenario " + scenario)
+
+	## Opens `n` raw ENet connections that never answer the handshake (a scan,
+	## a flood) and holds them; the server must keep room for real players.
+	## Each sends a peer id >= 2 like a Godot client does: ENetMultiplayerPeer
+	## silently resets connections without one (plain ENet noise never even
+	## reaches the handshake).
+	func _flood(n: int, hold: float) -> void:
+		var parsed := NetAddress.parse(address, Net.DEFAULT_PORT)
+		var hosts: Array[ENetConnection] = []
+		for i in n:
+			var h := ENetConnection.new()
+			if h.create_host(1, Net.CHANNELS) == OK:
+				h.connect_to_host(str(parsed["host"]), int(parsed["port"]), Net.CHANNELS, randi_range(2, 0x7FFFFFFF))
+				hosts.append(h)
+		var connected := 0
+		var dropped := 0
+		var end := Time.get_ticks_msec() + int(hold * 1000.0)
+		while Time.get_ticks_msec() < end:
+			for h in hosts:
+				while true:
+					var ev: Array = h.service(0)
+					var kind := int(ev[0])
+					if kind == ENetConnection.EVENT_CONNECT:
+						connected += 1
+					elif kind == ENetConnection.EVENT_DISCONNECT:
+						dropped += 1
+					elif kind != ENetConnection.EVENT_RECEIVE:
+						break  # NONE or ERROR: nothing more this frame
+			await get_tree().process_frame
+		for h in hosts:
+			h.destroy()
+		print("[test %s] flood: %d of %d connected, %d dropped by the server" % [role, connected, n, dropped])
+		_finish("ok" if connected >= n - 2 and dropped >= 1 else
+			"fail: %d of %d raw connections, %d dropped" % [connected, n, dropped])
 
 	## Joined and standing in the server's zone (as a client, zone built).
 	func _in_zone() -> bool:

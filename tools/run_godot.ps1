@@ -13,6 +13,7 @@
 #   .\tools\run_godot.ps1 net [scenario]        # M09: multi-process co-op tests (server + headless clients)
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 #   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
+#   .\tools\run_godot.ps1 wsspike <host> [secs]  # M09b: WebSocket echo + download through Tailscale Funnel (tests/ws_spike.gd)
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
@@ -72,7 +73,7 @@ function Update-Import {
 }
 if ($Mode -notin @("import", "reset")) { Update-Import }
 
-if ($Mode -notin @("import", "smoke", "net", "server", "serverperf")) { Show-OtherGodot }  # headless modes share no GPU
+if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "wsspike")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would
@@ -177,6 +178,21 @@ switch ($Mode) {
 		# joining from the title screen ("Join co-op" -> 127.0.0.1).
 		$port = if ($Name) { $Name } else { "7777" }
 		& $godot --headless --path $proj res://scenes/dedicated_server.tscn -- "--port=$port" "--save=user://local_server.json"
+	}
+	"wsspike" {
+		# M09b Phase 0: how a WebSocket to the laptop behaves through Tailscale
+		# Funnel. The Funnel address comes from public DNS (1.1.1.1): a PC in
+		# the tailnet would otherwise resolve the name to the tailnet and skip
+		# the Funnel relay. The name stays the TLS name (--via keeps SNI).
+		if (-not $Name) { Write-Error "usage: wsspike <laptop>.ts.net [seconds]"; exit 1 }
+		$hostName = $Name -replace "^wss?://", "" -replace "/.*$", ""
+		$secs = if ($Label) { $Label } else { "300" }
+		$via = @(Resolve-DnsName -Name $hostName -Server 1.1.1.1 -Type A -DnsOnly -ErrorAction SilentlyContinue |
+			Where-Object { $_.IPAddress } | Select-Object -First 1)
+		if ($via.Count -eq 0) { Write-Error "$hostName has no public address: is Funnel on for it?"; exit 1 }
+		Write-Output ("Funnel address of {0}: {1}" -f $hostName, $via[0].IPAddress)
+		& $godot --headless --path $proj --script res://tests/ws_spike.gd -- "--url=wss://$hostName/" "--via=$($via[0].IPAddress)" `
+			"--seconds=$secs" "--out=$env:TEMPunebound_ws_spike.json"
 	}
 	"serverperf" {
 		# M09 Spike A: headless tick cost of the Highlands with N bot heroes

@@ -101,6 +101,33 @@ const SCENARIOS := {
 			{"role": "c2", "delay": 3.0, "args": ["--godot=4.5.2-stable (official)"]}],
 		"timeout": 90.0,
 	},
+	# M09b: invite codes (NetTestCodes); the orchestrator writes the list.
+	"invite": {
+		"server": [],
+		"invites": {"c1": NetTestCodes.C1},
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--invite=" + NetTestCodes.C1]},
+			{"role": "c2", "delay": 1.0, "args": ["--invite=" + NetTestCodes.UNKNOWN]},
+			{"role": "c3", "delay": 2.0}],
+		"timeout": 90.0,
+	},
+	"invite_live": {
+		"server": [],
+		"invites": {"c1": NetTestCodes.C1, "shared": NetTestCodes.SHARED},
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--invite=" + NetTestCodes.C1]},
+			{"role": "c2", "delay": 0.5, "args": ["--invite=" + NetTestCodes.SHARED]},
+			{"role": "c3", "delay": 12.0, "args": ["--invite=" + NetTestCodes.SHARED]}],
+		"timeout": 120.0,
+	},
+	"auth_garbage": {
+		"server": [],
+		"invites": {"c1": NetTestCodes.C1},
+		"clients": [{"role": "flood", "delay": 0.0, "args": ["--connections=12", "--hold=14"]},
+			{"role": "j1", "delay": 1.0, "args": ["--auth=junk"]},
+			{"role": "j2", "delay": 1.5, "args": ["--auth=junk_magic"]},
+			{"role": "o1", "delay": 2.0, "args": ["--auth=old"]},
+			{"role": "c1", "delay": 3.0, "args": ["--invite=" + NetTestCodes.C1]}],
+		"timeout": 90.0,
+	},
 	"dns": {
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--connect=nohost.invalid:7777"]}],
 		"timeout": 45.0,
@@ -144,6 +171,15 @@ func _run_scenario(scenario: String, spec: Dictionary, port: int) -> void:
 	if has_server:
 		var srv_args: Array = ["res://scenes/dedicated_server.tscn", "--", "--port=%d" % port,
 			"--save=user://net_test/srv_save.json"]
+		if spec.has("invites"):
+			var lines := "# net test invites\n"
+			var invites: Dictionary = spec["invites"]
+			for invite_name: String in invites:
+				lines += "%s\t%s\ttest\n" % [invite_name, str(invites[invite_name])]
+			var f := FileAccess.open(DIR + "invites.txt", FileAccess.WRITE)
+			f.store_string(lines)
+			f.close()
+			srv_args.append("--invites=" + DIR + "invites.txt")
 		srv_args.append_array(spec["server"] as Array)
 		_clean("srv")
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(DIR + "srv_save.json"))

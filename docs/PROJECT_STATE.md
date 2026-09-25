@@ -1,10 +1,35 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-25 · Milestone: **M09 Co-op** — built, 13 net scenarios +
-smoke (401) green, measured on the server laptop; **user gate pending** (see
-"Gate walk" in the M09 section). M08 was played by the user; small notes
-follow after M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
-[SERVER_SETUP.md](SERVER_SETUP.md) (Tailscale, port 7777/udp).
+Updated: 2026-09-25 · Milestone: **M09 Co-op** — built, played by the user
+and a friend over Tailscale. **M09b (friends without Tailscale) in
+progress**, see below. M08 was played by the user; small notes follow after
+M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
+[SERVER_SETUP.md](SERVER_SETUP.md).
+
+## M09b Friends without Tailscale (in progress, 2026-09-25)
+The user wants friends to join without installing Tailscale, the laptop to
+stay the server, no paid relay (Hetzner) and no tunnel service (playit.gg).
+Starlink lets nothing in (CGNAT for IPv4, the router blocks inbound IPv6), so
+the plan (approved 2026-09-25) is **Tailscale Funnel**: a public HTTPS name
+for the laptop, relayed over the laptop's own outbound Tailscale link, no
+port opened, TLS ends on the laptop. Funnel carries TCP only, so the game
+gets a WebSocket path next to ENet. Access control moves into the game:
+personal **invite codes**. The service moves to its own sandboxed user.
+- **Phase 1 (built):** invite codes in the handshake (TECHNICAL_ARCHITECTURE
+  "Access (M09b)"): `NetAuth` (HMAC challenge-response, nothing decoded
+  before the MAC checks out), protocol 8, KICK, a waiting room of 8
+  unverified connections, `server_relay` off, the title's "Invite code"
+  field (remembered per server), `tools/server/invites.sh`,
+  `RUNEBOUND_INVITES=/etc/runebound/invites` in server.env. Without an invite
+  list a server is open and binds 127.0.0.1. Smoke 412, net 17 scenarios
+  green (new: `invite`, `invite_live`, `auth_garbage`).
+- **Phase 0 (ready, waiting for Funnel):** `tests/ws_spike.gd`,
+  `run_godot wsspike <host> [secs]` (echo 30 x 900 B/s + a 200 KB/s
+  download through Funnel; `--via` keeps the Funnel path from a tailnet PC).
+- **Deploy note:** the laptop keeps running the M09 build until its next
+  restart; after one it waits for its invite list (Phase 3,
+  `tools/server/setup-service.sh`). Games from this commit on speak protocol
+  8 and cannot join an M09 server (and vice versa).
 
 ## M09 Co-op (2026-09-25)
 Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE

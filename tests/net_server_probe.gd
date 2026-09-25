@@ -7,11 +7,12 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "enemy_types", "look_boss", "rewards",
-	"travel", "companions", "soak", "load"]
+	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage"]
 
 var scenario := ""
 var result_path := ""
 var _max_roster := 0
+var _revoked := false
 var _joins := 0
 var _leaves := 0
 var _ready_peers := 0
@@ -31,6 +32,14 @@ func _ready() -> void:
 		_ready_peers += 1
 		_update())
 	_update()
+
+
+## The peer id of the player with that name (0 = not in the roster).
+func _roster_peer(player: String) -> int:
+	for peer: int in Net.roster:
+		if str((Net.roster[peer] as Dictionary).get("name", "")) == player:
+			return peer
+	return 0
 
 
 func _on_roster() -> void:
@@ -297,6 +306,32 @@ func _update() -> void:
 				"fail: expected the 4.6.0 client in and the 4.5.2 one out (max roster %d)" % _max_roster
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
+		"invite":
+			if _max_roster > 1:
+				verdict = "fail: %d players got in with one valid code" % _max_roster
+			elif _ready_peers < 1:
+				verdict = "fail: the invited client never arrived"
+			elif Net.refused_total < 2:
+				verdict = "fail: %d refusals for a wrong code and a missing one" % Net.refused_total
+			else:
+				verdict = "ok"
+		"invite_live":
+			# The host revokes c1's code as soon as c1 is in (what invites.sh remove does).
+			if not _revoked and Net.is_peer_ready(_roster_peer("C1")):
+				_revoked = true
+				var f := FileAccess.open(Net.invites_path, FileAccess.WRITE)
+				f.store_string("# c1 revoked\nshared\t%s\ttest\n" % NetTestCodes.SHARED)
+				f.close()
+			verdict = "ok" if Net.kicks >= 2 else "fail: %d kicks (a revoke and a replaced session expected)" % Net.kicks
+		"auth_garbage":
+			if _max_roster != 1:
+				verdict = "fail: roster reached %d (only c1 is invited)" % _max_roster
+			elif Net.refused_total < 3:
+				verdict = "fail: %d refusals for junk, junk with a MAC and an old game" % Net.refused_total
+			elif Net.evicted_total < 1:
+				verdict = "fail: the flood never filled the waiting room"
+			else:
+				verdict = "ok"
 		"full":
 			if _max_roster > 1:
 				verdict = "fail: %d players on a 1-player server" % _max_roster

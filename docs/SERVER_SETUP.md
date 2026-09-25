@@ -65,6 +65,8 @@ journalctl -u runebound-server -b          # Log seit dem Boot
   ```
 
 ## Koop-Betrieb (ab M09)
+> **M09b (in Arbeit, 2026-09-25):** Freunde sollen ohne Tailscale über Tailscale Funnel beitreten, mit persönlichen Einladungscodes. `server.env` zeigt schon auf die Einladungsliste `/etc/runebound/invites`. Nach dem nächsten Neustart lässt der Server nur noch Spieler mit Code herein. Die Liste legt `tools/server/setup-service.sh` an (Phase 3 von M09b), die Codes verwaltet `tools/server/invites.sh add|list|show|remove NAME`.
+
 Der Server ist seit M09 ein echtes Spiel: `RUNEBOUND_SCENE` startet `res://scenes/dedicated_server.tscn`. Er hält genau eine Zone (die, in der seine Welt zuletzt war), bis 5 Spieler und eine eigene Welt (`~/.local/share/godot/app_userdata/RUNEBOUND/runebound_server.json`: Bosse, Camps, Zone). Die Charaktere bleiben auf den Rechnern der Spieler.
 
 **Einschalten (einmalig):**

@@ -2160,6 +2160,48 @@ func _run() -> void:
 		and Net.godot_minor("4.10.1-rc1") == "4.10" and Net.godot_minor(Net.godot_version()) != "",
 		"server and clients compare Godot by major.minor (patch releases may differ)")
 	_check(Net.broken_scripts().is_empty(), "every script co-op needs compiles (title and server check this)")
+
+	# --- M09b: invite codes and the join handshake (NetAuth) ---
+	_check(NetAuth.normalize_code(" k7qm-2xrp vb4t_5nhl ") == "K7QM2XRPVB4T5NHL" and NetAuth.normalize_code("0o1i8b") == "OOIIBB"
+		and NetAuth.is_valid_code("K7QM-2XRP-VB4T-5NHL") and not NetAuth.is_valid_code("K7QM-2XRP-VB4T"),
+		"M09b: invite codes forgive case, dashes and 0/O, 1/I, and have exactly 16 characters")
+	var code_a := NetAuth.generate_code()
+	_check(NetAuth.is_valid_code(code_a) and code_a.length() == 19 and code_a != NetAuth.generate_code(),
+		"generated codes are well-formed (XXXX-XXXX-XXXX-XXXX) and random")
+	_check(NetAuth.code_key("k7qm 2xrp vb4t 5nhl") == NetAuth.code_key("K7QM-2XRP-VB4T-5NHL") and NetAuth.code_key(code_a).size() == 32
+		and NetAuth.code_key(code_a) != NetAuth.code_key("K7QM-2XRP-VB4T-5NHL"), "a code's key ignores formatting and differs per code")
+	var invite_list := NetAuth.parse_invites("# RUNEBOUND invites\nanna\tK7QM-2XRP-VB4T-5NHL\t2026-09-25\n\njust-a-name\nbo b ZZZZ\n  ben   %s  \n" % code_a)
+	var invite_keys: Dictionary = invite_list["keys"]
+	_check(invite_keys.size() == 2 and invite_keys.has("anna") and invite_keys.has("ben") and int(invite_list["bad"]) == 2,
+		"the invite list reads name + code lines and skips comments and broken lines")
+	var nonce := NetAuth.new_nonce()
+	var hello_in := {"protocol": Net.PROTOCOL, "name": "Anna"}
+	var answer := NetAuth.build_join("k7qm-2xrp-vb4t-5nhl", nonce, hello_in)
+	var verdict_ok := NetAuth.verify_join(answer, nonce, invite_keys, false)
+	_check(int(verdict_ok["verdict"]) == NetAuth.Verdict.OK and str(verdict_ok["invite"]) == "anna"
+		and str((bytes_to_var(verdict_ok["hello"] as PackedByteArray) as Dictionary).get("name", "")) == "Anna",
+		"the right code gets in and names the friend; the hello arrives intact")
+	var tampered := answer.duplicate()
+	tampered[tampered.size() - 1] = tampered[tampered.size() - 1] ^ 1
+	_check(int(NetAuth.verify_join(answer, NetAuth.new_nonce(), invite_keys, false)["verdict"]) == NetAuth.Verdict.BAD_CODE
+		and int(NetAuth.verify_join(tampered, nonce, invite_keys, false)["verdict"]) == NetAuth.Verdict.BAD_CODE
+		and int(NetAuth.verify_join(NetAuth.build_join(NetAuth.generate_code(), nonce, hello_in), nonce, invite_keys, false)["verdict"])
+			== NetAuth.Verdict.BAD_CODE,
+		"a replayed answer, a changed hello and an unknown code are all refused")
+	var no_code := NetAuth.build_join("", nonce, hello_in)
+	_check(int(NetAuth.verify_join(no_code, nonce, invite_keys, false)["verdict"]) == NetAuth.Verdict.NO_CODE
+		and int(NetAuth.verify_join(no_code, nonce, {}, true)["verdict"]) == NetAuth.Verdict.OPEN,
+		"no code: refused by a server with invites, fine for an open one")
+	var big := NetAuth.MAGIC.to_ascii_buffer()
+	big.resize(NetAuth.MAX_JOIN_SIZE + 1)
+	var junk_checks: Array[Dictionary] = [NetAuth.verify_join(PackedByteArray([1, 2, 3]), nonce, invite_keys, false),
+		NetAuth.verify_join(var_to_bytes({"protocol": 7, "name": "Old"}), nonce, invite_keys, false),
+		NetAuth.verify_join(big, nonce, invite_keys, false)]
+	_check(int(junk_checks[0]["verdict"]) == NetAuth.Verdict.MALFORMED and int(junk_checks[1]["verdict"]) == NetAuth.Verdict.OLD_CLIENT
+		and int(junk_checks[2]["verdict"]) == NetAuth.Verdict.MALFORMED
+		and not junk_checks[0].has("hello") and not junk_checks[1].has("hello") and not junk_checks[2].has("hello"),
+		"noise, an old game's hello and oversized answers are refused without decoding anything")
+	_check(not (multiplayer as SceneMultiplayer).server_relay, "clients never talk to each other through the server")
 	SaveGame.flags = {"colossus_defeated": true}
 	SaveGame.camps = {"camp_1": {"cleared_at": 5.0}}
 	SaveGame.current_zone = "res://scenes/hub.tscn"

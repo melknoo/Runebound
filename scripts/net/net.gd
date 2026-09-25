@@ -16,10 +16,18 @@ extends Node
 ## messages carry the zone epoch and are dropped when stale; the server sends
 ## zone messages to a client only after it reported ZONE_READY.
 ##
-## Handshake: SceneMultiplayer auth (raw bytes before any RPC): the exact
-## protocol, the same Godot major.minor (patch releases talk to each other:
-## 4.6.1 joins a 4.6.3 server), the player count. A mismatch is refused with a
-## readable reason instead of failing on RPC ids.
+## Handshake: SceneMultiplayer auth (raw bytes before any RPC). The server
+## sends a challenge, the client answers with its hello and a MAC made with its
+## invite code (NetAuth, M09b); only a verified answer is decoded. Then the
+## exact protocol, the same Godot major.minor (patch releases talk to each
+## other: 4.6.1 joins a 4.6.3 server) and the player count. Every refusal
+## carries a readable reason instead of failing on RPC ids.
+##
+## Invites (M09b): the server reads its invite list (`invites_path`, one code
+## per friend, tools/server/invites.sh) every INVITES_POLL seconds; a revoked or
+## changed code ends that session (KICK), and a code joining again replaces its
+## older session. Without an invite list the server is open and ENet binds
+## 127.0.0.1 only (tests, tools/run_godot coop).
 
 signal session_started(welcome: Dictionary)  # client: accepted, the zone loads next
 signal session_failed(reason: String)        # client: could not join
@@ -30,7 +38,7 @@ signal peer_left(peer_id: int)   # server: a client left
 
 enum Mode { OFFLINE, SERVER, CLIENT }
 
-const PROTOCOL := 7
+const PROTOCOL := 8
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3
@@ -39,7 +47,17 @@ const CH_HERO := 1      # unreliable ordered: a hero's own state
 const CH_SNAPSHOT := 2  # unreliable ordered: world snapshots
 const EPOCH_ANY := -1   # session messages, valid in every zone
 const CONNECT_TIMEOUT := 12.0
-const AUTH_TIMEOUT := 15.0
+const AUTH_TIMEOUT := 8.0
+## Unverified connections at once (a scan, a flood): a new one pushes the
+## oldest out, so a friend always gets a turn.
+const PENDING_MAX := 8
+## ENet slots beyond the party: the waiting room plus peers still saying
+## goodbye after being pushed out.
+const ENET_SPARE := 24
+const INVITES_POLL := 2.0
+const REFUSAL_LOG_PER_MIN := 5
+## Protocol-7 games read the challenge's reason as their refusal.
+const UPDATE_REASON := "This server runs a newer version of RUNEBOUND. Update your game (git pull)."
 ## Zone builds block the main loop for seconds (the laptop: ~1.5 s); ENet
 ## must not drop a peer for that.
 const PEER_TIMEOUT_MIN_MS := 15000
@@ -63,6 +81,16 @@ var pending_spawn: Vector3 = Vector3.INF
 var protocol_override: int = -1
 ## Tests: pretend to run another Godot version (`-- --godot=4.5.2-stable`).
 var godot_override: String = ""
+## Tests: how this client answers the challenge (`-- --auth=`): "" normally,
+## "junk" random bytes, "junk_magic" our format with a random MAC, "old" a
+## protocol-7 game (hello first), "silent" never.
+var auth_test: String = ""
+## Server: the invite list ("" = open: no codes, ENet on 127.0.0.1 only).
+var invites_path: String = ""
+## Server counters (tests, the 60 s log line).
+var refused_total: int = 0
+var evicted_total: int = 0
+var kicks: int = 0
 ## Server: peers told "no", dropped shortly after unless they already left.
 var _refused: Dictionary = {}
 
@@ -82,6 +110,16 @@ var _welcome: Dictionary = {}       # client: the server's answer
 var _pending: Dictionary = {}       # server: peer -> hello, until auth completes
 var _ready_epoch: Dictionary = {}   # server: peer -> epoch it has loaded
 var _join: Dictionary = {}          # client: {host, port, resolve, stage}
+var _code: String = ""              # client: the invite code of this join
+var _invite_keys: Dictionary = {}   # server: invite name -> HMAC key
+var _invites_text: String = ""      # server: the list as last read
+var _invites_loaded := false
+var _invites_warned := false
+var _invites_left: float = 0.0
+var _challenges: Dictionary = {}    # server: peer -> {nonce, since}, until it answers
+var _peer_invite: Dictionary = {}   # server: peer -> invite name
+var _refusal_log: Array[int] = []   # server: msec of the refusals logged in the last minute
+var _refusals: int = 0              # server: refusals since the last log line
 var _connect_left: float = 0.0
 ## Netsim (`-- --netsim=rtt_ms,jitter_ms,loss_pct`): delays this process's
 ## sends and receives (half the RTT each way) and drops unreliable traffic.
@@ -115,6 +153,7 @@ func _ready() -> void:
 	var sm := _scene_multiplayer()
 	sm.auth_callback = _on_auth
 	sm.auth_timeout = AUTH_TIMEOUT
+	sm.server_relay = false  # clients talk to the server only, never through it to each other
 	sm.peer_authenticating.connect(_on_peer_authenticating)
 	sm.peer_authentication_failed.connect(_on_auth_failed)
 	sm.peer_connected.connect(_on_peer_connected)
@@ -126,6 +165,7 @@ func _ready() -> void:
 	on(NetMsg.ZONE_READY, _on_zone_ready)
 	on(NetMsg.ECHO, _on_echo)
 	on(NetMsg.TRAVEL_GO, _on_travel_go)
+	on(NetMsg.KICK, _on_kick)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--netsim="):
 			var parts := arg.trim_prefix("--netsim=").split(",")
@@ -137,6 +177,8 @@ func _ready() -> void:
 			protocol_override = arg.trim_prefix("--protocol=").to_int()
 		elif arg.begins_with("--godot="):
 			godot_override = arg.trim_prefix("--godot=")
+		elif arg.begins_with("--auth="):
+			auth_test = arg.trim_prefix("--auth=")
 
 
 # ---------------------------------------------------------------------------
@@ -195,30 +237,39 @@ static func broken_scripts() -> Array[String]:
 # Session: host / join / leave
 # ---------------------------------------------------------------------------
 
-## Dedicated server: listen on every interface (IPv4 + IPv6) at `port`.
-func host(port: int, players: int = MAX_PLAYERS) -> Error:
+## Dedicated server at `port`. With an invite list it listens on every
+## interface (IPv4 + IPv6) and lets in listed codes only; without one it is
+## open and binds 127.0.0.1 (only this machine can join).
+func host(port: int, players: int = MAX_PLAYERS, invites: String = "") -> Error:
 	_close()
 	var peer := ENetMultiplayerPeer.new()
-	peer.set_bind_ip("*")
-	# One slot more than players: a full server can still answer "full".
-	var err := peer.create_server(port, players + 1, CHANNELS)
+	var bind := "*" if invites != "" else "127.0.0.1"
+	peer.set_bind_ip(bind)
+	var err := peer.create_server(port, players + ENET_SPARE, CHANNELS)
 	if err != OK:
 		return err
 	_enet = peer
 	multiplayer.multiplayer_peer = peer
 	mode = Mode.SERVER
 	max_players = players
+	invites_path = invites
 	roster.clear()
-	log_line("listening on *:%d/udp, up to %d players, protocol %d, Godot %s" % [port, players,
+	log_line("listening on %s:%d/udp, up to %d players, protocol %d, Godot %s" % [bind, port, players,
 		PROTOCOL, godot_version()])
+	if invites == "":
+		log_line("open: no invite list, only this machine can join")
+	else:
+		_reload_invites()
 	return OK
 
 
-## Client: join the server at `address` ("host", "host:port", "[v6]:port").
-## The answer comes as session_started or session_failed.
-func join(address: String, player_name: String, class_id: StringName, level: int) -> void:
+## Client: join the server at `address` ("host", "host:port", "[v6]:port")
+## with the invite code the host gave us ("" for an open server). The answer
+## comes as session_started or session_failed.
+func join(address: String, player_name: String, class_id: StringName, level: int, invite: String = "") -> void:
 	_close()
 	last_reason = ""
+	_code = invite
 	var parsed := NetAddress.parse(address, DEFAULT_PORT)
 	if String(parsed["error"]) != "":
 		_fail(String(parsed["error"]))
@@ -282,6 +333,11 @@ func _process(delta: float) -> void:
 		if _stats_left <= 0.0:
 			_stats_left = STATS_EVERY
 			_log_stats()
+		if invites_path != "":
+			_invites_left -= delta
+			if _invites_left <= 0.0:
+				_invites_left = INVITES_POLL
+				_reload_invites()
 
 
 func _poll_join(delta: float) -> void:
@@ -303,29 +359,95 @@ func _poll_join(delta: float) -> void:
 				_fail("Could not find the server \"%s\"." % String(_join["host"]))
 				return
 	if _connect_left <= 0.0:
-		_fail("No answer from %s. Is the server running, and is Tailscale connected?" % target)
+		_fail("No answer from %s. Is the server running, and is the address right?" % target)
 
 
 func _on_peer_authenticating(id: int) -> void:
-	if mode == Mode.CLIENT and id == 1:
+	var sm := _scene_multiplayer()
+	if mode == Mode.SERVER:
+		if _challenges.size() >= PENDING_MAX:
+			_evict_oldest_pending()
+		var nonce := NetAuth.new_nonce()
+		_challenges[id] = {"nonce": nonce, "since": Time.get_ticks_msec()}
+		sm.send_auth(id, var_to_bytes({"challenge": nonce, "reason": UPDATE_REASON}))
+	elif mode == Mode.CLIENT and id == 1:
 		_join["stage"] = "handshake"
-		_scene_multiplayer().send_auth(1, var_to_bytes(_hello))
+		if auth_test == "old":  # a protocol-7 game sends its hello first
+			sm.send_auth(1, var_to_bytes(_hello))
 
 
 func _on_auth(id: int, data: PackedByteArray) -> void:
-	var decoded: Variant = bytes_to_var(data)  # never _with_objects: untrusted bytes
-	var msg: Dictionary = decoded if decoded is Dictionary else {}
 	if mode == Mode.SERVER:
-		_server_check_hello(id, msg)
-	elif mode == Mode.CLIENT and id == 1:
-		if bool(msg.get("ok", false)):
-			_welcome = msg
-			_scene_multiplayer().complete_auth(1)
-		else:
+		_server_check_join(id, data)
+		return
+	if mode != Mode.CLIENT or id != 1:
+		return
+	var decoded: Variant = bytes_to_var(data)  # from the server we chose; never _with_objects
+	var msg: Dictionary = decoded if decoded is Dictionary else {}
+	if msg.has("challenge"):
+		if auth_test == "old":  # a protocol-7 game: an answer without "ok" is a refusal
 			_fail(str(msg.get("reason", "The server refused the connection.")))
+		elif auth_test != "silent":
+			var nonce: PackedByteArray = msg["challenge"] if msg["challenge"] is PackedByteArray else PackedByteArray()
+			_scene_multiplayer().send_auth(1, _join_answer(nonce))
+	elif bool(msg.get("ok", false)):
+		_welcome = msg
+		_scene_multiplayer().complete_auth(1)
+	else:
+		_fail(str(msg.get("reason", "The server refused the connection.")))
 
 
-func _server_check_hello(id: int, hello: Dictionary) -> void:
+func _join_answer(nonce: PackedByteArray) -> PackedByteArray:
+	var crypto := Crypto.new()
+	match auth_test:
+		"junk":
+			return crypto.generate_random_bytes(200)
+		"junk_magic":
+			var out := NetAuth.MAGIC.to_ascii_buffer()
+			out.append(NetAuth.FLAG_HAS_CODE)
+			out.append_array(crypto.generate_random_bytes(NetAuth.MAC_SIZE + 64))
+			return out
+	return NetAuth.build_join(_code, nonce, _hello)
+
+
+## Server: a join answer. Nothing in it is decoded before its MAC checks out
+## (or the server is open, which only this machine can reach).
+func _server_check_join(id: int, data: PackedByteArray) -> void:
+	var challenge: Dictionary = _challenges.get(id, {})
+	_challenges.erase(id)  # one answer per challenge
+	if challenge.is_empty():
+		_refuse(id, UPDATE_REASON, "an answer without a challenge")
+		return
+	var check := NetAuth.verify_join(data, challenge["nonce"] as PackedByteArray, _invite_keys, invites_path == "")
+	var verdict := int(check["verdict"])
+	if verdict == NetAuth.Verdict.MALFORMED or verdict == NetAuth.Verdict.OLD_CLIENT:
+		_refuse(id, UPDATE_REASON, "not a protocol-%d join (an older game, or noise)" % PROTOCOL)
+		return
+	if verdict == NetAuth.Verdict.NO_CODE:
+		_refuse(id, "This server needs an invite code. Ask the host for yours.", "no invite code")
+		return
+	if verdict == NetAuth.Verdict.BAD_CODE:
+		_refuse(id, "Invite code not accepted. Check it for typos, or ask the host for a new one.", "unknown invite code")
+		return
+	var decoded: Variant = bytes_to_var(check["hello"] as PackedByteArray)  # verified: never _with_objects
+	if decoded is not Dictionary:
+		_refuse(id, UPDATE_REASON, "an unreadable hello")
+		return
+	_server_check_hello(id, decoded as Dictionary, str(check.get("invite", "")))
+
+
+func _server_check_hello(id: int, hello: Dictionary, invite: String) -> void:
+	# A code joining again replaces its older session (a crashed game, or a
+	# second PC): that seat does not count against "full".
+	var replaced: Array[int] = []
+	if invite != "":
+		for other: int in _peer_invite:
+			if other != id and str(_peer_invite[other]) == invite:
+				replaced.append(other)
+	var seated := 0
+	for other: int in replaced:
+		if roster.has(other):
+			seated += 1
 	var reason := ""
 	var their_protocol := int(hello.get("protocol", -1))
 	if their_protocol != PROTOCOL:
@@ -334,24 +456,20 @@ func _server_check_hello(id: int, hello: Dictionary) -> void:
 	elif godot_minor(str(hello.get("godot", "?"))) != godot_minor(godot_version()):
 		reason = "Version mismatch: the server runs Godot %s, you run %s. Use Godot %s.x." % [
 			godot_version(), str(hello.get("godot", "?")), godot_minor(godot_version())]
-	elif roster.size() >= max_players:
+	elif roster.size() - seated >= max_players:
 		reason = "The server is full (%d/%d)." % [roster.size(), max_players]
 	var sm := _scene_multiplayer()
 	if reason != "":
-		log_line("refused peer %d: %s" % [id, reason])
-		sm.send_auth(id, var_to_bytes({"ok": false, "reason": reason}))
-		_refused[id] = true
-		get_tree().create_timer(0.5, true, false, true).timeout.connect(func() -> void:
-			# The refused client usually hangs up by itself first (then ENet has
-			# forgotten the peer and a disconnect would only log an error).
-			if _refused.has(id) and _enet != null and mode == Mode.SERVER:
-				_refused.erase(id)
-				_enet.disconnect_peer(id)
-		)
+		_refuse(id, reason)
 		return
+	for other: int in replaced:
+		kick(other, "You joined this server from another game with the same invite code.")
+	if invite != "":
+		_peer_invite[id] = invite
 	if str(hello.get("godot", "")) != godot_version():
 		log_line("note: peer %d runs Godot %s (server %s)" % [id, str(hello.get("godot", "?")), godot_version()])
 	hello["name"] = _unique_name(clean_name(str(hello.get("name", ""))))
+	hello["invite"] = invite
 	_pending[id] = hello
 	var spawn_at := Vector3.INF  # late joiners appear next to the party
 	var zone := get_tree().current_scene as ZoneBase
@@ -360,6 +478,115 @@ func _server_check_hello(id: int, hello: Dictionary) -> void:
 	sm.send_auth(id, var_to_bytes({"ok": true, "peer_id": id, "zone": zone_scene, "epoch": zone_epoch,
 		"flags": SaveGame.flags.duplicate(true), "name": hello["name"], "spawn_at": spawn_at}))
 	sm.complete_auth(id)
+
+
+## Server: say no (the reason is what the player reads) and drop the peer.
+## The log keeps the first REFUSAL_LOG_PER_MIN a minute; the 60 s line counts
+## the rest.
+func _refuse(id: int, reason: String, why: String = "") -> void:
+	_refusals += 1
+	refused_total += 1
+	var now := Time.get_ticks_msec()
+	while not _refusal_log.is_empty() and now - _refusal_log[0] > 60000:
+		_refusal_log.pop_front()
+	if _refusal_log.size() < REFUSAL_LOG_PER_MIN:
+		_refusal_log.append(now)
+		log_line("refused peer %d%s: %s" % [id, _peer_from(id), why if why != "" else reason])
+	_scene_multiplayer().send_auth(id, var_to_bytes({"ok": false, "reason": reason}))
+	_drop_later(id)
+
+
+## Server: disconnect half a second from now, so a reason sent right before
+## arrives first.
+func _drop_later(id: int) -> void:
+	_refused[id] = true
+	get_tree().create_timer(0.5, true, false, true).timeout.connect(func() -> void:
+		# The client usually hangs up by itself first (then ENet has forgotten
+		# the peer and a disconnect would only log an error).
+		if _refused.has(id) and _enet != null and mode == Mode.SERVER:
+			_refused.erase(id)
+			_enet.disconnect_peer(id)
+	)
+
+
+## Server: the waiting room is full; the connection waiting longest goes.
+func _evict_oldest_pending() -> void:
+	var oldest := -1
+	var since := 0
+	for id: int in _challenges:
+		var t := int((_challenges[id] as Dictionary)["since"])
+		if oldest < 0 or t < since:
+			oldest = id
+			since = t
+	if oldest < 0:
+		return
+	_challenges.erase(oldest)
+	evicted_total += 1
+	_refusals += 1
+	_scene_multiplayer().disconnect_peer(oldest)
+
+
+## Server: " from 1.2.3.4" for the log ("" when unknown).
+func _peer_from(id: int) -> String:
+	if _enet == null:
+		return ""
+	var p := _enet.get_peer(id)
+	return " from %s" % p.get_remote_address() if p != null else ""
+
+
+## Server: tell a client why, then drop it (M09b: a revoked invite, or its
+## code joined from another game).
+func kick(peer_id: int, reason: String) -> void:
+	if mode != Mode.SERVER:
+		return
+	kicks += 1
+	log_line("kicked %s (peer %d): %s" % [peer_name(peer_id), peer_id, reason])
+	_peer_invite.erase(peer_id)
+	if roster.has(peer_id):
+		send_to_peer(peer_id, NetMsg.KICK, [reason], CH_EVENTS, false)
+	_drop_later(peer_id)
+
+
+func _on_kick(_from: int, payload: Array) -> void:
+	if mode == Mode.CLIENT:
+		_end_session(str(payload[0]) if not payload.is_empty() else "The server removed you.")
+
+
+## Server: (re)reads the invite list. A code that is gone or changed ends that
+## friend's session; an unreadable list keeps the last one.
+func _reload_invites() -> void:
+	var text := ""
+	var exists := FileAccess.file_exists(invites_path)
+	if exists:
+		var f := FileAccess.open(invites_path, FileAccess.READ)
+		if f == null:
+			if not _invites_warned:
+				_invites_warned = true
+				log_line("cannot read the invite list %s (%s): keeping the last one" % [invites_path,
+					error_string(FileAccess.get_open_error())])
+			return
+		text = f.get_as_text()
+		f.close()
+	if _invites_loaded and text == _invites_text:
+		return
+	_invites_loaded = true
+	_invites_warned = false
+	_invites_text = text
+	var parsed := NetAuth.parse_invites(text)
+	var old := _invite_keys
+	_invite_keys = parsed["keys"]
+	if not exists:
+		log_line("no invite list at %s: nobody can join until you add one (tools/server/invites.sh add NAME)" % invites_path)
+	else:
+		var bad := int(parsed["bad"])
+		log_line("invites: %d loaded from %s%s" % [_invite_keys.size(), invites_path,
+			(" (%d unreadable lines skipped)" % bad) if bad > 0 else ""])
+	for id: int in _peer_invite.keys():
+		var invite := str(_peer_invite[id])
+		if not _invite_keys.has(invite):
+			kick(id, "The host revoked your invite code.")
+		elif old.has(invite) and old[invite] != _invite_keys[invite]:
+			kick(id, "The host changed your invite code. Ask for the new one.")
 
 
 func _unique_name(wanted: String) -> String:
@@ -379,8 +606,10 @@ func _unique_name(wanted: String) -> String:
 func _on_auth_failed(id: int) -> void:
 	_pending.erase(id)
 	_refused.erase(id)
+	_challenges.erase(id)
+	_peer_invite.erase(id)
 	if mode == Mode.CLIENT and id == 1 and last_reason == "":
-		_fail("The handshake with the server timed out.")
+		_fail("The handshake with the server timed out. Do you both run the same game version?")
 
 
 func _on_peer_connected(id: int) -> void:
@@ -391,13 +620,17 @@ func _on_peer_connected(id: int) -> void:
 	roster[id] = {"name": str(hello.get("name", "Hero")), "class_id": str(hello.get("class_id", "")),
 		"level": int(hello.get("level", 1))}
 	_tune_peer(id)
-	log_line("%s joined (peer %d, %d/%d)" % [roster[id]["name"], id, roster.size(), max_players])
+	var invite := str(hello.get("invite", ""))
+	log_line("%s joined (peer %d%s, %d/%d)" % [roster[id]["name"], id,
+		(", invite " + invite) if invite != "" else "", roster.size(), max_players])
 	_broadcast_roster()
 
 
 func _on_peer_disconnected(id: int) -> void:
 	_pending.erase(id)
 	_refused.erase(id)
+	_challenges.erase(id)
+	_peer_invite.erase(id)
 	if mode != Mode.SERVER or not roster.has(id):
 		return
 	var who := str((roster[id] as Dictionary).get("name", "?"))
@@ -425,7 +658,7 @@ func _on_connected() -> void:
 func _on_connection_failed() -> void:
 	if mode == Mode.CLIENT and last_reason == "":
 		var target := NetAddress.format(String(_join.get("host", "?")), int(_join.get("port", DEFAULT_PORT)))
-		_fail("No answer from %s. Is the server running, and is Tailscale connected?" % target)
+		_fail("No answer from %s. Is the server running, and is the address right?" % target)
 
 
 func _on_server_disconnected() -> void:
@@ -522,6 +755,12 @@ func _close() -> void:
 	roster.clear()
 	_pending.clear()
 	_refused.clear()
+	_challenges.clear()
+	_peer_invite.clear()
+	_invite_keys.clear()
+	_invites_loaded = false
+	_invites_text = ""
+	invites_path = ""
 	_ready_epoch.clear()
 	_sim_queue.clear()
 	_sim_last_due.clear()
@@ -799,5 +1038,7 @@ func _log_stats() -> void:
 	if _enet != null and _enet.host != null:
 		sent = float(_enet.host.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA)) / STATS_EVERY / 1024.0
 		received = float(_enet.host.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA)) / STATS_EVERY / 1024.0
-	log_line("tick p50 %.2f / p95 %.2f / max %.2f ms | players %d | enemies %d (%d asleep) | out %.1f KB/s, in %.1f KB/s" % [
-		p50, p95, worst, roster.size(), EnemyBase.all_enemies.size(), asleep, sent, received])
+	var refused := (" | refused %d" % _refusals) if _refusals > 0 else ""
+	_refusals = 0
+	log_line("tick p50 %.2f / p95 %.2f / max %.2f ms | players %d | enemies %d (%d asleep) | out %.1f KB/s, in %.1f KB/s%s" % [
+		p50, p95, worst, roster.size(), EnemyBase.all_enemies.size(), asleep, sent, received, refused])

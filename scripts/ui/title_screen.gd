@@ -1,9 +1,9 @@
 extends Control
 ## M09 title screen (the main scene): Continue (singleplayer, straight into
-## the save), Join co-op (name + server address, the last one remembered in
+## the save), Join co-op (name + server address + invite code, remembered in
 ## user://settings.cfg, never a fixed server) and Quit. After a co-op session
-## ends it shows why. `-- --connect=host:port [--name=N]` joins right away
-## (tools/run_godot coop).
+## ends it shows why. `-- --connect=host:port [--name=N] [--invite=CODE]` joins
+## right away (tools/run_godot coop).
 
 const ACCENT_FALLBACK := Color(0.37, 0.88, 0.91)
 const WARN := Color("#E08A7A")
@@ -14,6 +14,8 @@ var _join_page: VBoxContainer
 var _continue_btn: Button
 var _name_edit: LineEdit
 var _address_edit: LineEdit
+var _invite_edit: LineEdit
+var _invite_show: Button
 var _connect_btn: Button
 var _back_btn: Button
 var _status: Label
@@ -40,15 +42,19 @@ func _ready() -> void:
 		return
 	var auto_connect := ""
 	var auto_name := ""
+	var auto_invite := ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--connect="):
 			auto_connect = arg.trim_prefix("--connect=")
 		elif arg.begins_with("--name="):
 			auto_name = arg.trim_prefix("--name=")
+		elif arg.begins_with("--invite="):
+			auto_invite = arg.trim_prefix("--invite=")
 	if auto_connect != "" and Net.last_reason == "":
 		_auto = true
 		_show_join()
 		_address_edit.text = auto_connect
+		_invite_edit.text = auto_invite
 		if auto_name != "":
 			_name_edit.text = auto_name
 		_connect()
@@ -128,6 +134,25 @@ func _build() -> void:
 	_address_edit = _line_edit(ClientSettings.get_value("last_server", DEFAULT_SERVER), "server-name:7777")
 	_address_edit.text_submitted.connect(func(_t: String) -> void: _connect())
 	_join_page.add_child(_address_edit)
+	# M09b: the host's server lets in invited friends only; each server keeps
+	# its own remembered code.
+	_join_page.add_child(_caption("Invite code  (the host gives you one)"))
+	var code_row := HBoxContainer.new()
+	code_row.add_theme_constant_override("separation", 12)
+	_join_page.add_child(code_row)
+	_invite_edit = _line_edit(ClientSettings.get_invite(_address_edit.text), "XXXX-XXXX-XXXX-XXXX")
+	_invite_edit.secret = true
+	_invite_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_invite_edit.text_submitted.connect(func(_t: String) -> void: _connect())
+	code_row.add_child(_invite_edit)
+	_invite_show = _button("Show", _toggle_invite)
+	_invite_show.custom_minimum_size = Vector2(150, 44)
+	code_row.add_child(_invite_show)
+	_address_edit.text_changed.connect(func(text: String) -> void:
+		var known := ClientSettings.get_invite(text)
+		if known != "":
+			_invite_edit.text = known
+	)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	_join_page.add_child(row)
@@ -208,6 +233,11 @@ func _show_main() -> void:
 	_continue_btn.grab_focus()
 
 
+func _toggle_invite() -> void:
+	_invite_edit.secret = not _invite_edit.secret
+	_invite_show.text = "Show" if _invite_edit.secret else "Hide"
+
+
 func _connect() -> void:
 	if Net.is_joining():
 		return
@@ -216,14 +246,19 @@ func _connect() -> void:
 	if String(parsed["error"]) != "":
 		_say(_status, String(parsed["error"]), WARN)
 		return
+	var code := _invite_edit.text.strip_edges()
+	if code != "" and not NetAuth.is_valid_code(code):
+		_say(_status, "An invite code has 16 letters and digits, like K7QM-2XRP-VB4T-5NHL. Check it for typos.", WARN)
+		return
 	var player_name := Net.clean_name(_name_edit.text)
 	if not _auto:
 		ClientSettings.set_value("name", player_name)
 		ClientSettings.set_value("last_server", address)
+		ClientSettings.set_invite(address, NetAuth.pretty_code(code) if code != "" else "")
 	var ch := SaveGame.active_character()
 	var level := int((ch.get("progression", {}) as Dictionary).get("level", 1))
 	_set_busy(true)
-	Net.join(address, player_name, SaveGame.active_class_id(), level)
+	Net.join(address, player_name, SaveGame.active_class_id(), level, code)
 
 
 func _on_failed(reason: String) -> void:
@@ -244,3 +279,4 @@ func _set_busy(busy: bool) -> void:
 	_back_btn.disabled = busy
 	_name_edit.editable = not busy
 	_address_edit.editable = not busy
+	_invite_edit.editable = not busy
