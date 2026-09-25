@@ -46,9 +46,28 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
     camps), echo (20 Hz x 900 B: loss after the first second 0 %), unknown
     host. `run_godot server [port]` runs a local server to join from the
     title screen.
-  - **Server cost after phase 1** (`serverperf --dedicated`, dev PC):
-    1 hero p50 0.8 / p95 1.5 ms, 5 bot heroes with ~13 enemies fighting
-    p50 2.4 / p95 4.0 ms (about x3 on the laptop: inside the budget).
+  - **Server cost after phase 1** (`serverperf --dedicated`): dev PC 1 hero
+    p50 0.8 / p95 1.5 ms, 5 bot heroes with ~13 enemies fighting p50 2.4 /
+    p95 4.0 ms; the laptop 1 hero p50 2.0 / p95 3.3 ms (was 12.7 / 16.0),
+    5 bots p50 7.6 / p95 17.9 ms (the bots run their whole kit on the
+    server; real clients run theirs at home). Net tests green on the laptop.
+- **Phase 2 (heroes in one world):**
+  - `Player.net_role`: OWNER (this machine plays it), PUPPET (another
+    player's hero on a client: pose, state, HP and actions from the network,
+    no input, physics, hurtbox or local death), PROXY (a client's hero on the
+    server: position and HP from its owner, a hurtbox, the client's
+    character for stat math, no rig). Remote heroes never block anyone.
+  - `NetWorld` (per zone while online): clients send their hero at 30 Hz,
+    their actions (`action_started`, so puppets play the clip) and their
+    character (on join and after changes); the server keeps the proxies,
+    relays actions and sends a 20 Hz hero snapshot; puppets are posed 100 ms
+    in the past (interpolated, 150 ms extrapolation, snap on teleport).
+  - Remote heroes show a nameplate (name + level, `Sigmund  Lv2`); a party
+    panel on the HUD's left lists them with health and the ping.
+  - Tests: smoke 391 (+ interpolation, puppet role, character re-apply);
+    net scenario `heroes` (two clients, one with netsim 100 ms / 2 %: each
+    walks to a spot and dodges, the other sees the puppet there and replays
+    the dodge; the level-up reaches the roster and the proxy).
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

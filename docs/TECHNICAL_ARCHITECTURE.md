@@ -350,6 +350,21 @@ never `DisplayServer` (headless bot clients are clients).
 - **SaveGame online session:** `begin_online_session(flags)` swaps in the
   server's flags; `_collect()` writes the stashed own world while `online`;
   `end_online_session()` restores it.
+- **Heroes (`NetWorld`, `Player.net_role`):** OWNER / PUPPET / PROXY, set
+  before `add_child`. Non-owners get an inert `InputSource`, no body
+  collision, return at the top of `_physics_process`, never emit
+  `player_died`; `apply_net_state(pos, yaw, vel, state, hp, hp_max)` poses
+  them (`health.is_dead` follows the HP). Puppets have no hurtbox; proxies
+  keep one (enemies target and hit them on the server) and no rig
+  (`_build_visual` returns early without a view). Messages: HERO_STATE
+  (client, 30 Hz, unreliable, seq-ordered), SNAPSHOT (server, 20 Hz, every
+  hero but the receiver's), HERO_SPAWN / HERO_DESPAWN (on ZONE_READY and
+  leave), HERO_ACTION (relayed `action_started`), CHARACTER (the client's
+  `character_dict`, sent after ZONE_READY and debounced after changes,
+  applied with `SaveGame.apply_character`, level to the roster).
+  `NetWorld.sample_at` interpolates 100 ms behind the server clock (clock
+  offset from the least-delayed snapshot), extrapolates 150 ms, snaps when
+  `Player.teleports` changed (bumped by the owner on any jump > 6 m).
 - **AI sleep** (`EnemyBase.SLEEP_RADIUS` 60 m): idle, standing enemies with no
   hero near skip `_physics_process`; checks every 0.5 s (spread by instance
   id), a hit wakes them.

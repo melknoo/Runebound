@@ -75,6 +75,19 @@ var is_local: bool = true
 ## Reserved for co-op (Godot's high-level multiplayer: 1 = server / local).
 var peer_id: int = 1
 
+## M09: who drives this Player instance.
+##   OWNER   this machine plays it (the local hero; bots in tests)
+##   PUPPET  another player's hero on a client: pose, state, animation and HP
+##           come from the network (NetWorld); no input, physics or death here
+##   PROXY   a client's hero on the dedicated server: position and HP from its
+##           owner, a hurtbox so enemies can find and hit it, no visuals
+## Set before add_child.
+enum NetRole { OWNER, PUPPET, PROXY }
+var net_role: NetRole = NetRole.OWNER
+## M09: bumped whenever this hero jumps instead of walking (respawn, travel);
+## puppets snap instead of sliding across the map when it changes.
+var teleports: int = 0
+
 # Ability tuning: derived caches of `abilities`, kept because the Runebreaker
 # code and the tests read them by name (player.cleave.startup ...).
 var cleave: AbilityData
@@ -108,7 +121,7 @@ var _weapon_pivot: Node3D
 
 
 func _ready() -> void:
-	collision_layer = 0b10
+	collision_layer = 0b10 if net_role == NetRole.OWNER else 0  # M09: remote heroes never block anyone
 	collision_mask = 0b101
 	var col := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
@@ -134,13 +147,15 @@ func _ready() -> void:
 	add_child(progression)
 	progression.talents_changed.connect(equipment._apply_max_hp)  # levels + Runic Plate
 
-	Hurtbox.create(self, 0b1000, 0.5, 1.75, 0.85)
+	# A puppet is never hit on a client (enemies attack on the server).
+	Hurtbox.create(self, 0b1000 if net_role != NetRole.PUPPET else 0, 0.5, 1.75, 0.85)
 
 	if class_data == null:
 		class_data = ClassData.default_class()
 	progression.class_id = class_data.id
 	if input_source == null:
-		input_source = LocalInputSource.new()
+		# M09: only the hero this machine plays may read its keyboard.
+		input_source = LocalInputSource.new() if net_role == NetRole.OWNER and is_local else InputSource.new()
 	_load_abilities()
 	_register_actions()
 	if known_abilities.is_empty():
@@ -298,6 +313,11 @@ func _build_visual() -> void:
 	_visual = Node3D.new()
 	_visual.name = "Visual"
 	add_child(_visual)
+	if not Net.has_view():  # M09 dedicated server: facing and the ability pivot, nothing drawn
+		_weapon_pivot = Node3D.new()
+		_weapon_pivot.name = "WeaponPivotStandIn"
+		_visual.add_child(_weapon_pivot)
+		return
 	if _build_rigged_visual():
 		return
 
@@ -505,6 +525,8 @@ func _build_weapon() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not is_local:
+		return  # M09: remote heroes must not flip this machine's mouse
 	if event.is_action_pressed(&"toggle_cursor"):
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -517,6 +539,8 @@ func apply_hitstop(duration: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if net_role != NetRole.OWNER:
+		return  # M09: NetWorld poses puppets and proxies from the network
 	if _hitstop_left > 0.0:
 		_hitstop_left -= delta
 		return
@@ -1210,8 +1234,10 @@ func spend_resonance(amount: float) -> void:
 
 
 func take_hit(hit: HitInfo) -> bool:
-	if god_mode:
+	if god_mode or net_role == NetRole.PUPPET:
 		return false
+	if net_role == NetRole.PROXY:
+		return false  # M09: the owner confirms enemy hits on its own hero (phase 3)
 	# M07 Unbroken: an attack met inside the dodge's i-frames grants a barrier.
 	if health.invulnerable and not health.is_dead and has_power(&"unbroken") \
 			and float(_cooldowns.get(&"unbroken", 0.0)) <= 0.0:
@@ -1239,7 +1265,26 @@ func _on_damaged(hit: HitInfo) -> void:
 
 
 func _on_died() -> void:
+	if net_role != NetRole.OWNER:
+		return  # remote heroes die on their owner's machine, never here
 	player_died.emit()
+
+
+## M09: pose and vitals of a remote hero from the network (NetWorld). Never
+## emits `player_died`: the owner handles its own death and respawn.
+func apply_net_state(pos: Vector3, yaw: float, vel: Vector3, net_state: int, hp: float, hp_max: float) -> void:
+	global_position = pos
+	_visual.rotation.y = yaw
+	velocity = vel
+	state = clampi(net_state, 0, State.size() - 1) as State
+	health.max_health = maxf(hp_max, 1.0)
+	health.current_health = clampf(hp, 0.0, health.max_health)
+	health.is_dead = hp <= 0.0
+
+
+## Facing yaw (the network sends it; `_visual` holds the gameplay facing).
+func facing_yaw() -> float:
+	return _visual.rotation.y
 
 
 # ---------------------------------------------------------------------------

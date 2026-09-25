@@ -2178,6 +2178,58 @@ func _run() -> void:
 	_check(got.size() == 1 and int((got[0] as Array)[0]) == 1 and str(((got[0] as Array)[1] as Array)[0]) == "hi",
 		"offline: send_to_server runs the handler right here (never an RPC to itself)")
 
+	# --- M09 phase 2: remote heroes (puppets), interpolation, character sync ---
+	var s0 := {"t": 0.0, "pos": Vector3.ZERO, "yaw": 0.0, "vel": Vector3(10, 0, 0), "state": 0, "hp": 50.0, "hp_max": 100.0, "tp": 0}
+	var s1 := {"t": 100.0, "pos": Vector3(1, 0, 0), "yaw": 1.0, "vel": Vector3(10, 0, 0), "state": 1, "hp": 40.0, "hp_max": 100.0, "tp": 0}
+	var mid := NetWorld.sample_at([s0, s1], 50.0)
+	_check((mid["pos"] as Vector3).is_equal_approx(Vector3(0.5, 0, 0)) and is_equal_approx(float(mid["yaw"]), 0.5),
+		"puppets interpolate between two snapshots")
+	var jumped := s1.duplicate()
+	jumped["tp"] = 1
+	jumped["pos"] = Vector3(50, 0, 0)
+	_check((NetWorld.sample_at([s0, jumped], 50.0)["pos"] as Vector3).is_equal_approx(Vector3(50, 0, 0)),
+		"a teleport snaps instead of sliding")
+	var ahead := NetWorld.sample_at([s0, s1], 1000.0)
+	_check((ahead["pos"] as Vector3).is_equal_approx(Vector3(1.0 + 10.0 * NetWorld.MAX_EXTRAPOLATE_MS / 1000.0, 0, 0)),
+		"with no newer snapshot a puppet extrapolates briefly, then holds")
+	var zone_now := get_tree().current_scene as ZoneBase
+	var puppet := Player.new()
+	puppet.net_role = Player.NetRole.PUPPET
+	puppet.is_local = false
+	zone_now.add_player(puppet)
+	var hurtbox_layer := -1
+	for child in puppet.get_children():
+		if child is Hurtbox:
+			hurtbox_layer = (child as Hurtbox).collision_layer
+	_check(not (puppet.input_source is LocalInputSource) and puppet.collision_layer == 0 and hurtbox_layer == 0,
+		"a puppet reads no keyboard, blocks nobody and cannot be hit here")
+	var died := [false]
+	puppet.player_died.connect(func() -> void: died[0] = true)
+	puppet.apply_net_state(Vector3(3, 0, 3), 1.2, Vector3.ZERO, 0, 0.0, 120.0)
+	await _wait_frames(3)
+	_check(puppet.global_position.is_equal_approx(Vector3(3, 0, 3)) and is_equal_approx(puppet.facing_yaw(), 1.2)
+		and puppet.health.is_dead and not died[0] and is_equal_approx(puppet.health.max_health, 120.0),
+		"network state poses a puppet; 0 HP marks it dead without dying locally")
+	_check(not puppet.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO)),
+		"hits on a puppet are ignored (its owner decides)")
+	zone_now.remove_player(puppet)
+	puppet.free()
+	var proxy_hero := Player.new()
+	proxy_hero.net_role = Player.NetRole.PROXY
+	proxy_hero.is_local = false
+	zone_now.add_player(proxy_hero)
+	var sword := ItemData.new()
+	sword.slot = ItemData.Slot.WEAPON
+	sword.display_name = "Test Blade"
+	var ch := {"class_id": "runebreaker", "known_abilities": ["rune_cleave", "ember_lance"], "gold": 5,
+		"inventory": [sword.to_dict()], "equipped": {}, "progression": {"level": 4, "xp": 0, "talents": {}}}
+	SaveGame.apply_character(proxy_hero, ch)
+	SaveGame.apply_character(proxy_hero, ch)
+	_check(proxy_hero.equipment.inventory.size() == 1 and proxy_hero.progression.level == 4 and proxy_hero.knows(&"ember_lance"),
+		"a proxy takes a client's character (re-applied without doubling the inventory)")
+	zone_now.remove_player(proxy_hero)
+	proxy_hero.free()
+
 	SaveGame.wipe()
 	print("== %d failures ==" % _failures.size())
 	get_tree().quit(0 if _failures.is_empty() else 1)

@@ -43,6 +43,11 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}],
 		"timeout": 90.0,
 	},
+	"heroes": {
+		"server": [],
+		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=100,20,2"]}],
+		"timeout": 150.0,
+	},
 	"dns": {
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--connect=nohost.invalid:7777"]}],
 		"timeout": 45.0,

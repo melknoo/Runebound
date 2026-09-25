@@ -29,7 +29,7 @@ signal peer_left(peer_id: int)   # server: a client left
 
 enum Mode { OFFLINE, SERVER, CLIENT }
 
-const PROTOCOL := 1
+const PROTOCOL := 2
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3
@@ -494,6 +494,17 @@ func _on_zone_ready(from: int, payload: Array) -> void:
 func _on_echo(from: int, payload: Array) -> void:
 	if mode == Mode.SERVER:
 		send_to_peer(from, NetMsg.ECHO, payload, CH_SNAPSHOT, false)
+
+
+## Server: a client's level changed (its character arrived or it levelled).
+func set_peer_level(peer_id: int, level: int) -> void:
+	if mode != Mode.SERVER or not roster.has(peer_id):
+		return
+	var entry := roster[peer_id] as Dictionary
+	if int(entry.get("level", 0)) == level:
+		return
+	entry["level"] = level
+	_broadcast_roster()
 
 
 func peer_name(peer_id: int) -> String:

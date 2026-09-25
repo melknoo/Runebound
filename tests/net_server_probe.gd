@@ -36,6 +36,44 @@ func _on_roster() -> void:
 	_update()
 
 
+func _physics_process(_delta: float) -> void:
+	if scenario == "heroes" and Engine.get_physics_frames() % 30 == 0:
+		_update()
+
+
+## Both proxies stand where their owners walked, one of them levelled up.
+func _heroes_verdict() -> String:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone == null or zone.net_world == null:
+		return "fail: no zone replication on the server"
+	var world := zone.net_world
+	if _max_roster < 2:
+		return "fail: only %d player(s) joined" % _max_roster
+	if world.heroes.size() < 2 and _leaves == 0:
+		return "fail: %d proxies for 2 players" % world.heroes.size()
+	if _saw_both:
+		return "ok" if _saw_level else "fail: no proxy levelled up (character sync)"
+	var at_spot := 0
+	for peer: int in world.heroes:
+		var proxy := world.heroes[peer] as Player
+		if proxy.net_role != Player.NetRole.PROXY or proxy.is_local:
+			return "fail: a hero on the server is not a proxy"
+		var role := str((Net.roster.get(peer, {}) as Dictionary).get("name", "")).to_lower()
+		var spot := zone._player_spawn_point() + Vector3(4.0 if role == "c1" else -4.0, 0.0, 0.0)
+		if Vector2(proxy.global_position.x - spot.x, proxy.global_position.z - spot.z).length() < 0.6:
+			at_spot += 1
+		if proxy.progression.level > 1:
+			_saw_level = true
+	if at_spot == 2:
+		_saw_both = true
+		return "ok" if _saw_level else "fail: no proxy levelled up (character sync)"
+	return "fail: %d of 2 proxies reached their owner's spot" % at_spot
+
+
+var _saw_both := false
+var _saw_level := false
+
+
 func _update() -> void:
 	var verdict := "fail: unknown scenario " + scenario
 	match scenario:
@@ -60,6 +98,8 @@ func _update() -> void:
 				verdict = "ok"
 		"echo":
 			verdict = "ok" if _ready_peers >= 1 else "fail: the client never reported the zone loaded"
+		"heroes":
+			verdict = _heroes_verdict()
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
 		"full":

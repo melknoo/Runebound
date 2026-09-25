@@ -196,7 +196,20 @@ func active_class_id() -> StringName:
 
 ## Restore the active character into a freshly spawned player. Called by ZoneBase.
 func restore_player(player: Player) -> void:
-	var ch := active_character()
+	restore_character(player, active_character())
+
+
+## M09: a character dict (character_dict() format) onto a hero that may
+## already hold one: the co-op server re-applies a client's character to its
+## proxy whenever it changes (stat and talent math of that client's hits).
+static func apply_character(player: Player, ch: Dictionary) -> void:
+	player.equipment.inventory.clear()
+	player.equipment.equipped.clear()
+	player.known_abilities = player.class_data.starting_abilities.duplicate()
+	restore_character(player, ch)
+
+
+static func restore_character(player: Player, ch: Dictionary) -> void:
 	if ch.is_empty():
 		return
 	for entry: Dictionary in ch.get("inventory", []):

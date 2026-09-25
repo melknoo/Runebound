@@ -180,6 +180,9 @@
   session until save v5 moves it into the character (phase 4).
 - ENet can drop up to ~1 s of unreliable packets right after a zone build
   (throttle recovering); harmless for snapshots, the join state is reliable.
+- Remote heroes play their animations but not yet their ability effects
+  (slashes, Ember Lance, runes) and show no equipment changes (Cindermaw's
+  molten blade): the effect stream comes with the enemy replication.
 - The work network reaches the laptop only through Tailscale's DERP relay
   (Frankfurt, pings 40-208 ms); home connections are expected to go direct.
 

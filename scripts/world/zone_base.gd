@@ -32,6 +32,9 @@ var look: ZoneLook = null
 var _hulls: Array[MeshInstance3D] = []
 ## M08: heightmap terrain when the zone has one (null = flat floor at y 0).
 var terrain: Terrain = null
+## M09: co-op replication of this zone (null offline) and the party frames.
+var net_world: NetWorld = null
+var party_panel: PartyPanel = null
 
 var style_name: String:
 	get:
@@ -60,6 +63,10 @@ func _ready() -> void:
 	world.add_child(enemies_root)
 
 	_build_zone()
+	if Net.is_online():
+		net_world = NetWorld.new()
+		net_world.setup(self)
+		add_child(net_world)
 	if not Net.has_view():
 		_zone_ready()
 		Net.zone_entered(scene_file_path)
@@ -124,6 +131,11 @@ func _ready() -> void:
 		add_child(capture)
 	_attach_test_runners()
 	Net.zone_entered(scene_file_path)  # M09: a client reports it has loaded the zone
+	if net_world != null:
+		net_world.watch_local_hero(player)  # after ZONE_READY: the server has a proxy for it by then
+		party_panel = PartyPanel.new()
+		hud.add_child(party_panel)
+		party_panel.setup(self)
 
 
 ## `-- --shots=<json>` / `-- --perf=<json>`: data-driven capture and perf runs

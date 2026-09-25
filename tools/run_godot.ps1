@@ -45,7 +45,7 @@ function Get-ListZone([string]$jsonPath) {
 	return "res://scenes/combat_lab.tscn"
 }
 
-if ($Mode -notin @("import", "smoke")) { Show-OtherGodot }
+if ($Mode -notin @("import", "smoke", "net", "server", "serverperf")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would

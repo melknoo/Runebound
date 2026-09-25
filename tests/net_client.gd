@@ -1,8 +1,30 @@
+class_name NetClient
 extends Node
 ## M09: headless test client for tests/net_test.gd. Joins the server given by
 ## `--connect=`, plays its `--role` in the `--net-test=` scenario and writes
 ## "ok" / "fail: <why>" to `--result=`. The driver lives under the root, so it
 ## survives the zone change that joining causes.
+
+
+## Walks the hero to `target` and presses queued actions (heroes scenario).
+class Goto extends InputSource:
+	var target := Vector3.INF
+	var queue: Array[StringName] = []
+
+	func poll(intent: PlayerIntent, player: Player) -> void:
+		intent.pressed.append_array(queue)
+		queue.clear()
+		if target == Vector3.INF:
+			return
+		var d := target - player.global_position
+		d.y = 0.0
+		if d.length() > 0.2:
+			intent.move_dir = d.normalized()
+
+
+## Where each test role walks in the heroes scenario: beside the zone spawn.
+static func hero_target(zone: ZoneBase, role: String) -> Vector3:
+	return zone._player_spawn_point() + Vector3(4.0 if role == "c1" else -4.0, 0.0, 0.0)
 
 
 func _ready() -> void:
@@ -87,6 +109,76 @@ class Driver extends Node:
 				if not await _in_zone():
 					return
 				await _echo_test(20.0)
+			"heroes":
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				var hero := zone.player
+				var other_role := "c2" if role == "c1" else "c1"
+				var goto := Goto.new()
+				goto.target = NetClient.hero_target(zone, role)
+				hero.input_source = goto
+				if not await _until(func() -> bool: return zone.net_world.heroes.size() == 1, 30.0, "the other hero to appear"):
+					return
+				var other := zone.net_world.heroes.values()[0] as Player
+				if not await _until(func() -> bool:
+					return Vector2(hero.global_position.x - goto.target.x, hero.global_position.z - goto.target.z).length() < 0.3,
+					20.0, "our hero to reach its spot"):
+					return
+				await _seconds(1.0)
+				goto.queue.append(&"dodge")  # an action the other side must replay
+				if role == "c2":
+					hero.progression.add_xp(5000)  # levels up: the character goes to the server again
+				var their_spot := NetClient.hero_target(zone, other_role)
+				if not await _until(func() -> bool:
+					return Vector2(other.global_position.x - their_spot.x, other.global_position.z - their_spot.z).length() < 0.6,
+					30.0, "the other hero's puppet at its spot"):
+					return
+				if not await _until(func() -> bool: return zone.net_world.replayed_actions >= 1, 20.0, "the other hero's dodge"):
+					return
+				if role == "c1" and not await _until(func() -> bool:
+					var entry: Dictionary = Net.roster.get(other.peer_id, {})
+					return int(entry.get("level", 1)) > 1, 20.0, "c2's new level in the roster"):
+					return
+				if other.net_role != Player.NetRole.PUPPET or other.is_local or other.collision_layer != 0:
+					_finish("fail: the other hero is not a puppet")
+					return
+				if zone.party_panel == null or not zone.party_panel.visible:
+					_finish("fail: no party panel")
+					return
+				await _seconds(3.0)  # stay while the other side finishes its checks
+				_finish("ok")
+			"bot":
+				# A co-op stand-in (tools: run_godot coop): walks a loop in front of
+				# the spawn and dodges now and then until `--duration=` runs out.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				var goto := Goto.new()
+				zone.player.input_source = goto
+				var base := zone._player_spawn_point()
+				var loop: Array[Vector3] = [base + Vector3(-3, 0, -6), base + Vector3(3, 0, -6), base + Vector3(3, 0, -3),
+					base + Vector3(-3, 0, -3)]
+				var end := Time.get_ticks_msec() + int(_arg_float("--duration=", 120.0) * 1000.0)
+				var i := 0
+				while Time.get_ticks_msec() < end and Net.is_client():
+					goto.target = loop[i % loop.size()]
+					i += 1
+					await _seconds(1.6)
+					goto.queue.append(&"dodge" if i % 3 == 0 else &"rune_cleave")
+				_finish("ok")
+			"watch":
+				# Windowed look at the other heroes: a screenshot to `--snap=`.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				zone.player.input_source = InputSource.new()
+				if not await _until(func() -> bool: return not zone.net_world.heroes.is_empty(), 30.0, "another hero"):
+					return
+				await _seconds(_arg_float("--snap-after=", 4.0))
+				var img := get_viewport().get_texture().get_image()
+				img.save_png(_arg("--snap=", "user://net_test/watch.png"))
+				_finish("ok")
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")
@@ -149,6 +241,16 @@ class Driver extends Node:
 		print("[test %s] echo: %d sent, %d back (%.1f %% lost, %.1f %% after the first second) | rtt p50 %.0f / p95 %.0f / max %.0f ms | ENet rtt %d ms" % [
 			role, sent, n, loss, steady_loss, rtts[int(n * 0.5)], rtts[mini(int(n * 0.95), n - 1)], rtts[n - 1], Net.ping_ms()])
 		_finish("ok" if steady_loss <= MAX_STEADY_LOSS else "fail: %.0f %% of the packets were lost" % steady_loss)
+
+	func _arg(prefix: String, fallback: String) -> String:
+		for a in OS.get_cmdline_user_args():
+			if a.begins_with(prefix):
+				return a.trim_prefix(prefix)
+		return fallback
+
+	func _arg_float(prefix: String, fallback: float) -> float:
+		var v := _arg(prefix, "")
+		return v.to_float() if v != "" else fallback
 
 	func _expect_reason(needle: String) -> void:
 		if _failed_reason.contains(needle):
