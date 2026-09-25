@@ -112,5 +112,5 @@ Für den Wechsel ändern sich nur zwei Dinge:
 - **Netzwerk:** Nur WLAN. Ein LAN-Kabel am Router wäre stabiler und hätte weniger Latenz-Spitzen. Optional das WLAN-Powersave abschalten (`wifi.powersave = 2` in NetworkManager).
 - **Aus dem LAN gesperrt:** sshd :22 und die `web-ui.js` auf :3000 sind aus dem LAN nicht mehr erreichbar (bewusst). Bei Bedarf: `sudo ufw allow in on tailscale0 to any port 3000 proto tcp`.
 - **Docker:** Von Docker veröffentlichte Container-Ports umgehen ufw. Heute laufen keine Container.
-- **`.godot/` ist im Repo getrackt:** Ein Import unter Linux ändert Cache-Dateien darin. `runebound-server.sh` verwirft diese Änderungen vor jedem Pull. Vorschlag für den Dev-Rechner: `.godot/` in `.gitignore` aufnehmen und aus dem Index nehmen.
+- **`.godot/` ist seit M09 nicht mehr im Repo** (`.gitignore`). Der erste Pull danach löscht die getrackten Cache-Dateien, der anschließende Import baut sie neu (einmalig ca. 15 s). `runebound-server.sh` verwirft Import-Churn nur noch, falls noch getrackte Kopien existieren. `.gitattributes` hält die Server-Dateien auf LF.
 - **System-Updates** laufen manuell: `sudo apt update && sudo apt upgrade`, danach selbst neu starten, wenn nötig.

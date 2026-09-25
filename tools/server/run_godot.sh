@@ -4,6 +4,7 @@
 #   tools/server/run_godot.sh import   # import assets headless
 #   tools/server/run_godot.sh smoke    # headless smoke test (fails on SCRIPT ERROR too)
 #   tools/server/run_godot.sh serve    # run RUNEBOUND_SCENE from server.env headless
+#   tools/server/run_godot.sh serverperf [heroes]  # M09: Highlands tick cost with bot heroes
 # Godot comes from $GODOT (default ~/godot/godot).
 set -euo pipefail
 
@@ -47,6 +48,12 @@ case "$mode" in
 		fi
 		exit "$code"
 		;;
+	serverperf)
+		# M09 Spike A: every frame is exactly one physics tick (--fixed-fps),
+		# so the wall time per frame is the tick cost on this machine.
+		exec "$godot" --headless --fixed-fps 60 --path "$proj" --quit-after 20000 \
+			res://tests/server_perf.tscn -- "--heroes=${2:-5}"
+		;;
 	serve)
 		# Values already in the environment (systemd EnvironmentFile) win.
 		if [[ -z "${RUNEBOUND_SCENE:-}" ]]; then
@@ -59,7 +66,7 @@ case "$mode" in
 		exec "$godot" --headless --path "$proj" "$RUNEBOUND_SCENE"
 		;;
 	*)
-		echo "unknown mode $mode (import | smoke | serve)" >&2
+		echo "unknown mode $mode (import | smoke | serverperf | serve)" >&2
 		exit 1
 		;;
 esac

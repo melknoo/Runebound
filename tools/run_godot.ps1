@@ -9,6 +9,7 @@
 #   .\tools\run_godot.ps1 shots <list>           # data-driven shots: tests/shots/<list>.json
 #   .\tools\run_godot.ps1 perf <scenario> [label] # scripted fight: tests/perf/<scenario>.json
 #   .\tools\run_godot.ps1 stress                 # lab stress test (exit 1 below budget)
+#   .\tools\run_godot.ps1 serverperf [heroes]    # M09: headless Highlands tick cost with bot heroes
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
@@ -108,6 +109,12 @@ switch ($Mode) {
 		& $godot --path $proj @cap --resolution 1600x900 $zone -- "--perf=$scenario" "--label=$Label"
 	}
 	"stress"  { & $godot --path $proj @cap --resolution 1600x900 res://tests/stress_test.tscn -- --stress }
+	"serverperf" {
+		# M09 Spike A: headless tick cost of the Highlands with N bot heroes
+		# (default 5). --fixed-fps 60 makes every frame exactly one tick.
+		$heroes = if ($Name) { $Name } else { "5" }
+		& $godot --headless --fixed-fps 60 --path $proj --quit-after 20000 res://tests/server_perf.tscn -- "--heroes=$heroes"
+	}
 	default   { Write-Error "unknown mode $Mode"; exit 1 }
 }
 exit $LASTEXITCODE

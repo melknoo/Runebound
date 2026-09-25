@@ -1,10 +1,16 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-24 · Milestone: **M08 Open World I** — built, smoke green
-(373 checks), shot list `m08_open_world` (17 shots) reviewed by the
-implementer; **user gate pending** (see the M08 section for the walk).
-M07 and M07b were accepted by the user on 2026-09-24. Next: M09 Co-op
-(ROADMAP.md).
+Updated: 2026-09-25 · Milestone: **M09 Co-op** — in progress (plan approved by
+the user 2026-09-25, see ROADMAP.md M09 for architecture, rules and phases).
+M08 was played by the user; small notes follow after M09. M07 and M07b were
+accepted on 2026-09-24. The co-op server laptop is set up:
+[SERVER_SETUP.md](SERVER_SETUP.md) (Tailscale, port 7777/udp, systemd unit
+disabled until M09 ships).
+
+## M09 Co-op (2026-09-25, in progress)
+- **Phase 0:** `.godot/` is no longer tracked (`.gitignore`; run
+  `toolsun_godot.cmd import` after a fresh clone, the server script imports
+  after every pull). `.gitattributes` keeps the server files LF.
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

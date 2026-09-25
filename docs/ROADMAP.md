@@ -1,7 +1,7 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-09-24 · M01–M07b abgeschlossen (M07 und M07b vom Spieler am 24.09. abgenommen).
-M08 Open World I ist gebaut (Smoke grün, Shot-Liste gesichtet), Gate beim Spieler.
+Stand: 2026-09-25 · M01–M08 gebaut (M07/M07b abgenommen am 24.09., M08 angespielt: kleine Notizen
+folgen nach M09). **Aktuell: M09 Co-op.** Server-Laptop steht (`docs/SERVER_SETUP.md`).
 
 ## Nordstern (aktualisiert 2026-09-24)
 RUNEBOUND wird ein **Koop-Action-RPG für 2–5 Spieler** in einer stilisierten Pixel-Fantasy-Welt:
@@ -34,7 +34,47 @@ Singleplayer bleibt jederzeit vollständig spielbar.
 
 ## Aktuell
 
-### M08 — Open World I: Ashen Highlands, offen (umgesetzt, Gate beim Spieler)
+### M09 — Co-op (2–5 Spieler, dedizierter Server) — in Arbeit
+Plan vom 2026-09-25 (vom Spieler freigegeben). Architektur:
+- **Zwei Rollen:** Autorität und Client. Singleplayer ist die Autorität mit lokalem Helden
+  (`OfflineMultiplayerPeer`, der heutige Codepfad). Der dedizierte Server ist die Autorität ohne
+  Helden (Headless auf dem Laptop, `tools/server/`). Clients sehen die Welt als Puppets.
+- **Hybride Autorität** (ersetzt „Bewegung/Fähigkeiten als Intents zum Server“): Der Server besitzt
+  Gegner, Camps, Bosse, Welt-Flags, Truhen, Belohnungswürfe und Zonenwechsel. Jeder Client besitzt
+  seinen Helden: Bewegung, Fähigkeiten, Treffererkennung gegen die Gegner-Puppets, eigene HP und
+  Charakterdaten aus dem eigenen Save. Grund: 30–120 ms RTT über Starlink/Tailscale, unter Freunden
+  kein Anti-Cheat nötig; der eigene Held fühlt sich exakt wie im Singleplayer an. Gegner-Treffer
+  auf Helden bestätigt der Besitzer (Ausweichen zählt so, wie man es sieht).
+- **Eigene Replikationsschicht** im Autoload `Net` (ENet, Auth-Handshake, 20-Hz-Snapshots,
+  reliable Events, Zonen-Epoche); Gegner präsentieren sich über Zustands-Events.
+- **Adresse:** Textfeld `host:port` mit „zuletzt benutzt“, Default-Port 7777, nie fest im Code.
+  Der Server bindet `*` (IPv4 + IPv6) auf `RUNEBOUND_PORT`.
+
+Regeln (Spieler-Entscheidungen 2026-09-25):
+- **Persönlicher Loot:** jeder sieht nur seine Drops; jeder Held in ~60 m um einen Kill bekommt volle
+  XP und einen eigenen Gold-/Loot-Wurf. Truhen öffnen einmal, mit einem Beutel pro Held.
+- **Zonenwechsel gemeinsam:** einer löst aus, 5-s-Countdown (abbrechbar), die ganze Gruppe reist.
+  Der Server hält genau eine Zone. Schrein-Hops innerhalb der Zone sind persönlich.
+- **Skalierung:** Gegner-HP +70 % pro weiterem Spieler (Datenwert), Schaden bleibt.
+- Welt-Flags und Camps leben auf dem Server, Charaktere beim Spieler.
+
+Phasen (jede endet mit Smoke grün, Netztests grün, Doku, Commit + Push):
+0. Aufräumen (`.godot/` aus dem Repo) + Leistungs-Spike auf dem Laptop (4 Bot-Helden, alle Camps).
+1. Netz-Fundament: `Net`, dedizierter Server, Titelbildschirm (Singleplayer / Koop beitreten),
+   Mehrprozess-Testharness `run_godot net`.
+2. Helden in einer Welt: Heldenzustand, fremde Helden, Server-Proxies, Namensschilder, Party-HUD.
+3. Gegner: 3a Kern (Rusher, Caster, Bolt, Treffer-/Hurt-Pfade), 3b alle Gegner, Hazards, Bosse,
+   HP-Skalierung.
+4. Belohnungen und Welt (persönlicher Loot, Truhen, Camps, Flags, Save v5).
+5. Gruppen-Ablauf (Reise-Countdown, Tod, Nachzügler, Disconnect).
+6. Gates: `run_godot coop` (Server + Bots + ein Fenster), 10 min stabil mit 5 Helden, Netsim
+   100 ms / 2 % Verlust, Server-Leistung auf dem Laptop, WAN-Test über Tailscale, Deploy, dein
+   Playtest.
+
+Nicht in M09: Listen-Host, Passwort (Tailscale regelt den Zugang; kommt mit „nativ ohne
+Tailscale“), Chat, Interest-Management, Prediction.
+
+### M08 — Open World I: Ashen Highlands, offen (angespielt; Notizen folgen nach M09)
 Sichtbar:
 - **Heightmap-Terrain 384 × 384 m** aus einem deklarativen Layout gebacken (`tools/worldgen`):
   Südhänge → Nordplateau, Randgebirge, Grate mit Felsen, eingeschnittene Trampelpfade, flache
@@ -51,8 +91,8 @@ Sichtbar:
 - **Kompass** oben im HUD und **Karte auf M** mit allem, was der Charakter gesehen hat.
 Unsichtbar: Boden-Seam (nichts kodiert mehr y = 0), `EncounterSpawner` v2, `EnemyBase.RETURN`,
 SaveGame v4, `WaypointRegistry`, Ankunfts-Hints, Runner-Positionen per POI-ID.
-Gate: dein Playtest (PROJECT_STATE „Gate walk"). Offen: KNOWN_ISSUES „M08 open items" (Respawn-
-Minuten, Camp-Dichte, Randgebirge-Look, NavMesh später).
+Angespielt vom Spieler; seine kleinen Notizen werden direkt nach M09 umgesetzt. Offen: KNOWN_ISSUES
+„M08 open items" (Respawn-Minuten, Camp-Dichte, Randgebirge-Look, NavMesh später).
 
 ### M07b — Character Foundations (abgenommen)
 Sichtbar:
@@ -74,18 +114,6 @@ Gate: dein Playtest (`tools\run_godot.cmd reset` → `play`: Fresh Start → Gol
 Earthbreaker lernen → C-Fenster).
 
 ## Geplant
-
-### M09 — Co-op (2–5 Spieler, dedizierter Server)
-- Godot High-Level-Multiplayer (ENet), **Server-Autorität**: Bewegung/Fähigkeiten als Intents zum
-  Server, Zustand zurück. Der Server ist der bestehende Headless-Modus (läuft heute schon für Tests)
-  als Linux-Export auf dem Laptop zuhause.
-- Lobby/Verbinden (IP + Passwort), Charakterwahl aus dem eigenen Save, Spieler-Spawn in der Zone,
-  Nameplates, Party-HUD (kleine HP-Bars der Mitspieler), Zonenwechsel gemeinsam.
-- Regeln: XP-Teilung in Reichweite, Loot pro Spieler (jeder sieht eigene Drops) — Entscheidung im
-  Meilenstein.
-- Welt-Flags (Bosse tot, Portale offen) leben auf dem Server; Charaktere beim Spieler.
-- Technik-Gates: 5 Clients + Server auf einem Rechner stabil, Latenz-Test über LAN/WAN, Smoke mit
-  zwei simulierten Peers.
 
 ### M10 — Open World II: zwei weitere Zonen
 Mit der M08-Technik: zwei neue Regionen mit eigener Identität (Palette, Gegnerfamilie, Wetter),

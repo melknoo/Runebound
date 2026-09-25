@@ -25,9 +25,12 @@ cd "$repo"
 git fetch --quiet origin || fail "git fetch failed (network? GitHub auth?)"
 upstream="$(git rev-parse '@{u}')" || fail "branch $(git branch --show-current) has no upstream"
 if [[ "$(git rev-parse HEAD)" != "$upstream" ]]; then
-	# The committed .godot/ comes from Windows; a Linux import rewrites it.
-	# That churn is regenerated below and would otherwise block the pull.
-	git checkout -- .godot
+	# .godot/ is untracked since M09 (.gitignore); older commits tracked it and
+	# a Linux import rewrote it, which blocked the pull. Discard that churn if
+	# any tracked copy is still around; a no-op (and no error) otherwise.
+	if [[ -n "$(git ls-files .godot)" ]]; then
+		git checkout -- .godot
+	fi
 	git pull --ff-only || fail "git pull --ff-only failed (local changes or diverged history?)"
 	echo "RUNEBOUND: updated to $(git log --oneline -1)"
 	GODOT="$godot" "$here/run_godot.sh" import || fail "import after update failed"

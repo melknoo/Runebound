@@ -142,7 +142,9 @@
 - Sigrun borrows the Runebreaker rig (bronze tint); a real NPC model and her
   story come with M11.
 
-## M08 open items (needs the user's playtest)
+## M08 open items (played by the user; notes follow after M09)
+- The user played M08 and has a few small notes; they are scheduled right
+  after M09 (2026-09-25) and get listed here when they arrive.
 - Camp respawn is 10 minutes (`respawn_min` per POI, default in
   EncounterSpawner), the re-arm radius 45 m, the leash 26 m (ambush 30,
   patrol 40): start values.
