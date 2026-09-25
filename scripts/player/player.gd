@@ -86,6 +86,17 @@ var peer_id: int = 1
 ## Set before add_child.
 enum NetRole { OWNER, PUPPET, PROXY }
 var net_role: NetRole = NetRole.OWNER
+## M09: an action's look the other players must see too (HeroFx): plays here
+## and, for this machine's hero in co-op, goes to the others, whose puppet of
+## this hero plays the same entry.
+func hero_fx(kind: StringName, args: Array) -> void:
+	HeroFx.play(self, kind, args)
+	if Net.is_client() and net_role == NetRole.OWNER:
+		var zone := ZoneBase.zone_of(self)
+		if zone != null and zone.net_world != null:
+			zone.net_world.send_hero_fx(kind, args)
+
+
 ## M09: bumped whenever this hero jumps instead of walking (respawn, travel);
 ## puppets snap instead of sliding across the map when it changes.
 var teleports: int = 0
@@ -776,8 +787,7 @@ func try_dodge() -> bool:
 	_set_cooldown(&"dodge", DODGE_COOLDOWN)
 	health.invulnerable = true
 	_visual.rotation.y = atan2(-dir.x, -dir.z)
-	VFX.dodge_dust(get_tree().current_scene, global_position, dir)
-	Sfx.play("dodge", global_position, -4.0)
+	hero_fx(&"dodge", [global_position, dir])
 	cooldowns_changed.emit()
 	action_started.emit(&"dodge")
 	return true
@@ -814,7 +824,7 @@ func try_melee() -> bool:
 	_melee_flip = not _melee_flip
 	_face_melee_target()
 	_animate_cleave()
-	Sfx.play("swing", global_position, -2.0, 0.1)
+	hero_fx(&"sfx", ["swing", global_position, -2.0])
 	action_started.emit(&"cleave_l" if _melee_flip else &"cleave_r")
 	return true
 
@@ -850,7 +860,7 @@ func _do_cleave_hit() -> void:
 	var hits := _query_hurtboxes(center, radius)
 	var scene := get_tree().current_scene
 	# Slash arc regardless of contact — the swing itself must read.
-	VFX.melee_slash(scene, global_position + Vector3(0, 1.1, 0) + fwd * 0.9, fwd, _melee_flip)
+	hero_fx(&"slash", [global_position + Vector3(0, 1.1, 0) + fwd * 0.9, fwd, _melee_flip])
 	var any_hit := false
 	for enemy: Node in hits:
 		var hit := roll_ability_hit(cleave)
@@ -896,8 +906,7 @@ func try_ember() -> bool:
 	_state_timer = 0.0
 	_set_cooldown(&"ember_lance", ember.cooldown)
 	_face_aim_instant()
-	VFX.ember_cast(get_tree().current_scene, muzzle_position())
-	Sfx.play("ember_cast", global_position, -3.0)
+	hero_fx(&"ember_cast", [muzzle_position()])
 	cooldowns_changed.emit()
 	action_started.emit(&"ember")
 	return true
@@ -922,7 +931,7 @@ func _fire_ember() -> void:
 	proj.position = muzzle_position()
 	get_tree().current_scene.add_child(proj)
 	feel_impulse(-aim_direction(), 0.05)
-	Sfx.play("ember_fire", muzzle_position(), -2.0, 0.1)
+	hero_fx(&"ember_fire", [muzzle_position(), aim_direction()])  # puppets fly a visual copy
 
 
 # ---------------------------------------------------------------------------
@@ -944,7 +953,7 @@ func try_earthbreaker() -> bool:
 	tw.tween_property(_weapon_pivot, "rotation_degrees", Vector3(-120, 0, 0), earthbreaker.startup) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	velocity.y = 7.0
-	Sfx.play("earthbreaker_windup", global_position, -3.0)
+	hero_fx(&"sfx", ["earthbreaker_windup", global_position, -3.0])
 	cooldowns_changed.emit()
 	action_started.emit(&"earthbreaker")
 	return true
@@ -971,8 +980,7 @@ func _do_slam_hit() -> void:
 	action_started.emit(&"earthbreaker_impact")  # presentation: landing clip
 	var scene := get_tree().current_scene
 	var pos := global_position
-	VFX.earthbreaker_slam(scene, pos, earthbreaker.aoe_radius)
-	Sfx.play("earthbreaker_impact", pos, 2.0, 0.06)
+	hero_fx(&"slam", [pos, earthbreaker.aoe_radius])
 	feel_shake(0.55)
 	var hits := _query_hurtboxes(pos + Vector3(0, 0.5, 0), earthbreaker.aoe_radius)
 	for enemy: Node in hits:
@@ -1035,8 +1043,7 @@ func try_storm_step() -> bool:
 	_set_cooldown(&"storm_step", storm_step.cooldown)
 	collision_mask = 0b001  # phase through enemies during the dash
 	_visual.rotation.y = atan2(-dir.x, -dir.z)
-	VFX.flash(get_tree().current_scene, global_position + Vector3(0, 1.0, 0), Color(0.8, 0.9, 1.0), 1.0, 0.1)
-	Sfx.play("storm_step", global_position, -1.0, 0.08)
+	hero_fx(&"storm_step", [global_position])
 	cooldowns_changed.emit()
 	action_started.emit(&"storm_step")
 	return true
@@ -1072,7 +1079,7 @@ func _finish_storm_step() -> void:
 func _resolve_storm_step() -> void:
 	collision_mask = 0b101
 	var scene := get_tree().current_scene
-	VFX.storm_trail(scene, _dash_start, global_position)
+	hero_fx(&"storm_trail", [_dash_start, global_position])
 	# Everything the dash passed through gets zapped and shocked.
 	var path := global_position - _dash_start
 	var center := _dash_start + path * 0.5 + Vector3(0, 1.0, 0)
@@ -1091,11 +1098,11 @@ func _resolve_storm_step() -> void:
 		if enemy.has_method(&"take_hit") and enemy.call(&"take_hit", hit):
 			zapped += 1
 			gain_resonance(storm_step.resonance_gain_per_hit, true)
-			VFX.lightning_arc(scene, global_position + Vector3(0, 1.0, 0),
-				enemy_3d.global_position + Vector3(0, 1.0, 0), Color(0.8, 0.9, 1.0))
+			hero_fx(&"arc", [global_position + Vector3(0, 1.0, 0), enemy_3d.global_position + Vector3(0, 1.0, 0),
+				Color(0.8, 0.9, 1.0), false])
 	# M07 Overload: the landing point Shocks everything around it.
 	if has_power(&"overload"):
-		VFX.ground_ring(scene, global_position, ArtKit.color("color_roles.lightning.body"), OVERLOAD_RADIUS, 0.25)
+		hero_fx(&"ring", [global_position, ArtKit.color("color_roles.lightning.body"), OVERLOAD_RADIUS, 0.25])
 		for other in EnemyBase.all_enemies:
 			if is_instance_valid(other) and other.ai_state != EnemyBase.AIState.DEAD \
 					and other.global_position.distance_to(global_position) <= OVERLOAD_RADIUS:
@@ -1135,8 +1142,7 @@ func try_chain_spark() -> bool:
 		if next.status.has_shock():
 			bonus_jump = true
 		var chest := next.global_position + Vector3(0, 1.0, 0)
-		VFX.lightning_arc(scene, from, chest)
-		VFX.flash(scene, chest, Color(1.0, 1.0, 0.75), 0.6, 0.1)
+		hero_fx(&"arc", [from, chest, Color(1.0, 0.95, 0.5), true])
 		var hit := roll_ability_hit(chain_spark)
 		if next.take_hit(hit):
 			gain_resonance(chain_spark.resonance_gain_per_hit, true)
@@ -1153,7 +1159,7 @@ func try_chain_spark() -> bool:
 	# M07 Thunderclap: the last target bursts onto its neighbours.
 	if has_power(&"thunderclap") and not hit_enemies.is_empty() and is_instance_valid(hit_enemies[-1]):
 		var last := hit_enemies[-1]
-		VFX.ground_ring(scene, last.global_position, ArtKit.color("color_roles.lightning.body"), THUNDERCLAP_RADIUS, 0.25)
+		hero_fx(&"ring", [last.global_position, ArtKit.color("color_roles.lightning.body"), THUNDERCLAP_RADIUS, 0.25])
 		for other in EnemyBase.all_enemies.duplicate():
 			if other == last or not is_instance_valid(other) or other.ai_state == EnemyBase.AIState.DEAD:
 				continue
@@ -1162,7 +1168,7 @@ func try_chain_spark() -> bool:
 				splash.damage *= 0.6
 				splash.source_position = last.global_position
 				other.take_hit(splash)
-	Sfx.play("chain_spark", global_position, -1.0, 0.1)
+	hero_fx(&"sfx", ["chain_spark", global_position, -1.0])
 	feel_impulse(aim_direction(), 0.04)
 	# Weapon flourish: quick raise, snap back.
 	var tw := _weapon_pivot.create_tween()
@@ -1209,6 +1215,7 @@ func try_fracture_rune() -> bool:
 	# M08: on the ground under the aim spot (slopes, ledges), never at y 0
 	rune.position = ZoneBase.ground_under(self, global_position + offset, 0.02)
 	get_tree().current_scene.add_child(rune)
+	hero_fx(&"rune", [rune.position, rune.arm_time])  # puppets arm a visual copy
 	_face_aim_instant()
 	# Casting gesture: brief point with the blade.
 	var tw := _weapon_pivot.create_tween()
@@ -1307,8 +1314,7 @@ const BULWARK_RADIUS := 3.0
 func grant_barrier(amount: float, duration: float) -> void:
 	barrier = maxf(barrier, amount)
 	_barrier_time = maxf(_barrier_time, duration)
-	VFX.player_ring(self, global_position, 1.1, duration, ArtKit.color("color_roles.player_accent.hot"))
-	VFX.flash(get_tree().current_scene, global_position + Vector3(0, 1.1, 0), ArtKit.color("color_roles.player_accent.hot"), 1.0, 0.12)
+	hero_fx(&"barrier", [duration])
 
 
 func _on_barrier_absorbed(amount: float) -> void:
@@ -1333,7 +1339,7 @@ func try_runic_guard() -> bool:
 	spend_resonance(runic_guard.resonance_cost)
 	_set_cooldown(&"runic_guard", runic_guard.cooldown)
 	grant_barrier(runic_guard.damage + float(progression.level), runic_guard.active)
-	Sfx.play("runic_guard", global_position, -2.0, 0.05)
+	hero_fx(&"sfx", ["runic_guard", global_position, -2.0])
 	cooldowns_changed.emit()
 	action_started.emit(&"runic_guard")
 	return true
@@ -1350,12 +1356,7 @@ func try_resonance_burst() -> bool:
 	_set_cooldown(&"resonance_burst", resonance_burst.cooldown)
 	var scene := get_tree().current_scene
 	var pos := global_position
-	var gold := ArtKit.color("color_roles.resonance.body")
-	VFX.flash(scene, pos + Vector3(0, 1.0, 0), ArtKit.color("color_roles.resonance.hot"), 2.4, 0.18)
-	VFX.ground_ring(scene, pos, gold, resonance_burst.aoe_radius, 0.35)
-	VFX.burst(scene, pos + Vector3(0, 0.8, 0), {"tex": "shard", "amount": 14, "lifetime": 0.5, "size": 0.16,
-		"spread": 90.0, "vel_min": 4.0, "vel_max": 8.0, "colors": [ArtKit.color("color_roles.resonance.hot"), Color(gold, 0.0)] as Array[Color]})
-	Sfx.play("resonance_burst", pos, 0.0, 0.05)
+	hero_fx(&"res_burst", [pos, resonance_burst.aoe_radius])
 	feel_shake(0.45)
 	var hits := _query_hurtboxes(pos + Vector3(0, 0.8, 0), resonance_burst.aoe_radius)
 	for enemy: Node in hits:

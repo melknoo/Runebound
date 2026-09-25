@@ -13,6 +13,9 @@ var _pierces_left: int = 0
 var _already_hit: Array[Node] = []
 ## M07 talents: split shards deal a share of the damage and never split again.
 var damage_scale: float = 1.0
+## M09: another player's lance on a co-op client: flies and bursts for show,
+## hits nothing (the owner's real lance deals the damage).
+var visual_only: bool = false
 var can_split: bool = true
 
 const SPLIT_ANGLE := 0.45
@@ -29,7 +32,7 @@ func setup(data: AbilityData, dir: Vector3, source: Node3D) -> void:
 
 func _ready() -> void:
 	collision_layer = 0b100000
-	collision_mask = 0b10001  # world + enemy hurtboxes
+	collision_mask = 0b1 if visual_only else 0b10001  # world + enemy hurtboxes (a copy: world only)
 	monitoring = true
 
 	var col := CollisionShape3D.new()
@@ -100,6 +103,8 @@ func _on_body_entered(_body: Node3D) -> void:
 
 
 func _on_area_entered(area: Area3D) -> void:
+	if visual_only:
+		return
 	var hb := area as Hurtbox
 	if hb == null or hb.owner_entity == null or hb.owner_entity == _source:
 		return
@@ -162,6 +167,9 @@ func _explode(victim: Node) -> void:
 	var scene := get_tree().current_scene
 	VFX.ember_impact(scene, global_position)
 	Sfx.play("ember_impact", global_position, 0.0, 0.1)
+	if visual_only:
+		queue_free()
+		return
 	if victim != null:
 		_damage(victim)
 		_split_from(victim)

@@ -1,7 +1,8 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-09-25 · M01–M08 gebaut (M07/M07b abgenommen am 24.09., M08 angespielt: kleine Notizen
-folgen nach M09). **Aktuell: M09 Co-op.** Server-Laptop steht (`docs/SERVER_SETUP.md`).
+Stand: 2026-09-25 · M01–M09 gebaut (M07/M07b abgenommen am 24.09., M08 angespielt: kleine Notizen
+folgen nach M09). **M09 Co-op ist fertig gebaut, Gate beim Spieler.** Server-Laptop steht
+(`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve.
 
 ## Nordstern (aktualisiert 2026-09-24)
 RUNEBOUND wird ein **Koop-Action-RPG für 2–5 Spieler** in einer stilisierten Pixel-Fantasy-Welt:
@@ -34,7 +35,7 @@ Singleplayer bleibt jederzeit vollständig spielbar.
 
 ## Aktuell
 
-### M09 — Co-op (2–5 Spieler, dedizierter Server) — in Arbeit
+### M09 — Co-op (2–5 Spieler, dedizierter Server) — gebaut, Gate beim Spieler
 Plan vom 2026-09-25 (vom Spieler freigegeben). Architektur:
 - **Zwei Rollen:** Autorität und Client. Singleplayer ist die Autorität mit lokalem Helden
   (`OfflineMultiplayerPeer`, der heutige Codepfad). Der dedizierte Server ist die Autorität ohne
@@ -70,6 +71,10 @@ Phasen (jede endet mit Smoke grün, Netztests grün, Doku, Commit + Push):
 6. Gates: `run_godot coop` (Server + Bots + ein Fenster), 10 min stabil mit 5 Helden, Netsim
    100 ms / 2 % Verlust, Server-Leistung auf dem Laptop, WAN-Test über Tailscale, Deploy, dein
    Playtest.
+
+Stand 2026-09-25: alle Phasen gebaut. Smoke 401 grün, 13 Mehrprozess-Netztests grün (plus
+10-min-Soak), Laptop unter Last p95 8–11 ms. Gate: dein Playtest (PROJECT_STATE „Gate walk“:
+`tools\run_godot.cmd coop`, dann der Laptop, dann ein Freund).
 
 Nicht in M09: Listen-Host, Passwort (Tailscale regelt den Zugang; kommt mit „nativ ohne
 Tailscale“), Chat, Interest-Management, Prediction.

@@ -171,23 +171,25 @@
 - Debug overlay keys (F1) unchanged; M is the map. F, G, H, T, Z, X, B, P
   stay free.
 
-## M09 open items (co-op in progress)
-- Party travel is one-way per request: a hero who walks back through the
-  gate right after arriving starts a new countdown (5 s) for everybody.
-- A server killed hard (power, crash) is noticed by clients only after the
-  ENet timeout (15-30 s); a normal stop disconnects everyone at once.
-- Every enemy, hazard and both bosses replicate; rewards, chests and world
-  flags follow the co-op rules (phase 4). Chests reset with the server's
-  session (like singleplayer, they are not saved).
+## M09 open items (needs the user's playtest)
+- Numbers to feel in play: party countdown 5 s, reward radius 60 m, chest
+  purse radius 12 m, enemy health +70 % per extra hero, hurt margin 1.2 m.
+- Remote heroes: split-lance shards and the Glacier Heart frost field are
+  not mirrored (their damage is; only the look is missing on the others'
+  screens); equipment looks (Cindermaw's molten blade) are not either.
 - The Vessel's expanding ring hits by band, not by sphere: a forwarded ring
   hit carries no area, so only i-frames refuse it on the owner's side.
+- Chests reset with the server's session (like singleplayer, not saved).
+- Party travel is one-way per request: walking back through the gate right
+  after arriving starts a new countdown for everybody.
+- A server killed hard (power, crash) is noticed by clients only after the
+  ENet timeout (15-30 s); a normal stop disconnects everyone at once.
 - ENet can drop up to ~1 s of unreliable packets right after a zone build
   (throttle recovering); harmless for snapshots, the join state is reliable.
-- Remote heroes play their animations but not yet their ability effects
-  (slashes, Ember Lance, runes) and show no equipment changes (Cindermaw's
-  molten blade): the effect stream comes with the enemy replication.
 - The work network reaches the laptop only through Tailscale's DERP relay
   (Frankfurt, pings 40-208 ms); home connections are expected to go direct.
+- The laptop server shows single tick spikes up to ~60 ms under full load
+  (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
 ## Technical
 - Two game instances at once on the dev iGPU crashed the one in the

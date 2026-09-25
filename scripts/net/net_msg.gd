@@ -80,3 +80,6 @@ const TRAVEL_CANCEL := 31
 const TRAVEL_CANCELLED := 32
 ## server -> client, any epoch: [scene, epoch, arrival] - load that zone now
 const TRAVEL_GO := 33
+## client -> server: [kind, args]; server -> other clients: [peer, kind, args]
+## - a hero's action look (HeroFx) for its puppets
+const HERO_FX := 34

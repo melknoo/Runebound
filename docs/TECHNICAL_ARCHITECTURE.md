@@ -419,6 +419,16 @@ never `DisplayServer` (headless bot clients are clients).
   `NetWorld.spawn_hint()` -> `Net.pending_spawn`. `Net._exit_tree` on the
   server disconnects every peer and flushes, so clients see the end at once.
   `_send_now` skips peers ENet is tearing down.
+- **Hero effects:** `Player.hero_fx(kind, args)` plays a `HeroFx` entry for
+  the acting hero and, for this machine's hero in co-op, sends HERO_FX; the
+  server relays it and every other client plays the same entry on its
+  puppet. Projectile and rune entries spawn `visual_only` copies on puppets
+  (world collision only, no hits). **Rule:** a new ability look goes through
+  `hero_fx` (a new HeroFx entry), never straight to VFX, unless only its own
+  player should see it (hit feedback, footsteps).
+- **Tools:** `run_godot coop [bots]` (local server + companion bots +
+  window), net scenarios `soak` (10 min, by name) and the probe's `load`
+  mode for the server laptop (camps re-arm after 5 s, enemies x10 health).
 - **AI sleep** (`EnemyBase.SLEEP_RADIUS` 60 m): idle, standing enemies with no
   hero near skip `_physics_process`; checks every 0.5 s (spread by instance
   id), a hit wakes them.

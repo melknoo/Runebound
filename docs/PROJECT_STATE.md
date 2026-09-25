@@ -1,13 +1,12 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-25 · Milestone: **M09 Co-op** — in progress (plan approved by
-the user 2026-09-25, see ROADMAP.md M09 for architecture, rules and phases).
-M08 was played by the user; small notes follow after M09. M07 and M07b were
-accepted on 2026-09-24. The co-op server laptop is set up:
-[SERVER_SETUP.md](SERVER_SETUP.md) (Tailscale, port 7777/udp, systemd unit
-disabled until M09 ships).
+Updated: 2026-09-25 · Milestone: **M09 Co-op** — built, 13 net scenarios +
+smoke (401) green, measured on the server laptop; **user gate pending** (see
+"Gate walk" in the M09 section). M08 was played by the user; small notes
+follow after M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
+[SERVER_SETUP.md](SERVER_SETUP.md) (Tailscale, port 7777/udp).
 
-## M09 Co-op (2026-09-25, in progress)
+## M09 Co-op (2026-09-25)
 Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
 "Co-op (M09)".
 - **Phase 0:** `.godot/` is no longer tracked (`.gitignore`; run
@@ -150,6 +149,34 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
   - Tests: net scenarios `travel` (countdown, cancel, travel hub ->
     Highlands, arrival at the south gate, a late joiner next to the party,
     epoch 2) and `server_gone`; 12 scenarios green, smoke 401.
+- **Phase 6 (tools, effects, gates):**
+  - `tools\run_godot.cmd coop [bots]`: a local server, companion bots
+    (Sigmund, Brynja, ...; they follow the first real hero, fight near it,
+    follow party travel) and the game window, joined automatically.
+  - Remote heroes' ability effects: `HeroFx` (slash arcs, Ember Lance as a
+    visual copy, Earthbreaker slam, Storm Step flash and trail, chain / arc
+    lightning, rings, Fracture Rune as a visual copy, barrier, Resonance
+    Burst, key sounds) plays for the acting hero and goes to the others
+    (HERO_FX). Windowed look: the buddy's slashes, slam and lance read.
+  - **Soak** (10 min, 4 bots + a window, local server): 5 players the whole
+    time, nodes flat (2216-2232), 0 orphans, tick p95 ~1 ms, ~48 KB/s out.
+  - **Server laptop under load** (5 min, 4 bots over Tailscale DERP relay
+    fighting at 4 camps that re-arm after 5 s, enemies x10 health, 13-15
+    awake): tick p50 5.8-6.6 ms, p95 7.9-10.7 ms (budget 16.7), single
+    spikes up to 63 ms, 57-76 KB/s out; 500-800 hits per client applied.
+  - WAN: echo over the relay 0 % loss, RTT p50 67 ms; `heroes` passed over
+    the internet.
+- **Gate walk (user):**
+  1. `tools\run_godot.cmd coop` - you join a local server with two
+     buddies. Runehold -> portal to the Highlands: the 5 s party countdown
+     (X cancels) -> fight camp 1 with the buddies (only your loot drops for
+     you; everyone near gets full XP) -> a chest (one opening, a purse each)
+     -> the Colossus (boss bar, a legendary for each hero).
+  2. On the laptop once: `sudo systemctl enable --now runebound-server`
+     (SERVER_SETUP "Koop-Betrieb"). Title -> Join co-op ->
+     `melvin-aspire-e5-573g.tail94658b.ts.net`.
+  3. With a friend: share the laptop in Tailscale (SERVER_SETUP "Freunde"),
+     they join with the same address.
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

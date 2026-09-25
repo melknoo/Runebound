@@ -139,6 +139,8 @@ class Driver extends Node:
 					return
 				if not await _until(func() -> bool: return zone.net_world.replayed_actions >= 1, 20.0, "the other hero's dodge"):
 					return
+				if not await _until(func() -> bool: return zone.net_world.hero_fx_seen >= 1, 10.0, "the other hero's dodge dust (HeroFx)"):
+					return
 				if role == "c1" and not await _until(func() -> bool:
 					var entry: Dictionary = Net.roster.get(other.peer_id, {})
 					return int(entry.get("level", 1)) > 1, 20.0, "c2's new level in the roster"):

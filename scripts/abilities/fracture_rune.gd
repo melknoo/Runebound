@@ -7,6 +7,8 @@ extends Node3D
 const ARM_TIME := 1.2
 
 var arm_time: float = ARM_TIME  # equipment can shorten this
+## M09: another player's rune on a co-op client (arms and bursts, hits nothing).
+var visual_only: bool = false
 var _data: AbilityData
 var _source: Player
 
@@ -64,6 +66,9 @@ func _detonate() -> void:
 	var scene := get_tree().current_scene
 	VFX.frost_burst(scene, global_position, _data.aoe_radius)
 	Sfx.play("rune_detonate", global_position, 0.0, 0.08)
+	if visual_only:  # another player's rune on a co-op client: the look only
+		queue_free()
+		return
 	if _source != null and is_instance_valid(_source):
 		_source.feel_shake(0.2)
 

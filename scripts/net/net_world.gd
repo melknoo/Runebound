@@ -89,6 +89,7 @@ func setup(z: ZoneBase) -> void:
 		NetMsg.FLAG: _on_flag_msg,
 		NetMsg.TRAVEL_REQUEST: _on_travel_request_msg, NetMsg.TRAVEL_COUNTDOWN: _on_travel_countdown_msg,
 		NetMsg.TRAVEL_CANCEL: _on_travel_cancel_msg, NetMsg.TRAVEL_CANCELLED: _on_travel_cancelled_msg,
+		NetMsg.HERO_FX: _on_hero_fx_msg,
 	}
 	for kind: int in _enemy_handlers:
 		Net.on(kind, _enemy_handlers[kind] as Callable)
@@ -988,3 +989,29 @@ func _unhandled_input(event: InputEvent) -> void:
 	if Net.is_client() and not travel.is_empty() and event.is_action_pressed(&"party_cancel"):
 		Net.send_to_server(NetMsg.TRAVEL_CANCEL, [])
 		get_viewport().set_input_as_handled()
+
+
+# ---------------------------------------------------------------------------
+# M09 phase 6: what heroes' actions look like to the others
+# ---------------------------------------------------------------------------
+
+## Client (tests): hero effects played on puppets.
+var hero_fx_seen: int = 0
+
+
+## Client: our hero's action look (Player.hero_fx) for the others.
+func send_hero_fx(kind: StringName, args: Array) -> void:
+	Net.send_to_server(NetMsg.HERO_FX, [String(kind), args])
+
+
+func _on_hero_fx_msg(from: int, payload: Array) -> void:
+	if Net.is_dedicated():
+		if payload.size() >= 2 and heroes.has(from):
+			Net.broadcast_zone(NetMsg.HERO_FX, [from, payload[0], payload[1]], Net.CH_EVENTS, from)
+		return
+	if not Net.is_client() or payload.size() < 3 or payload[2] is not Array:
+		return
+	var puppet := heroes.get(int(payload[0])) as Player
+	if puppet != null and is_instance_valid(puppet):
+		hero_fx_seen += 1
+		HeroFx.play(puppet, StringName(str(payload[1])), payload[2] as Array)
