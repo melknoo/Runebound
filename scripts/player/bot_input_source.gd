@@ -88,5 +88,10 @@ func _nearest_enemy(from: Vector3) -> EnemyBase:
 	return best
 
 
-static func _alive(e: EnemyBase) -> bool:
-	return e != null and is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD
+## Untyped on purpose: a typed EnemyBase parameter errors on a freed target
+## before is_instance_valid could say so.
+static func _alive(e: Variant) -> bool:
+	if e == null or not is_instance_valid(e):
+		return false
+	var enemy := e as EnemyBase
+	return enemy != null and enemy.ai_state != EnemyBase.AIState.DEAD

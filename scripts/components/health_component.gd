@@ -6,6 +6,8 @@ extends Node
 signal damaged(hit: HitInfo)
 signal died
 signal health_changed(current: float, maximum: float)
+## M09: damage over time (burn ticks), for the co-op server to report.
+signal dot_damaged(amount: float, type: HitInfo.DamageType)
 
 @export var max_health: float = 100.0
 
@@ -34,6 +36,7 @@ func apply_dot(amount: float, type: HitInfo.DamageType) -> void:
 		return
 	current_health = maxf(current_health - amount, 0.0)
 	health_changed.emit(current_health, max_health)
+	dot_damaged.emit(amount, type)
 	var parent_3d := get_parent() as Node3D
 	if parent_3d != null:
 		GameFeel.damage_number(parent_3d.global_position + Vector3(0, 1.2, 0), amount, HitInfo.type_color(type))

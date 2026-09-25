@@ -365,6 +365,27 @@ never `DisplayServer` (headless bot clients are clients).
   `NetWorld.sample_at` interpolates 100 ms behind the server clock (clock
   offset from the least-delayed snapshot), extrapolates 150 ms, snaps when
   `Player.teleports` changed (bumped by the owner on any jump > 6 m).
+- **Enemies:** server-side `NetWorld.register_enemy` (net id u16) hooks
+  `state_entered` (ENEMY_STATE with pose), `health.damaged` (ENEMY_HIT),
+  `health.dot_damaged` (ENEMY_DOT for the burn owner's numbers),
+  `enemy_died` (ENEMY_DEATH with the killer's peer) and `tree_exiting`
+  (ENEMY_DESPAWN). Clients build puppets with `ZoneBase.make_enemy(type_id)`
+  + `net_puppet = true` (+ EliteModifier by kind, sim gated off). Puppet
+  rules: `_physics_process` returns (only the hitstop timer runs),
+  `take_hit` -> `_forward_hit` (HIT), `status.apply_*` -> `forward_status`
+  (STATUS), `apply_net_pose` from snapshots, `net_enter_state` from events
+  (runs `_enter_state` for the animator and `_present_state` with the
+  server's pose), `present_hit / present_dot / present_death`. The server
+  applies a client's HIT with `attacker_id` = that client's proxy (talent
+  math, kill credit and loot unchanged) after a 45 m sanity check.
+  **Rule for new enemy code:** anything that only looks or sounds goes into
+  `_present_state` (or a `present_*` helper), using `present_origin()` /
+  `present_forward()`; simulation stays in the state machine. Attacks set
+  `hit.area_center / area_radius` and hit every hero inside.
+- **Enemy hits on heroes:** a PROXY's `take_hit` forwards the hit (HURT) to
+  its owner; the owner applies it through its own `take_hit` (so dodge
+  i-frames refuse it) unless its hero is more than `HURT_MARGIN` (1.2 m)
+  outside the struck area.
 - **AI sleep** (`EnemyBase.SLEEP_RADIUS` 60 m): idle, standing enemies with no
   hero near skip `_physics_process`; checks every 0.5 s (spread by instance
   id), a hit wakes them.

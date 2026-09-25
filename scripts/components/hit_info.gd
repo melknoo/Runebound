@@ -24,6 +24,11 @@ var burn_mult: float = 1.0  # Kindling: scales the Burn this hit applies
 ## a reference: statuses and Wildfire resolve seconds later, possibly after
 ## the attacker is gone, and an int travels over the wire unchanged.
 var attacker_id: int = 0
+## M09: the volume an enemy attack struck (sphere centre + radius; INF / 0 =
+## unknown). A co-op client only takes a forwarded hit when its own hero is
+## still inside it: dodging out on your own screen counts.
+var area_center: Vector3 = Vector3.INF
+var area_radius: float = 0.0
 
 
 ## The attacker node, or null when it is gone or unknown.

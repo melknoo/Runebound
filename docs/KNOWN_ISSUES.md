@@ -174,8 +174,11 @@
 ## M09 open items (co-op in progress)
 - Co-op clients cannot travel yet (portals and shrines say so); party travel
   with the countdown comes in phase 5.
-- A client sees no enemies yet (phase 3 replicates them); chests still open
-  locally on a client (personal loot, phase 4 makes them server-side).
+- Replicated so far: rushers, casters, their bolts, elites (look only).
+  Brute, assassin, warden, elite novas / fire patches, shadow runes and both
+  bosses follow in phase 3b; until then they would act only on the server.
+  Chests still open locally on a client (personal loot, phase 4 makes them
+  server-side); kill rewards still land on the server's proxy (phase 4).
 - Zone discovery XP uses world flags: in co-op a client gets it again each
   session until save v5 moves it into the character (phase 4).
 - ENet can drop up to ~1 s of unreliable packets right after a zone build

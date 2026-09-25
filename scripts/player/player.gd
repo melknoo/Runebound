@@ -1237,7 +1237,12 @@ func take_hit(hit: HitInfo) -> bool:
 	if god_mode or net_role == NetRole.PUPPET:
 		return false
 	if net_role == NetRole.PROXY:
-		return false  # M09: the owner confirms enemy hits on its own hero (phase 3)
+		# M09: the owner decides (its i-frames, whether it still stands in the area).
+		var zone := ZoneBase.zone_of(self)
+		if zone == null or zone.net_world == null or health.is_dead:
+			return false
+		zone.net_world.forward_hurt(self, hit)
+		return true
 	# M07 Unbroken: an attack met inside the dodge's i-frames grants a barrier.
 	if health.invulnerable and not health.is_dead and has_power(&"unbroken") \
 			and float(_cooldowns.get(&"unbroken", 0.0)) <= 0.0:

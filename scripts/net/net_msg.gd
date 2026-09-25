@@ -15,8 +15,10 @@ const NOTICE := 3
 const ECHO := 4
 ## client -> server, unreliable 30 Hz: [seq, pos, yaw, vel, state, hp, hp_max, teleports]
 const HERO_STATE := 5
-## server -> client, unreliable 20 Hz: [server_msec, heroes] where heroes is
-## [[peer, pos, yaw, vel, state, hp, hp_max, teleports], ...] (all but the receiver)
+## server -> client, unreliable 20 Hz: [server_msec, heroes, enemy_bytes] where
+## heroes is [[peer, pos, yaw, vel, state, hp, hp_max, teleports], ...] (all
+## but the receiver) and enemy_bytes NetCodec.encode_enemies (several packets
+## when many enemies are awake; heroes only in the first)
 const SNAPSHOT := 6
 ## server -> client: [peer, name, class_id, level, pos, yaw] - a hero to show
 const HERO_SPAWN := 7
@@ -28,3 +30,27 @@ const HERO_ACTION := 9
 ## client -> server: [character dict] (SaveGame.character_dict), on join and
 ## after changes: the proxy's stats, talents and level
 const CHARACTER := 10
+## server -> client: [id, type_id, pos, yaw, level, elite_kind (-1 none), hp, hp_max, state, seq]
+const ENEMY_SPAWN := 11
+## server -> client: [id, state, seq, pos, yaw] - the enemy entered a state
+## (its telegraph and clip start now, from the server's pose)
+const ENEMY_STATE := 12
+## server -> client: [id, damage, crit, type, attacker_peer] - a hit landed
+const ENEMY_HIT := 13
+## server -> client: [id, amount, type, owner_peer] - burn damage ticked
+const ENEMY_DOT := 14
+## server -> client: [id, killer_peer]
+const ENEMY_DEATH := 15
+## server -> client: [id] - removed without dying
+const ENEMY_DESPAWN := 16
+## server -> client: [bolt_id, origin, dir, speed] - an enemy bolt flies
+const BOLT := 17
+## server -> client: [bolt_id, pos] - that bolt popped
+const BOLT_POP := 18
+## client -> server: [enemy_id, hit (NetCodec.hit_to_array)] - our hero hit it
+const HIT := 19
+## client -> server: [enemy_id, kind, duration, amount] - a status without a hit
+const STATUS := 20
+## server -> the hero's owner: [hit] - an enemy attack struck its proxy; the
+## owner takes it unless its own hero dodged (i-frames) or left the area
+const HURT := 21

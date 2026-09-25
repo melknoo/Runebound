@@ -2230,6 +2230,53 @@ func _run() -> void:
 	zone_now.remove_player(proxy_hero)
 	proxy_hero.free()
 
+	# --- M09 phase 3a: enemy replication (offline side) ---
+	var h0 := HitInfo.create(23.5, HitInfo.DamageType.FIRE, HitInfo.Weight.HEAVY, Vector3(1, 2, 3))
+	h0.is_crit = true
+	h0.applies_burn = true
+	h0.burn_mult = 1.5
+	h0.ability = &"ember_lance"
+	h0.knockback = 4.0
+	h0.area_center = Vector3(4, 5, 6)
+	h0.area_radius = 1.1
+	h0.from_player = true
+	var h1 := NetCodec.hit_from_array(NetCodec.hit_to_array(h0))
+	_check(is_equal_approx(h1.damage, 23.5) and h1.type == HitInfo.DamageType.FIRE and h1.weight == HitInfo.Weight.HEAVY
+		and h1.is_crit and h1.applies_burn and not h1.applies_chill and is_equal_approx(h1.burn_mult, 1.5)
+		and h1.ability == &"ember_lance" and h1.area_center == Vector3(4, 5, 6) and is_equal_approx(h1.area_radius, 1.1)
+		and h1.from_player and h1.attacker_id == 0,
+		"hits survive the wire (the attacker is filled in by the receiver)")
+	var rows: Array[Dictionary] = [{"id": 513, "pos": Vector3(-120.25, 14.5, 99.75), "yaw": 2.5, "vel": Vector3(3, 0, -4),
+		"state": 5, "seq": 201, "hp": 77.5, "bits": NetCodec.ST_BURN | NetCodec.ST_INVULNERABLE}]
+	var bytes := NetCodec.encode_enemies(rows)
+	var decoded := NetCodec.decode_enemies(bytes)
+	_check(bytes.size() == NetCodec.ENEMY_BYTES and decoded.size() == 1 and int(decoded[0]["id"]) == 513
+		and (decoded[0]["pos"] as Vector3).is_equal_approx(Vector3(-120.25, 14.5, 99.75))
+		and absf(float(decoded[0]["yaw"]) - 2.5) < 0.001 and (decoded[0]["vel"] as Vector3).is_equal_approx(Vector3(3, 0, -4))
+		and int(decoded[0]["state"]) == 5 and int(decoded[0]["seq"]) == 201 and is_equal_approx(float(decoded[0]["hp"]), 77.5)
+		and int(decoded[0]["bits"]) == NetCodec.ST_BURN | NetCodec.ST_INVULNERABLE,
+		"an enemy snapshot row packs into %d bytes and back" % NetCodec.ENEMY_BYTES)
+	var ghost := ZoneBase.make_enemy("caster")
+	ghost.net_puppet = true
+	zone_now.enemies_root.add_child(ghost)
+	ghost.global_position = zone_now.player.global_position + Vector3(0, 0, -5)
+	await _wait_frames(3)
+	var ghost_hp := ghost.health.current_health
+	var took := ghost.take_hit(HitInfo.create(30.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, Vector3.ZERO))
+	ghost.status.apply_shock()
+	_check(took and is_equal_approx(ghost.health.current_health, ghost_hp) and not ghost.status.has_shock()
+		and ghost.type_id == "caster",
+		"a puppet enemy sends hits and statuses to the server instead of taking them")
+	ghost.apply_net_pose(Vector3(2, 0, 2), 1.0, Vector3.ZERO, 10.0, NetCodec.ST_SHOCK)
+	_check(ghost.status.has_shock() and is_equal_approx(ghost.health.current_health, 10.0),
+		"snapshots set a puppet's health and statuses")
+	await _wait_frames(40)
+	_check(ghost.global_position.is_equal_approx(Vector3(2, 0, 2)) and ghost.ai_state == EnemyBase.AIState.IDLE,
+		"a puppet enemy never thinks or moves on its own")
+	ghost.present_death()
+	await _wait_frames(30)
+	_check(not is_instance_valid(ghost), "the server's death removes the puppet")
+
 	SaveGame.wipe()
 	print("== %d failures ==" % _failures.size())
 	get_tree().quit(0 if _failures.is_empty() else 1)

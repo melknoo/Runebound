@@ -55,6 +55,21 @@ var level: int = 1
 var xp_value: int = 20
 var visual: Node3D
 
+## M09 co-op. On the server every enemy has a net id (NetWorld). On a client
+## an enemy is a puppet of the server's: posed from snapshots, its states and
+## hits arrive as events, hits it takes go to the server, and it never
+## thinks, moves or dies on its own. Set before add_child.
+var net_id: int = 0
+var net_puppet: bool = false
+## The make_enemy id ("rusher", "caster", ...) a client spawns the puppet by.
+var type_id: String = "rusher"
+## Bumped on every state entry (8 bit on the wire): a puppet notices a
+## re-entered STAGGER that polling ai_state would miss.
+var state_seq: int = 0
+var _net_origin: Vector3 = Vector3.ZERO
+var _net_yaw: float = 0.0
+var _net_pose_valid: bool = false
+
 const HP_PER_LEVEL := 0.08
 
 
@@ -113,6 +128,8 @@ func _ready() -> void:
 
 	status = StatusEffectComponent.new()
 	status.health = health
+	if net_puppet:
+		status.puppet_of = self  # statuses mirror the server; applying one asks it
 	add_child(status)
 
 	Hurtbox.create(self, 0b10000, 0.55, 1.7, 0.85)
@@ -151,6 +168,9 @@ var _sleep_check_left: float = float(get_instance_id() % 97) / 97.0 * SLEEP_CHEC
 
 
 func _physics_process(delta: float) -> void:
+	if net_puppet:
+		_hitstop_left = maxf(_hitstop_left - delta, 0.0)  # the animator's impact freeze
+		return  # M09: NetWorld poses puppets from the server's snapshots
 	if _hitstop_left > 0.0:
 		_hitstop_left -= delta
 		return
@@ -268,7 +288,108 @@ func _return_home(delta: float) -> void:
 func _enter_state(new_state: AIState) -> void:
 	ai_state = new_state
 	_state_timer = 0.0
+	state_seq = (state_seq + 1) & 0xFF
 	state_entered.emit(new_state)
+
+
+# ---------------------------------------------------------------------------
+# M09 presentation seam: what a state looks and sounds like. The authority
+# calls it from its state machine; a co-op puppet calls it when the server
+# reports the state (net_enter_state), with the server's pose at that moment.
+# ---------------------------------------------------------------------------
+
+## Where the state began (the server's pose on a puppet).
+func present_origin() -> Vector3:
+	return _net_origin if _net_pose_valid else global_position
+
+
+## Facing when the state began (the server's on a puppet).
+func present_forward() -> Vector3:
+	var yaw := _net_yaw if _net_pose_valid else visual.rotation.y
+	return Vector3(-sin(yaw), 0.0, -cos(yaw))
+
+
+## Subclasses present their own states and call super().
+func _present_state(s: AIState) -> void:
+	if s == AIState.STAGGER:
+		_on_interrupted()  # telegraphs and glows go away
+
+
+## M09 puppet: the server's enemy entered `new_state` at `pos` facing `yaw`.
+func net_enter_state(new_state: AIState, seq: int, pos: Vector3, yaw: float) -> void:
+	if ai_state == AIState.DEAD:
+		return
+	_net_origin = pos
+	_net_yaw = yaw
+	_net_pose_valid = true
+	_enter_state(new_state)  # state_entered: the animator plays the state's clip
+	_present_state(new_state)
+	_net_pose_valid = false
+	state_seq = seq
+
+
+## M09 puppet: pose, health and statuses from a snapshot.
+func apply_net_pose(pos: Vector3, yaw: float, vel: Vector3, hp: float, bits: int) -> void:
+	if ai_state == AIState.DEAD:
+		return
+	global_position = pos
+	visual.rotation.y = yaw
+	velocity = vel
+	health.current_health = clampf(hp, 0.0, health.max_health)
+	health.invulnerable = bits & NetCodec.ST_INVULNERABLE != 0
+	status.set_net_bits(bits)
+
+
+## The snapshot bits of this enemy (server).
+func net_status_bits() -> int:
+	return status.net_bits() | (NetCodec.ST_INVULNERABLE if health.invulnerable else 0)
+
+
+## M09 puppet: a hit the server applied (the true damage after block, Shock
+## and talents). The damage number shows for the hero who dealt it.
+func present_hit(damage: float, crit: bool, type: HitInfo.DamageType, mine: bool) -> void:
+	if mine:
+		GameFeel.damage_number(global_position + Vector3(0, 1.8, 0), damage, HitInfo.type_color(type), crit)
+	VFX.enemy_hit(get_tree().current_scene, global_position + Vector3(0, 1.0, 0))
+	Sfx.play("enemy_hurt", global_position, -6.0, 0.15)
+	if not mine:  # our own hit already flashed when it landed
+		_squash()
+		_flash_white()
+
+
+## M09 puppet: damage over time (burn) the server dealt.
+func present_dot(amount: float, type: HitInfo.DamageType, mine: bool) -> void:
+	if mine:
+		GameFeel.damage_number(global_position + Vector3(0, 1.2, 0), amount, HitInfo.type_color(type))
+
+
+## M09 puppet: the server's enemy died.
+func present_death() -> void:
+	if ai_state == AIState.DEAD:
+		return
+	_enter_state(AIState.DEAD)
+	collision_layer = 0
+	_death_presentation()
+
+
+## M09 puppet: a hit on the puppet goes to the server; the hit flash and
+## squash show at once, the damage number when the server answers.
+func _forward_hit(hit: HitInfo) -> bool:
+	if ai_state == AIState.DEAD or health.invulnerable:
+		return false
+	var zone := ZoneBase.zone_of(self)
+	if zone != null and zone.net_world != null:
+		zone.net_world.send_hit(self, hit)
+	_squash()
+	_flash_white()
+	return true
+
+
+## M09 puppet: a status applied without a hit (Overload, frost) goes to the server.
+func forward_status(kind: StringName, duration: float, amount: float) -> void:
+	var zone := ZoneBase.zone_of(self)
+	if zone != null and zone.net_world != null:
+		zone.net_world.send_status(self, kind, duration, amount)
 
 
 ## Pick who to hunt: whoever hit us in the last LAST_ATTACKER_MEMORY seconds
@@ -334,6 +455,8 @@ func last_attacker() -> Player:
 
 
 func take_hit(hit: HitInfo) -> bool:
+	if net_puppet:
+		return _forward_hit(hit)
 	if ai_state == AIState.DEAD:
 		return false
 	sleeping = false  # a long shot from beyond the sleep radius wakes it
@@ -531,9 +654,13 @@ func _on_died() -> void:
 	_enter_state(AIState.DEAD)
 	collision_layer = 0
 	set_physics_process(false)
+	enemy_died.emit(self)
+	_death_presentation()
+
+
+func _death_presentation() -> void:
 	VFX.death_burst(get_tree().current_scene, global_position + Vector3(0, 0.9, 0), body_color)
 	Sfx.play("enemy_death", global_position, -3.0, 0.12)
-	enemy_died.emit(self)
 	# Quick shrink-out instead of a corpse; keeps the lab readable.
 	var tw := create_tween()
 	tw.tween_property(visual, "scale", base_visual_scale * 0.05, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)

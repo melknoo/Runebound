@@ -37,7 +37,7 @@ func _on_roster() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if scenario == "heroes" and Engine.get_physics_frames() % 30 == 0:
+	if scenario in ["heroes", "enemies"] and Engine.get_physics_frames() % 30 == 0:
 		_update()
 
 
@@ -70,6 +70,33 @@ func _heroes_verdict() -> String:
 	return "fail: %d of 2 proxies reached their owner's spot" % at_spot
 
 
+var _kills_credited := 0
+var _kills := 0
+var _hooked: Dictionary = {}
+
+
+func _enemies_verdict() -> String:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone == null or zone.net_world == null:
+		return "fail: no zone replication on the server"
+	for id: int in zone.net_world.enemies:
+		var e := zone.net_world.enemies[id] as EnemyBase
+		if is_instance_valid(e) and not _hooked.has(id):
+			_hooked[id] = true
+			e.enemy_died.connect(func(dead: EnemyBase) -> void:
+				_kills += 1
+				if dead.last_attacker() != null and dead.last_attacker().net_role == Player.NetRole.PROXY:
+					_kills_credited += 1
+				_update())
+	if _kills < 3:
+		return "fail: %d of 3 lab enemies killed" % _kills
+	if _kills_credited < _kills:
+		return "fail: %d of %d kills credited to a player" % [_kills_credited, _kills]
+	if zone.net_world.hurts_forwarded < 1:
+		return "fail: no enemy hit was forwarded to a hero's owner"
+	return "ok"
+
+
 var _saw_both := false
 var _saw_level := false
 
@@ -100,6 +127,8 @@ func _update() -> void:
 			verdict = "ok" if _ready_peers >= 1 else "fail: the client never reported the zone loaded"
 		"heroes":
 			verdict = _heroes_verdict()
+		"enemies":
+			verdict = _enemies_verdict()
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
 		"full":

@@ -12,6 +12,11 @@ const SHOCK_DURATION := 4.0
 const SHOCK_DAMAGE_MULT := 1.2
 
 var health: HealthComponent = null  # wired by the owner
+## M09: set on an enemy puppet (co-op client). Its statuses mirror the
+## server's snapshot bits (set_net_bits), never tick damage here, and
+## applying one is forwarded to the server (Overload, Glacial Bulwark,
+## FrostField, Conductor's Oath touch statuses without a hit).
+var puppet_of: Node = null
 
 var _burn_left: float = 0.0
 var _burn_dps: float = 0.0
@@ -27,6 +32,9 @@ func is_conductor() -> bool:
 
 
 func apply_conductor(duration: float = 6.0) -> void:
+	if puppet_of != null:
+		puppet_of.call(&"forward_status", &"conductor", duration, 0.0)
+		return
 	_conductor_left = maxf(_conductor_left, duration)
 
 
@@ -71,6 +79,9 @@ func apply_from_hit(hit: HitInfo) -> void:
 
 
 func apply_burn(dps: float = BURN_DPS, duration: float = BURN_DURATION, source_id: int = 0) -> void:
+	if puppet_of != null:
+		puppet_of.call(&"forward_status", &"burn", duration, dps)
+		return
 	_burn_dps = maxf(_burn_dps, dps)
 	_burn_left = maxf(_burn_left, duration)
 	if source_id != 0:
@@ -78,11 +89,43 @@ func apply_burn(dps: float = BURN_DPS, duration: float = BURN_DURATION, source_i
 
 
 func apply_chill(duration: float = CHILL_DURATION) -> void:
+	if puppet_of != null:
+		puppet_of.call(&"forward_status", &"chill", duration, 0.0)
+		return
 	_chill_left = maxf(_chill_left, duration)
 
 
 func apply_shock(duration: float = SHOCK_DURATION) -> void:
+	if puppet_of != null:
+		puppet_of.call(&"forward_status", &"shock", duration, 0.0)
+		return
 	_shock_left = maxf(_shock_left, duration)
+
+
+## M09 puppet: the server's statuses (NetCodec.ST_* bits). They last until the
+## next snapshot says otherwise; a puppet shows them but deals no damage.
+const NET_HOLD := 0.6
+
+
+func set_net_bits(bits: int) -> void:
+	_burn_left = NET_HOLD if bits & NetCodec.ST_BURN else 0.0
+	_chill_left = NET_HOLD if bits & NetCodec.ST_CHILL else 0.0
+	_shock_left = NET_HOLD if bits & NetCodec.ST_SHOCK else 0.0
+	_conductor_left = NET_HOLD if bits & NetCodec.ST_CONDUCTOR else 0.0
+
+
+## The snapshot bits for this component (server side).
+func net_bits() -> int:
+	var bits := 0
+	if has_burn():
+		bits |= NetCodec.ST_BURN
+	if has_chill():
+		bits |= NetCodec.ST_CHILL
+	if has_shock():
+		bits |= NetCodec.ST_SHOCK
+	if is_conductor():
+		bits |= NetCodec.ST_CONDUCTOR
+	return bits
 
 
 func clear_all() -> void:
@@ -105,7 +148,8 @@ func _process(delta: float) -> void:
 		_burn_accum += delta
 		if _burn_accum >= 0.5:
 			_burn_accum -= 0.5
-			health.apply_dot(_burn_dps * 0.5, HitInfo.DamageType.FIRE)
+			if puppet_of == null:  # a puppet burns for show; the server deals the damage
+				health.apply_dot(_burn_dps * 0.5, HitInfo.DamageType.FIRE)
 			if owner_3d != null:
 				VFX.burn_tick(owner_3d.get_tree().current_scene, owner_3d.global_position + Vector3(0, 0.8, 0))
 	else:

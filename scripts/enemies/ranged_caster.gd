@@ -133,6 +133,19 @@ func _ai_process(delta: float) -> void:
 
 func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
+	_present_windup()
+
+
+func _present_state(s: AIState) -> void:
+	super(s)
+	match s:
+		AIState.WINDUP:
+			_present_windup()
+		AIState.RECOVER:
+			_present_fire()
+
+
+func _present_windup() -> void:
 	# Telegraph: orb charges up bright with sound; scales with time.
 	var tw := create_tween()
 	tw.tween_property(_staff_orb, "emission_energy_multiplier", 3.5, WINDUP_TIME * 0.9)
@@ -143,7 +156,7 @@ func _start_windup() -> void:
 
 func _fire() -> void:
 	_enter_state(AIState.RECOVER)
-	_reset_orb()
+	_present_fire()
 	if player == null or not is_instance_valid(player):
 		return
 	var origin := _orb_mesh.global_position
@@ -152,6 +165,12 @@ func _fire() -> void:
 	bolt.setup((target - origin).normalized(), BOLT_SPEED, BOLT_DAMAGE)
 	bolt.position = origin  # position before add_child: no origin-frame overlap
 	get_tree().current_scene.add_child(bolt)
+
+
+## The orb lets go (the bolt itself is simulation; a co-op client gets its
+## own copy from the server).
+func _present_fire() -> void:
+	_reset_orb()
 	Sfx.play("bolt_fire", global_position, -4.0)
 
 

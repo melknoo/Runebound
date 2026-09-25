@@ -98,8 +98,8 @@ func _add_aura(color: Color) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if enemy == null or enemy.ai_state == EnemyBase.AIState.DEAD:
-		return
+	if enemy == null or enemy.ai_state == EnemyBase.AIState.DEAD or enemy.net_puppet:
+		return  # M09: a co-op puppet's fire patches and novas happen on the server
 	_timer += delta
 	match kind:
 		Kind.EMBERBOUND:

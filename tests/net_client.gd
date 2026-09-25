@@ -154,6 +154,16 @@ class Driver extends Node:
 				if not await _in_zone():
 					return
 				var zone := get_tree().current_scene as ZoneBase
+				if "--fight" in OS.get_cmdline_user_args():  # fight whatever the server sends instead
+					var fighter := BotInputSource.new(3)
+					fighter.engage_radius = 60.0
+					zone.player.input_source = fighter
+					zone.player.camera_rig = null
+					zone.player.targeting = null
+					zone.player.debug_learn_all()
+					await _seconds(_arg_float("--duration=", 120.0))
+					_finish("ok")
+					return
 				var goto := Goto.new()
 				zone.player.input_source = goto
 				var base := zone._player_spawn_point()
@@ -176,8 +186,40 @@ class Driver extends Node:
 				if not await _until(func() -> bool: return not zone.net_world.heroes.is_empty(), 30.0, "another hero"):
 					return
 				await _seconds(_arg_float("--snap-after=", 4.0))
-				var img := get_viewport().get_texture().get_image()
-				img.save_png(_arg("--snap=", "user://net_test/watch.png"))
+				var shots := int(_arg_float("--snaps=", 1.0))
+				var path := _arg("--snap=", "user://net_test/watch.png")
+				for i in shots:
+					var img := get_viewport().get_texture().get_image()
+					img.save_png(path if shots == 1 else path.get_basename() + "_%d.png" % i)
+					await _seconds(_arg_float("--snap-every=", 0.5))
+				_finish("ok")
+			"enemies":
+				# Bots fight the lab's puppets until the server has killed them all.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				var world := zone.net_world
+				if not await _until(func() -> bool: return world.enemies.size() >= 3, 30.0, "the lab's 3 enemies as puppets"):
+					return
+				for e in EnemyBase.all_enemies:
+					# (the zone's shader warm-up instances sit frozen under the floor for 0.3 s)
+					if not e.net_puppet and e.process_mode != Node.PROCESS_MODE_DISABLED:
+						_finish("fail: a client-side enemy that is not a puppet (%s)" % e.name)
+						return
+				var bot := BotInputSource.new(7 if role == "c1" else 11)
+				bot.engage_radius = 60.0
+				zone.player.input_source = bot
+				zone.player.camera_rig = null  # bots aim along their facing
+				zone.player.targeting = null
+				zone.player.debug_learn_all()
+				if not await _until(func() -> bool: return world.enemies.is_empty(), 90.0, "every enemy dead"):
+					return
+				if world.hits_sent == 0:
+					_finish("fail: this client never hit anything")
+					return
+				print("[test %s] hits sent %d, hurts taken %d, dodged %d" % [role, world.hits_sent, world.hurts_taken,
+					world.hurts_dodged])
+				await _seconds(2.0)
 				_finish("ok")
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):

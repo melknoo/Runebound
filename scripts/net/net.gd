@@ -29,7 +29,7 @@ signal peer_left(peer_id: int)   # server: a client left
 
 enum Mode { OFFLINE, SERVER, CLIENT }
 
-const PROTOCOL := 2
+const PROTOCOL := 3
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

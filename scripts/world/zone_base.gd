@@ -692,20 +692,25 @@ func _warm_up_ids() -> Array[String]:
 
 ## A fresh enemy of a spawn id, not yet in the tree (spawning and warm-up).
 static func make_enemy(id: String) -> EnemyBase:
+	var e: EnemyBase
 	match id:
 		"caster":
-			return RangedCaster.new()
+			e = RangedCaster.new()
 		"assassin":
-			return Assassin.new()
+			e = Assassin.new()
 		"brute":
-			return Brute.new()
+			e = Brute.new()
 		"warden":
-			return HollowWarden.new()
+			e = HollowWarden.new()
 		"colossus":
-			return AshveinColossus.new()
+			e = AshveinColossus.new()
 		"vessel":
-			return ShatteredVessel.new()
-	return MeleeRusher.new()
+			e = ShatteredVessel.new()
+		_:
+			e = MeleeRusher.new()
+			id = "rusher"
+	e.type_id = id  # M09: a co-op client spawns the puppet by this id
+	return e
 
 
 func _warm_up_characters(spot: Vector3) -> void:
@@ -841,6 +846,8 @@ func _spawn_enemy(enemy: EnemyBase, pos: Vector3) -> void:
 	enemy.player = nearest_player(pos)
 	enemy.auto_retarget = true  # M07b: keeps hunting the nearest / last attacking hero
 	enemy.enemy_died.connect(_on_enemy_died)
+	if net_world != null and Net.is_dedicated():
+		net_world.register_enemy.call_deferred(enemy)  # deferred: an elite's modifier is added right after
 
 
 func spawn_by_id(id: String, pos: Vector3) -> EnemyBase:
@@ -869,7 +876,7 @@ func spawn_brute(pos: Vector3 = Vector3.INF) -> void:
 
 func spawn_elite(kind: int = -1, pos: Vector3 = Vector3.INF) -> EnemyBase:
 	pos = _resolve_spawn_pos(pos)
-	var enemy := MeleeRusher.new()
+	var enemy := make_enemy("rusher")
 	_spawn_enemy(enemy, pos)
 	var modifier := EliteModifier.new()
 	modifier.name = "EliteModifier"

@@ -68,6 +68,34 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
     net scenario `heroes` (two clients, one with netsim 100 ms / 2 %: each
     walks to a spot and dodges, the other sees the puppet there and replays
     the dodge; the level-up reaches the roster and the proxy).
+  - **WAN (Spike B):** the dev PC joined the laptop's real dedicated server
+    over Tailscale (DERP relay Frankfurt): echo 20 Hz x 900 B, 0 % loss,
+    RTT p50 67 / p95 84 / max 166 ms; the `heroes` scenario passed with two
+    clients over the internet.
+- **Phase 3a (enemy replication core: rusher, caster, bolts):**
+  - Server: every enemy gets a net id (`NetWorld.register_enemy`, deferred
+    from `_spawn_enemy`); spawn, state entries (with the pose at that
+    moment), hits (true damage), burn ticks, deaths and despawns go out as
+    events; 20 Hz snapshots carry awake enemies within 150 m of each client
+    (27-byte rows, `NetCodec`, 32 per packet) plus a round-robin of sleeping
+    ones. Enemy bolts are announced and popped by event.
+  - Client: enemy puppets (`EnemyBase.net_puppet`): no AI or physics,
+    posed 100 ms behind the server, statuses from snapshot bits (burn shows,
+    never ticks), hits and statuses they take go to the server (flash and
+    squash at once, the damage number when the server answers), death by
+    event. Bolts are visual copies.
+  - Presentation seam: `_present_state(state)` with `present_origin()` /
+    `present_forward()`; the rusher and caster moved their telegraphs, glows
+    and sounds there (singleplayer unchanged).
+  - Enemy hits on heroes: the proxy forwards them (`HURT`) with the struck
+    area (`HitInfo.area_center/area_radius`); the owner takes the hit
+    unless its own hero dodged (i-frames) or stands > 1.2 m outside the
+    area. Rusher sweeps hit every hero inside, not only the first.
+  - Tests: smoke 397 (+ hit / snapshot codec, puppet enemy behaviour);
+    net scenario `enemies` (combat lab on the server, two bot clients, one
+    with netsim: puppets appear, all three enemies die with kill credit to a
+    player, enemy hits reach the owners). Windowed look: telegraph discs,
+    hit flashes, the caster's charge and bolt all show on a client.
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

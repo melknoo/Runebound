@@ -40,6 +40,30 @@ var _char_left: float = 0.0
 ## Actions a puppet replayed (tests).
 var replayed_actions: int = 0
 
+## M09 phase 3: enemies. Server: net id -> the real enemy; client: -> puppet.
+var enemies: Dictionary = {}
+var _enemy_samples: Dictionary = {}  # client: id -> samples like the heroes'
+var _next_enemy_id: int = 1
+var _bolts: Dictionary = {}          # server: id -> EnemyBolt; client: id -> its copy
+var _next_bolt_id: int = 1
+var _round_robin: int = 0
+## Client counters (tests): forwarded hits taken / dodged by our hero.
+var hurts_taken: int = 0
+var hurts_dodged: int = 0
+var hits_sent: int = 0
+var hurts_forwarded: int = 0  # server
+
+## Enemies farther than this from a client's hero are sent only in the slow
+## round-robin refresh.
+const RELEVANCE := 150.0
+const IDLE_REFRESH_PER_SNAPSHOT := 3
+## A hit claimed from farther away than this is ignored (sanity, not anti-cheat).
+const MAX_HIT_RANGE := 45.0
+## A forwarded hit still counts this far outside its area (the proxy lags the
+## owner a little; the owner's own screen decides the rest).
+const HURT_MARGIN := 1.2
+var _enemy_handlers: Dictionary = {}  # NetMsg kind -> handler (registered in setup)
+
 
 func setup(z: ZoneBase) -> void:
 	zone = z
@@ -50,6 +74,15 @@ func setup(z: ZoneBase) -> void:
 	Net.on(NetMsg.HERO_DESPAWN, _on_hero_despawn)
 	Net.on(NetMsg.HERO_ACTION, _on_hero_action)
 	Net.on(NetMsg.CHARACTER, _on_character)
+	_enemy_handlers = {
+		NetMsg.ENEMY_SPAWN: _on_enemy_spawn, NetMsg.ENEMY_STATE: _on_enemy_state_msg,
+		NetMsg.ENEMY_HIT: _on_enemy_hit_msg, NetMsg.ENEMY_DOT: _on_enemy_dot_msg,
+		NetMsg.ENEMY_DEATH: _on_enemy_death_msg, NetMsg.ENEMY_DESPAWN: _on_enemy_despawn_msg,
+		NetMsg.BOLT: _on_bolt_msg, NetMsg.BOLT_POP: _on_bolt_pop_msg,
+		NetMsg.HIT: _on_hit_msg, NetMsg.STATUS: _on_status_msg, NetMsg.HURT: _on_hurt_msg,
+	}
+	for kind: int in _enemy_handlers:
+		Net.on(kind, _enemy_handlers[kind] as Callable)
 	if Net.is_dedicated():
 		Net.peer_ready.connect(_on_peer_ready)
 		Net.peer_left.connect(_on_peer_left)
@@ -75,6 +108,8 @@ func _exit_tree() -> void:
 		for handler: Callable in [_on_hero_state, _on_snapshot, _on_hero_spawn, _on_hero_despawn,
 				_on_hero_action, _on_character]:
 			Net.off(kind, handler)
+	for kind: int in _enemy_handlers:
+		Net.off(kind, _enemy_handlers[kind] as Callable)
 	if Net.peer_ready.is_connected(_on_peer_ready):
 		Net.peer_ready.disconnect(_on_peer_ready)
 	if Net.peer_left.is_connected(_on_peer_left):
@@ -113,6 +148,10 @@ func _on_peer_ready(peer: int) -> void:
 		if other != peer:
 			Net.send_to_peer(peer, NetMsg.HERO_SPAWN, _spawn_payload(other))
 	Net.broadcast_zone(NetMsg.HERO_SPAWN, _spawn_payload(peer), Net.CH_EVENTS, peer)
+	for id: int in enemies:  # the newcomer gets every enemy alive right now
+		var e := enemies[id] as EnemyBase
+		if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
+			Net.send_to_peer(peer, NetMsg.ENEMY_SPAWN, _enemy_spawn_payload(e))
 	Net.log_line("%s's hero is in the world at %s" % [Net.peer_name(peer), proxy.global_position.round()])
 
 
@@ -190,6 +229,21 @@ func _on_hero_action(from: int, payload: Array) -> void:
 
 func _send_snapshots() -> void:
 	var now := Time.get_ticks_msec()
+	var idle: Array[EnemyBase] = []
+	var awake: Array[EnemyBase] = []
+	for id: int in enemies:
+		var e := enemies[id] as EnemyBase
+		if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD:
+			continue
+		if e.sleeping:
+			idle.append(e)
+		else:
+			awake.append(e)
+	# A few sleeping enemies per snapshot keep far puppets fresh.
+	var refresh: Array[EnemyBase] = []
+	for i in mini(IDLE_REFRESH_PER_SNAPSHOT, idle.size()):
+		_round_robin = (_round_robin + 1) % idle.size()
+		refresh.append(idle[_round_robin])
 	for peer in Net.ready_peers():
 		var entries: Array = []
 		for other: int in heroes:
@@ -200,8 +254,28 @@ func _send_snapshots() -> void:
 				continue
 			entries.append([other, h.global_position, h.facing_yaw(), h.velocity, int(h.state),
 				h.health.current_health, h.health.max_health, h.teleports])
-		if not entries.is_empty():
-			Net.send_to_peer(peer, NetMsg.SNAPSHOT, [now, entries], Net.CH_SNAPSHOT)
+		var me := heroes.get(peer) as Player
+		var rows: Array[Dictionary] = []
+		for e in awake:
+			if me == null or e.global_position.distance_to(me.global_position) <= RELEVANCE:
+				rows.append(_enemy_row(e))
+		for e in refresh:
+			rows.append(_enemy_row(e))
+		if entries.is_empty() and rows.is_empty():
+			continue
+		var first := true
+		var start := 0
+		while first or start < rows.size():
+			var chunk := rows.slice(start, start + NetCodec.ENEMIES_PER_PACKET)
+			Net.send_to_peer(peer, NetMsg.SNAPSHOT, [now, entries if first else [], NetCodec.encode_enemies(chunk)],
+				Net.CH_SNAPSHOT)
+			first = false
+			start += NetCodec.ENEMIES_PER_PACKET
+
+
+func _enemy_row(e: EnemyBase) -> Dictionary:
+	return {"id": e.net_id, "pos": e.global_position, "yaw": e.visual.rotation.y, "vel": e.velocity,
+		"state": int(e.ai_state), "seq": e.state_seq, "hp": e.health.current_health, "bits": e.net_status_bits()}
 
 
 # ---------------------------------------------------------------------------
@@ -277,6 +351,17 @@ func _on_snapshot(_from: int, payload: Array) -> void:
 		_clock_ready = true
 	else:
 		_clock_offset -= 0.5  # ~10 ms per second at 20 Hz
+	if payload.size() >= 3 and payload[2] is PackedByteArray:
+		for row in NetCodec.decode_enemies(payload[2] as PackedByteArray):
+			var id := int(row["id"])
+			if not _enemy_samples.has(id):
+				continue
+			row["t"] = server_ms
+			row["tp"] = 0
+			var samples: Array = _enemy_samples[id]
+			samples.append(row)
+			while samples.size() > 2 and server_ms - float((samples[0] as Dictionary)["t"]) > BUFFER_MS:
+				samples.pop_front()
 	for e: Array in payload[1] as Array:
 		if e.size() < 8:
 			continue
@@ -303,6 +388,13 @@ func _pose_puppets() -> void:
 			continue
 		p.apply_net_state(s["pos"] as Vector3, float(s["yaw"]), s["vel"] as Vector3, int(s["state"]),
 			float(s["hp"]), float(s["hp_max"]))
+	for id: int in enemies:
+		var e := enemies[id] as EnemyBase
+		if e == null or not is_instance_valid(e):
+			continue
+		var es := sample_at(_enemy_samples.get(id, []) as Array, render_t)
+		if not es.is_empty():
+			e.apply_net_pose(es["pos"] as Vector3, float(es["yaw"]), es["vel"] as Vector3, float(es["hp"]), int(es["bits"]))
 
 
 ## The pose at server time `t` from time-ordered samples: interpolated between
@@ -355,3 +447,249 @@ func _add_nameplate(p: Player, peer: int) -> void:
 	label.tree_exiting.connect(func() -> void:
 		if Net.roster_changed.is_connected(refresh):
 			Net.roster_changed.disconnect(refresh))
+
+
+# ---------------------------------------------------------------------------
+# Enemies (M09 phase 3)
+# ---------------------------------------------------------------------------
+
+## Server: ZoneBase._spawn_enemy (deferred, so an elite's modifier exists).
+func register_enemy(e: EnemyBase) -> void:
+	if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD or e.net_id != 0:
+		return
+	e.net_id = _next_enemy_id
+	_next_enemy_id = _next_enemy_id % 65000 + 1  # u16 on the wire, reused only after 65k spawns
+	enemies[e.net_id] = e
+	e.state_entered.connect(_on_enemy_state.bind(e))
+	e.health.damaged.connect(_on_enemy_damaged.bind(e))
+	e.health.dot_damaged.connect(_on_enemy_dot.bind(e))
+	e.enemy_died.connect(_on_enemy_killed)
+	e.tree_exiting.connect(_on_enemy_gone.bind(e))
+	Net.broadcast_zone(NetMsg.ENEMY_SPAWN, _enemy_spawn_payload(e))
+
+
+func _enemy_spawn_payload(e: EnemyBase) -> Array:
+	var modifier := e.get_node_or_null(^"EliteModifier") as EliteModifier
+	return [e.net_id, e.type_id, e.global_position, e.visual.rotation.y, e.level,
+		int(modifier.kind) if modifier != null else -1, e.health.current_health, e.health.max_health,
+		int(e.ai_state), e.state_seq]
+
+
+func _on_enemy_state(state: EnemyBase.AIState, e: EnemyBase) -> void:
+	if state == EnemyBase.AIState.DEAD:
+		return  # ENEMY_DEATH says it
+	Net.broadcast_zone(NetMsg.ENEMY_STATE, [e.net_id, int(state), e.state_seq, e.global_position, e.visual.rotation.y])
+
+
+func _on_enemy_damaged(hit: HitInfo, e: EnemyBase) -> void:
+	Net.broadcast_zone(NetMsg.ENEMY_HIT, [e.net_id, hit.damage, hit.is_crit, int(hit.type), _peer_of(hit.attacker_id)])
+
+
+func _on_enemy_dot(amount: float, type: HitInfo.DamageType, e: EnemyBase) -> void:
+	Net.broadcast_zone(NetMsg.ENEMY_DOT, [e.net_id, amount, int(type), _peer_of(e.status.burn_source_id)])
+
+
+func _on_enemy_killed(e: EnemyBase) -> void:
+	Net.broadcast_zone(NetMsg.ENEMY_DEATH, [e.net_id, _peer_of(e.last_attacker_id)])
+
+
+func _on_enemy_gone(e: EnemyBase) -> void:
+	if not enemies.has(e.net_id):
+		return
+	enemies.erase(e.net_id)
+	if e.ai_state != EnemyBase.AIState.DEAD:
+		Net.broadcast_zone(NetMsg.ENEMY_DESPAWN, [e.net_id])
+
+
+## The co-op peer behind a player instance id (0: the world, or unknown).
+func _peer_of(instance_id: int) -> int:
+	if instance_id == 0:
+		return 0
+	var obj := instance_from_id(instance_id)
+	var hero := obj as Player if obj != null and is_instance_valid(obj) else null
+	return hero.peer_id if hero != null and hero.net_role == Player.NetRole.PROXY else 0
+
+
+## Server: an enemy bolt came to life (EnemyBolt._ready).
+func register_bolt(b: EnemyBolt) -> void:
+	if not Net.is_dedicated():
+		return
+	b.net_id = _next_bolt_id
+	_next_bolt_id += 1
+	_bolts[b.net_id] = b
+	Net.broadcast_zone(NetMsg.BOLT, [b.net_id, b.global_position, b.direction(), b.speed])
+
+
+func bolt_popped(b: EnemyBolt) -> void:
+	if Net.is_dedicated() and _bolts.has(b.net_id):
+		_bolts.erase(b.net_id)
+		Net.broadcast_zone(NetMsg.BOLT_POP, [b.net_id, b.global_position])
+
+
+## Server: an enemy attack struck a client's proxy; its owner decides.
+func forward_hurt(proxy: Player, hit: HitInfo) -> void:
+	hurts_forwarded += 1
+	Net.send_to_peer(proxy.peer_id, NetMsg.HURT, [NetCodec.hit_to_array(hit)])
+
+
+## Client: our hero hit an enemy puppet.
+func send_hit(e: EnemyBase, hit: HitInfo) -> void:
+	hits_sent += 1
+	Net.send_to_server(NetMsg.HIT, [e.net_id, NetCodec.hit_to_array(hit)])
+
+
+## Client: a status applied to a puppet without a hit.
+func send_status(e: EnemyBase, kind: StringName, duration: float, amount: float) -> void:
+	Net.send_to_server(NetMsg.STATUS, [e.net_id, String(kind), duration, amount])
+
+
+# --- server: what clients tell us ------------------------------------------
+
+func _on_hit_msg(from: int, payload: Array) -> void:
+	if not Net.is_dedicated() or payload.size() < 2 or payload[1] is not Array:
+		return
+	var e := enemies.get(int(payload[0])) as EnemyBase
+	var proxy := heroes.get(from) as Player
+	if e == null or not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD 			or proxy == null or not is_instance_valid(proxy):
+		return
+	if proxy.global_position.distance_to(e.global_position) > MAX_HIT_RANGE:
+		return
+	var hit := NetCodec.hit_from_array(payload[1] as Array)
+	hit.attacker_id = proxy.get_instance_id()  # talents, kill credit and loot follow the proxy
+	hit.from_player = true
+	e.take_hit(hit)
+
+
+func _on_status_msg(from: int, payload: Array) -> void:
+	if not Net.is_dedicated() or payload.size() < 4:
+		return
+	var e := enemies.get(int(payload[0])) as EnemyBase
+	var proxy := heroes.get(from) as Player
+	if e == null or not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD or proxy == null:
+		return
+	var duration := clampf(float(payload[2]), 0.0, 30.0)
+	match str(payload[1]):
+		"burn":
+			e.status.apply_burn(maxf(float(payload[3]), 0.0), duration, proxy.get_instance_id())
+		"chill":
+			e.status.apply_chill(duration)
+		"shock":
+			e.status.apply_shock(duration)
+		"conductor":
+			e.status.apply_conductor(duration)
+
+
+# --- client: what the server tells us --------------------------------------
+
+func _on_enemy_spawn(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 10:
+		return
+	var id := int(payload[0])
+	if enemies.has(id):
+		return
+	var e := ZoneBase.make_enemy(str(payload[1]))
+	e.net_puppet = true
+	e.net_id = id
+	e.level = int(payload[4])
+	zone.enemies_root.add_child(e)
+	var kind := int(payload[5])
+	if kind >= 0:
+		var modifier := EliteModifier.new()
+		modifier.name = "EliteModifier"
+		modifier.kind = kind as EliteModifier.Kind
+		e.add_child(modifier)
+	e.global_position = payload[2] as Vector3
+	e.visual.rotation.y = float(payload[3])
+	e.health.max_health = maxf(float(payload[7]), 1.0)
+	e.health.current_health = clampf(float(payload[6]), 0.0, e.health.max_health)
+	e.ai_state = clampi(int(payload[8]), 0, EnemyBase.AIState.size() - 1) as EnemyBase.AIState
+	e.state_seq = int(payload[9])
+	enemies[id] = e
+	_enemy_samples[id] = []
+
+
+func _puppet(payload: Array) -> EnemyBase:
+	if not Net.is_client() or payload.is_empty():
+		return null
+	var e := enemies.get(int(payload[0])) as EnemyBase
+	return e if e != null and is_instance_valid(e) else null
+
+
+func _on_enemy_state_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e != null and payload.size() >= 5:
+		e.net_enter_state(clampi(int(payload[1]), 0, EnemyBase.AIState.size() - 1) as EnemyBase.AIState,
+			int(payload[2]), payload[3] as Vector3, float(payload[4]))
+
+
+func _on_enemy_hit_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e != null and payload.size() >= 5:
+		e.present_hit(float(payload[1]), bool(payload[2]), clampi(int(payload[3]), 0, 3) as HitInfo.DamageType,
+			int(payload[4]) == Net.my_id())
+
+
+func _on_enemy_dot_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e != null and payload.size() >= 4:
+		e.present_dot(float(payload[1]), clampi(int(payload[2]), 0, 3) as HitInfo.DamageType, int(payload[3]) == Net.my_id())
+
+
+func _on_enemy_death_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e == null:
+		return
+	enemies.erase(e.net_id)
+	_enemy_samples.erase(e.net_id)
+	e.present_death()
+
+
+func _on_enemy_despawn_msg(_from: int, payload: Array) -> void:
+	var e := _puppet(payload)
+	if e == null:
+		return
+	enemies.erase(e.net_id)
+	_enemy_samples.erase(e.net_id)
+	e.queue_free()
+
+
+func _on_bolt_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 4:
+		return
+	var bolt := EnemyBolt.new()
+	bolt.visual_only = true
+	bolt.setup(payload[2] as Vector3, float(payload[3]), 0.0)
+	bolt.position = payload[1] as Vector3  # before add_child, like every projectile
+	zone.add_child(bolt)
+	_bolts[int(payload[0])] = bolt
+
+
+func _on_bolt_pop_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 2:
+		return
+	var bolt := _bolts.get(int(payload[0])) as EnemyBolt
+	_bolts.erase(int(payload[0]))
+	if bolt != null and is_instance_valid(bolt):
+		bolt.global_position = payload[1] as Vector3
+		bolt.net_pop()
+
+
+## An enemy attack struck our hero's proxy on the server. We take it the way
+## our own screen saw it: dodge i-frames refuse it inside Player.take_hit, and
+## a hero that already left the struck area is not hit.
+func _on_hurt_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.is_empty() or payload[0] is not Array:
+		return
+	var hero := zone.player
+	if hero == null or not is_instance_valid(hero) or hero.health.is_dead:
+		return
+	var hit := NetCodec.hit_from_array(payload[0] as Array)
+	if hit.area_radius > 0.0 and hit.area_center != Vector3.INF:
+		var chest := hero.global_position + Vector3(0, 0.9, 0)
+		if chest.distance_to(hit.area_center) > hit.area_radius + HURT_MARGIN:
+			hurts_dodged += 1
+			return
+	if hero.take_hit(hit):
+		hurts_taken += 1
+	else:
+		hurts_dodged += 1

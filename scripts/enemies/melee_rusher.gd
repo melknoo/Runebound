@@ -130,10 +130,23 @@ func _ai_process(delta: float) -> void:
 
 func _start_windup() -> void:
 	_enter_state(AIState.WINDUP)
+	_present_windup()
+
+
+func _present_state(s: AIState) -> void:
+	super(s)
+	match s:
+		AIState.WINDUP:
+			_present_windup()
+		AIState.ATTACK:
+			_present_attack()
+
+
+func _present_windup() -> void:
 	# Ground disc marks the strike zone; fills in over the wind-up.
-	var fwd := -visual.global_transform.basis.z
+	var fwd := present_forward()
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		global_position + fwd * 1.1,
+		present_origin() + fwd * 1.1,
 		1.4, WINDUP_TIME)
 	# Telegraph: axe raised, blade glows hot, warning sound.
 	var tw := _axe_pivot.create_tween()
@@ -149,6 +162,11 @@ func _start_windup() -> void:
 
 func _do_attack() -> void:
 	_enter_state(AIState.ATTACK)
+	_present_attack()
+	_strike()
+
+
+func _present_attack() -> void:
 	var tw := _axe_pivot.create_tween()
 	tw.tween_property(_axe_pivot, "rotation_degrees", Vector3(35, 0, 0), 0.09) \
 		.set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
@@ -157,7 +175,10 @@ func _do_attack() -> void:
 	_reset_glow()
 	Sfx.play("swing", global_position, -6.0, 0.12, 0.8)
 
-	# Hit check: sphere in front, against the player hurtbox layer.
+
+func _strike() -> void:
+	# Hit check: sphere in front, against the player hurtbox layer. M09: every
+	# hero inside is hit (co-op), each owner confirms with its own position.
 	var fwd := -visual.global_transform.basis.z
 	var center := global_position + Vector3(0, 0.9, 0) + fwd * 1.2
 	var space := get_world_3d().direct_space_state
@@ -174,9 +195,10 @@ func _do_attack() -> void:
 		if hb != null and hb.owner_entity is Player:
 			var hit := HitInfo.create(ATTACK_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
 			hit.knockback = 4.0
+			hit.area_center = center
+			hit.area_radius = shape.radius
 			(hb.owner_entity as Player).take_hit(hit)
 			VFX.melee_impact(get_tree().current_scene, hb.owner_entity.global_position + Vector3(0, 1.0, 0), fwd)
-			break
 
 
 func _reset_glow() -> void:
