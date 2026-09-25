@@ -130,7 +130,7 @@ func _build() -> void:
 	_name_edit = _line_edit(ClientSettings.get_value("name", ""), "Hero")
 	_name_edit.max_length = Net.NAME_MAX
 	_join_page.add_child(_name_edit)
-	_join_page.add_child(_caption("Server  (the host's address; host:port for a LAN server)"))
+	_join_page.add_child(_caption("Server  (the host's address, or host:port for a LAN server)"))
 	_address_edit = _line_edit(ClientSettings.get_value("last_server", DEFAULT_SERVER), "server-name:7777")
 	_address_edit.text_submitted.connect(func(_t: String) -> void: _connect())
 	_join_page.add_child(_address_edit)
