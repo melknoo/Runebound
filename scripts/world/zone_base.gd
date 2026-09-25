@@ -70,6 +70,7 @@ func _ready() -> void:
 	if not Net.has_view():
 		_zone_ready()
 		Net.zone_entered(scene_file_path)
+		net_world.adopt_ready_peers()  # clients that loaded this zone faster than the server
 		return  # M09 dedicated server: the world without a local hero, camera or UI
 	_spawn_player()
 	if look != null and look.ash_fall > 0.0:
@@ -511,6 +512,9 @@ func _spawn_player() -> void:
 	var arrival := SaveGame.pending_arrival
 	SaveGame.pending_arrival = ""
 	player.global_position = _arrival_point(arrival) if arrival != "" else _player_spawn_point()
+	if Net.pending_spawn != Vector3.INF:  # M09: a late joiner appears next to the party
+		player.global_position = ground_point(Net.pending_spawn, 0.2)
+		Net.pending_spawn = Vector3.INF
 
 	camera_rig = CameraRig.new()
 	camera_rig.name = "CameraRig"
@@ -1146,8 +1150,9 @@ func cycle_style() -> void:
 func travel_to(scene_path: String, arrival: String = "") -> void:
 	if _travelling:
 		return
-	if Net.is_client():
-		_party_travel_unavailable()
+	if Net.is_client():  # M09: the whole party travels, after a countdown anyone can cancel
+		if net_world != null:
+			net_world.request_party_travel(scene_path, arrival, zone_label(scene_path))
 		return
 	_travelling = true
 	SaveGame.pending_arrival = arrival
@@ -1172,15 +1177,14 @@ func fast_travel(key: String) -> void:
 	if scene_path != scene_file_path:
 		travel_to(scene_path, poi)
 		return
-	if Net.is_client():
-		_party_travel_unavailable()
-		return
 	_travelling = true
 	Sfx.play_ui("portal_travel", -6.0)
 	_fade_then(func() -> void:
 		var spot := _arrival_point(poi)
-		for p in players:  # the local hero today; co-op moves the party
-			if p != null and is_instance_valid(p):
+		# M09: a hop inside the zone is personal: only this machine's hero moves
+		# (in co-op the others see it snap: the teleport counter).
+		for p in players:
+			if p != null and is_instance_valid(p) and (p.is_local or not Net.is_online()):
 				p.global_position = spot
 				p.velocity = Vector3.ZERO
 		if hud != null:
@@ -1190,11 +1194,24 @@ func fast_travel(key: String) -> void:
 	, true)
 
 
-## M09: zone changes in co-op move the whole party through the server; until
-## that flow exists a client stays where the server is.
-func _party_travel_unavailable() -> void:
-	if hud != null:
-		hud.toast("Travel is not available in co-op yet", UiTheme.MUTED)
+## M09: display names for the party travel banner.
+const ZONE_LABELS := {"hub": "Runehold", "ashen_highlands": "the Ashen Highlands",
+	"shattered_spire": "the Shattered Spire", "combat_lab": "the Combat Lab"}
+
+
+static func zone_label(scene_path: String) -> String:
+	var key := scene_path.get_file().get_basename()
+	return str(ZONE_LABELS.get(key, key.capitalize()))
+
+
+## M09 co-op client: the server says go. Save, fade, then `load_zone`.
+func party_travel_go(load_zone: Callable) -> void:
+	_travelling = true
+	SaveGame.save_now()
+	Sfx.play_ui("portal_travel", -4.0)
+	if MusicDirector.instance != null:
+		MusicDirector.instance.stop(0.5)
+	_fade_then(load_zone, false)
 
 
 ## A Waypoint's [E]: the travel list.

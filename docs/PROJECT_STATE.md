@@ -135,6 +135,21 @@ Architecture, rules and phases: ROADMAP.md M09; tech: TECHNICAL_ARCHITECTURE
     and opens chest_south, c2 108 m away gets only the party's camp bonus,
     no loot and no drops, and sees the chest open; the server spawns no
     drops of its own).
+- **Phase 5 (party flow):**
+  - A portal or a shrine into another zone starts a 5 s party countdown
+    (banner: "Party travel to ... in 5  [X] Cancel  (who)"); anyone can
+    cancel with X. At zero the server starts a new zone epoch, tells every
+    client (TRAVEL_GO), saves its world and changes scene; clients fade and
+    follow and arrive at the same gate. The new zone adopts clients that
+    loaded before the server did.
+  - Shrine hops inside a zone are personal (only this machine's hero moves).
+  - Death: the owner respawns its own hero (nearest attuned shrine).
+  - Late joiners appear next to a party member (welcome `spawn_at`).
+  - A server that shuts down disconnects everyone at once; clients go back
+    to the title with the reason and their own world restored.
+  - Tests: net scenarios `travel` (countdown, cancel, travel hub ->
+    Highlands, arrival at the south gate, a late joiner next to the party,
+    epoch 2) and `server_gone`; 12 scenarios green, smoke 401.
 
 ## M08 Open World I (2026-09-24)
 The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.

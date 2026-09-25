@@ -37,7 +37,7 @@ func _on_roster() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if scenario in ["heroes", "enemies", "enemy_types", "look_boss", "rewards"] and Engine.get_physics_frames() % 30 == 0:
+	if scenario in ["heroes", "enemies", "enemy_types", "look_boss", "rewards", "travel"] and Engine.get_physics_frames() % 30 == 0:
 		_update()
 
 
@@ -156,6 +156,7 @@ func _spawn_roster(zone: ZoneBase) -> void:
 	_update()
 
 
+var _quitting := false
 var _saw_both := false
 var _saw_level := false
 
@@ -216,6 +217,21 @@ func _update() -> void:
 					verdict = "fail: the server spawned %d drops of its own" % server_drops
 				else:
 					verdict = "ok"
+		"travel":
+			var zone := get_tree().current_scene as ZoneBase
+			if not zone is AshenHighlands:
+				verdict = "fail: the server never left the hub"
+			elif zone.net_world == null or zone.net_world.heroes.size() < 3 and _leaves == 0:
+				verdict = "fail: %d proxies in the Highlands" % (zone.net_world.heroes.size() if zone.net_world != null else 0)
+			elif Net.zone_epoch != 2:
+				verdict = "fail: zone epoch %d after one travel" % Net.zone_epoch
+			else:
+				verdict = "ok"
+		"server_gone":
+			verdict = "ok"
+			if _ready_peers >= 1 and not _quitting:
+				_quitting = true
+				get_tree().create_timer(2.0).timeout.connect(func() -> void: get_tree().quit())
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
 		"full":

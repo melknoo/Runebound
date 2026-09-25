@@ -87,6 +87,8 @@ func setup(z: ZoneBase) -> void:
 		NetMsg.ENEMY_FX: _on_enemy_fx_msg, NetMsg.HAZARD: _on_hazard_msg, NetMsg.ENEMY_SCALE: _on_enemy_scale_msg,
 		NetMsg.GRANT: _on_grant_msg, NetMsg.CHEST_OPEN: _on_chest_open_msg, NetMsg.CHEST_OPENED: _on_chest_opened_msg,
 		NetMsg.FLAG: _on_flag_msg,
+		NetMsg.TRAVEL_REQUEST: _on_travel_request_msg, NetMsg.TRAVEL_COUNTDOWN: _on_travel_countdown_msg,
+		NetMsg.TRAVEL_CANCEL: _on_travel_cancel_msg, NetMsg.TRAVEL_CANCELLED: _on_travel_cancelled_msg,
 	}
 	for kind: int in _enemy_handlers:
 		Net.on(kind, _enemy_handlers[kind] as Callable)
@@ -127,6 +129,7 @@ func _exit_tree() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_tick_travel(delta)
 	if Net.is_dedicated():
 		_snap_left -= delta
 		if _snap_left <= 0.0:
@@ -879,3 +882,109 @@ func _on_flag_msg(_from: int, payload: Array) -> void:
 	var flag := StringName(str(payload[0]))
 	SaveGame.flags[String(flag)] = true  # the session world only; our own stays on disk
 	zone.apply_world_flag(flag)
+
+
+# ---------------------------------------------------------------------------
+# M09 phase 5: party travel, late joiners
+# ---------------------------------------------------------------------------
+
+## Seconds between a portal / shrine request and the party leaving.
+const TRAVEL_COUNTDOWN_SECONDS := 5.0
+
+## Server: the running countdown {scene, arrival, label, left, by}; client:
+## what the banner shows. Empty = none.
+var travel: Dictionary = {}
+var _banner: Label = null
+## Tests: countdowns seen / cancelled on this machine.
+var travel_countdowns_seen: int = 0
+var travel_cancels_seen: int = 0
+
+
+## Server, at the end of the zone build: clients that reported this zone before
+## it existed get their proxy and the world now.
+func adopt_ready_peers() -> void:
+	for peer in Net.ready_peers():
+		_on_peer_ready(peer)
+
+
+## Server: where a late joiner should appear (next to the first hero).
+func spawn_hint() -> Vector3:
+	for peer: int in heroes:
+		var h := heroes[peer] as Player
+		if h != null and is_instance_valid(h) and not h.health.is_dead:
+			return h.global_position + Vector3(2.0, 0.0, 1.5)
+	return Vector3.INF
+
+
+## Client: our hero wants another zone: the party goes (after the countdown).
+func request_party_travel(scene_path: String, arrival: String, label: String) -> void:
+	Net.send_to_server(NetMsg.TRAVEL_REQUEST, [scene_path, arrival, label])
+
+
+func _on_travel_request_msg(from: int, payload: Array) -> void:
+	if not Net.is_dedicated() or payload.size() < 3 or not travel.is_empty():
+		return
+	var scene_path := str(payload[0])
+	if not ResourceLoader.exists(scene_path) or scene_path == zone.scene_file_path:
+		return
+	travel = {"scene": scene_path, "arrival": str(payload[1]), "label": str(payload[2]),
+		"left": TRAVEL_COUNTDOWN_SECONDS, "by": from}
+	Net.log_line("%s starts party travel to %s" % [Net.peer_name(from), scene_path])
+	Net.broadcast_zone(NetMsg.TRAVEL_COUNTDOWN, [scene_path, str(payload[2]), TRAVEL_COUNTDOWN_SECONDS, from])
+
+
+func _on_travel_cancel_msg(from: int, _payload: Array) -> void:
+	if not Net.is_dedicated() or travel.is_empty():
+		return
+	travel = {}
+	Net.log_line("%s cancelled the party travel" % Net.peer_name(from))
+	Net.broadcast_zone(NetMsg.TRAVEL_CANCELLED, [from])
+
+
+func _tick_travel(delta: float) -> void:
+	if travel.is_empty():
+		return
+	travel["left"] = float(travel["left"]) - delta
+	if Net.is_dedicated():
+		if float(travel["left"]) <= 0.0:
+			var go := travel
+			travel = {}
+			Net.change_zone(str(go["scene"]), str(go["arrival"]))
+	elif _banner != null:
+		_banner.text = "Party travel to %s in %d   [X] Cancel   (%s)" % [str(travel["label"]),
+			ceili(maxf(float(travel["left"]), 0.0)), Net.peer_name(int(travel["by"]))]
+
+
+func _on_travel_countdown_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 4:
+		return
+	travel = {"scene": str(payload[0]), "label": str(payload[1]), "left": float(payload[2]), "by": int(payload[3])}
+	travel_countdowns_seen += 1
+	if zone.hud != null and _banner == null:
+		_banner = Label.new()
+		_banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		_banner.offset_left = -360.0
+		_banner.offset_top = 150.0
+		_banner.custom_minimum_size = Vector2(720, 0)
+		_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		UiTheme.apply(_banner)
+		_banner.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.hot", Color(0.62, 0.95, 0.9)))
+		zone.hud.add_child(_banner)
+
+
+func _on_travel_cancelled_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client():
+		return
+	travel = {}
+	travel_cancels_seen += 1
+	if _banner != null:
+		_banner.queue_free()
+		_banner = null
+	if zone.hud != null and not payload.is_empty():
+		zone.hud.toast("Travel cancelled by %s" % Net.peer_name(int(payload[0])), UiTheme.MUTED)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if Net.is_client() and not travel.is_empty() and event.is_action_pressed(&"party_cancel"):
+		Net.send_to_server(NetMsg.TRAVEL_CANCEL, [])
+		get_viewport().set_input_as_handled()

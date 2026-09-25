@@ -69,3 +69,14 @@ const CHEST_OPEN := 26
 const CHEST_OPENED := 27
 ## server -> client: [flag] - a world flag was set (bosses): zones react
 const FLAG := 28
+## client -> server: [scene, arrival poi, label] - our hero used a portal / a
+## shrine into another zone: the party travels
+const TRAVEL_REQUEST := 29
+## server -> client: [scene, label, seconds, by_peer] - party travel counts down
+const TRAVEL_COUNTDOWN := 30
+## client -> server: [] - cancel the countdown
+const TRAVEL_CANCEL := 31
+## server -> client: [by_peer]
+const TRAVEL_CANCELLED := 32
+## server -> client, any epoch: [scene, epoch, arrival] - load that zone now
+const TRAVEL_GO := 33

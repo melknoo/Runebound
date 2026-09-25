@@ -406,6 +406,19 @@ never `DisplayServer` (headless bot clients are clients).
   sends FLAG, clients set the session flag and call the zone's
   `apply_world_flag(flag)`, which the authority calls itself after a boss.
   Save v5 keeps `discovered` zones per character.
+- **Party travel:** clients' `ZoneBase.travel_to` sends TRAVEL_REQUEST;
+  the server's NetWorld counts down (TRAVEL_COUNTDOWN / TRAVEL_CANCEL /
+  TRAVEL_CANCELLED, action `party_cancel` = X) and calls
+  `Net.change_zone(scene, arrival)`: epoch + 1 and `zone_scene` set before
+  the scene changes, TRAVEL_GO (any epoch) to every client, server save,
+  deferred scene change. `Net.zone_entered` only bumps the epoch for the
+  first zone; `NetWorld.adopt_ready_peers()` runs at the end of the server's
+  zone build. Clients: `ZoneBase.party_travel_go` (save, fade) then
+  `Net._enter_zone(scene, epoch, arrival)`. `fast_travel` inside a zone moves
+  only the local hero online. Late joiners: welcome `spawn_at` from
+  `NetWorld.spawn_hint()` -> `Net.pending_spawn`. `Net._exit_tree` on the
+  server disconnects every peer and flushes, so clients see the end at once.
+  `_send_now` skips peers ENet is tearing down.
 - **AI sleep** (`EnemyBase.SLEEP_RADIUS` 60 m): idle, standing enemies with no
   hero near skip `_physics_process`; checks every 0.5 s (spread by instance
   id), a hit wakes them.

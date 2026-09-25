@@ -326,6 +326,75 @@ class Driver extends Node:
 					return
 				await _seconds(4.0)  # c2 checks meanwhile
 				_finish("ok")
+			"travel":
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				zone.player.input_source = InputSource.new()
+				if role == "c3":
+					# The late joiner: straight into the Highlands, next to the party.
+					if not zone is AshenHighlands:
+						_finish("fail: the late joiner landed in %s" % zone.scene_file_path)
+						return
+					if not await _until(func() -> bool: return zone.net_world.heroes.size() >= 2, 20.0, "the party's puppets"):
+						return
+					var nearest := INF
+					for peer: int in zone.net_world.heroes:
+						var h := zone.net_world.heroes[peer] as Player
+						nearest = minf(nearest, h.global_position.distance_to(zone.player.global_position))
+					if nearest > 6.0:
+						_finish("fail: the late joiner appeared %.1f m from the nearest hero" % nearest)
+						return
+					await _seconds(3.0)
+					_finish("ok")
+					return
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				var world := zone.net_world
+				if role == "c1":
+					await _seconds(1.0)
+					zone.travel_to("res://scenes/ashen_highlands.tscn", "gate_south")
+				if not await _until(func() -> bool: return world.travel_countdowns_seen >= 1, 15.0, "the countdown"):
+					return
+				if role == "c2":
+					Net.send_to_server(NetMsg.TRAVEL_CANCEL, [])  # what [X] does
+				if not await _until(func() -> bool: return world.travel_cancels_seen >= 1, 15.0, "the cancel"):
+					return
+				if role == "c1":
+					await _seconds(1.0)
+					zone._travelling = false
+					zone.travel_to("res://scenes/ashen_highlands.tscn", "gate_south")
+				if not await _until(func() -> bool:
+					var z := get_tree().current_scene as ZoneBase
+					return z is AshenHighlands and z.player != null and z.net_world != null, 30.0, "arriving in the Highlands"):
+					return
+				var hl := get_tree().current_scene as ZoneBase
+				var gate := hl._arrival_point("gate_south")
+				if hl.player.global_position.distance_to(gate) > 6.0:
+					_finish("fail: arrived %.1f m from the south gate" % hl.player.global_position.distance_to(gate))
+					return
+				if not await _until(func() -> bool: return hl.net_world.heroes.size() >= 1, 20.0, "the other hero in the new zone"):
+					return
+				if not await _until(func() -> bool: return Net.roster.size() >= 3 and hl.net_world.heroes.size() >= 2,
+						60.0, "the late joiner"):
+					return
+				await _seconds(3.0)
+				_finish("ok")
+			"server_gone":
+				if not await _in_zone():
+					return
+				var ended := [""]
+				Net.session_ended.connect(func(reason: String) -> void: ended[0] = reason)
+				if not await _until(func() -> bool: return ended[0] != "", 40.0, "the session to end with the server"):
+					return
+				if not await _until(func() -> bool:
+					var scene := get_tree().current_scene
+					return scene != null and scene.scene_file_path == Net.TITLE_SCENE, 10.0, "the title screen"):
+					return
+				if not ended[0].contains("Lost the connection") or SaveGame.online:
+					_finish("fail: ended with \"%s\" (online save %s)" % [ended[0], SaveGame.online])
+					return
+				_finish("ok")
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")

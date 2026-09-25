@@ -172,8 +172,10 @@
   stay free.
 
 ## M09 open items (co-op in progress)
-- Co-op clients cannot travel yet (portals and shrines say so); party travel
-  with the countdown comes in phase 5.
+- Party travel is one-way per request: a hero who walks back through the
+  gate right after arriving starts a new countdown (5 s) for everybody.
+- A server killed hard (power, crash) is noticed by clients only after the
+  ENet timeout (15-30 s); a normal stop disconnects everyone at once.
 - Every enemy, hazard and both bosses replicate; rewards, chests and world
   flags follow the co-op rules (phase 4). Chests reset with the server's
   session (like singleplayer, they are not saved).

@@ -29,7 +29,7 @@ signal peer_left(peer_id: int)   # server: a client left
 
 enum Mode { OFFLINE, SERVER, CLIENT }
 
-const PROTOCOL := 5
+const PROTOCOL := 6
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3
@@ -55,6 +55,9 @@ var zone_scene: String = ""
 var roster: Dictionary = {}
 ## Why the last session ended or failed (the title screen shows it).
 var last_reason: String = ""
+## Client: where the welcome says to appear (next to a party member; INF = the
+## zone's own spawn). Read once by ZoneBase._spawn_player.
+var pending_spawn: Vector3 = Vector3.INF
 ## Tests: pretend to speak another protocol (`-- --protocol=N`).
 var protocol_override: int = -1
 ## Zone-bound messages dropped because their epoch was stale (tests, stats).
@@ -110,6 +113,7 @@ func _ready() -> void:
 	on(NetMsg.ROSTER, _on_roster)
 	on(NetMsg.ZONE_READY, _on_zone_ready)
 	on(NetMsg.ECHO, _on_echo)
+	on(NetMsg.TRAVEL_GO, _on_travel_go)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--netsim="):
 			var parts := arg.trim_prefix("--netsim=").split(",")
@@ -309,8 +313,12 @@ func _server_check_hello(id: int, hello: Dictionary) -> void:
 		return
 	hello["name"] = _unique_name(clean_name(str(hello.get("name", ""))))
 	_pending[id] = hello
+	var spawn_at := Vector3.INF  # late joiners appear next to the party
+	var zone := get_tree().current_scene as ZoneBase
+	if zone != null and zone.net_world != null:
+		spawn_at = zone.net_world.spawn_hint()
 	sm.send_auth(id, var_to_bytes({"ok": true, "peer_id": id, "zone": zone_scene, "epoch": zone_epoch,
-		"flags": SaveGame.flags.duplicate(true), "name": hello["name"]}))
+		"flags": SaveGame.flags.duplicate(true), "name": hello["name"], "spawn_at": spawn_at}))
 	sm.complete_auth(id)
 
 
@@ -366,6 +374,8 @@ func _on_connected() -> void:
 	log_line("joined as %s (peer %d)" % [str(_welcome.get("name", "?")), my_id()])
 	var flags: Dictionary = _welcome.get("flags", {})
 	SaveGame.begin_online_session(flags)
+	var spawn_at: Variant = _welcome.get("spawn_at", Vector3.INF)
+	pending_spawn = spawn_at as Vector3 if spawn_at is Vector3 else Vector3.INF
 	session_started.emit(_welcome)
 	_enter_zone(str(_welcome.get("zone", "")), int(_welcome.get("epoch", 0)))
 
@@ -394,14 +404,44 @@ func _tune_peer(id: int) -> void:
 
 
 ## Client: loading the server's zone (the welcome, later party travel).
-func _enter_zone(scene_path: String, epoch: int) -> void:
+func _enter_zone(scene_path: String, epoch: int, arrival: String = "") -> void:
 	if scene_path == "" or not ResourceLoader.exists(scene_path):
 		_end_session("The server is in a zone this game does not know (%s). Update your game." % scene_path)
 		return
 	zone_epoch = epoch
 	zone_scene = scene_path
-	SaveGame.pending_arrival = ""
+	SaveGame.pending_arrival = arrival
 	get_tree().change_scene_to_file(scene_path)
+
+
+## Server: the party travels. A new zone epoch starts right now (before the
+## scene changes), so a client that loads faster than the server still
+## reports into the right zone; the new zone adopts peers already ready.
+func change_zone(scene_path: String, arrival: String) -> void:
+	if mode != Mode.SERVER:
+		return
+	zone_epoch += 1
+	zone_scene = scene_path
+	_ready_epoch.clear()
+	for id: int in roster:
+		send_to_peer(id, NetMsg.TRAVEL_GO, [scene_path, zone_epoch, arrival], CH_EVENTS, false)
+	SaveGame.current_zone = scene_path
+	SaveGame.save_now()
+	log_line("party travels to %s (epoch %d)" % [scene_path, zone_epoch])
+	get_tree().change_scene_to_file.call_deferred(scene_path)
+
+
+func _on_travel_go(_from: int, payload: Array) -> void:
+	if mode != Mode.CLIENT or payload.size() < 3:
+		return
+	var scene_path := str(payload[0])
+	var epoch := int(payload[1])
+	var arrival := str(payload[2])
+	var zone := get_tree().current_scene as ZoneBase
+	if zone != null:
+		zone.party_travel_go(func() -> void: _enter_zone(scene_path, epoch, arrival))
+	else:
+		_enter_zone(scene_path, epoch, arrival)
 
 
 func _fail(reason: String) -> void:
@@ -444,6 +484,14 @@ func _close() -> void:
 	_sim_last_due.clear()
 
 
+func _exit_tree() -> void:
+	if mode == Mode.SERVER and _enet != null:
+		for id: int in roster:
+			_enet.disconnect_peer(id)  # clients hear "gone" now, not after the 15-30 s timeout
+		if _enet.host != null:
+			_enet.host.flush()
+
+
 func _scene_multiplayer() -> SceneMultiplayer:
 	return multiplayer as SceneMultiplayer
 
@@ -457,9 +505,10 @@ func _scene_multiplayer() -> SceneMultiplayer:
 func zone_entered(scene_path: String) -> void:
 	match mode:
 		Mode.SERVER:
-			zone_epoch += 1
-			zone_scene = scene_path
-			_ready_epoch.clear()
+			if scene_path != zone_scene:  # the first zone; change_zone already started a travel's epoch
+				zone_epoch += 1
+				zone_scene = scene_path
+				_ready_epoch.clear()
 			log_line("zone %s (epoch %d)" % [scene_path, zone_epoch])
 		Mode.CLIENT:
 			zone_scene = scene_path
@@ -581,6 +630,9 @@ func _send(to: int, channel: int, epoch: int, kind: int, payload: Array) -> void
 func _send_now(to: int, channel: int, epoch: int, kind: int, payload: Array) -> void:
 	if _enet == null:
 		return
+	var peer := _enet.get_peer(to)
+	if peer == null or peer.get_state() != ENetPacketPeer.STATE_CONNECTED:
+		return  # leaving (ENet is tearing it down): sending would only log errors
 	match channel:
 		CH_HERO:
 			_rx_hero.rpc_id(to, epoch, kind, payload)
