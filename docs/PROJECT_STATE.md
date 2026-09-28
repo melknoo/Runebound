@@ -17,7 +17,7 @@ M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
 - **Release branch** (user: "only a new commit on e.g. release restarts
   the server"): the server follows `release` (`RUNEBOUND_BRANCH`), main
   keeps moving; ship with `tools\run_godot.cmd release`. Friends clone
-  `-b release`.
+  `-b release`. The laptop switched over on 2026-09-28.
 - **Playtest log** (key J, user: "a quest log for the open KNOWN_ISSUES
   points, to tick off"): 50 points in 7 groups (German), states offen /
   passt / Problem + note, saved per machine in `user://playtest.json` (Claude
