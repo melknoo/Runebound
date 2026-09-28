@@ -63,8 +63,10 @@ const IDLE_REFRESH_PER_SNAPSHOT := 3
 ## A hit claimed from farther away than this is ignored (sanity, not anti-cheat).
 const MAX_HIT_RANGE := 45.0
 ## A forwarded hit still counts this far outside its area (the proxy lags the
-## owner a little; the owner's own screen decides the rest).
-const HURT_MARGIN := 1.2
+## owner a little; the owner's own screen decides the rest). M08 notes: the
+## area is the marker the owner saw, measured flat at the feet, so the margin
+## only covers latency.
+const HURT_MARGIN := 0.3
 ## Enemy health per hero beyond the first (user decision 2026-09-25: +70 %).
 ## Damage stays; applied at spawn and again, keeping the fraction, whenever a
 ## hero joins or leaves.
@@ -713,8 +715,9 @@ func _on_hurt_msg(_from: int, payload: Array) -> void:
 		return
 	var hit := NetCodec.hit_from_array(payload[0] as Array)
 	if hit.area_radius > 0.0 and hit.area_center != Vector3.INF:
-		var chest := hero.global_position + Vector3(0, 0.9, 0)
-		if chest.distance_to(hit.area_center) > hit.area_radius + HURT_MARGIN:
+		var flat := hero.global_position - hit.area_center
+		flat.y = 0.0
+		if flat.length() > hit.area_radius + HURT_MARGIN:
 			hurts_dodged += 1
 			return
 	if hero.take_hit(hit):

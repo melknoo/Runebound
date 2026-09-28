@@ -29,6 +29,12 @@ const DODGE_SPEED := 15.0
 const DODGE_DURATION := 0.24
 const DODGE_RECOVERY := 0.08
 const DODGE_COOLDOWN := 0.55
+const DODGE_THREAT_RANGE := 6.0  # a direction-less dodge leaves enemies this close
+## M08 notes (user 2026-09-28): Shift sprints, free, but only out of combat -
+## no hit taken or thrown for SPRINT_COMBAT_LOCK seconds. For crossing the
+## open world; in a fight the dodge is the answer.
+const SPRINT_MULT := 1.45
+const SPRINT_COMBAT_LOCK := 3.0
 const DODGE_IFRAMES := 0.26  # user-tuned: a touch past the dash itself
 
 ## Default class resource cap; the live value is max_resource() (ClassData).
@@ -556,6 +562,7 @@ func _physics_process(delta: float) -> void:
 		return  # M09: NetWorld poses puppets and proxies from the network
 	if _hitstop_left > 0.0:
 		_hitstop_left -= delta
+		_poll_during_hitstop()
 		return
 	for key: StringName in _cooldowns.keys():
 		_cooldowns[key] = maxf(_cooldowns[key] - delta, 0.0)
@@ -575,7 +582,13 @@ func _physics_process(delta: float) -> void:
 
 	match state:
 		State.MOVE:
-			_process_move(delta)
+			# M08 notes: a dodge pressed a moment too early (cooldown, a hit
+			# freeze) goes off the tick it can, instead of being dropped.
+			if _buffered_action == &"dodge" and try_dodge():
+				_buffered_action = &""
+				_buffer_timer = 0.0
+			else:
+				_process_move(delta)
 		State.DODGE:
 			_process_dodge(delta)
 		State.MELEE:
@@ -611,6 +624,7 @@ func roll_ability_hit(data: AbilityData) -> HitInfo:
 	var damage_mult := 1.0 + stat(&"damage_pct") / 100.0
 	var bonus_crit := stat(&"crit_pct") / 100.0
 	var hit := data.roll_hit(global_position, damage_mult, bonus_crit)
+	mark_combat()  # swinging at something ends a sprint
 	hit.from_player = true
 	hit.attacker_id = get_instance_id()  # M07b: talent mults, XP and loot follow the attacker
 	hit.ability = data.id
@@ -668,6 +682,19 @@ func _try_or_buffer(action: StringName) -> void:
 		_buffer_timer = INPUT_BUFFER
 
 
+## Presses during a hit freeze are kept (M08 notes: a dodge right after a hit
+## got lost): they go to the buffer and fire as soon as the state allows.
+func _poll_during_hitstop() -> void:
+	if input_source == null or input_locked:
+		return
+	intent.clear()
+	input_source.poll(intent, self)
+	for action in intent.pressed:
+		if knows(action):
+			_buffered_action = action
+			_buffer_timer = INPUT_BUFFER
+
+
 func _consume_buffer() -> void:
 	if _buffered_action != &"":
 		var action := _buffered_action
@@ -692,9 +719,35 @@ func _move_input_dir() -> Vector3:
 	return intent.move_dir
 
 
+## Last time this hero hit or was hit (msec), for the sprint's combat lock.
+var _last_combat_msec: int = -1000000
+var _sprint_note_at: int = -1000000
+
+
+func mark_combat() -> void:
+	_last_combat_msec = Time.get_ticks_msec()
+
+
+func in_combat() -> bool:
+	return Time.get_ticks_msec() - _last_combat_msec < int(SPRINT_COMBAT_LOCK * 1000.0)
+
+
+## Sprinting right now: Shift held while moving, out of combat.
+func is_sprinting() -> bool:
+	return state == State.MOVE and intent.sprint and intent.move_dir != Vector3.ZERO and not in_combat()
+
+
 func _process_move(delta: float) -> void:
 	var dir := _move_input_dir()
 	var target_vel := dir * MAX_SPEED * (1.0 + stat(&"move_pct") / 100.0)
+	if is_sprinting():
+		target_vel *= SPRINT_MULT
+	elif intent.sprint and dir != Vector3.ZERO and is_local \
+			and Time.get_ticks_msec() - _sprint_note_at > 4000:
+		_sprint_note_at = Time.get_ticks_msec()  # held in a fight: say why once in a while
+		var zone := ZoneBase.zone_of(self)
+		if zone != null and zone.hud != null:
+			zone.hud.toast("No sprinting in combat", UiTheme.MUTED)
 	var rate := ACCEL if dir != Vector3.ZERO else DECEL
 	velocity.x = move_toward(velocity.x, target_vel.x, rate * delta)
 	velocity.z = move_toward(velocity.z, target_vel.z, rate * delta)
@@ -780,7 +833,7 @@ func try_dodge() -> bool:
 		_resolve_storm_step()
 	var dir := _move_input_dir()
 	if dir == Vector3.ZERO:
-		dir = facing()
+		dir = _dodge_away_dir()
 	_dodge_dir = dir
 	state = State.DODGE
 	_state_timer = 0.0
@@ -791,6 +844,32 @@ func try_dodge() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"dodge")
 	return true
+
+
+## Space without a direction: away from the closest threat (the soft target,
+## else the nearest enemy within DODGE_THREAT_RANGE) - M08 notes: it used to
+## dash along the facing, which after a swing points into the enemy. Forward
+## when nothing is near.
+func _dodge_away_dir() -> Vector3:
+	var threat: Node3D = null
+	var t: EnemyBase = targeting.current if targeting != null else null
+	if t != null and is_instance_valid(t) and t.ai_state != EnemyBase.AIState.DEAD \
+			and t.global_position.distance_to(global_position) <= DODGE_THREAT_RANGE:
+		threat = t
+	else:
+		var best := DODGE_THREAT_RANGE
+		for e in EnemyBase.all_enemies:
+			if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD:
+				continue
+			var d := e.global_position.distance_to(global_position)
+			if d < best:
+				best = d
+				threat = e
+	if threat == null:
+		return facing()
+	var away := global_position - threat.global_position
+	away.y = 0.0
+	return away.normalized() if away.length() > 0.05 else -facing()
 
 
 func _process_dodge(delta: float) -> void:
@@ -1245,6 +1324,7 @@ func spend_resonance(amount: float) -> void:
 func take_hit(hit: HitInfo) -> bool:
 	if god_mode or net_role == NetRole.PUPPET:
 		return false
+	mark_combat()  # attacked (even a dodged attack): no sprinting for a moment
 	if net_role == NetRole.PROXY:
 		# M09: the owner decides (its i-frames, whether it still stands in the area).
 		var zone := ZoneBase.zone_of(self)

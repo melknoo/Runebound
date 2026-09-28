@@ -292,6 +292,75 @@ func _run() -> void:
 	lab.kill_all_enemies()
 	await _wait_frames(20)
 	_check(lab.enemy_count() == 0, "kill_all clears enemies")
+
+	# --- M08 notes: an attack hits exactly what its marker shows ---
+	player.health.invulnerable = false
+	var marker_wrong: Array[String] = []
+	# [id, wind-up, strike, marker ahead, marker radius]
+	for spec: Array in [["rusher", &"_start_windup", &"_strike", MeleeRusher.STRIKE_AHEAD, MeleeRusher.STRIKE_RADIUS],
+			["brute", &"_start_windup", &"_slam", Brute.SLAM_AHEAD, Brute.SLAM_RADIUS],
+			["assassin", &"_start_windup", &"_stab", Assassin.STAB_AHEAD, Assassin.STAB_RADIUS],
+			["warden", &"_start_windup", &"_spin", 0.0, HollowWarden.SPIN_RADIUS]]:
+		for inside: bool in [false, true]:
+			var foe := lab.spawn_by_id(str(spec[0]), player.global_position + Vector3(0, 0, -6.0))
+			await _wait_frames(1)
+			foe.visual.rotation.y = 0.0  # facing -Z
+			foe.call(spec[1])
+			var center: Vector3 = foe.global_position + Vector3(0, 0, -float(spec[3]))
+			var edge := float(spec[4]) + (-0.25 if inside else EnemyBase.STRIKE_TOLERANCE + 0.15)
+			player.global_position = Vector3(center.x + edge, player.global_position.y, center.z)
+			player.health.heal_full()
+			var before := player.health.current_health
+			foe.call(spec[2])
+			var was_hit := player.health.current_health < before
+			if was_hit != inside:
+				marker_wrong.append("%s %s" % [spec[0], "inside" if inside else "outside"])
+			foe.queue_free()
+			await _wait_frames(1)
+	_check(marker_wrong.is_empty(),
+		"M08 notes: melee hits land inside the marker and never just outside it (%s)" % ", ".join(marker_wrong))
+	# The colossus charge hits inside its drawn lane only.
+	var colossus := ZoneBase.make_enemy("colossus")
+	lab._spawn_enemy(colossus, player.global_position + Vector3(0, 0, -20.0))
+	await _wait_frames(1)
+	colossus.set(&"_charge_dir", Vector3(0, 0, 1))
+	colossus.visual.rotation.y = PI
+	colossus.lock_strike()
+	var lane_start := colossus.global_position
+	player.global_position = lane_start + Vector3(1.9, 0, 1.0)
+	var beside: Array = colossus.heroes_in_lane()
+	player.global_position = lane_start + Vector3(1.3, 0, 1.0)
+	var in_lane: Array = colossus.heroes_in_lane()
+	player.global_position = lane_start + Vector3(0.0, 0, 9.0)
+	var ahead_far: Array = colossus.heroes_in_lane()
+	_check(beside.is_empty() and in_lane.size() == 1 and ahead_far.is_empty(),
+		"the colossus charge hits inside its lane next to its body, not beside the lane or far ahead")
+	colossus.queue_free()
+	player.global_position = start_pos
+	player.health.heal_full()
+	await _wait_frames(2)
+
+	# --- M08 notes: dodge input is not lost ---
+	player._cooldowns[&"dodge"] = 0.05  # just used
+	player._try_or_buffer(&"dodge")
+	await _wait_frames(8)
+	_check(player.state == Player.State.DODGE or player._cooldowns.get(&"dodge", 0.0) > 0.3,
+		"a dodge pressed during the cooldown goes off when it ends (buffered from MOVE)")
+	await _wait_frames(30)
+	player._cooldowns[&"dodge"] = 0.0
+	var threat := lab.spawn_by_id("rusher", player.global_position + player.facing() * 2.0)
+	await _wait_frames(1)
+	threat.set_physics_process(false)
+	var away_dir: Vector3 = player._dodge_away_dir()
+	var to_threat := threat.global_position - player.global_position
+	to_threat.y = 0.0
+	_check(away_dir.dot(to_threat.normalized()) < -0.9, "a dodge without a direction leaves the nearby enemy")
+	threat.queue_free()
+	player.global_position = start_pos
+	player.velocity = Vector3.ZERO
+	player.reset_cooldowns()
+	await _wait_frames(2)  # the camera follows in _process
+	player._face_aim_instant()  # facing and camera agree again for the melee checks
 	var rusher := MeleeRusher.new()
 	lab.enemies_root.add_child(rusher)
 	rusher.player = player
@@ -515,11 +584,84 @@ func _run() -> void:
 	_check(foreign_tagged == 0 and foreign_legendary == 0,
 		"another class never rolls Runebreaker affixes or legendaries (elite drops downgrade to rare)")
 	var own_legendary := false
-	for i in 60:
+	for i in 300:  # 5 % legendaries from elites: 300 rolls miss one with 2e-7
 		if ItemGenerator.generate(2, &"runebreaker").legendary_id != &"":
 			own_legendary = true
 	_check(own_legendary and AffixPool.legendaries_for(&"runebreaker").size() == AffixPool.LEGENDARIES.size(),
 		"the Runebreaker still rolls its own legendaries")
+
+	# --- M08 notes: sprint on Shift, out of combat only ---
+	player._last_combat_msec = -1000000
+	player.state = Player.State.MOVE
+	player.intent.move_dir = Vector3(0, 0, -1)
+	player.intent.sprint = true
+	var sprint_free := player.is_sprinting()
+	player.mark_combat()
+	var sprint_fight := player.is_sprinting()
+	player.intent.clear()
+	_check(sprint_free and not sprint_fight and not player.intent.sprint and InputMap.has_action(&"sprint"),
+		"Shift sprints out of combat, not right after a hit, and the intent resets each tick")
+	player._last_combat_msec = -1000000
+
+	# --- M08 notes: gear comes off again ---
+	var gear := player.equipment
+	var off_item := ItemGenerator.generate(0)
+	off_item.slot = ItemData.Slot.RING
+	gear.add_item(off_item)
+	gear.equip(off_item)
+	var came_off := gear.unequip(ItemData.Slot.RING)
+	var in_bag: bool = gear.inventory.has(off_item) and gear.equipped.get(ItemData.Slot.RING) == null
+	gear.equip(off_item)
+	var filler: Array[ItemData] = []
+	while not gear.is_full():
+		var f := ItemGenerator.generate(0)
+		filler.append(f)
+		gear.add_item(f)
+	var refused: bool = not gear.unequip(ItemData.Slot.RING) and gear.equipped.get(ItemData.Slot.RING) == off_item
+	for f in filler:
+		gear.discard(f)
+	gear.unequip(ItemData.Slot.RING)
+	gear.discard(off_item)
+	_check(came_off and in_bag and refused and not gear.unequip(ItemData.Slot.RING),
+		"unequip puts the item in the bag, and refuses (item stays on) with a full bag or an empty slot")
+
+	# --- M08 notes: portal titles only up close, at body size ---
+	var title_probe := Portal.new()
+	title_probe.label_text = "PROBE GATE"
+	lab.world.add_child(title_probe)
+	title_probe.global_position = Vector3(0, 0, -40)
+	var title_label: Label3D = title_probe._label
+	_check(title_label.font_size == UiTheme.BODY and is_equal_approx(title_label.visibility_range_end, 22.0)
+		and title_label.visibility_range_end_margin > 0.0,
+		"portal titles use the body font size and hide beyond 22 m")
+	title_probe.queue_free()
+
+	# --- M08 notes: fewer drops, rare items much rarer ---
+	var rarity_counts: Array = []
+	for bias in 3:
+		var counts := [0, 0, 0, 0]  # common, magic, rare, legendary
+		for i in 6000:
+			counts[int(ItemGenerator._roll_rarity(bias))] += 1
+		rarity_counts.append(counts)
+	var trash_c: Array = rarity_counts[0]
+	var brute_c: Array = rarity_counts[1]
+	var elite_c: Array = rarity_counts[2]
+	_check(int(trash_c[3]) <= 60 and int(trash_c[2]) >= 240 and int(trash_c[2]) <= 500
+		and int(brute_c[3]) >= 20 and int(brute_c[3]) <= 120 and int(brute_c[2]) >= 850 and int(brute_c[2]) <= 1200
+		and int(elite_c[3]) >= 200 and int(elite_c[3]) <= 420 and int(elite_c[0]) + int(elite_c[1]) == 0,
+		"loot tuning: legendaries 0.3 / 1 / 5 %%, rares 6 / 17 / 95 %% (6000 rolls: %s %s %s)" % [trash_c, brute_c, elite_c])
+	var drops_of := func(kind: StringName) -> int:
+		var n := 0
+		for i in 5000:
+			if ItemGenerator.kill_drops(kind):
+				n += 1
+		return n
+	var trash_drops: int = drops_of.call(&"trash")
+	var brute_drops: int = drops_of.call(&"brute")
+	var elite_drops: int = drops_of.call(&"elite")
+	_check(trash_drops > 300 and trash_drops < 520 and brute_drops > 1350 and brute_drops < 1650
+		and elite_drops > 2800 and elite_drops < 3200,
+		"kill drop chances 8 / 30 / 60 %% (5000 kills: %d %d %d)" % [trash_drops, brute_drops, elite_drops])
 
 	# --- M06 B5: HUD v2 look ---
 	var hud_root := lab.hud.get_child(0) as Control
@@ -1270,12 +1412,14 @@ func _run() -> void:
 	_check(field_found, "Glacier Heart leaves a frost field")
 	_check(is_instance_valid(frost_victim) and frost_victim.status.has_chill(), "frost field chills enemies inside")
 
-	# --- elite always drops loot ---
+	# --- an elite that rolls a drop drops rare or better (M08 notes: 60 %) ---
 	lab.kill_all_enemies()
 	await _wait_frames(20)
 	var loot_elite := lab.spawn_elite(EliteModifier.Kind.STORMTOUCHED, player.global_position + Vector3(0, 0.2, -6))
 	await _wait_frames(3)
+	ItemGenerator.forced_drop_roll = 0.0
 	loot_elite.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, player.global_position))
+	ItemGenerator.forced_drop_roll = -1.0
 	await _wait_frames(5)
 	var drop_found: ItemDrop = null
 	for child in lab.world.get_children():
@@ -1836,6 +1980,17 @@ func _run() -> void:
 	_check(highlands.waypoint_ui.visible and highlands.player.input_locked and listed.size() == 2
 		and listed.has(WaypointRegistry.HUB_KEY) and listed.has(wp.id),
 		"the travel list shows Runehold and the attuned shrine only (%s)" % str(listed))
+	_check(highlands.waypoint_ui.map_scene() == highlands.scene_file_path
+		and highlands.waypoint_ui.map_has_shrine(String(listed[listed.size() - 1])),
+		"M08 notes: the travel panel shows the Highlands map with the known shrines on it")
+	var reg_map := WaypointRegistry.zone_map(highlands.scene_file_path)
+	var probe_view := ZoneMapView.new()
+	probe_view.setup(reg_map.get("texture") as Texture2D, reg_map.get("bounds", Rect2()) as Rect2, MapUI.MAP_PX)
+	var probe_pos := highlands.poi_position("spawn")
+	_check(reg_map.get("texture") != null and (reg_map["bounds"] as Rect2).is_equal_approx(highlands.map_bounds())
+		and probe_view.world_to_map(probe_pos).is_equal_approx(highlands.map_ui.world_to_map(probe_pos)),
+		"the registry's map matches the zone's, and ZoneMapView places things like the full map")
+	probe_view.free()
 	highlands.waypoint_ui.close()
 	_check(not highlands.waypoint_ui.visible and not highlands.player.input_locked, "closing the travel list frees the input")
 	highlands.player.discover_waypoint("ashen_highlands:wp_crossroads", "Crossroads Cairn")
@@ -1918,7 +2073,7 @@ func _run() -> void:
 			drops_out += 1
 	var chest_loot := drops_out + (highlands.player.equipment.inventory.size() - inv_before_chest)
 	_check(chest.opened, "chest opens on the interact key")
-	_check(chest_loot >= 2, "chest pops at least 2 items")
+	_check(chest_loot >= ItemGenerator.CHEST_ITEMS.x, "chest pops at least %d item(s)" % ItemGenerator.CHEST_ITEMS.x)
 	await _wait_frames(20)
 	_check(chest.get_node_or_null("treasure_chest") != null and chest._lid.rotation_degrees.x < -30.0,
 		"kit chest wraps the collider and swings its hinged lid open")

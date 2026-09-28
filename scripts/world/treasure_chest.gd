@@ -122,7 +122,7 @@ func open(zone: ZoneBase) -> void:
 	var front := global_position + Vector3(0, 0, 1.3)
 	for hero in heroes:
 		var items: Array[ItemData] = []
-		for i in 2 + (randi() % 2):
+		for i in ItemGenerator.chest_item_count():
 			var item := ItemGenerator.generate(min_rarity_bias, hero.class_data.id)
 			ItemGenerator.apply_item_level(item, ilvl)
 			items.append(item)

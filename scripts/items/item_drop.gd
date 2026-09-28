@@ -124,9 +124,19 @@ func _add_presentation(color: Color) -> void:
 		Sfx.play("rune_place", global_position, -6.0, 0.1, 0.8)
 
 
+## Last "inventory full" note (msec), so walking over a pile says it once.
+static var _full_note_at: int = -100000
+
+
 func _try_pickup() -> void:
 	if not player.equipment.add_item(item):
-		return  # inventory full: stays on the ground
+		# Inventory full: stays on the ground, and the hero hears why.
+		if player.is_local and Time.get_ticks_msec() - _full_note_at > 4000:
+			_full_note_at = Time.get_ticks_msec()
+			var zone := ZoneBase.zone_of(player)
+			if zone != null and zone.hud != null:
+				zone.hud.toast("Inventory full (%d/%d)" % [Equipment.INVENTORY_CAP, Equipment.INVENTORY_CAP], UiTheme.MUTED)
+		return
 	var pitch := 1.0 + 0.12 * float(item.rarity)
 	Sfx.play("pickup", global_position, -4.0, 0.04, pitch)
 	picked_up.emit(item)

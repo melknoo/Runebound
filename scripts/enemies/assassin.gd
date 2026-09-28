@@ -82,6 +82,10 @@ func _build_blades() -> void:
 		_blade_pivot.add_child(blade)
 
 
+## The stab's marker (and hit): a disc this far ahead, this big.
+const STAB_AHEAD := 0.9
+const STAB_RADIUS := 1.0
+
 func _ai_process(delta: float) -> void:
 	match ai_state:
 		AIState.IDLE:
@@ -114,8 +118,7 @@ func _ai_process(delta: float) -> void:
 			elif _state_timer > 1.2:
 				_enter_state(AIState.CIRCLE)
 		AIState.WINDUP:
-			brake(delta)
-			face_player(delta, 5.0)
+			brake(delta)  # stopped dead and facing locked at wind-up start
 			if _state_timer >= WINDUP_TIME:
 				_stab()
 		AIState.RETREAT:
@@ -130,6 +133,7 @@ func _ai_process(delta: float) -> void:
 
 
 func _start_windup() -> void:
+	lock_strike()  # the dash stops here: no sliding the stab past its marker
 	_enter_state(AIState.WINDUP)
 	_present_windup()
 
@@ -142,8 +146,8 @@ func _present_state(s: AIState) -> void:
 
 func _present_windup() -> void:
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		present_origin() + present_forward() * 0.9,
-		1.0, WINDUP_TIME)
+		present_origin() + present_forward() * STAB_AHEAD,
+		STAB_RADIUS, WINDUP_TIME)
 	var tw := _blade_pivot.create_tween()
 	tw.tween_property(_blade_pivot, "rotation_degrees", Vector3(0, 0, 90), WINDUP_TIME * 0.8)
 	Sfx.play("telegraph", global_position, -8.0, 0.1, 1.4)
@@ -152,26 +156,9 @@ func _present_windup() -> void:
 func _stab() -> void:
 	_enter_state(AIState.RETREAT)
 	play_fx(&"stab")  # a retreat after a stagger looks different: the stab is its own fx
-	var fwd := -visual.global_transform.basis.z
-
-	var space := get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = 0.9
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis(), global_position + Vector3(0, 0.9, 0) + fwd * 1.0)
-	query.collision_mask = 0b1000
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	for result: Dictionary in space.intersect_shape(query, 4):
-		var hb := result["collider"] as Hurtbox
-		if hb != null and hb.owner_entity is Player:
-			var hit := HitInfo.create(STAB_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, global_position)
-			hit.knockback = 2.0
-			hit.area_center = global_position + Vector3(0, 0.9, 0) + fwd * 1.0
-			hit.area_radius = 0.9
-			(hb.owner_entity as Player).take_hit(hit)
-			VFX.enemy_hit(get_tree().current_scene, hb.owner_entity.global_position + Vector3(0, 1.0, 0))
+	for victim in strike_circle(strike_point(STAB_AHEAD), STAB_RADIUS, STAB_DAMAGE,
+			HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, 2.0):
+		VFX.enemy_hit(get_tree().current_scene, victim.global_position + Vector3(0, 1.0, 0))
 
 
 func _present_fx(fx: StringName) -> void:

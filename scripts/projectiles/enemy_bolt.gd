@@ -139,7 +139,7 @@ func _pop(victim: Node) -> void:
 		var hit := HitInfo.create(damage, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position - _dir)
 		hit.knockback = 2.5
 		hit.area_center = global_position
-		hit.area_radius = 0.3
+		hit.area_radius = 0.8  # the bolt's 0.3 plus the hurtbox's 0.5: it touched the body
 		victim.call(&"take_hit", hit)
 	if net_id != 0 and not visual_only:
 		var zone := ZoneBase.zone_of(self)

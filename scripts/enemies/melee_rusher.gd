@@ -98,6 +98,10 @@ func _build_axe() -> void:
 	_axe_pivot.rotation_degrees = Vector3(-20, 10, 0)
 
 
+## The axe's marker: a disc this far ahead, this big (the hit uses the same).
+const STRIKE_AHEAD := 1.1
+const STRIKE_RADIUS := 1.4
+
 func _ai_process(delta: float) -> void:
 	match ai_state:
 		AIState.IDLE:
@@ -110,8 +114,7 @@ func _ai_process(delta: float) -> void:
 			if distance_to_player() <= ATTACK_RANGE:
 				_start_windup()
 		AIState.WINDUP:
-			face_player(delta, 4.0)  # slow tracking: dodging sideways works
-			brake(delta)
+			brake(delta)  # facing locked: the strike lands where the marker is
 			if _state_timer >= WINDUP_TIME:
 				_do_attack()
 		AIState.ATTACK:
@@ -129,6 +132,7 @@ func _ai_process(delta: float) -> void:
 
 
 func _start_windup() -> void:
+	lock_strike()
 	_enter_state(AIState.WINDUP)
 	_present_windup()
 
@@ -146,8 +150,8 @@ func _present_windup() -> void:
 	# Ground disc marks the strike zone; fills in over the wind-up.
 	var fwd := present_forward()
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		present_origin() + fwd * 1.1,
-		1.4, WINDUP_TIME)
+		present_origin() + fwd * STRIKE_AHEAD,
+		STRIKE_RADIUS, WINDUP_TIME)
 	# Telegraph: axe raised, blade glows hot, warning sound.
 	var tw := _axe_pivot.create_tween()
 	tw.tween_property(_axe_pivot, "rotation_degrees", Vector3(-110, 0, 0), WINDUP_TIME * 0.8) \
@@ -176,29 +180,12 @@ func _present_attack() -> void:
 	Sfx.play("swing", global_position, -6.0, 0.12, 0.8)
 
 
+## The strike lands on the marker (EnemyBase.strike_circle). M09: every hero
+## inside is hit, each co-op owner confirms with its own position.
 func _strike() -> void:
-	# Hit check: sphere in front, against the player hurtbox layer. M09: every
-	# hero inside is hit (co-op), each owner confirms with its own position.
-	var fwd := -visual.global_transform.basis.z
-	var center := global_position + Vector3(0, 0.9, 0) + fwd * 1.2
-	var space := get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = 1.1
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis(), center)
-	query.collision_mask = 0b1000
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	for result: Dictionary in space.intersect_shape(query, 4):
-		var hb := result["collider"] as Hurtbox
-		if hb != null and hb.owner_entity is Player:
-			var hit := HitInfo.create(ATTACK_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
-			hit.knockback = 4.0
-			hit.area_center = center
-			hit.area_radius = shape.radius
-			(hb.owner_entity as Player).take_hit(hit)
-			VFX.melee_impact(get_tree().current_scene, hb.owner_entity.global_position + Vector3(0, 1.0, 0), fwd)
+	for victim in strike_circle(strike_point(STRIKE_AHEAD), STRIKE_RADIUS, ATTACK_DAMAGE,
+			HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, 4.0):
+		VFX.melee_impact(get_tree().current_scene, victim.global_position + Vector3(0, 1.0, 0), _strike_forward)
 
 
 func _reset_glow() -> void:

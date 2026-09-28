@@ -91,6 +91,7 @@ func _ai_process(delta: float) -> void:
 
 
 func _start_windup() -> void:
+	lock_strike()
 	_enter_state(AIState.WINDUP)
 	_present_windup()
 	# The wind-back turns the gameplay facing (the front block follows it).
@@ -116,23 +117,8 @@ func _spin() -> void:
 	tw.tween_property(visual, "rotation:y", visual.rotation.y + TAU + 0.7, 0.3) \
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	play_fx(&"spin")
-	var space := get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = SPIN_RADIUS
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis(), global_position + Vector3(0, 0.9, 0))
-	query.collision_mask = 0b1000
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	for result: Dictionary in space.intersect_shape(query, 4):
-		var hb := result["collider"] as Hurtbox
-		if hb != null and hb.owner_entity is Player:
-			var hit := HitInfo.create(SPIN_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, global_position)
-			hit.knockback = 5.0
-			hit.area_center = global_position + Vector3(0, 0.9, 0)
-			hit.area_radius = SPIN_RADIUS
-			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero in the spin
+	# M09: every hero in the spin; exactly the marker's disc (M08 notes).
+	strike_circle(_strike_origin, SPIN_RADIUS, SPIN_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, 5.0)
 
 
 func _present_fx(fx: StringName) -> void:

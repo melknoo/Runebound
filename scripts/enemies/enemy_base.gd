@@ -470,6 +470,73 @@ func dir_to_player() -> Vector3:
 	return d.normalized()
 
 
+# ---------------------------------------------------------------------------
+# M08 notes (user, 2026-09-28: "dodged out of the marker, still got hit"): an
+# attack strikes exactly the area its marker shows. lock_strike() at wind-up
+# start stops the enemy and freezes the pose the marker is drawn from (the
+# enemy no longer turns after that); strike_circle() hits every hero whose
+# feet stand in the marker's circle. Never a sphere against the hurtbox: that
+# reached half a metre past the drawn rim.
+# ---------------------------------------------------------------------------
+
+## Feet this far past a marker's rim still count (the rim is drawn inside the edge).
+const STRIKE_TOLERANCE := 0.2
+## Heroes more than this far above or below the strike are out of it.
+const STRIKE_HEIGHT := 2.5
+var _strike_origin := Vector3.ZERO
+var _strike_forward := Vector3.FORWARD
+
+
+func lock_strike() -> void:
+	velocity.x = 0.0
+	velocity.z = 0.0
+	_strike_origin = global_position
+	var f := -visual.global_transform.basis.z
+	f.y = 0.0
+	_strike_forward = f.normalized() if f.length() > 0.01 else Vector3.FORWARD
+
+
+## A point `ahead` metres in front of the locked strike pose.
+func strike_point(ahead: float) -> Vector3:
+	return _strike_origin + _strike_forward * ahead
+
+
+## Heroes whose feet are within `radius` (+ STRIKE_TOLERANCE) of `center`,
+## measured flat.
+func heroes_in_circle(center: Vector3, radius: float) -> Array[Player]:
+	var out: Array[Player] = []
+	var candidates: Array[Player] = []
+	var zone := ZoneBase.zone_of(self)
+	if zone != null:
+		candidates = zone.players
+	elif player != null and is_instance_valid(player):
+		candidates.append(player)
+	for p in candidates:
+		if p == null or not is_instance_valid(p) or p.health.is_dead:
+			continue
+		var d := p.global_position - center
+		if absf(d.y) > STRIKE_HEIGHT:
+			continue
+		d.y = 0.0
+		if d.length() <= radius + STRIKE_TOLERANCE:
+			out.append(p)
+	return out
+
+
+## One hit for every hero in the marker's circle. The hit carries the circle
+## (a co-op owner checks its own position against it). Returns the victims.
+func strike_circle(center: Vector3, radius: float, damage: float, type: HitInfo.DamageType,
+		weight: HitInfo.Weight, knockback: float) -> Array[Player]:
+	var victims := heroes_in_circle(center, radius)
+	for victim in victims:
+		var hit := HitInfo.create(damage, type, weight, global_position)
+		hit.knockback = knockback
+		hit.area_center = center
+		hit.area_radius = radius + STRIKE_TOLERANCE
+		victim.take_hit(hit)
+	return victims
+
+
 func face_player(delta: float, turn_speed: float = 10.0) -> void:
 	var dir := dir_to_player()
 	var target_yaw := atan2(-dir.x, -dir.z)

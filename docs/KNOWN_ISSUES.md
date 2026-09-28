@@ -22,7 +22,8 @@
   issue as M01).
 
 ## M03 feel questions (for the user's next playtest)
-- Drop rates are lab-tuned (trash 20%) — may flood the arena in long sessions.
+- ~~Drop rates are lab-tuned (trash 20%)~~ — retuned 2026-09-28 after the
+  user's M08 notes (docs/ITEMIZATION.md).
 - Inventory doesn't pause combat (ARPG-style); enemies keep attacking while
   the panel is open. Intended, but verify it doesn't feel unfair.
 - No "item level"/power progression yet — two Rares of the same affix are
@@ -32,8 +33,9 @@
 ## M04 feel questions (for the user's next playtest)
 - First camp sits ~13m from the highlands spawn — triggers almost immediately.
   Intentional density, but verify it doesn't feel ambush-y.
-- Colossus charge: contact check is distance-based (2m) — verify side-dodges
-  feel fair at 14 m/s.
+- ~~Colossus charge: contact check is distance-based (2m)~~ — since the M08
+  notes (2026-09-28) it hits inside its drawn lane only (half width 1.5 m +
+  0.2), and the lane stays on the ground for the whole run.
 - Camps re-arm on every zone visit (no world-state persistence yet) — farming
   loop by design for now.
 - Player death in the highlands respawns at zone entry with full HP; no
@@ -170,6 +172,14 @@
   set back only delays a respawn, never spawns one on top of anyone.
 - Debug overlay keys (F1) unchanged; M is the map. F, G, H, T, Z, X, B, P
   stay free.
+
+## M08 notes follow-up (built 2026-09-28, needs the user's playtest)
+- Enemies no longer turn during a wind-up: stepping out of a marker always
+  works now. If fights feel too easy, lengthen or shrink markers rather
+  than bringing back tracking.
+- Sprint x1.45 and the 3 s combat lock are first guesses.
+- Only the Highlands have a map; Runehold's travel panel shows the list only.
+- The new drop rates may feel stingy in the arena; tune in `ItemGenerator`.
 
 ## M09 open items (needs the user's playtest)
 - Numbers to feel in play: party countdown 5 s, reward radius 60 m, chest

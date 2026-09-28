@@ -388,6 +388,7 @@ static func arena(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 		var face := Vector2(centre.x - ppos.x, centre.z - ppos.z)
 		p.face_yaw = atan2(face.x, face.y)
 		p.arrival = String(sub.get("arrival", ""))
+		p.label_range = 14.0  # three gates side by side: only the ones you walk up to
 		p.set_meta(&"poi_id", String(sub.get("id", "")))
 		zone.world.add_child(p)
 		p.global_position = ppos

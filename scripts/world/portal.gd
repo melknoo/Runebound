@@ -12,6 +12,11 @@ var locked: bool = false
 var face_yaw: float = NAN
 ## M08: POI id of the gate / shrine the hero appears at in the destination.
 var arrival: String = ""
+## M08 notes (user 2026-09-28: portal titles overlapped): the title shows only
+## within this distance (labels keep a fixed screen size, so far ones piled up).
+## Gates standing side by side (the arena) use less.
+var label_range: float = 22.0
+const LABEL_RANGE_MARGIN := 3.0
 
 var _ring: MeshInstance3D
 var _ring_mat: StandardMaterial3D
@@ -39,14 +44,12 @@ func _ready() -> void:
 
 	_label = Label3D.new()
 	_label.text = label_text
-	_label.font_size = 48
-	_label.pixel_size = 0.004
-	_label.outline_size = 12
-	_label.outline_modulate = Color(0.05, 0.03, 0.08)
 	_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_label.position = Vector3(0, 3.7 if _gate_mat != null else 2.0, 0)
-	# Pixelify, not Jacquard: the blackletter face was unreadable as a world label
-	UiTheme.label3d(_label, UiTheme.BIG)
+	# The UI font at body size (M08 notes: BIG titles crowded each other).
+	UiTheme.label3d(_label, UiTheme.BODY)
+	_label.visibility_range_end = label_range
+	_label.visibility_range_end_margin = LABEL_RANGE_MARGIN
 	add_child(_label)
 	_prompt = InteractPrompt.create(self, 1.2)
 	_add_motes()

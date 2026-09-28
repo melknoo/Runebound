@@ -14,9 +14,7 @@ var zone: ZoneBase
 var _root: Control
 var _title: Label
 var _sub: Label
-var _map_rect: TextureRect
-var _marker_layer: Control
-var _player_icon: TextureRect
+var _view: ZoneMapView
 var _legend: VBoxContainer
 var _list: VBoxContainer
 var _marker_count: int = 0
@@ -51,7 +49,7 @@ func open() -> void:
 		zone.waypoint_ui.close()
 	visible = true
 	player.input_locked = true
-	_map_rect.texture = zone.map_texture()
+	_view.setup(zone.map_texture(), zone.map_bounds(), MAP_PX)
 	_refresh()
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -68,8 +66,8 @@ func close() -> void:
 
 ## Map pixel (inside the MAP_PX square) of a world position.
 func world_to_map(pos: Vector3) -> Vector2:
-	var b := zone.map_bounds()
-	return Vector2((pos.x - b.position.x) / maxf(b.size.x, 0.001), (pos.z - b.position.y) / maxf(b.size.y, 0.001)) * MAP_PX
+	_view.bounds = zone.map_bounds()
+	return _view.world_to_map(pos)
 
 
 func marker_count() -> int:
@@ -92,10 +90,7 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	if player != null and is_instance_valid(player):
-		var p := world_to_map(player.global_position)
-		_player_icon.position = p - Vector2(12, 12)
-		var f := player.facing()
-		_player_icon.rotation = atan2(f.x, -f.z)
+		_view.set_player(player.global_position, player.facing())
 	_refresh_left -= delta
 	if _refresh_left <= 0.0:
 		_refresh_left = 1.0
@@ -141,25 +136,9 @@ func _build() -> void:
 	map_frame.custom_minimum_size = Vector2(MAP_PX + 12, MAP_PX + 12)
 	map_frame.add_theme_stylebox_override("panel", UiTheme.nine("slot.png", 6, 6))
 	columns.add_child(map_frame)
-	var holder := Control.new()
-	holder.custom_minimum_size = Vector2(MAP_PX, MAP_PX)
-	map_frame.add_child(holder)
-	_map_rect = TextureRect.new()
-	_map_rect.size = Vector2(MAP_PX, MAP_PX)
-	_map_rect.stretch_mode = TextureRect.STRETCH_SCALE
-	_map_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_map_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	holder.add_child(_map_rect)
-	_marker_layer = Control.new()
-	_marker_layer.size = Vector2(MAP_PX, MAP_PX)
-	_marker_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	holder.add_child(_marker_layer)
-	_player_icon = TextureRect.new()
-	_player_icon.texture = Compass.icon("player")
-	_player_icon.size = Vector2(24, 24)
-	_player_icon.pivot_offset = Vector2(12, 12)
-	_player_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	holder.add_child(_player_icon)
+	_view = ZoneMapView.new()
+	_view.setup(null, Rect2(-50, -50, 100, 100), MAP_PX)
+	map_frame.add_child(_view)
 
 	var side := VBoxContainer.new()
 	side.add_theme_constant_override("separation", 8)
@@ -212,23 +191,11 @@ func _legend_row(icon_name: String, text: String) -> Control:
 
 func _refresh() -> void:
 	_title.text = zone.zone_title() if zone.zone_title() != "" else "MAP"
-	for child in _marker_layer.get_children():
-		child.queue_free()
 	for child in _list.get_children():
 		child.queue_free()
 	var markers := zone.map_markers()
 	_marker_count = markers.size()
 	_sub.text = "%d places known. Walk the trails to reveal more." % markers.size()
+	_view.set_markers(markers)
 	for m in markers:
-		var tex := Compass.icon(String(m.get("icon", "landmark")))
-		if tex == null:
-			continue
-		var ic := TextureRect.new()
-		ic.texture = tex
-		ic.size = Vector2(24, 24)
-		ic.position = world_to_map(m["pos"]) - Vector2(12, 12)
-		ic.tooltip_text = String(m.get("label", ""))
-		ic.mouse_filter = Control.MOUSE_FILTER_PASS
-		_marker_layer.add_child(ic)
-		var row := _legend_row(String(m.get("icon", "landmark")), String(m.get("label", "")))
-		_list.add_child(row)
+		_list.add_child(_legend_row(String(m.get("icon", "landmark")), String(m.get("label", ""))))

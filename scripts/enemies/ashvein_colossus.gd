@@ -129,6 +129,14 @@ func _build_body() -> void:
 		_arms_pivot.add_child(fist)
 
 
+## The slam's disc sits this far ahead (marker and hit alike).
+const SLAM_AHEAD := 1.8
+## The charge lane: half its drawn width, and how far the colossus's body
+## reaches behind / ahead of its centre along the lane.
+const CHARGE_HALF_WIDTH := 1.5
+const CHARGE_BODY_BACK := 1.0
+const CHARGE_BODY_FRONT := 1.8
+
 func _ai_process(delta: float) -> void:
 	_charge_cd = maxf(_charge_cd - delta, 0.0)
 	if enraged:
@@ -156,19 +164,20 @@ func _ai_process(delta: float) -> void:
 		AIState.WINDUP:
 			brake(delta)
 			if _attack_kind == "slam":
-				face_player(delta, 1.5)
+				# Facing locked at wind-up start: the slam lands on its disc.
 				if _state_timer >= _slam_windup:
 					_do_slam()
 			else:
-				# Charge windup: direction is committed, only slight tracking.
+				# Charge windup: direction committed, no tracking.
 				if _state_timer >= 0.8:
 					_begin_charge_run()
 		AIState.ATTACK:
-			# Charging run.
+			# Charging run, down the lane it drew and no further.
 			velocity.x = _charge_dir.x * CHARGE_SPEED
 			velocity.z = _charge_dir.z * CHARGE_SPEED
 			_charge_contact_check()
-			if is_on_wall() or _state_timer > 1.6:
+			var run := (global_position - _strike_origin).dot(_charge_dir)
+			if is_on_wall() or _state_timer > 1.6 or run >= CHARGE_MAX:
 				_end_charge(is_on_wall())
 		AIState.RECOVER:
 			brake(delta)
@@ -182,6 +191,7 @@ func _ai_process(delta: float) -> void:
 
 func _start_slam() -> void:
 	_attack_kind = "slam"
+	lock_strike()
 	_enter_state(AIState.WINDUP)
 	play_fx(&"slam_windup")
 
@@ -189,9 +199,7 @@ func _start_slam() -> void:
 func _do_slam() -> void:
 	_enter_state(AIState.RECOVER)
 	play_fx(&"slam")
-	var fwd := -visual.global_transform.basis.z
-	var center := global_position + fwd * 1.8
-	_hit_player_in_radius(center, SLAM_RADIUS, SLAM_DAMAGE, 9.0, HitInfo.Weight.HEAVY)
+	_hit_player_in_radius(strike_point(SLAM_AHEAD), SLAM_RADIUS, SLAM_DAMAGE, 9.0, HitInfo.Weight.HEAVY)
 
 
 func _start_charge() -> void:
@@ -201,6 +209,7 @@ func _start_charge() -> void:
 	_enter_state(AIState.WINDUP)
 	_charge_dir = dir_to_player()
 	visual.rotation.y = atan2(-_charge_dir.x, -_charge_dir.z)
+	lock_strike()  # the lane starts here
 	play_fx(&"charge_windup")
 
 
@@ -217,13 +226,13 @@ func _present_fx(fx: StringName) -> void:
 		&"roar":
 			Sfx.play("boss_roar", global_position, 2.0)
 		&"slam_windup":
-			_telegraph = VFX.telegraph_disc(scene, present_origin() + fwd * 1.8, SLAM_RADIUS, _slam_windup)
+			_telegraph = VFX.telegraph_disc(scene, present_origin() + fwd * SLAM_AHEAD, SLAM_RADIUS, _slam_windup)
 			var tw := _arms_pivot.create_tween()
 			tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(-130, 0, 0), _slam_windup * 0.85) \
 				.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 			Sfx.play("earthbreaker_windup", global_position, -3.0, 0.1, 0.7)
 		&"slam":
-			var center := present_origin() + fwd * 1.8
+			var center := present_origin() + fwd * SLAM_AHEAD
 			var tw := _arms_pivot.create_tween()
 			tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(40, 0, 0), 0.08)
 			tw.tween_property(_arms_pivot, "rotation_degrees", Vector3.ZERO, 0.5)
@@ -233,11 +242,15 @@ func _present_fx(fx: StringName) -> void:
 		&"charge_windup":
 			# Line telegraph: the shared threat language as a lane, filling from the
 			# colossus to the far end over the 0.8 s charge windup.
-			_telegraph = VFX.telegraph_lane(scene, present_origin(), fwd, CHARGE_MAX, 3.0, 0.8)
+			_telegraph = VFX.telegraph_lane(scene, present_origin(), fwd, CHARGE_MAX, CHARGE_HALF_WIDTH * 2.0, 0.8)
 			Sfx.play("charge_horn", global_position, 0.0)
 		&"charge_run":
+			# The lane stays on the ground for the whole run (M08 notes: the
+			# charge hit where nothing was drawn anymore).
 			if _telegraph != null and is_instance_valid(_telegraph):
 				_telegraph.queue_free()
+			_telegraph = VFX.telegraph_lane(scene, present_origin(), fwd, CHARGE_MAX, CHARGE_HALF_WIDTH * 2.0,
+				CHARGE_MAX / CHARGE_SPEED)
 			Sfx.play("boss_roar", global_position, -2.0, 0.1, 1.2)
 		&"wall":
 			VFX.earthbreaker_slam(scene, present_origin() + fwd * 1.5, 2.0)
@@ -250,20 +263,46 @@ func _charge_contact_check() -> void:
 	if _charge_hit_done:
 		return
 	# M07b: the charge flattens every hero in its path, not only the target.
-	var zone := get_tree().current_scene as ZoneBase
-	var victims: Array[Player] = zone.players_within(global_position, 2.0) if zone != null else []
-	if victims.is_empty() and zone == null and player != null and is_instance_valid(player) \
-			and player.global_position.distance_to(global_position) <= 2.0:
-		victims.append(player)
+	# M08 notes: "in its path" = inside the drawn lane (half width + the rim
+	# tolerance), where the colossus is right now.
+	var victims := heroes_in_lane()
 	if not victims.is_empty():
 		_charge_hit_done = true
 		for victim in victims:
+			var rel := victim.global_position - _strike_origin
+			var on_axis := _strike_origin + _charge_dir * rel.dot(_charge_dir)
 			var hit := HitInfo.create(CHARGE_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position - _charge_dir)
 			hit.knockback = 10.0
-			hit.area_center = global_position + Vector3(0, 0.9, 0)
-			hit.area_radius = 2.0
+			hit.area_center = on_axis
+			hit.area_radius = CHARGE_HALF_WIDTH + STRIKE_TOLERANCE
 			victim.take_hit(hit)
 			VFX.melee_impact(get_tree().current_scene, victim.global_position + Vector3(0, 1.0, 0), _charge_dir)
+
+
+## Heroes inside the charge lane next to the colossus: within the half width
+## of its axis and from just behind to just ahead of its body.
+func heroes_in_lane() -> Array[Player]:
+	var out: Array[Player] = []
+	var zone := ZoneBase.zone_of(self)
+	var candidates: Array[Player] = []
+	if zone != null:
+		candidates = zone.players
+	elif player != null and is_instance_valid(player):
+		candidates.append(player)
+	var here := (global_position - _strike_origin).dot(_charge_dir)
+	for p in candidates:
+		if p == null or not is_instance_valid(p) or p.health.is_dead:
+			continue
+		var rel := p.global_position - _strike_origin
+		if absf(rel.y) > STRIKE_HEIGHT:
+			continue
+		rel.y = 0.0
+		var along := rel.dot(_charge_dir)
+		var side := (rel - _charge_dir * along).length()
+		if side <= CHARGE_HALF_WIDTH + STRIKE_TOLERANCE and along >= here - CHARGE_BODY_BACK \
+				and along <= here + CHARGE_BODY_FRONT and along <= CHARGE_MAX + STRIKE_TOLERANCE:
+			out.append(p)
+	return out
 
 
 func _end_charge(hit_wall: bool) -> void:
@@ -274,24 +313,9 @@ func _end_charge(hit_wall: bool) -> void:
 		_state_timer = -0.8  # extra stun for slamming the wall
 
 
+## M09: every hero inside; exactly the marker's disc (M08 notes).
 func _hit_player_in_radius(center: Vector3, radius: float, damage: float, knockback: float, weight: HitInfo.Weight) -> void:
-	var space := get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = radius
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis(), center + Vector3(0, 0.5, 0))
-	query.collision_mask = 0b1000
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	for result: Dictionary in space.intersect_shape(query, 4):
-		var hb := result["collider"] as Hurtbox
-		if hb != null and hb.owner_entity is Player:
-			var hit := HitInfo.create(damage, HitInfo.DamageType.PHYSICAL, weight, global_position)
-			hit.knockback = knockback
-			hit.area_center = center + Vector3(0, 0.5, 0)
-			hit.area_radius = radius
-			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero inside
+	strike_circle(center, radius, damage, HitInfo.DamageType.PHYSICAL, weight, knockback)
 
 
 func _enrage() -> void:

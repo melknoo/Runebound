@@ -36,14 +36,21 @@ func equip(item: ItemData) -> void:
 	changed.emit()
 
 
-func unequip(slot: ItemData.Slot) -> void:
+## Takes the item off into the bag. False when the slot is empty or the bag
+## is full (the item stays on).
+func unequip(slot: ItemData.Slot) -> bool:
 	var item: ItemData = equipped.get(slot)
 	if item == null or inventory.size() >= INVENTORY_CAP:
-		return
+		return false
 	equipped.erase(slot)
 	inventory.append(item)
 	_recompute()
 	changed.emit()
+	return true
+
+
+func is_full() -> bool:
+	return inventory.size() >= INVENTORY_CAP
 
 
 func discard(item: ItemData) -> void:

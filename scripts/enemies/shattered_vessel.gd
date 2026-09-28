@@ -10,6 +10,7 @@ signal summon_requested(pos: Vector3)
 
 const SLAM_RANGE := 3.0
 const SLAM_RADIUS := 3.0
+const SLAM_AHEAD := 1.6  # the slam's disc sits this far ahead (marker and hit alike)
 const SLAM_DAMAGE := 26.0
 const SLAM_WINDUP := 0.8
 const FAN_BOLTS := 3
@@ -137,8 +138,7 @@ func _phase1(delta: float) -> void:
 			if distance_to_player() <= SLAM_RANGE:
 				_start_slam()
 		AIState.WINDUP:
-			brake(delta)
-			face_player(delta, 1.5)
+			brake(delta)  # facing locked at wind-up start: the slam lands on its disc
 			if _state_timer >= SLAM_WINDUP:
 				_do_slam()
 		AIState.RECOVER:
@@ -152,6 +152,7 @@ func _phase1(delta: float) -> void:
 
 
 func _start_slam() -> void:
+	lock_strike()
 	_enter_state(AIState.WINDUP)
 	play_fx(&"slam_windup")
 
@@ -159,9 +160,7 @@ func _start_slam() -> void:
 func _do_slam() -> void:
 	_enter_state(AIState.RECOVER)
 	play_fx(&"slam")
-	var fwd := -visual.global_transform.basis.z
-	var center := global_position + fwd * 1.6
-	_hit_player_in_radius(center, SLAM_RADIUS, SLAM_DAMAGE, 8.0)
+	_hit_player_in_radius(strike_point(SLAM_AHEAD), SLAM_RADIUS, SLAM_DAMAGE, 8.0)
 
 
 func _summon_adds() -> void:
@@ -284,24 +283,9 @@ func _expanding_ring() -> void:
 	tw.tween_callback(ring.queue_free)
 
 
+## M09: every hero inside; exactly the marker's disc (M08 notes).
 func _hit_player_in_radius(center: Vector3, radius: float, damage: float, knockback: float) -> void:
-	var space := get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = radius
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis(), center + Vector3(0, 0.5, 0))
-	query.collision_mask = 0b1000
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	for result: Dictionary in space.intersect_shape(query, 4):
-		var hb := result["collider"] as Hurtbox
-		if hb != null and hb.owner_entity is Player:
-			var hit := HitInfo.create(damage, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position)
-			hit.knockback = knockback
-			hit.area_center = center + Vector3(0, 0.5, 0)
-			hit.area_radius = radius
-			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero inside
+	strike_circle(center, radius, damage, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, knockback)
 
 
 ## M09 presentation of the Vessel's actions (see EnemyBase.play_fx).
@@ -313,10 +297,10 @@ func _present_fx(fx: StringName) -> void:
 			Sfx.play("vessel_roar", global_position, 4.0)
 			GameFeel.camera_shake(0.35)
 		&"slam_windup":
-			VFX.telegraph_disc(scene, here + present_forward() * 1.6, SLAM_RADIUS, SLAM_WINDUP)
+			VFX.telegraph_disc(scene, here + present_forward() * SLAM_AHEAD, SLAM_RADIUS, SLAM_WINDUP)
 			Sfx.play("earthbreaker_windup", global_position, -4.0, 0.1, 0.75)
 		&"slam":
-			var center := here + present_forward() * 1.6
+			var center := here + present_forward() * SLAM_AHEAD
 			VFX.earthbreaker_slam(scene, center, SLAM_RADIUS)
 			VFX.light_pop(scene, center, Color(0.7, 0.4, 1.0), 4.0, 6.0, 0.25)
 			Sfx.play("earthbreaker_impact", center, -2.0, 0.1, 0.85)

@@ -6,6 +6,33 @@ progress**, see below. M08 was played by the user; small notes follow after
 M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
 [SERVER_SETUP.md](SERVER_SETUP.md).
 
+## M08 notes (the user's playtest notes, built 2026-09-28)
+The six notes from the user's M08 playtest, with his choices (sprint free
+but out of combat only; drops "deutlich" fewer):
+- **Dodge ("still hit after dodging out of the field"):** the real hit zones
+  were bigger than the red markers (a sphere against the 0.5 m hurtbox; the
+  colossus charge 2.0 m wide and past its lane; the nova where the elite had
+  walked; the assassin sliding 1.6 m) and enemies kept turning after the
+  marker. Now an attack hits exactly its marker (TECHNICAL_ARCHITECTURE,
+  enemy rule): `EnemyBase.lock_strike` / `strike_circle`, the charge lane
+  stays drawn during the run, co-op `HURT_MARGIN` 1.2 -> 0.3. Input: a dodge
+  pressed during the cooldown or a hit freeze is buffered and fires from
+  MOVE; Space without a direction dodges away from the nearest enemy.
+- **Sprint:** Shift, x1.45, only when no hit was taken or thrown for 3 s
+  (`Player.in_combat`); a toast says why when held in a fight.
+- **Unequip:** "Unequip" in the item panel, right-click on worn gear (and
+  right-click equips from the bag); a full bag refuses with "Inventory full"
+  (also when walking over loot); equip / unequip / discard save at once.
+- **Waypoint map:** the travel panel shows the zone map (`ZoneMapView`, also
+  used by the M map) with the known shrines; hovering a name lights its
+  shrine, clicking an icon travels. Runehold has no map (list only).
+- **Drops:** kill drop 8 / 30 / 60 % (trash / brute / elite), legendaries
+  0.3 / 1 / 5 %, chests 1-2 items; all in `ItemGenerator`'s loot tuning
+  (docs/ITEMIZATION.md). Boss legendaries stay guaranteed.
+- **Portal titles:** body size, shown within 22 m (the three arena gates
+  14 m).
+- Smoke 424 green.
+
 ## M09b Friends without Tailscale (in progress, 2026-09-25)
 The user wants friends to join without installing Tailscale, the laptop to
 stay the server, no paid relay (Hetzner) and no tunnel service (playit.gg).

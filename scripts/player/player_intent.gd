@@ -10,8 +10,11 @@ extends RefCounted
 var move_dir: Vector3 = Vector3.ZERO
 ## Action ids pressed this tick (ability ids and "dodge"), in press order.
 var pressed: Array[StringName] = []
+## Held this tick: run faster (M08 notes; Player allows it out of combat only).
+var sprint: bool = false
 
 
 func clear() -> void:
 	move_dir = Vector3.ZERO
 	pressed.clear()
+	sprint = false

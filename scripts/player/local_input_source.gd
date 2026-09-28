@@ -16,6 +16,7 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 			continue
 		if Input.is_action_just_pressed(data.input_action):
 			intent.pressed.append(data.id)
+	intent.sprint = InputMap.has_action(&"sprint") and Input.is_action_pressed(&"sprint")
 	var raw := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back")
 	if raw != Vector2.ZERO and player.camera_rig != null:
 		intent.move_dir = (player.camera_rig.get_flat_basis() * Vector3(raw.x, 0, raw.y)).normalized()

@@ -15,8 +15,14 @@ Numeric affixes stay chunky; the exciting drops change ability behavior.
   - Every slot has at least 3 affixes.
 - **Rarities**: Common (0 affixes) · Magic (1) · Rare (2–3) ·
   Legendary (2 + power). Epic/Unique reserved for later.
-- **Drop rates**: trash 20% · brute 60% · elite 100% (rare or better,
-  25% legendary). Debug: key 7 random, key 8 legendary.
+- **Drop rates** (M08 notes, user 2026-09-28: "fewer drops, rare items much
+  rarer"; all in `ItemGenerator`'s loot tuning): a kill drops an item with
+  trash 8% · brute 30% · elite 60%. Rarity by bias: trash / plain chests
+  legendary 0.3%, rare 6%, magic 30%; brutes / better chests legendary 1%,
+  rare 17%, magic 45%; elites rare or better, 5% legendary. Chests give 1-2
+  items per hero (was 2-3). Boss legendaries stay guaranteed. (Before:
+  20 / 60 / 100%, legendaries 2 / 6 / 25%.) Debug: key 7 random, key 8
+  legendary.
 - **Presentation** scales with rarity: label → glow → gold beam → tall orange
   beam + fanfare. Auto-pickup at 1.4m, HUD toast on pickup.
 

@@ -80,6 +80,8 @@ func _refresh() -> void:
 			btn.icon = UiTheme.item_icon(item)
 			btn.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 			btn.pressed.connect(_select.bind(item))
+			btn.tooltip_text = "Right-click: take off"
+			btn.gui_input.connect(_on_right_click.bind(func() -> void: _unequip(slot)))
 		else:
 			btn.text = "%s: —" % ItemData.slot_name(slot)
 			btn.disabled = true
@@ -97,6 +99,8 @@ func _refresh() -> void:
 		btn.icon = UiTheme.item_icon(item)
 		btn.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 		btn.pressed.connect(_select.bind(item))
+		btn.tooltip_text = "Right-click: equip"
+		btn.gui_input.connect(_on_right_click.bind(func() -> void: _equip(item)))
 		_list_box.add_child(btn)
 
 	_render_detail()
@@ -139,19 +143,49 @@ func _render_detail() -> void:
 		_detail.add_child(row)
 		var equip_btn := Button.new()
 		equip_btn.text = "Equip"
-		equip_btn.pressed.connect(func() -> void:
-			player.equipment.equip(item)
-			Sfx.play_ui("equip", -4.0)
-			_selected = item
-		)
+		equip_btn.pressed.connect(func() -> void: _equip(item))
 		row.add_child(equip_btn)
 		var drop_btn := Button.new()
 		drop_btn.text = "Discard"
 		drop_btn.pressed.connect(func() -> void:
 			player.equipment.discard(item)
+			SaveGame.request_save()
 			_selected = null
 		)
 		row.add_child(drop_btn)
+	elif player.equipment.equipped.get(item.slot) == item:
+		# M08 notes (user 2026-09-28): gear can come off again.
+		var off_btn := Button.new()
+		off_btn.text = "Unequip"
+		off_btn.pressed.connect(func() -> void: _unequip(item.slot))
+		_detail.add_child(off_btn)
+
+
+func _equip(item: ItemData) -> void:
+	player.equipment.equip(item)
+	Sfx.play_ui("equip", -4.0)
+	SaveGame.request_save()
+	_selected = item
+
+
+## Into the bag, or a "full" note (the item stays on).
+func _unequip(slot: ItemData.Slot) -> void:
+	var item: ItemData = player.equipment.equipped.get(slot)
+	if player.equipment.unequip(slot):
+		Sfx.play_ui("equip", -8.0)
+		SaveGame.request_save()
+		_selected = item
+		return
+	player.ui_denied()
+	var zone := ZoneBase.zone_of(player)
+	if zone != null and zone.hud != null:
+		zone.hud.toast("Inventory full", UiTheme.MUTED)
+
+
+func _on_right_click(event: InputEvent, action: Callable) -> void:
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+		action.call()
 
 
 ## [text, colour] per stat that differs between two items (green = gain).

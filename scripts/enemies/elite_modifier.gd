@@ -120,26 +120,27 @@ func _drop_fire_patch() -> void:
 	enemy.get_tree().current_scene.add_child(patch)
 
 
+## Where the charging nova's disc was drawn (INF = none).
+var _nova_center := Vector3.INF
+
+
 func _charge_nova() -> void:
 	_nova_charging = true
+	# M08 notes: the nova goes off where its disc was drawn, even though the
+	# elite keeps moving while it charges.
+	var pos := enemy.global_position
 	enemy.play_fx(&"nova_charge")
 	await enemy.get_tree().create_timer(NOVA_TELEGRAPH).timeout
 	_nova_charging = false
 	if enemy == null or not is_instance_valid(enemy) or enemy.ai_state == EnemyBase.AIState.DEAD:
 		return
-	var pos := enemy.global_position
 	enemy.play_fx(&"nova")
 	# M07b: every hero inside the nova, not only the enemy's target.
-	var zone := enemy.get_tree().current_scene as ZoneBase
-	var victims: Array[Player] = zone.players_within(pos, NOVA_RADIUS) if zone != null else []
-	if zone == null and enemy.player != null and is_instance_valid(enemy.player) \
-			and enemy.player.global_position.distance_to(pos) <= NOVA_RADIUS:
-		victims.append(enemy.player)
-	for victim in victims:
+	for victim in enemy.heroes_in_circle(pos, NOVA_RADIUS):
 		var hit := HitInfo.create(NOVA_DAMAGE, HitInfo.DamageType.LIGHTNING, HitInfo.Weight.MEDIUM, pos)
 		hit.knockback = 3.0
-		hit.area_center = pos + Vector3(0, 0.9, 0)
-		hit.area_radius = NOVA_RADIUS
+		hit.area_center = pos
+		hit.area_radius = NOVA_RADIUS + EnemyBase.STRIKE_TOLERANCE
 		victim.take_hit(hit)
 
 
@@ -151,9 +152,13 @@ func present_fx(fx: StringName) -> void:
 	var pos := enemy.present_origin()
 	match fx:
 		&"nova_charge":
+			_nova_center = pos
 			VFX.telegraph_disc(scene, pos, NOVA_RADIUS, NOVA_TELEGRAPH)
 			Sfx.play("caster_charge", pos, -6.0, 0.1, 1.3)
 		&"nova":
+			if _nova_center != Vector3.INF:
+				pos = _nova_center  # the burst comes out where its disc was
+				_nova_center = Vector3.INF
 			VFX.ground_ring(scene, pos, Color(1.0, 0.95, 0.5), NOVA_RADIUS, 0.3)
 			for i in 5:
 				var a := randf() * TAU

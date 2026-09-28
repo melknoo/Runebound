@@ -84,7 +84,13 @@ func _physics_process(delta: float) -> void:
 		for area in get_overlapping_areas():  # M09: every hero standing in it
 			var hb := area as Hurtbox
 			if hb != null and hb.owner_entity is Player:
+				# M08 notes: the feet in the scorch burn, not a shoulder over its edge.
+				var hero := hb.owner_entity as Player
+				var flat := hero.global_position - global_position
+				flat.y = 0.0
+				if flat.length() > RADIUS + EnemyBase.STRIKE_TOLERANCE:
+					continue
 				var hit := HitInfo.create(TICK_DAMAGE, HitInfo.DamageType.FIRE, HitInfo.Weight.LIGHT, global_position)
-				hit.area_center = global_position + Vector3(0, 0.6, 0)
-				hit.area_radius = RADIUS + 0.5
-				(hb.owner_entity as Player).take_hit(hit)
+				hit.area_center = global_position
+				hit.area_radius = RADIUS + EnemyBase.STRIKE_TOLERANCE
+				hero.take_hit(hit)

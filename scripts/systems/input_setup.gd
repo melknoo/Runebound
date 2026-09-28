@@ -18,6 +18,7 @@ const KEYS := {
 	&"hero_character": [KEY_C],                # M07b character sheet tab
 	&"map_toggle": [KEY_M],                    # M08 zone map
 	&"party_cancel": [KEY_X],                  # M09 cancels a party travel countdown
+	&"sprint": [KEY_SHIFT],                    # M08 notes: held, out of combat
 }
 
 

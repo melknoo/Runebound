@@ -80,6 +80,9 @@ func _build_arms() -> void:
 		_arms_pivot.add_child(fist)
 
 
+## The slam's disc sits this far ahead of the brute (marker and hit alike).
+const SLAM_AHEAD := 1.4
+
 func _ai_process(delta: float) -> void:
 	match ai_state:
 		AIState.IDLE:
@@ -92,8 +95,7 @@ func _ai_process(delta: float) -> void:
 			if distance_to_player() <= ATTACK_RANGE:
 				_start_windup()
 		AIState.WINDUP:
-			brake(delta)
-			face_player(delta, 1.5)  # barely tracks: walk out of the disc
+			brake(delta)  # facing locked: walk out of the disc and it misses
 			if _state_timer >= WINDUP_TIME:
 				_slam()
 		AIState.RECOVER:
@@ -107,6 +109,7 @@ func _ai_process(delta: float) -> void:
 
 
 func _start_windup() -> void:
+	lock_strike()
 	_enter_state(AIState.WINDUP)
 	_present_windup()
 
@@ -119,7 +122,7 @@ func _present_state(s: AIState) -> void:
 
 func _present_windup() -> void:
 	_telegraph_disc = VFX.telegraph_disc(get_tree().current_scene,
-		present_origin() + present_forward() * 1.4,
+		present_origin() + present_forward() * SLAM_AHEAD,
 		SLAM_RADIUS, WINDUP_TIME)
 	var tw := _arms_pivot.create_tween()
 	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(-130, 0, 0), WINDUP_TIME * 0.85) \
@@ -130,15 +133,13 @@ func _present_windup() -> void:
 func _slam() -> void:
 	_enter_state(AIState.RECOVER)
 	play_fx(&"slam")
-	var fwd := -visual.global_transform.basis.z
-	var impact_center := global_position + fwd * 1.4
-	_slam_hit(impact_center)
+	_slam_hit(strike_point(SLAM_AHEAD))
 
 
 func _present_fx(fx: StringName) -> void:
 	if fx != &"slam":
 		return
-	var impact_center := present_origin() + present_forward() * 1.4
+	var impact_center := present_origin() + present_forward() * SLAM_AHEAD
 	var tw := _arms_pivot.create_tween()
 	tw.tween_property(_arms_pivot, "rotation_degrees", Vector3(40, 0, 0), 0.08) \
 		.set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_IN)
@@ -149,24 +150,9 @@ func _present_fx(fx: StringName) -> void:
 	GameFeel.camera_shake(0.25)
 
 
+## M09: every hero in the slam; exactly the marker's disc (M08 notes).
 func _slam_hit(impact_center: Vector3) -> void:
-	var space := get_world_3d().direct_space_state
-	var shape := SphereShape3D.new()
-	shape.radius = SLAM_RADIUS
-	var query := PhysicsShapeQueryParameters3D.new()
-	query.shape = shape
-	query.transform = Transform3D(Basis(), impact_center + Vector3(0, 0.5, 0))
-	query.collision_mask = 0b1000
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	for result: Dictionary in space.intersect_shape(query, 4):
-		var hb := result["collider"] as Hurtbox
-		if hb != null and hb.owner_entity is Player:
-			var hit := HitInfo.create(SLAM_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position)
-			hit.knockback = 8.0
-			hit.area_center = impact_center + Vector3(0, 0.5, 0)
-			hit.area_radius = SLAM_RADIUS
-			(hb.owner_entity as Player).take_hit(hit)  # M09: every hero in the slam
+	strike_circle(impact_center, SLAM_RADIUS, SLAM_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, 8.0)
 
 
 func _on_interrupted() -> void:

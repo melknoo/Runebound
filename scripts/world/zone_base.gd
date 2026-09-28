@@ -942,13 +942,14 @@ func _on_enemy_died(enemy: EnemyBase) -> void:
 
 
 func _roll_kill_item(enemy: EnemyBase, class_id: StringName) -> ItemData:
-	var item: ItemData = null
+	var item: ItemData = null  # chances and rarities: ItemGenerator's loot tuning
 	if enemy.is_elite:
-		item = ItemGenerator.generate(2, class_id)
+		if ItemGenerator.kill_drops(&"elite"):
+			item = ItemGenerator.generate(2, class_id)
 	elif enemy is Brute:
-		if randf() < 0.6:
+		if ItemGenerator.kill_drops(&"brute"):
 			item = ItemGenerator.generate(1, class_id)
-	elif randf() < 0.2:
+	elif ItemGenerator.kill_drops(&"trash"):
 		item = ItemGenerator.generate(0, class_id)
 	if item != null:
 		ItemGenerator.apply_item_level(item, enemy.level)

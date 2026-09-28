@@ -438,6 +438,17 @@ never `DisplayServer` (headless bot clients are clients).
   `_present_state` (or a `present_*` helper), using `present_origin()` /
   `present_forward()`; simulation stays in the state machine. Attacks set
   `hit.area_center / area_radius` and hit every hero inside.
+  **Rule since the M08 notes (2026-09-28): an attack hits exactly its
+  marker.** `lock_strike()` at wind-up start stops the enemy and freezes the
+  pose the marker is drawn from (no turning after that); the strike uses
+  `strike_point(ahead)` and `strike_circle(center, radius, ...)` (feet
+  inside the circle, flat, + `STRIKE_TOLERANCE` 0.2), never a sphere
+  against the hurtbox (that reached 0.5 m past the rim). Charges hit inside
+  their lane (`AshveinColossus.heroes_in_lane`), novas where their disc was,
+  fire patches at the feet. The co-op owner checks the same area flat with
+  `HURT_MARGIN` 0.3 (latency only). Player: a dodge pressed during its
+  cooldown or a hit freeze is buffered and goes off from MOVE; a dodge
+  without a direction leaves the nearest enemy (`_dodge_away_dir`).
 - **Named actions and hazards:** `play_fx(fx)` runs `_present_fx(fx)` (and
   the elite affix's `present_fx`) locally and emits `fx_played`, which the
   server sends as ENEMY_FX (with the pose); puppets run the same

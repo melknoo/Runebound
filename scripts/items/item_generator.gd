@@ -77,27 +77,49 @@ static func _make_legendary(item: ItemData, class_id: StringName = &"") -> ItemD
 	return item
 
 
+# ---------------------------------------------------------------------------
+# Loot tuning, all in one place (M08 notes, user 2026-09-28: "fewer drops,
+# rare items much rarer"; docs/ITEMIZATION.md). Boss legendaries stay
+# guaranteed (the zones hand them out on top).
+# ---------------------------------------------------------------------------
+
+## Chance that a kill drops an item, by kind of enemy (was 20 / 60 / 100 %).
+const KILL_DROP_CHANCE := {&"trash": 0.08, &"brute": 0.30, &"elite": 0.60}
+## Rarity odds by bias, cumulative: [legendary, + rare, + magic]; the rest is
+## common. 0 = trash and plain chests, 1 = brutes and the better chests,
+## 2 = elites (rare or better).
+const RARITY_ODDS := {
+	0: [0.003, 0.063, 0.363],  # legendary 0.3 %, rare 6 %, magic 30 %
+	1: [0.01, 0.18, 0.63],     # legendary 1 %, rare 17 %, magic 45 %
+	2: [0.05, 1.0, 1.0],       # legendary 5 %, rare 95 %
+}
+## Items a chest gives each hero (was 2-3).
+const CHEST_ITEMS := Vector2i(1, 2)
+
+## Tests: >= 0 replaces the next drop rolls (0.0 = always drops).
+static var forced_drop_roll: float = -1.0
+
+
+## Does a kill of this kind (KILL_DROP_CHANCE key) drop an item?
+static func kill_drops(kind: StringName) -> bool:
+	var roll := forced_drop_roll if forced_drop_roll >= 0.0 else randf()
+	return roll < float(KILL_DROP_CHANCE.get(kind, 0.0))
+
+
+static func chest_item_count() -> int:
+	return randi_range(CHEST_ITEMS.x, CHEST_ITEMS.y)
+
+
 static func _roll_rarity(bias: int) -> ItemData.Rarity:
+	var odds: Array = RARITY_ODDS[clampi(bias, 0, 2)]
 	var roll := randf()
-	match bias:
-		2:  # elite: rare or better
-			return ItemData.Rarity.LEGENDARY if roll < 0.25 else ItemData.Rarity.RARE
-		1:  # brute
-			if roll < 0.06:
-				return ItemData.Rarity.LEGENDARY
-			if roll < 0.4:
-				return ItemData.Rarity.RARE
-			if roll < 0.8:
-				return ItemData.Rarity.MAGIC
-			return ItemData.Rarity.COMMON
-		_:
-			if roll < 0.02:
-				return ItemData.Rarity.LEGENDARY
-			if roll < 0.15:
-				return ItemData.Rarity.RARE
-			if roll < 0.5:
-				return ItemData.Rarity.MAGIC
-			return ItemData.Rarity.COMMON
+	if roll < float(odds[0]):
+		return ItemData.Rarity.LEGENDARY
+	if roll < float(odds[1]):
+		return ItemData.Rarity.RARE
+	if roll < float(odds[2]):
+		return ItemData.Rarity.MAGIC
+	return ItemData.Rarity.COMMON
 
 
 static func _roll_affixes(item: ItemData, count: int, class_id: StringName = &"") -> void:
