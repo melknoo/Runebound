@@ -2,7 +2,7 @@
 # runebound-deploy.timer every 5 minutes, or now: sudo systemctl start runebound-deploy
 # Installed as a copy by tools/server/setup-service.sh.
 [Unit]
-Description=RUNEBOUND auto-deploy (new commit on main -> restart the server)
+Description=RUNEBOUND auto-deploy (new commit on the server branch -> restart the server)
 Wants=network-online.target
 After=network-online.target
 
