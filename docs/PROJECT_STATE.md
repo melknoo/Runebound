@@ -12,7 +12,8 @@ M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
   hold on a failed start, `tools\run_godot.cmd deploy` / `sudo systemctl
   start runebound-deploy` without a password (SERVER_SETUP "Updates:
   automatisch"). Needs one more `sudo tools/server/setup-service.sh` on the
-  laptop. Net scenario `deploy_notice` green.
+  laptop (done 2026-09-28: timer active, the password-free manual run works).
+  Net scenario `deploy_notice` green.
 - **Playtest log** (key J, user: "a quest log for the open KNOWN_ISSUES
   points, to tick off"): 50 points in 7 groups (German), states offen /
   passt / Problem + note, saved per machine in `user://playtest.json` (Claude
