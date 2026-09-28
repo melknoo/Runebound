@@ -33,9 +33,12 @@ personal **invite codes**. The service moves to its own sandboxed user.
 - **Deployed 2026-09-28:** the user ran `setup-service.sh`, created codes
   and joined over Funnel **with Tailscale switched off** on his PC. Public
   probes from outside the tailnet: no code -> "needs an invite code", an
-  unknown code -> "not accepted". Still to check over SSH once the dev PC is
-  in the tailnet again: `systemd-analyze security` of the installed units,
-  the egress self-test output, the journal. Gate left: a friend joins.
+  unknown code -> "not accepted". Checked over SSH: runebound-egress and
+  runebound-server active, 0 restarts, the game runs as `runebound` from
+  /opt/godot (170 MB RSS), `systemd-analyze security` 1.4 "OK" (server) /
+  1.5 "OK" (update), Funnel https:443 -> 127.0.0.1:7780, journal shows the
+  join, both refusals and idle ticks p95 0.1 ms. The egress rules need sudo
+  to read (`sudo runebound-egress status`). Gate left: a friend joins.
 - **Phase 3 (built, deployed 2026-09-28):**
   `sudo tools/server/setup-service.sh` moves the server to the system user
   `runebound` (own HTTPS clone, Godot in /opt/godot, `/etc/runebound/invites`
