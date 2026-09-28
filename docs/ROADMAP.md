@@ -94,8 +94,8 @@ Phasen:
 0. Funnel messen (RTT, Hänger, Bandbreite).
 1. Einladungscodes (gebaut).
 2. WebSocket (gebaut).
-3. Dienst + Funnel (Skript gebaut, Lauf auf dem Laptop offen).
-4. Doku, Freunde einladen, Gate: Ein Freund spielt ohne Tailscale.
+3. Dienst + Funnel (am 28.09. auf dem Laptop eingerichtet; der Spieler ist ohne Tailscale beigetreten).
+4. Doku, Freunde einladen, Gate: Ein Freund spielt ohne Tailscale (offen).
 Nicht in M09b: direktes UDP per Hole-Punching (nur falls Funnel zu langsam ist), IPv6 direkt,
 Accounts.
 

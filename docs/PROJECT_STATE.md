@@ -30,7 +30,13 @@ personal **invite codes**. The service moves to its own sandboxed user.
   behind over WS; WS clients ping with ECHO. Net scenarios: 21 green (17 over
   ENet, `handshake`, `invite`, `travel`, `server_gone` also `@ws`), smoke
   green.
-- **Phase 3 (built, waiting for the user's run):**
+- **Deployed 2026-09-28:** the user ran `setup-service.sh`, created codes
+  and joined over Funnel **with Tailscale switched off** on his PC. Public
+  probes from outside the tailnet: no code -> "needs an invite code", an
+  unknown code -> "not accepted". Still to check over SSH once the dev PC is
+  in the tailnet again: `systemd-analyze security` of the installed units,
+  the egress self-test output, the journal. Gate left: a friend joins.
+- **Phase 3 (built, deployed 2026-09-28):**
   `sudo tools/server/setup-service.sh` moves the server to the system user
   `runebound` (own HTTPS clone, Godot in /opt/godot, `/etc/runebound/invites`
   owned by the user), units `runebound-update` (pull + import) and
