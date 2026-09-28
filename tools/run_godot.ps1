@@ -181,18 +181,21 @@ switch ($Mode) {
 	}
 	"wsspike" {
 		# M09b Phase 0: how a WebSocket to the laptop behaves through Tailscale
-		# Funnel. The Funnel address comes from public DNS (1.1.1.1): a PC in
-		# the tailnet would otherwise resolve the name to the tailnet and skip
+		# Funnel. The Funnel address comes from public DNS over HTTPS: on a PC
+		# in the tailnet Windows sends *.ts.net lookups to Tailscale even with
+		# Resolve-DnsName -Server (NRPT), which gives the tailnet IP and skips
 		# the Funnel relay. The name stays the TLS name (--via keeps SNI).
+		# A freshly enabled Funnel can take ~10 min to appear in public DNS.
 		if (-not $Name) { Write-Error "usage: wsspike <laptop>.ts.net [seconds]"; exit 1 }
 		$hostName = $Name -replace "^wss?://", "" -replace "/.*$", ""
 		$secs = if ($Label) { $Label } else { "300" }
-		$via = @(Resolve-DnsName -Name $hostName -Server 1.1.1.1 -Type A -DnsOnly -ErrorAction SilentlyContinue |
-			Where-Object { $_.IPAddress } | Select-Object -First 1)
-		if ($via.Count -eq 0) { Write-Error "$hostName has no public address: is Funnel on for it?"; exit 1 }
-		Write-Output ("Funnel address of {0}: {1}" -f $hostName, $via[0].IPAddress)
-		& $godot --headless --path $proj --script res://tests/ws_spike.gd -- "--url=wss://$hostName/" "--via=$($via[0].IPAddress)" `
-			"--seconds=$secs" "--out=$env:TEMPunebound_ws_spike.json"
+		$answer = @((Invoke-RestMethod "https://dns.google/resolve?name=$hostName&type=A").Answer |
+			Where-Object { $_.type -eq 1 } | Select-Object -First 1)
+		if ($answer.Count -eq 0) { Write-Error "$hostName has no public address yet: is Funnel on (and ~10 min old)?"; exit 1 }
+		$via = $answer[0].data
+		Write-Output ("Funnel address of {0}: {1}" -f $hostName, $via)
+		& $godot --headless --path $proj --script res://tests/ws_spike.gd -- "--url=wss://$hostName/" "--via=$via" `
+			"--seconds=$secs" "--out=$env:TEMP\runebound_ws_spike.json"
 	}
 	"serverperf" {
 		# M09 Spike A: headless tick cost of the Highlands with N bot heroes

@@ -41,10 +41,17 @@ personal **invite codes**. The service moves to its own sandboxed user.
   7777/udp rule. server.env: `RUNEBOUND_TRANSPORT=ws`, port 7780. Godot
   runs under the seccomp filter and W^X (tested on the laptop).
   SERVER_SETUP rewritten; home network details are out of the public docs.
-- **Phase 0 (ready, waiting for Funnel):** `tests/ws_spike.gd`,
-  `run_godot wsspike <host> [secs]` (echo 30 x 900 B/s + a 200 KB/s
-  download through Funnel; `--via` keeps the Funnel path from a tailnet PC).
-  Localhost baseline: RTT 7 ms, 198 KB/s.
+- **Phase 0 (measured 2026-09-28, passed):** `tests/ws_spike.gd`,
+  `run_godot wsspike <host> [secs]` (echo 30 x 900 B/s for 5 min, then a
+  200 KB/s download). Work PC (company network) -> Funnel relay
+  (185.40.234.x) -> Starlink -> laptop: RTT **p50 62 / p95 90 / p99 173 /
+  max 451 ms**, 19 of 9000 answers over 250 ms, 1 stall (339 ms), download
+  the full 200 KB/s (min 180). Threshold was p95 <= 150 ms. For comparison
+  the same PC over the tailnet (DERP relay "fra"): p50 55 but p95 669 ms and
+  stalls up to 14.6 s. Localhost baseline: RTT 7 ms. Findings: a freshly
+  enabled Funnel needs ~10 min to show up in public DNS; on a tailnet PC
+  Windows answers *.ts.net from Tailscale even with `Resolve-DnsName
+  -Server` (NRPT), so `wsspike` resolves over DNS-over-HTTPS.
 - **Deploy note:** the laptop keeps running the M09 build until its next
   restart; after one it serves WebSocket on 127.0.0.1 and waits for its
   invite list. Games from protocol 8 on cannot join an M09 server (and vice
