@@ -37,8 +37,8 @@ personal **invite codes**. The service moves to its own sandboxed user.
   runebound-server active, 0 restarts, the game runs as `runebound` from
   /opt/godot (170 MB RSS), `systemd-analyze security` 1.4 "OK" (server) /
   1.5 "OK" (update), Funnel https:443 -> 127.0.0.1:7780, journal shows the
-  join, both refusals and idle ticks p95 0.1 ms. The egress rules need sudo
-  to read (`sudo runebound-egress status`). Gate left: a friend joins.
+  join, both refusals and idle ticks p95 0.1 ms. Egress rules checked by the user
+  (`sudo runebound-egress status`): DNS accepts above the IPv4/IPv6 REJECT for uid 997 (runebound). Gate left: a friend joins.
 - **Phase 3 (built, deployed 2026-09-28):**
   `sudo tools/server/setup-service.sh` moves the server to the system user
   `runebound` (own HTTPS clone, Godot in /opt/godot, `/etc/runebound/invites`
