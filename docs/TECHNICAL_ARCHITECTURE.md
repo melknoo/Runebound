@@ -392,8 +392,12 @@ never `DisplayServer` (headless bot clients are clients).
   (systemd sandbox, `IPAddressAllow=localhost`), and turns on
   `tailscale funnel --bg 7780`. `tests/ws_spike.gd` measures a WebSocket
   through Funnel (`run_godot wsspike <host>`).
-- **Auto-deploy (M09b):** `tools/server/runebound-deploy.sh` (root, timer every
-  5 min) fetches the server clone; on a new commit it reads
+- **Auto-deploy (M09b):** the server runs the `release` branch
+  (`RUNEBOUND_BRANCH`, server.env; `runebound-server.sh update` switches the
+  clone before pulling); `tools\run_godot.cmd release` fast-forwards
+  release to main and deploys. `tools/server/runebound-deploy.sh` (root,
+  timer every 5 min) fetches the server clone; on a new commit on its
+  upstream it reads
   `user://server_status.json` (players, zone, time; `Net.write_status` on
   roster changes, zone entry and every minute). With players online it writes
   a restart time to `RUNEBOUND_DEPLOY_FILE`; the server polls it every 2 s,

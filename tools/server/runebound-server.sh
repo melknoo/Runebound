@@ -33,6 +33,20 @@ update() {
 	if ! git fetch --quiet origin; then
 		echo "RUNEBOUND: git fetch failed (network?) - starting $(git log --oneline -1)" >&2
 	else
+		# The server follows RUNEBOUND_BRANCH (release; user 2026-09-28: only a
+		# new release commit restarts it, main keeps moving). Read fresh from
+		# the file, so a changed branch takes effect on this very start.
+		want="$(sed -n 's/^RUNEBOUND_BRANCH=//p' "$here/server.env" | tail -n 1)"
+		current="$(git branch --show-current)"
+		if [[ -n "$want" && "$want" != "$current" ]]; then
+			if git rev-parse --quiet --verify "origin/$want" > /dev/null; then
+				git checkout --quiet -B "$want" "origin/$want"
+				git branch --quiet --set-upstream-to="origin/$want"
+				echo "RUNEBOUND: switched to branch $want ($(git log --oneline -1))"
+			else
+				echo "RUNEBOUND: branch $want is not on origin - staying on $current" >&2
+			fi
+		fi
 		upstream="$(git rev-parse '@{u}')" || fail "branch $(git branch --show-current) has no upstream"
 		held="$(cat "${RUNEBOUND_DEPLOY_HOLD:-/nonexistent}" 2>/dev/null || true)"
 		if [[ -n "$held" && "$upstream" == "$held" ]]; then

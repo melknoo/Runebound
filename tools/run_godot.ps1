@@ -14,7 +14,8 @@
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 #   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
 #   .\tools\run_godot.ps1 wsspike <host> [secs]  # M09b: WebSocket echo + download through Tailscale Funnel (tests/ws_spike.gd)
-#   .\tools\run_godot.ps1 deploy                # M09b: roll the laptop server to the latest main now (runebound-deploy)
+#   .\tools\run_godot.ps1 release               # ship: main -> release (fast-forward), then deploy it now
+#   .\tools\run_godot.ps1 deploy                # roll the laptop server to the latest release now (runebound-deploy)
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
@@ -72,9 +73,9 @@ function Update-Import {
 		Invoke-Import | Out-Null
 	}
 }
-if ($Mode -notin @("import", "reset", "deploy")) { Update-Import }
+if ($Mode -notin @("import", "reset", "deploy", "release")) { Update-Import }
 
-if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "wsspike", "deploy")) { Show-OtherGodot }  # headless modes share no GPU
+if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "wsspike", "deploy", "release")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would
@@ -180,12 +181,30 @@ switch ($Mode) {
 		$port = if ($Name) { $Name } else { "7777" }
 		& $godot --headless --path $proj res://scenes/dedicated_server.tscn -- "--port=$port" "--save=user://local_server.json"
 	}
+	"release" {
+		# Ship what is on main: the server runs the release branch (server.env
+		# RUNEBOUND_BRANCH), so main moves to release (fast-forward only), then
+		# the laptop deploys it right away (else its timer does within 5 min).
+		$branch = (git -C $proj rev-parse --abbrev-ref HEAD).Trim()
+		if ($branch -ne "main") { Write-Error "release ships main; you are on $branch"; exit 1 }
+		if (git -C $proj status --porcelain --untracked-files=no) { Write-Error "uncommitted changes: commit and push main first"; exit 1 }
+		git -C $proj fetch -q origin
+		$localHead = (git -C $proj rev-parse main).Trim()
+		$remoteHead = (git -C $proj rev-parse origin/main).Trim()
+		if ($localHead -ne $remoteHead) { Write-Error "main is not pushed (local $($localHead.Substring(0,7)), origin $($remoteHead.Substring(0,7)))"; exit 1 }
+		git -C $proj push -q origin main:release
+		if ($LASTEXITCODE -ne 0) { Write-Error "push to release refused (not a fast-forward?)"; exit 1 }
+		Write-Output ("release is now {0}: {1}" -f $localHead.Substring(0, 7), (git -C $proj log --format=%s -1 main))
+		$target = if ($env:RUNEBOUND_SERVER_SSH) { $env:RUNEBOUND_SERVER_SSH } else { "melvin@melvin-aspire-e5-573g" }
+		ssh $target "sudo -n systemctl start runebound-deploy.service; journalctl -u runebound-deploy -n 12 --no-pager -o cat"
+		exit $LASTEXITCODE
+	}
 	"deploy" {
 		# M09b: the laptop's auto-deploy runs every 5 minutes; this runs it now
 		# (sudo without a password for exactly this, set up by setup-service.sh).
 		# With players online it waits for their 5-minute countdown.
 		$target = if ($env:RUNEBOUND_SERVER_SSH) { $env:RUNEBOUND_SERVER_SSH } else { "melvin@melvin-aspire-e5-573g" }
-		Write-Output "Deploying on $target (push first: it takes what is on origin/main) ..."
+		Write-Output "Deploying on $target (it takes what is on origin/release) ..."
 		ssh $target "sudo -n systemctl start runebound-deploy.service; journalctl -u runebound-deploy -n 12 --no-pager -o cat"
 		exit $LASTEXITCODE
 	}

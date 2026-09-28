@@ -41,8 +41,15 @@ Du (im Tailnet) ──────── dieselbe Adresse, direkt übers Tailnet
 4. **Codes anlegen:** `tools/server/invites.sh add melvin`, `tools/server/invites.sh add anna` und so weiter.
 
 ## Updates: automatisch (Auto-Deploy)
-Ein Push auf `main` geht von selbst live. Niemand muss dafür auf den Laptop.
-- **Ablauf:** `runebound-deploy.timer` schaut alle 5 Minuten nach (und 5 Minuten nach dem Boot). Gibt es einen neuen Commit, startet `runebound-deploy` den Server neu. Dabei holen `runebound-update` und der Import den neuen Stand.
+Ein neuer Commit auf **`release`** geht von selbst live. Niemand muss dafür auf den Laptop.
+
+**Branches: main vs. release** (seit 2026-09-28)
+- Entwickelt wird auf `main`. Der Server ignoriert `main`.
+- Der Server läuft auf `release` (`RUNEBOUND_BRANCH` in `server.env`). Ändert sich der Eintrag, wechselt der Update-Schritt den Server-Klon beim nächsten Start von selbst.
+- **Ausrollen:** `tools\run_godot.cmd release` schiebt `main` nach `release` (nur Fast-Forward), dann deployt es sofort. Voraussetzung: `main` ist sauber und gepusht. Claude rollt nur auf deinen Wunsch aus.
+- **Koop braucht denselben Stand wie der Server:** Freunde spielen von `release` (siehe „Für Freunde“). Weicht das Protokoll ab, lehnt der Server mit einer lesbaren Meldung ab.
+
+- **Ablauf:** `runebound-deploy.timer` schaut alle 5 Minuten nach (und 5 Minuten nach dem Boot). Gibt es einen neuen Commit auf dem Server-Branch, startet `runebound-deploy` den Server neu. Dabei holen `runebound-update` und der Import den neuen Stand.
 - **Es spielt jemand:** Der Server zählt 5 Minuten herunter, mit Hinweisen bei 5 min, 1 min und 10 s. Kurz vor dem Neustart fliegen alle mit „The server is restarting for an update“ in den Titel. Ihre Charaktere sind gespeichert, sie können gleich wieder beitreten. Gehen vorher alle, startet der Server sofort neu.
 - **Neuer Stand startet nicht:** Schreibt der neue Server nicht innerhalb von 3 Minuten seine Statusdatei, rollt der Deploy auf den alten Commit zurück und sperrt den kaputten (`/var/lib/runebound/deploy_hold`). Der nächste neuere Commit hebt die Sperre auf.
 - **Sofort statt in 5 min:**
@@ -70,7 +77,7 @@ tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
 ## Für Freunde (zum Weiterleiten)
 > **RUNEBOUND mitspielen:**
 > 1. Godot **4.6.x** installieren (godotengine.org, „Standard“, nicht .NET).
-> 2. Das Spiel holen: `git clone https://github.com/melknoo/Runebound.git` oder auf GitHub „Code → Download ZIP“. Danach in Godot den Ordner importieren und starten (F5).
+> 2. Das Spiel holen: `git clone -b release https://github.com/melknoo/Runebound.git`. Ohne git: auf GitHub den Branch **release** wählen, dann „Code → Download ZIP“. Danach in Godot den Ordner importieren und starten (F5). Updates: `git pull` im Ordner (oder die ZIP neu laden), wenn ich Bescheid sage.
 > 3. Im Titel „Join co-op“ wählen und diese drei Dinge eintragen:
 >    - deinen Namen
 >    - als Server die Adresse, die ich dir schicke (ohne Port)

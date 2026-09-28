@@ -14,6 +14,10 @@ M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
   automatisch"). Needs one more `sudo tools/server/setup-service.sh` on the
   laptop (done 2026-09-28: timer active, the password-free manual run works).
   Net scenario `deploy_notice` green.
+- **Release branch** (user: "only a new commit on e.g. release restarts
+  the server"): the server follows `release` (`RUNEBOUND_BRANCH`), main
+  keeps moving; ship with `tools\run_godot.cmd release`. Friends clone
+  `-b release`.
 - **Playtest log** (key J, user: "a quest log for the open KNOWN_ISSUES
   points, to tick off"): 50 points in 7 groups (German), states offen /
   passt / Problem + note, saved per machine in `user://playtest.json` (Claude
