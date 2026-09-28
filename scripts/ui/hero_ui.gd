@@ -106,6 +106,8 @@ func open_tab(tab: Tab) -> void:
 		player.input_locked = true
 	if zone != null and zone.map_ui != null and zone.map_ui.visible:  # M08
 		zone.map_ui.close()
+	if zone != null and zone.playtest_ui != null:
+		zone.playtest_ui.close()
 		player.input_locked = true
 	if zone != null and zone.waypoint_ui != null and zone.waypoint_ui.visible:
 		zone.waypoint_ui.close()

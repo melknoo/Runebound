@@ -34,7 +34,11 @@ update() {
 		echo "RUNEBOUND: git fetch failed (network?) - starting $(git log --oneline -1)" >&2
 	else
 		upstream="$(git rev-parse '@{u}')" || fail "branch $(git branch --show-current) has no upstream"
-		if [[ "$(git rev-parse HEAD)" != "$upstream" ]]; then
+		held="$(cat "${RUNEBOUND_DEPLOY_HOLD:-/nonexistent}" 2>/dev/null || true)"
+		if [[ -n "$held" && "$upstream" == "$held" ]]; then
+			# runebound-deploy rolled this commit back (it did not start): stay put.
+			echo "RUNEBOUND: ${upstream:0:7} is held after a failed deploy - staying at $(git log --oneline -1)"
+		elif [[ "$(git rev-parse HEAD)" != "$upstream" ]]; then
 			# .godot/ is untracked since M09 (.gitignore); older commits tracked it and
 			# a Linux import rewrote it, which blocked the pull. Discard that churn if
 			# any tracked copy is still around; a no-op (and no error) otherwise.

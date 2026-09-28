@@ -1,0 +1,13 @@
+# RUNEBOUND auto-deploy (see runebound-deploy.sh). Started by
+# runebound-deploy.timer every 5 minutes, or now: sudo systemctl start runebound-deploy
+# Installed as a copy by tools/server/setup-service.sh.
+[Unit]
+Description=RUNEBOUND auto-deploy (new commit on main -> restart the server)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/runebound-deploy
+# The 5-minute countdown for players plus the import and the start check.
+TimeoutStartSec=15min

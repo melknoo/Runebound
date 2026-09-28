@@ -14,6 +14,7 @@
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 #   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
 #   .\tools\run_godot.ps1 wsspike <host> [secs]  # M09b: WebSocket echo + download through Tailscale Funnel (tests/ws_spike.gd)
+#   .\tools\run_godot.ps1 deploy                # M09b: roll the laptop server to the latest main now (runebound-deploy)
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
@@ -71,9 +72,9 @@ function Update-Import {
 		Invoke-Import | Out-Null
 	}
 }
-if ($Mode -notin @("import", "reset")) { Update-Import }
+if ($Mode -notin @("import", "reset", "deploy")) { Update-Import }
 
-if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "wsspike")) { Show-OtherGodot }  # headless modes share no GPU
+if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "wsspike", "deploy")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would
@@ -178,6 +179,15 @@ switch ($Mode) {
 		# joining from the title screen ("Join co-op" -> 127.0.0.1).
 		$port = if ($Name) { $Name } else { "7777" }
 		& $godot --headless --path $proj res://scenes/dedicated_server.tscn -- "--port=$port" "--save=user://local_server.json"
+	}
+	"deploy" {
+		# M09b: the laptop's auto-deploy runs every 5 minutes; this runs it now
+		# (sudo without a password for exactly this, set up by setup-service.sh).
+		# With players online it waits for their 5-minute countdown.
+		$target = if ($env:RUNEBOUND_SERVER_SSH) { $env:RUNEBOUND_SERVER_SSH } else { "melvin@melvin-aspire-e5-573g" }
+		Write-Output "Deploying on $target (push first: it takes what is on origin/main) ..."
+		ssh $target "sudo -n systemctl start runebound-deploy.service; journalctl -u runebound-deploy -n 12 --no-pager -o cat"
+		exit $LASTEXITCODE
 	}
 	"wsspike" {
 		# M09b Phase 0: how a WebSocket to the laptop behaves through Tailscale

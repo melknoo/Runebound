@@ -133,6 +133,14 @@ const SCENARIOS := {
 			{"role": "c1", "delay": 3.0, "args": ["--invite=" + NetTestCodes.C1]}],
 		"timeout": 90.0,
 	},
+	# Auto-deploy: the script announced a restart; the server counts down and
+	# sends the player off with the update reason (tools/server/runebound-deploy.sh).
+	"deploy_notice": {
+		"server": [],
+		"deploy_in": 25,
+		"clients": [{"role": "c1", "delay": 0.0}],
+		"timeout": 90.0,
+	},
 	"dns": {
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--connect=nohost.invalid:7777"]}],
 		"timeout": 45.0,
@@ -199,6 +207,11 @@ func _run_scenario(scenario: String, spec: Dictionary, port: int) -> void:
 			srv_args.append("--invites=" + DIR + "invites.txt")
 		if over_ws:
 			srv_args.append("--transport=ws")
+		if spec.has("deploy_in"):
+			var df := FileAccess.open(DIR + "deploy_at", FileAccess.WRITE)
+			df.store_string(str(int(Time.get_unix_time_from_system()) + int(spec["deploy_in"])))
+			df.close()
+			srv_args.append("--deploy-file=" + DIR + "deploy_at")
 		srv_args.append_array(spec["server"] as Array)
 		_clean("srv")
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(DIR + "srv_save.json"))

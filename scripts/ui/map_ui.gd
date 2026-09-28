@@ -47,6 +47,8 @@ func open() -> void:
 		zone.trainer_ui.close()
 	if zone.waypoint_ui != null:
 		zone.waypoint_ui.close()
+	if zone.playtest_ui != null:
+		zone.playtest_ui.close()
 	visible = true
 	player.input_locked = true
 	_view.setup(zone.map_texture(), zone.map_bounds(), MAP_PX)

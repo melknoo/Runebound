@@ -392,6 +392,22 @@ never `DisplayServer` (headless bot clients are clients).
   (systemd sandbox, `IPAddressAllow=localhost`), and turns on
   `tailscale funnel --bg 7780`. `tests/ws_spike.gd` measures a WebSocket
   through Funnel (`run_godot wsspike <host>`).
+- **Auto-deploy (M09b):** `tools/server/runebound-deploy.sh` (root, timer every
+  5 min) fetches the server clone; on a new commit it reads
+  `user://server_status.json` (players, zone, time; `Net.write_status` on
+  roster changes, zone entry and every minute). With players online it writes
+  a restart time to `RUNEBOUND_DEPLOY_FILE`; the server polls it every 2 s,
+  broadcasts NOTICE lines (5 min / 1 min / 10 s; clients toast them,
+  `Net.notice_received`) and kicks everyone with `DEPLOY_KICK_REASON` 3 s
+  before. The script then restarts the server and waits up to 3 min for a
+  fresh status file; otherwise it resets the clone to the old commit and
+  holds the new one (`RUNEBOUND_DEPLOY_HOLD`, respected by
+  `runebound-server.sh update`). Net scenario `deploy_notice`.
+- **Playtest log:** `PlaytestLog` (checklist data
+  `resources/playtest/checklist.json`, ticks in `user://playtest.json`) and
+  `PlaytestUI` (key J, one window at a time like the map). Rule: a new or
+  resolved playtest point in KNOWN_ISSUES goes into the checklist too, with a
+  stable id.
 - **ENet:** bind `*` (or 127.0.0.1 when open), peer
   timeouts 15-30 s (zone builds block the main loop), packet throttle off
   (`throttle_configure(5000, 32, 0)`). After a zone build ENet may still drop

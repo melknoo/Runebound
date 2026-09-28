@@ -590,6 +590,43 @@ func _run() -> void:
 	_check(own_legendary and AffixPool.legendaries_for(&"runebreaker").size() == AffixPool.LEGENDARIES.size(),
 		"the Runebreaker still rolls its own legendaries")
 
+	# --- the playtest checklist (J) ---
+	var ids := PlaytestLog.item_ids()
+	var unique := {}
+	for id in ids:
+		unique[id] = true
+	var groups_filled := true
+	for g: Dictionary in PlaytestLog.groups():
+		if (g.get("items", []) as Array).is_empty():
+			groups_filled = false
+	_check(ids.size() >= 30 and unique.size() == ids.size() and groups_filled,
+		"the playtest checklist loads (%d points, unique ids, no empty group)" % ids.size())
+	var real_path := PlaytestLog.state_path
+	PlaytestLog.state_path = "user://playtest_smoke.json"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlaytestLog.state_path))
+	PlaytestLog.reload()
+	PlaytestLog.set_state(ids[0], PlaytestLog.OK)
+	PlaytestLog.set_state(ids[1], PlaytestLog.PROBLEM, "zu schnell")
+	PlaytestLog.reload()
+	var tally := PlaytestLog.counts()
+	_check(PlaytestLog.state_of(ids[0]) == PlaytestLog.OK and PlaytestLog.note_of(ids[1]) == "zu schnell"
+		and int(tally["ok"]) == 1 and int(tally["problem"]) == 1 and int(tally["open"]) == ids.size() - 2
+		and PlaytestLog.next_state(PlaytestLog.PROBLEM) == PlaytestLog.OPEN,
+		"playtest ticks and notes survive a reload, and the counts add up")
+	lab.playtest_ui.open()
+	var rows_all := lab.playtest_ui.row_count()
+	var locked := player.input_locked
+	lab.playtest_ui._only_open.button_pressed = true
+	var rows_open := lab.playtest_ui.row_count()
+	lab.playtest_ui.close()
+	_check(locked and not player.input_locked and rows_all == ids.size() and rows_open == ids.size() - 2
+		and InputMap.has_action(&"playtest_toggle"),
+		"J opens the playtest log (all rows, 'nur offene' hides the ticked ones) and locks input while open")
+	lab.playtest_ui._only_open.button_pressed = false
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(PlaytestLog.state_path))
+	PlaytestLog.state_path = real_path
+	PlaytestLog.reload()
+
 	# --- M08 notes: sprint on Shift, out of combat only ---
 	player._last_combat_msec = -1000000
 	player.state = Player.State.MOVE

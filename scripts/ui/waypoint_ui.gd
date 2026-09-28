@@ -44,6 +44,8 @@ func open(from: Waypoint, p: Player = null) -> void:
 			zone.trainer_ui.close()
 		if zone.map_ui != null:
 			zone.map_ui.close()
+		if zone.playtest_ui != null:
+			zone.playtest_ui.close()
 	visible = true
 	player.input_locked = true
 	_refresh()

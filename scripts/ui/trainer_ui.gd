@@ -81,6 +81,8 @@ func open(npc: TrainerNpc, p: Player = null) -> void:
 		zone.hero_ui.close()  # one window at a time
 	if zone != null and zone.map_ui != null:
 		zone.map_ui.close()
+	if zone != null and zone.playtest_ui != null:
+		zone.playtest_ui.close()
 	visible = true
 	player.input_locked = true
 	_refresh()

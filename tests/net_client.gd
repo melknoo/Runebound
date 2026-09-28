@@ -497,6 +497,18 @@ class Driver extends Node:
 			"dns":
 				if await _until(func() -> bool: return _failed_reason != "", 40.0, "a lookup failure"):
 					_expect_reason("Could not find")
+			"deploy_notice":
+				var notices: Array[String] = []
+				Net.notice_received.connect(func(text: String) -> void: notices.append(text))
+				var gone := [""]
+				Net.session_ended.connect(func(reason: String) -> void: gone[0] = reason)
+				if not await _in_zone():
+					return
+				if not await _until(func() -> bool: return gone[0] != "", 60.0, "the update restart"):
+					return
+				var saw_countdown := notices.any(func(t: String) -> bool: return t.contains("restart in"))
+				_finish("ok" if saw_countdown and gone[0].contains("restarting for an update") else
+					"fail: notices %s, ended with \"%s\"" % [notices, gone[0]])
 			"invite":
 				if role == "c1":  # a listed code
 					if not await _in_zone():

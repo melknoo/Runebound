@@ -1,0 +1,12 @@
+# RUNEBOUND: look for a new commit every 5 minutes (runebound-deploy.service).
+# Installed as a copy and enabled by tools/server/setup-service.sh.
+[Unit]
+Description=RUNEBOUND auto-deploy every 5 minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+Unit=runebound-deploy.service
+
+[Install]
+WantedBy=timers.target

@@ -19,6 +19,7 @@ const KEYS := {
 	&"map_toggle": [KEY_M],                    # M08 zone map
 	&"party_cancel": [KEY_X],                  # M09 cancels a party travel countdown
 	&"sprint": [KEY_SHIFT],                    # M08 notes: held, out of combat
+	&"playtest_toggle": [KEY_J],               # the playtest checklist (PlaytestUI)
 }
 
 

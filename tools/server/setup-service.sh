@@ -16,6 +16,10 @@
 #   5. Tailscale Funnel: https://<this laptop>.ts.net -> 127.0.0.1:7780
 #   6. moves your world save over (if there is one), drops the old 7777/udp
 #      firewall rule and starts the server
+#   7. auto-deploy: runebound-deploy.timer (every 5 min: a new commit on main
+#      goes live, with a 5-minute countdown when people play) and a sudoers
+#      rule so you can run it now without a password
+#      (tools\run_godot.cmd deploy from the dev PC)
 set -euo pipefail
 
 [[ $EUID -eq 0 ]] || { echo "Please run with sudo: sudo $0" >&2; exit 1; }
@@ -120,6 +124,23 @@ else
 fi
 rm -f /tmp/runebound-funnel.txt
 
+say "7/7 auto-deploy"
+install -o root -g root -m 755 "$here/runebound-deploy.sh" /usr/local/sbin/runebound-deploy
+install -m 644 "$here/runebound-deploy.service" "$here/runebound-deploy.timer" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now runebound-deploy.timer >/dev/null
+sudoers=/etc/sudoers.d/runebound-deploy
+printf '# RUNEBOUND: %s may start the auto-deploy now (tools/server/setup-service.sh)\n%s ALL=(root) NOPASSWD: /usr/bin/systemctl start runebound-deploy.service, /usr/bin/systemctl start runebound-deploy\n' \
+	"$admin" "$admin" > "$sudoers.tmp"
+if visudo -cf "$sudoers.tmp" >/dev/null; then
+	install -o root -g root -m 440 "$sudoers.tmp" "$sudoers"
+	echo "ok: $admin can run 'sudo systemctl start runebound-deploy' without a password"
+else
+	echo "!! the sudoers rule did not validate - not installed"
+fi
+rm -f "$sudoers.tmp"
+systemctl list-timers runebound-deploy.timer --no-pager | head -n 2 || true
+
 say "sandbox check (lower is safer)"
 systemd-analyze security runebound-server.service 2>/dev/null | tail -n 1 || true
 systemd-analyze security runebound-update.service 2>/dev/null | tail -n 1 || true
@@ -128,6 +149,7 @@ cat <<EOF
 
 Done. Next:
   - codes for you and your friends:  $here/invites.sh add NAME
+  - deploys: automatic within 5 min of a push; now: sudo systemctl start runebound-deploy
   - the address for everyone:        $(tailscale status --json 2>/dev/null | sed -n 's/.*"DNSName": "\([^"]*\)\.".*/\1/p' | head -n 1)
   - log:                             journalctl -u runebound-server -f
 EOF

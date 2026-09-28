@@ -6,6 +6,19 @@ progress**, see below. M08 was played by the user; small notes follow after
 M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
 [SERVER_SETUP.md](SERVER_SETUP.md).
 
+## Auto-deploy and the playtest log (built 2026-09-28)
+- **Auto-deploy** (user: "no more SSH restarts"; with players online a
+  5-minute countdown): `runebound-deploy.timer` every 5 min, rollback and
+  hold on a failed start, `tools\run_godot.cmd deploy` / `sudo systemctl
+  start runebound-deploy` without a password (SERVER_SETUP "Updates:
+  automatisch"). Needs one more `sudo tools/server/setup-service.sh` on the
+  laptop. Net scenario `deploy_notice` green.
+- **Playtest log** (key J, user: "a quest log for the open KNOWN_ISSUES
+  points, to tick off"): 50 points in 7 groups (German), states offen /
+  passt / Problem + note, saved per machine in `user://playtest.json` (Claude
+  reads it on the dev PC: `%APPDATA%/Godot/app_userdata/RUNEBOUND/playtest.json`).
+  The title screen shows how many are open. Smoke 427 green.
+
 ## M08 notes (the user's playtest notes, built 2026-09-28)
 The six notes from the user's M08 playtest, with his choices (sprint free
 but out of combat only; drops "deutlich" fewer):

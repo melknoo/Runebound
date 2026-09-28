@@ -42,6 +42,7 @@ signal session_ended(reason: String)         # client: left or lost the server
 signal roster_changed
 signal peer_ready(peer_id: int)  # server: a client finished loading the current zone
 signal peer_left(peer_id: int)   # server: a client left
+signal notice_received(text: String)  # client: a server notice (also a HUD toast)
 
 enum Mode { OFFLINE, SERVER, CLIENT }
 enum Transport { ENET, WS }
@@ -63,6 +64,13 @@ const PENDING_MAX := 8
 ## goodbye after being pushed out.
 const ENET_SPARE := 24
 const INVITES_POLL := 2.0
+## Server: players and zone for tools/server/runebound-deploy.sh (who is on,
+## is the new build up?), written on joins, leaves, zone changes and every minute.
+const STATUS_PATH := "user://server_status.json"
+## Update notices before a deploy restart (seconds left -> text), then a KICK.
+const DEPLOY_NOTICES := [[300, "Server update: restart in 5 minutes."], [60, "Server update: restart in 1 minute."],
+	[10, "Server update: restart in 10 seconds."]]
+const DEPLOY_KICK_REASON := "The server is restarting for an update. Join again in a minute - your character is saved."
 const REFUSAL_LOG_PER_MIN := 5
 ## Protocol-7 games read the challenge's reason as their refusal.
 const UPDATE_REASON := "This server runs a newer version of RUNEBOUND. Update your game (git pull)."
@@ -105,6 +113,12 @@ var godot_override: String = ""
 var auth_test: String = ""
 ## Server: the invite list ("" = open: no codes, ENet on 127.0.0.1 only).
 var invites_path: String = ""
+## Server: the file tools/server/runebound-deploy.sh writes a restart time
+## into (RUNEBOUND_DEPLOY_FILE / --deploy-file=; "" = none).
+var deploy_file: String = ""
+var _deploy_at: int = 0          # unix time of the announced restart (0 = none)
+var _deploy_stage: int = -1      # the last DEPLOY_NOTICES entry shown
+var _deploy_kicked := false
 ## Server counters (tests, the 60 s log line).
 var refused_total: int = 0
 var evicted_total: int = 0
@@ -188,6 +202,7 @@ func _ready() -> void:
 	on(NetMsg.ECHO, _on_echo)
 	on(NetMsg.TRAVEL_GO, _on_travel_go)
 	on(NetMsg.KICK, _on_kick)
+	on(NetMsg.NOTICE, _on_notice)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--netsim="):
 			var parts := arg.trim_prefix("--netsim=").split(",")
@@ -415,11 +430,13 @@ func _process(delta: float) -> void:
 		if _stats_left <= 0.0:
 			_stats_left = STATS_EVERY
 			_log_stats()
-		if invites_path != "":
-			_invites_left -= delta
-			if _invites_left <= 0.0:
-				_invites_left = INVITES_POLL
+		_invites_left -= delta
+		if _invites_left <= 0.0:
+			_invites_left = INVITES_POLL
+			if invites_path != "":
 				_reload_invites()
+			if deploy_file != "":
+				_poll_deploy()
 
 
 func _poll_join(delta: float) -> void:
@@ -628,6 +645,66 @@ func kick(peer_id: int, reason: String) -> void:
 	if roster.has(peer_id):
 		send_to_peer(peer_id, NetMsg.KICK, [reason], CH_EVENTS, false)
 	_drop_later(peer_id)
+
+
+## Client: a line from the server for the HUD.
+func _on_notice(_from: int, payload: Array) -> void:
+	if mode != Mode.CLIENT or payload.is_empty():
+		return
+	var text := str(payload[0])
+	notice_received.emit(text)
+	var zone := get_tree().current_scene as ZoneBase
+	if zone != null and zone.hud != null:
+		zone.hud.toast(text, ArtKit.color("color_roles.resonance.body", Color("#FFC34D")))
+
+
+## Server: one line to everyone connected.
+func notice_all(text: String) -> void:
+	for id: int in roster:
+		send_to_peer(id, NetMsg.NOTICE, [text], CH_EVENTS, false)
+
+
+## Server: players, zone and time for the deploy script.
+func write_status() -> void:
+	if mode != Mode.SERVER:
+		return
+	var f := FileAccess.open(STATUS_PATH, FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify({"players": roster.size(), "zone": zone_scene, "protocol": PROTOCOL,
+		"at": int(Time.get_unix_time_from_system())}))
+	f.close()
+
+
+## Server: a restart is coming (the deploy script wrote its time): count it
+## down for the players, then send them off with a reason just before.
+func _poll_deploy() -> void:
+	var at := 0
+	if FileAccess.file_exists(deploy_file):
+		at = FileAccess.get_file_as_string(deploy_file).strip_edges().to_int()
+	if at != _deploy_at:
+		_deploy_at = at
+		_deploy_stage = -1
+		_deploy_kicked = false
+		if at > 0:
+			log_line("deploy: restart announced for %s" % Time.get_datetime_string_from_unix_time(at + int(Time.get_time_zone_from_system().get("bias", 0)) * 60, true))
+	if _deploy_at <= 0 or roster.is_empty():
+		return
+	var left := _deploy_at - int(Time.get_unix_time_from_system())
+	var stage := -1
+	for i in DEPLOY_NOTICES.size():
+		if left <= int(DEPLOY_NOTICES[i][0]) + 1:
+			stage = i
+	if stage > _deploy_stage:
+		_deploy_stage = stage
+		notice_all(str(DEPLOY_NOTICES[stage][1]))
+	elif _deploy_stage < 0 and left > int(DEPLOY_NOTICES[0][0]):
+		_deploy_stage = 0
+		notice_all("Server update: restart in %d minutes." % ceili(float(left) / 60.0))
+	if left <= 3 and not _deploy_kicked:
+		_deploy_kicked = true
+		for id: int in roster.keys():
+			kick(id, DEPLOY_KICK_REASON)
 
 
 func _on_kick(_from: int, payload: Array) -> void:
@@ -848,6 +925,8 @@ func _close() -> void:
 	_invites_loaded = false
 	_invites_text = ""
 	invites_path = ""
+	deploy_file = ""
+	_deploy_at = 0
 	_ready_epoch.clear()
 	_sim_queue.clear()
 	_sim_last_due.clear()
@@ -882,6 +961,7 @@ func zone_entered(scene_path: String) -> void:
 				zone_scene = scene_path
 				_ready_epoch.clear()
 			log_line("zone %s (epoch %d)" % [scene_path, zone_epoch])
+			write_status()  # the deploy script's "the new build is up"
 		Mode.CLIENT:
 			zone_scene = scene_path
 			send_to_server(NetMsg.ZONE_READY, [scene_path])
@@ -937,6 +1017,7 @@ func peer_name(peer_id: int) -> String:
 
 func _broadcast_roster() -> void:
 	roster_changed.emit()
+	write_status()
 	for id: int in roster:
 		send_to_peer(id, NetMsg.ROSTER, [roster.duplicate(true)], CH_EVENTS, false)
 
@@ -1140,6 +1221,7 @@ func _log_stats() -> void:
 		sent = float(_enet.host.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA)) / STATS_EVERY / 1024.0
 		received = float(_enet.host.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA)) / STATS_EVERY / 1024.0
 	var traffic := "out %.1f KB/s, in %.1f KB/s" % [sent, received] if _enet != null else "WebSocket"
+	write_status()
 	var refused := (" | refused %d" % _refusals) if _refusals > 0 else ""
 	_refusals = 0
 	log_line("tick p50 %.2f / p95 %.2f / max %.2f ms | players %d | enemies %d (%d asleep) | %s%s" % [

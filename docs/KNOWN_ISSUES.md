@@ -1,5 +1,10 @@
 # Known Issues / Technical Debt
 
+> **Playtest points** (feel, balance, looks) are also in the game: key J opens
+> the PLAYTEST log (`resources/playtest/checklist.json`), the user ticks them
+> there (passt / Problem + note, saved in user://playtest.json). When a point
+> is added or resolved here, update the checklist too (keep ids stable).
+
 ## Feel (needs human playtest)
 - Camera sensitivity/zoom defaults unvalidated with a real mouse.
 - Ember Lance roots the player for its 0.14s startup — may feel sticky while

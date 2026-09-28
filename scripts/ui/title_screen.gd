@@ -121,6 +121,14 @@ func _build() -> void:
 	_main_page.add_child(_button("Quit", func() -> void: get_tree().quit()))
 	_main_status = _status_label()
 	_main_page.add_child(_main_status)
+	# The playtest checklist (PlaytestLog): how much is left to try.
+	var todo := PlaytestLog.counts()
+	if int(todo["total"]) > 0:
+		var hint := Label.new()
+		hint.text = "Playtest: %d offen, %d Probleme  (J im Spiel)" % [int(todo["open"]), int(todo["problem"])]
+		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		hint.add_theme_color_override("font_color", UiTheme.MUTED)
+		_main_page.add_child(hint)
 
 	_join_page = VBoxContainer.new()
 	_join_page.add_theme_constant_override("separation", 10)

@@ -180,7 +180,9 @@ func _do(action: Dictionary) -> void:
 				_zone.trainer_ui.close()
 				_zone.waypoint_ui.close()
 				_zone.map_ui.close()
+				_zone.playtest_ui.close()
 			"map": _zone.map_ui.toggle()  # M08
+			"playtest": _zone.playtest_ui.toggle()  # the J checklist
 			"waypoint":  # M08: the travel list of the nearest shrine
 				var nearest: Waypoint = null
 				for child in _zone.world.get_children():

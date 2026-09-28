@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "enemy_types", "look_boss", "rewards",
-	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage"]
+	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
 var result_path := ""
@@ -306,6 +306,9 @@ func _update() -> void:
 				"fail: expected the 4.6.0 client in and the 4.5.2 one out (max roster %d)" % _max_roster
 		"reject_version":
 			verdict = "ok" if _max_roster == 0 else "fail: a wrong version was let in"
+		"deploy_notice":
+			verdict = "ok" if Net.kicks >= 1 and FileAccess.file_exists(Net.STATUS_PATH) else \
+				"fail: %d kicks, status file %s" % [Net.kicks, FileAccess.file_exists(Net.STATUS_PATH)]
 		"invite":
 			if _max_roster > 1:
 				verdict = "fail: %d players got in with one valid code" % _max_roster

@@ -26,6 +26,7 @@ var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
 var map_ui: MapUI            # M08 zone map (M)
+var playtest_ui: PlaytestUI  # the playtest checklist (J)
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
 var look: ZoneLook = null
@@ -111,6 +112,10 @@ func _ready() -> void:
 	map_ui = MapUI.new()  # M08: the zone map on M (zones without one say so)
 	add_child(map_ui)
 	map_ui.setup(player, self)
+
+	playtest_ui = PlaytestUI.new()  # the user's playtest checklist on J
+	add_child(playtest_ui)
+	playtest_ui.setup(player, self)
 
 	style_manager = StyleManager.new()
 	add_child(style_manager)

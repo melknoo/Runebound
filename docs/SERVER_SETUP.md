@@ -40,6 +40,19 @@ Du (im Tailnet) ──────── dieselbe Adresse, direkt übers Tailnet
    - schaltet Funnel ein
 4. **Codes anlegen:** `tools/server/invites.sh add melvin`, `tools/server/invites.sh add anna` und so weiter.
 
+## Updates: automatisch (Auto-Deploy)
+Ein Push auf `main` geht von selbst live. Niemand muss dafür auf den Laptop.
+- **Ablauf:** `runebound-deploy.timer` schaut alle 5 Minuten nach (und 5 Minuten nach dem Boot). Gibt es einen neuen Commit, startet `runebound-deploy` den Server neu. Dabei holen `runebound-update` und der Import den neuen Stand.
+- **Es spielt jemand:** Der Server zählt 5 Minuten herunter, mit Hinweisen bei 5 min, 1 min und 10 s. Kurz vor dem Neustart fliegen alle mit „The server is restarting for an update“ in den Titel. Ihre Charaktere sind gespeichert, sie können gleich wieder beitreten. Gehen vorher alle, startet der Server sofort neu.
+- **Neuer Stand startet nicht:** Schreibt der neue Server nicht innerhalb von 3 Minuten seine Statusdatei, rollt der Deploy auf den alten Commit zurück und sperrt den kaputten (`/var/lib/runebound/deploy_hold`). Der nächste neuere Commit hebt die Sperre auf.
+- **Sofort statt in 5 min:**
+  - vom Dev-PC: `tools\run_godot.cmd deploy`
+  - auf dem Laptop: `sudo systemctl start runebound-deploy`
+  - Beides braucht kein Passwort: Die sudoers-Regel in `/etc/sudoers.d/runebound-deploy` erlaubt genau diesen einen Befehl.
+- **Log:** `journalctl -u runebound-deploy -n 30` zeigt Zeilen wie „deploy: restarting: abc1234 -> def5678“, „live at …“ oder „rolled back“.
+- **Pausieren:** `sudo systemctl disable --now runebound-deploy.timer`. Wieder an geht es mit `enable --now`.
+- **Einrichtung:** `setup-service.sh` ab Stand 2026-09-28 installiert Timer, Dienst, Skript (`/usr/local/sbin/runebound-deploy`) und die sudoers-Regel. Wer das Skript schon früher ausgeführt hat, führt es einmal erneut aus.
+
 ## Einladungscodes
 ```bash
 tools/server/invites.sh add NAME      # neuer Code, wird einmal angezeigt
@@ -77,7 +90,7 @@ tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
 - **Das Update** (`runebound-update`: git pull + Import) läuft vor jedem Start im selben Benutzer. Es darf zu GitHub, ist sonst genauso abgeschottet.
 - **Restrisiken:**
   - Die Funnel-Adresse ist öffentlich auffindbar (über die Zertifikats-Logs). Scanner treffen dann auf den Einladungs-Handshake.
-  - Andere Dienste auf dem Laptop, die auf localhost lauschen (zum Beispiel `:3000`), wären für den Spielserver erreichbar.
+  - Andere Dienste auf dem Laptop, die auf localhost lauschen (zum Beispiel `:3000`), sperrt `runebound-egress` für den Spielserver: Er darf dort keine Verbindung öffnen, nur auf die von tailscaled antworten.
   - Funnel hängt am Gratis-Angebot von Tailscale.
 
 ## Ist-Zustand
@@ -100,6 +113,7 @@ tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
 - **`setup-service.sh`:** die einmalige Einrichtung (siehe oben), wiederholbar.
 - **`invites.sh`:** verwaltet die Einladungscodes.
 - **`runebound-server.sh update | start`:** `update` macht `git fetch` und `pull --ff-only` und importiert, wenn sich Projektdateien geändert haben. Ohne Netz startet der Server mit dem bisherigen Stand. `start` ersetzt sich durch `godot --headless … $RUNEBOUND_SCENE`.
+- **`runebound-deploy.sh` / `.service` / `.timer`:** der Auto-Deploy (siehe oben). Das Skript läuft als root-eigene Kopie in `/usr/local/sbin`.
 - **`runebound-update.service` / `runebound-server.service`:** die Units. Sie werden **kopiert**, nicht verlinkt, damit ein `git pull` keine root-geladene Unit still ändert.
 - **`server.env`:** `RUNEBOUND_TRANSPORT=ws`, `RUNEBOUND_PORT=7780`, `RUNEBOUND_SCENE`, `RUNEBOUND_INVITES` (nur der Pfad).
 - **`run_godot.sh import | ensure-import | smoke | net | serverperf | serve`:** das Gegenstück zu `tools/run_godot.ps1`. `GODOT` überschreibt den Godot-Pfad (Default `~/godot/godot`). `serve` nur benutzen, wenn der Dienst gestoppt ist (derselbe Port).
@@ -107,7 +121,8 @@ tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
 
 ## Bedienung (auf dem Laptop oder per SSH)
 ```bash
-sudo systemctl restart runebound-server    # Update einspielen: holt den Stand, importiert, startet neu
+sudo systemctl start runebound-deploy      # Update jetzt (sonst automatisch alle 5 min, mit Countdown für Spieler)
+sudo systemctl restart runebound-server    # hart neu starten (holt den Stand, importiert), ohne Countdown
 sudo systemctl stop runebound-server       # stoppen
 systemctl status runebound-server          # Zustand
 journalctl -u runebound-server -f          # Spiel-Log live
@@ -133,7 +148,7 @@ Der Server hält genau eine Zone (die, in der seine Welt zuletzt war), bis zu 5 
 
 **Godot-Version:** Server und Spieler brauchen dieselbe Godot-Hauptversion 4.6, die Patch-Version darf abweichen (das Log vermerkt es). Empfohlen ist überall 4.6.3.
 
-**Update einspielen:** `sudo systemctl restart runebound-server`.
+**Update einspielen:** geht automatisch (siehe „Updates: automatisch“). Von Hand: `tools\run_godot.cmd deploy`. Ein harter Neustart ohne Countdown: `sudo systemctl restart runebound-server`.
 - Alle Spieler fliegen dabei sofort raus und landen mit Begründung im Titel. Ihr Charakter ist gespeichert.
 - Spieler brauchen denselben Stand wie der Server. Bei einer anderen Protokoll- oder Godot-Version lehnt der Server mit einer lesbaren Meldung ab.
 - Ein manuelles `git pull` im Dienst-Klon ist unnötig. Das Update-Skript importiert immer dann, wenn sich seit dem letzten Import Projektdateien geändert haben (Stempel `.godot/runebound_import.stamp`). Kompilieren Skripte trotzdem nicht, beendet sich der Server mit einer klaren Meldung.

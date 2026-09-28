@@ -1,0 +1,98 @@
+{
+	"version": 1,
+	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
+	"groups": [
+		{
+			"id": "combat",
+			"title": "Kampf",
+			"items": [
+				{"id": "k_dodge_marker", "src": "M08-Notizen", "title": "Ausweichen: getroffen nur im roten Marker", "hint": "Am Rand eines Brute- oder Colossus-Markers ausweichen. Trifft es nur, wenn du sichtbar im Roten stehst?"},
+				{"id": "k_no_tracking", "src": "M08-Notizen", "title": "Gegner drehen beim Ausholen nicht mehr nach", "hint": "Macht das Kämpfe zu leicht? Wenn ja: Marker größer oder Ausholen kürzer statt Nachdrehen."},
+				{"id": "k_dodge_input", "src": "M08-Notizen", "title": "Leertaste geht nicht mehr verloren", "hint": "Kurz nach einem Dodge oder direkt nach einem Treffer Space drücken: kommt der Dodge? Ohne WASD weg vom Gegner?"},
+				{"id": "k_dodge_cancel", "src": "Feel", "title": "Dodge bricht die Nahkampf-Erholung sofort ab", "hint": "Nach einem Cleave sofort Space: fühlt sich das verlässlich an oder zappelig?"},
+				{"id": "k_sprint", "src": "M08-Notizen", "title": "Sprint mit Shift", "hint": "x1,45 Tempo, gesperrt bis 3 s nach dem letzten Treffer. Passen Tempo und Sperre?"},
+				{"id": "k_ember_root", "src": "Feel", "title": "Ember Lance hält kurz fest (0,14 s)", "hint": "Beim Kiten Ember Lance werfen: fühlt sich das klebrig an?"},
+				{"id": "k_storm_step", "src": "M02", "title": "Storm Step ohne Unverwundbarkeit", "hint": "Durch Gegner dashen: fühlt es sich fair an, dass nur der Dodge schützt?"},
+				{"id": "k_chain_spark", "src": "M02", "title": "Chain Spark wirkt sofort", "hint": "Hat der Zauber genug Gewicht, oder bräuchte er einen kurzen Stopp beim Wirken?"},
+				{"id": "k_fracture_range", "src": "M02", "title": "Fracture Rune gegen Verfolger", "hint": "Auf maximale Reichweite gegen einen verlangsamten Gegner: explodiert sie hinter ihm?"},
+				{"id": "k_fracture_buff", "src": "M07b", "title": "Fracture Rune nutzt jetzt Ausrüstung und Crit", "hint": "Kleiner Buff: zu stark?"},
+				{"id": "k_camera", "src": "Feel", "title": "Kamera mit echter Maus", "hint": "Empfindlichkeit und Zoom: angenehm?"}
+			]
+		},
+		{
+			"id": "enemies",
+			"title": "Gegner & Bosse",
+			"items": [
+				{"id": "g_vessel_ring", "src": "M05", "title": "Vessel-Ring (Phase 2)", "hint": "Ist das Ausweichfenster des wachsenden Rings im Dunkeln lesbar?"},
+				{"id": "g_shadow_runes", "src": "M05", "title": "Schattenrunen des Vessels", "hint": "Eine liegt immer unter dir: ausweichbar oder billig?"},
+				{"id": "g_warden_block", "src": "M05", "title": "Warden blockt von vorne", "hint": "Liest sich Funke und Klirren als 'geh um ihn herum'?"},
+				{"id": "g_spire_casters", "src": "M05", "title": "Caster auf den Spire-Plattformen", "hint": "Fair mit der Kamera auf Distanz?"},
+				{"id": "g_first_camp", "src": "M04", "title": "Erstes Camp nah am Highlands-Start", "hint": "13 m vom Start entfernt: fühlt sich das wie ein Überfall an?"},
+				{"id": "g_enemy_level", "src": "M07", "title": "Gegnerlevel erhöhen nur Leben", "hint": "+8 % Leben pro Level, Schaden bleibt gleich: sollen höhere Gegner auch härter zuschlagen?"},
+				{"id": "g_rusher_eyes", "src": "Feel", "title": "Rusher-Augen auf Kampfdistanz", "hint": "Sind die leuchtenden Augen zu klein, um sie zu lesen?"}
+			]
+		},
+		{
+			"id": "world",
+			"title": "Welt & Camps",
+			"items": [
+				{"id": "w_waypoint_map", "src": "M08-Notizen", "title": "Wegpunkte mit Karte", "hint": "An einem Schrein: zeigt die Karte, wohin es geht? Hover leuchtet, Klick aufs Icon reist."},
+				{"id": "w_portal_titles", "src": "M08-Notizen", "title": "Portal-Titel", "hint": "Kleiner und erst ab etwa 22 m sichtbar (Arena-Tore 14 m): überlagern sie sich noch?"},
+				{"id": "w_camp_respawn", "src": "M08", "title": "Camp-Respawn und Leine", "hint": "Camps kommen nach 10 min wieder, Gegner laufen nach 26 m zurück: passt das?"},
+				{"id": "w_camp_density", "src": "M08", "title": "Camp-Dichte und Level-Bänder", "hint": "8 Camps, 2 Hinterhalte, 1 Patrouille; Süd Level 1, Mitte 2, Nord 3: zu viel, zu wenig?"},
+				{"id": "w_rim", "src": "M08", "title": "Randberge der Highlands", "hint": "Wirken sie vom Plateau aus wie eine Wand?"},
+				{"id": "w_slope_markers", "src": "M08", "title": "Marker auf steilen Hängen", "hint": "Bei Verfolgungen am Hang: passt der Rand des Markers zum Treffer?"},
+				{"id": "w_storm_crest", "src": "M08", "title": "Storm Step über Kuppen", "hint": "Der Dash fliegt gerade weiter und fällt erst danach: stört das?"},
+				{"id": "w_stuck", "src": "M08", "title": "Gegner ohne Navmesh", "hint": "Bleiben Gegner irgendwo hängen, obwohl die Leine sie zurückholt?"},
+				{"id": "w_death", "src": "M04", "title": "Tod in den Highlands", "hint": "Respawn am Zoneneingang mit vollem Leben, keine Strafe: ok so?"}
+			]
+		},
+		{
+			"id": "loot",
+			"title": "Beute & Fortschritt",
+			"items": [
+				{"id": "b_drop_rates", "src": "M08-Notizen", "title": "Neue Drop-Raten", "hint": "Items bei 8 % (Trash) / 30 % (Brute) / 60 % (Elite), Legendaries 0,3 / 1 / 5 %: zu geizig oder richtig?"},
+				{"id": "b_unequip", "src": "M08-Notizen", "title": "Ausrüstung ablegen", "hint": "Knopf 'Unequip' oder Rechtsklick; mit voller Tasche kommt 'Inventory full'."},
+				{"id": "b_affixes", "src": "M07", "title": "Stärke durch 7 Ausrüstungsslots", "hint": "Mehr Affixe insgesamt: wird der Held zu stark?"},
+				{"id": "b_xp_curve", "src": "M07", "title": "XP-Kurve, Level-Cap und Talente", "hint": "Alles Startwerte: levelst du zu schnell oder zu langsam?"},
+				{"id": "b_learn_prices", "src": "M07b", "title": "Lernreihenfolge und Preise", "hint": "Earthbreaker ab Level 2 für 50 Gold zuerst: passt die Reihenfolge?"},
+				{"id": "b_resonance_early", "src": "M07b", "title": "Resonance vor Level 2", "hint": "Sie füllt sich, bevor man etwas damit machen kann: stört das?"},
+				{"id": "b_discard", "src": "M03", "title": "Wegwerfen löscht endgültig", "hint": "Kein Zurücklegen auf den Boden: ok?"}
+			]
+		},
+		{
+			"id": "ui",
+			"title": "UI & Steuerung",
+			"items": [
+				{"id": "u_inventory_combat", "src": "M03", "title": "Inventar pausiert den Kampf nicht", "hint": "Gegner greifen weiter an, während das Fenster offen ist: unfair?"},
+				{"id": "u_esc", "src": "M07b", "title": "Esc bei offenen Fenstern", "hint": "Schließt Esc nur das Fenster, oder springt auch der Mauszeiger um?"},
+				{"id": "u_tab_locked", "src": "M07", "title": "Tab-Zielwahl bei offenem Fenster", "hint": "Mit offenem Talentfenster geht Tab nicht: stört das?"}
+			]
+		},
+		{
+			"id": "look",
+			"title": "Look & Musik",
+			"items": [
+				{"id": "l_music", "src": "M06", "title": "Musik", "hint": "Highlands, Runehold und Spire (erkunden + Kampf), der Boss-Sieg-Klang: passen Stücke und Lautstärken?"},
+				{"id": "l_spire_dark", "src": "M06", "title": "Dunkelheit im Spire", "hint": "In Bewegung: zu dunkel oder genau richtig?"},
+				{"id": "l_runehold_clouds", "src": "M06", "title": "Wolken über Runehold", "hint": "Zu unruhig?"},
+				{"id": "l_first_hitch", "src": "M06", "title": "Ruckler im ersten Kampf", "hint": "Spürst du beim ersten Kampf einer Session einen kurzen Hänger (erste Chain Spark, erster Storm Step)?"},
+				{"id": "l_armor", "src": "Feel", "title": "Rüstung des Helden", "hint": "Wirkt sie zu hell im Vergleich zur Welt?"},
+				{"id": "l_veilstalker", "src": "M06", "title": "Veilstalker-Bewegung", "hint": "Passt die Animation beim Umkreisen und Zurückweichen zum Tempo?"}
+			]
+		},
+		{
+			"id": "coop",
+			"title": "Koop",
+			"items": [
+				{"id": "c_friend_join", "src": "M09b", "title": "Freund tritt ohne Tailscale bei", "hint": "Nur mit Spiel, Adresse und seinem Code. Klappt das auf Anhieb?"},
+				{"id": "c_deploy", "src": "neu", "title": "Server-Update per Push", "hint": "Während ihr spielt: kommen die Hinweise (5 min, 1 min, 10 s), und klappt der Wiedereinstieg?"},
+				{"id": "c_countdown", "src": "M09", "title": "Gruppenreise", "hint": "5 s Countdown, X bricht ab: angenehm?"},
+				{"id": "c_rewards", "src": "M09", "title": "Beute in der Gruppe", "hint": "Jeder in 60 m bekommt volle XP und eigene Drops, Truhen einen Beutel bis 12 m: passt das?"},
+				{"id": "c_hp_scaling", "src": "M09", "title": "Gegnerleben in der Gruppe", "hint": "+70 % Leben pro weiterem Spieler: zu zäh, zu leicht?"},
+				{"id": "c_remote_looks", "src": "M09", "title": "Optik fremder Helden", "hint": "Split-Lance-Splitter, Frostfeld und die Cindermaw-Klinge fehlen bei den anderen noch: fällt das auf?"},
+				{"id": "c_travel_back", "src": "M09", "title": "Direkt zurück durchs Tor", "hint": "Gleich nach der Ankunft wieder durchs Tor startet einen neuen Countdown für alle: nervig?"}
+			]
+		}
+	]
+}

@@ -1,0 +1,16 @@
+{
+ "zone": "res://scenes/hub.tscn",
+ "out": "captures_shots/playtest",
+ "comment": "The playtest checklist (J) over Runehold.",
+ "shots": [
+  {
+   "name": "playtest_log",
+   "player": {"poi": "spawn", "offset": [0, 0.2, 0]},
+   "yaw": 0.0,
+   "pitch": -0.2,
+   "zoom": 4.5,
+   "actions": [{"wait": 0.4}, {"do": "playtest"}, {"wait": 0.3}],
+   "settle": 0.3
+  }
+ ]
+}

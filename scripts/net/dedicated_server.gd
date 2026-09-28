@@ -41,6 +41,10 @@ func _ready() -> void:
 			invites = arg.trim_prefix("--invites=")
 	SaveGame.use_server_save()
 	var err := Net.host(port, players, invites, over_ws)
+	Net.deploy_file = OS.get_environment("RUNEBOUND_DEPLOY_FILE")
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--deploy-file="):  # tests
+			Net.deploy_file = arg.trim_prefix("--deploy-file=")
 	if err != OK:
 		printerr("[net] cannot listen on port %d: %s" % [port, error_string(err)])
 		get_tree().quit(1)
