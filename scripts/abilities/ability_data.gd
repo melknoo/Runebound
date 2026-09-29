@@ -28,9 +28,13 @@ extends Resource
 ## START: known from creation. TRAINER: bought at the hub trainer (level +
 ## gold). TALENT: granted while the talent `unlock_power` is learned.
 enum Unlock { START, TRAINER, TALENT }
+## M10: holding its key keeps firing it (the Elementalist's Rune Bolt).
+@export var repeat_while_held: bool = false
+## M10 threat: enemies take this ability's damage x this as threat (tank
+## abilities threaten more; a taunt pulls regardless).
+@export var threat_mult: float = 1.0
 @export_group("Learning")
-## Input action that fires it (keys live in InputSetup / project.godot).
-@export var input_action: StringName = &""
+## M10: keys belong to loadout slots (InputSetup.SLOT_ACTIONS), not abilities.
 @export var unlock: Unlock = Unlock.TRAINER
 @export var learn_level: int = 1
 @export var learn_price: int = 0

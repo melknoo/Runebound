@@ -1,4 +1,4 @@
-# RUNEBOUND — Progression Design (M07)
+# RUNEBOUND — Progression Design (M07, classes M10)
 
 Status: **implementer proposal**, built while the user was away (they asked
 to continue past M06). Every number and every talent is data. XP values sit
@@ -51,65 +51,96 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
   and legendary powers don't scale. The item detail shows "Item Level N",
   and the compare view lists affix deltas.
 
-## Talent tree (3 branches x 8 nodes)
+## Talent trees (M10: one per class, 3 branches x 8 nodes)
 - **Tiers** open by points spent in the same branch: tier 1 at 0, tier 2 at
-  3, tier 3 at 6, the capstone at 10.
+  3, tier 3 at 6, the capstone at 10 (the generator asserts every tier is
+  reachable).
 - One point per level: by the cap (24 points) a build finishes one branch
   and dips into a second.
 - **Respec:** free, in the talent panel (key N).
-- Behavior nodes are marked ⚙.
+- Behavior nodes are marked ⚙. Nodes marked (P2) / (P3) belong to abilities
+  that arrive in M10 phase 2 (tank) / phase 3 (Elementalist); they can be
+  learned already but do nothing until then.
+- M10 moved the Storm and Ember branches with their spells to the
+  Elementalist; Molten Core (an Earthbreaker talent) stayed with the tank.
+  A migrated Runebreaker's spell talents drop out of its tree (the points are
+  free again).
 
-### Storm (lightning, tempo)
-| Tier | Node | Ranks | Effect |
-|---|---|---|---|
-| 1 | Static Charge | 3 | +3 % crit chance per rank |
-| 1 | Quickstep | 2 | Storm Step cooldown −12 % per rank |
-| 2 | Arc Conduit | 2 | Chain Spark +1 jump per rank |
-| 2 | Galvanize | 3 | +8 % damage to Shocked enemies per rank |
-| 2 | ⚙ Overload | 1 | Storm Step's end point Shocks every enemy within 2.5 m |
-| 3 | ⚙ Thunderclap | 1 | Chain Spark's last target bursts: 60 % damage within 2 m |
-| 3 | Storm Surge | 2 | +15 % Resonance from lightning hits per rank |
-| Cap | ⚙ Eye of the Storm | 1 | Storm Step refunds 20 % of its cooldown per enemy it passes through |
-
-### Ember (fire, damage over time)
-| Tier | Node | Ranks | Effect |
-|---|---|---|---|
-| 1 | Kindling | 3 | Burn damage +20 % per rank |
-| 1 | Searing Lance | 3 | Ember Lance damage +8 % per rank |
-| 2 | ⚙ Split Lance | 1 | Ember Lance splits into two half-damage lances on its first hit |
-| 2 | Piercing Heat | 1 | Ember Lance pierces +1 enemy |
-| 2 | ⚙ Molten Core | 1 | Earthbreaker ignites (Burns) every enemy it hits |
-| 3 | ⚙ Wildfire | 1 | A Burning enemy that dies spreads Burn to enemies within 3 m |
-| 3 | Fuel the Fire | 2 | +10 % damage to Burning enemies per rank |
-| Cap | ⚙ Phoenix Burst | 1 | Ember Lance bursts where it ends: 50 % damage within 2 m, and Burn |
-
-### Runic Warden (defense, Resonance, frost)
+### Runebreaker (tank)
+**Bulwark** (block, threat, damage taken)
 | Tier | Node | Ranks | Effect |
 |---|---|---|---|
 | 1 | Runic Plate | 3 | +15 max health per rank |
+| 1 | Stalwart | 3 | take 3 % less damage per rank |
+| 2 | Shield Wall (P2) | 2 | Rune Wall blocks 5 % more per rank |
+| 2 | Provoker (P2) | 2 | taunts hold 1 s longer per rank |
+| 2 | ⚙ Unbroken | 1 | dodging through an attack grants a 15-health barrier (8 s cooldown) |
+| 3 | ⚙ Riposte (P2) | 1 | a parry's counter hits every enemy within 2.5 m, +15 Resonance |
+| 3 | Bastion (P2) | 2 | Warding Rune reduces damage 5 % more per rank |
+| Cap | ⚙ Unyielding (P2) | 1 | below 30 % health you take 30 % less damage |
+
+**Earthshaker** (Rune Cleave, Earthbreaker, Warden's Leap)
+| Tier | Node | Ranks | Effect |
+|---|---|---|---|
+| 1 | Heavy Hands | 3 | Rune Cleave +8 % damage per rank |
+| 1 | Earthshaker | 2 | Earthbreaker costs 8 less Resonance per rank |
+| 2 | ⚙ Molten Core | 1 | Earthbreaker sets every enemy it hits ablaze |
+| 2 | Aftershock | 2 | Earthbreaker's area +0.5 m per rank |
+| 2 | Wide Arc | 2 | Rune Cleave reaches 15 % further per rank |
+| 3 | ⚙ Quake Leap (P2) | 1 | Warden's Leap lands like Earthbreaker (heavy stagger) |
+| 3 | Hold the Line | 2 | +8 % damage per rank to enemies that are attacking you |
+| Cap | ⚙ Tectonic (P2) | 1 | Earthbreaker taunts every enemy it hits for 3 s |
+
+**Runic Warden** (Resonance, barrier, the burst)
+| Tier | Node | Ranks | Effect |
+|---|---|---|---|
 | 1 | Resonant Strikes | 3 | +10 % Resonance gained per rank |
-| 2 | ⚙ Runic Guard | 1 | **Ability 7 (key 5):** a Resonance barrier (30 Resonance, absorbs 40 + 1 per level, 4 s, 12 s cooldown) |
-| 2 | Earthshaker | 2 | Earthbreaker costs 8 less Resonance per rank |
-| 2 | Frost Ward | 2 | Fracture Rune arms 0.2 s faster per rank |
-| 3 | ⚙ Glacial Bulwark | 1 | Enemies that hit your Runic Guard are Chilled |
-| 3 | ⚙ Resonance Burst | 1 | **Ability 8 (key 6):** spend all Resonance (at least 50) in a 4 m nova: 0.7 damage per point, heavy stagger |
-| Cap | ⚙ Unbroken | 1 | Dodging through an attack grants a 15-health barrier (8 s cooldown) |
+| 1 | Steadfast (P2) | 2 | +3 Resonance per hit Rune Wall blocks, per rank |
+| 2 | ⚙ Runic Guard | 1 | **unlocks Runic Guard** (30 Resonance: a barrier of 40 + 1 per level for 4 s) |
+| 2 | Warding Runes | 2 | Runic Guard absorbs 15 more per rank |
+| 2 | ⚙ Glacial Bulwark | 1 | enemies that strike your Runic Guard are Chilled |
+| 3 | ⚙ Resonance Burst | 1 | **unlocks Resonance Burst** (all Resonance, 50+, in a 4 m nova) |
+| 3 | Binding Chains (P2) | 2 | Rune Chain cooldown -15 % per rank |
+| Cap | ⚙ Aegis of Runes (P2) | 1 | Runic Guard also shields allies within 6 m for half its amount |
 
-## Gold and the trainer (M07b)
-- **Start kit:** Rune Cleave and Dodge. The five other base abilities are
-  bought from **Sigrun Runewright** (Runehold, by the training gear, `[E]`):
+### Elementalist (damage)
+**Storm** (lightning, tempo) - the M07 branch unchanged: Static Charge (+3 %
+crit), Quickstep (Storm Step cooldown -12 %), Arc Conduit (+1 Chain Spark
+jump), Galvanize (+8 % vs Shocked), ⚙ Overload, ⚙ Thunderclap, Storm Surge
+(+15 % Aether from lightning), ⚙ Eye of the Storm (capstone).
 
-  | Ability | Level | Price |
-  |---|---|---|
-  | Earthbreaker | 2 | 50 |
-  | Ember Lance | 3 | 150 |
-  | Storm Step | 4 | 275 |
-  | Chain Spark | 5 | 400 |
-  | Fracture Rune | 7 | 600 |
+**Ember** (fire, damage over time) - the M07 branch with one change: Kindling,
+Searing Lance, ⚙ Split Lance, Piercing Heat, **⚙ Cinderfall (P3)** (Ember Fall
+leaves burning ground for 3 s; replaces Molten Core), ⚙ Wildfire, Fuel the
+Fire, ⚙ Phoenix Burst (capstone).
 
-  Cumulative 50 / 200 / 475 / 875 / 1,475. Runic Guard and Resonance Burst
-  stay talent unlocks. All of it is data on the `AbilityData` (`unlock`,
-  `learn_level`, `learn_price`).
+**Frost** (control)
+| Tier | Node | Ranks | Effect |
+|---|---|---|---|
+| 1 | Frost Ward | 2 | Fracture Rune arms 0.2 s faster per rank |
+| 1 | Aether Flow | 3 | +10 % Aether gained per rank |
+| 2 | Shatter | 3 | +8 % damage per rank to Chilled enemies |
+| 2 | ⚙ Deep Freeze (P3) | 1 | Frost Nova roots the enemies it Chills for 1 s |
+| 2 | Rune Mastery | 2 | Fracture Rune's area +0.5 m per rank |
+| 3 | ⚙ Echo Rune (P3) | 1 | Fracture Rune detonates a second time, at half damage |
+| 3 | Cold Snap (P3) | 2 | Chill lasts 0.5 s longer per rank |
+| Cap | ⚙ Absolute Zero (P3) | 1 | an enemy Chilled three times within 6 s freezes for 2 s |
+
+## Gold and the trainers (M07b, M10: one per class)
+- **Start kit:** the class's basic attack and Dodge. The rest is bought from
+  the class's trainer in Runehold (`[E]`; a hero of another class is sent to
+  its own):
+  - **Sigrun Runewright** (Runebreaker, by the training gear, north-west):
+    Earthbreaker L2, 50 g. The tank's new abilities (phase 2) join her list.
+  - **Maren Emberwright** (Elementalist, by the east wall near the spawn):
+    Ember Lance L2 / 50, Storm Step L3 / 150, Chain Spark L4 / 275, Fracture
+    Rune L5 / 400 (cumulative 50 / 200 / 475 / 875). Phase 3 adds the new
+    spells.
+
+  Runic Guard and Resonance Burst stay talent unlocks. All of it is data on
+  the `AbilityData` (`unlock`, `learn_level`, `learn_price`). The M07b list
+  (one Runebreaker with all eight, Fracture Rune at L7 / 600) is history; the
+  v2 -> v3 migration still refunds those frozen prices.
 - **Gold drops:** every kill pays `round(xp_reward * 0.5 * rand(0.8..1.25))`,
   so elites (x4) and enemy levels (+15 %) carry over. Bosses scatter theirs
   into 3 (Colossus) / 4 (Vessel) piles; chests add 40–60 x item-level scale.
@@ -121,25 +152,32 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
   lists effective damage, average with crit, cooldown, cost and Resonance
   gain per known ability (`StatSheet`, same formulas as the hits).
 
-## Planned: the loadout (M10)
-From M10 on a hero takes **4 of about 12** class abilities into the field
-(RMB, 1, 2, 3; the basic attack on LMB and Dodge stay fixed) and swaps them
-anywhere out of combat. Abilities join the pool through the class trainer
-(this section's gold and level rule), quests and bosses, secrets and
-dungeons (tomes) and the talent tree. The Storm and Ember branches move to
-the elementalist with their spells. See CLASS_DESIGN "Three roles".
+## The loadout (M10, built)
+A hero takes **4 of its class's pool** into the field (RMB, 1, 2, 3; the
+basic attack on LMB and Dodge stay fixed) and swaps them anywhere out of
+combat (the Abilities tab, K; the sprint's 3 s rule). A newly learned ability
+takes the first free slot; a forgotten one (a respec) leaves its slot. M10
+builds 8 pool abilities per class; abilities join the pool through the class
+trainer, the talent tree and, from M12-M14, quests, bosses and tomes. See
+CLASS_DESIGN "Three roles".
 
 ## Save format
-SaveGame **v4** (M08): `{version, world: {zone, flags, camps: {id:
-{cleared_at}}}, characters: [{class_id, known_abilities, gold, inventory,
-equipped, progression, waypoints, map_discovered}], active}`. `world` is
-what a co-op server will own (flags, cleared camps); `characters` stay with
-the player (attuned shrines, map discovery). v3 → v4 adds the new keys
-empty. v1 → v2 adds progression; v2 → v3 wraps the single character as a
-Runebreaker with **the start kit only and the prices of the abilities its
-level had reached refunded as gold** (user, 2026-09-24: every character walks
-the trainer path). Debug `[9]` and `tools\run_godot.cmd reset` (game closed;
-it saves again on quit) give a true fresh start incl. abilities and gold.
+SaveGame **v6** (M10): `{version, characters: [{name, class_id,
+known_abilities, loadout, gold, inventory, equipped, progression, waypoints,
+map_discovered, discovered, world: {zone, flags, camps: {id: {cleared_at}}},
+notes}], active}`. **Every character has its own world** (user, 2026-09-29):
+a new character meets the Colossus itself. The title screen lists, creates
+(class + name) and deletes characters. A save without characters (the
+dedicated server's) keeps one top-level `world`. Migrations: v5 -> v6 copies
+the world into every character and gives a Runebreaker the M07b price of the
+spells that moved to the Elementalist as gold (a toast says so once); v4 ->
+v5 moves zone discovery into the character; v3 -> v4 adds camps, waypoints
+and the map; v2 -> v3 wraps the single character as a Runebreaker with **the
+start kit only and the prices of the abilities its level had reached
+refunded as gold** (user, 2026-09-24: every character walks the trainer
+path); v1 -> v2 adds progression. Debug `[9]` gives the active character a
+true fresh start (the others stay); `tools\run_godot.cmd reset` (game closed)
+deletes the whole save.
 
 ## Open for the user (decisions to confirm)
 0. M07b: Earthbreaker before Ember Lance (L2 / L3); prices; Fracture Rune

@@ -72,6 +72,10 @@ class Driver extends Node:
 		if role == "flood":
 			await _flood(int(_arg("--connections=", "12")), _arg_float("--hold=", 12.0))
 			return
+		# M10: `--class=elementalist` plays that class (a fresh character in this client's save)
+		var want_class := _arg("--class=", "")
+		if want_class != "" and String(SaveGame.active_class_id()) != want_class:
+			SaveGame.create_character(StringName(want_class), player_name)
 		Net.join(address, player_name, SaveGame.active_class_id(), 1, invite)
 		match scenario:
 			"handshake":

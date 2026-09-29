@@ -193,12 +193,11 @@ func _ensure_proxy(peer: int) -> Player:
 	if existing != null and is_instance_valid(existing):
 		return existing
 	var entry: Dictionary = Net.roster.get(peer, {})
-	var p := Player.new()
+	var p := Player.create(ClassData.load_by_id(StringName(str(entry.get("class_id", ClassData.DEFAULT_ID)))))
 	p.name = "Hero_%d" % peer
 	p.net_role = Player.NetRole.PROXY
 	p.is_local = false
 	p.peer_id = peer
-	p.class_data = ClassData.load_by_id(StringName(str(entry.get("class_id", ClassData.DEFAULT_ID))))
 	zone.add_player(p)
 	p.global_position = zone._arrival_point("")  # until the owner's first state arrives
 	heroes[peer] = p
@@ -334,12 +333,11 @@ func _on_hero_spawn(_from: int, payload: Array) -> void:
 	var old := heroes.get(peer) as Player
 	if old != null and is_instance_valid(old):
 		return  # already shown
-	var p := Player.new()
+	var p := Player.create(ClassData.load_by_id(StringName(str(payload[2]))))
 	p.name = "Hero_%d" % peer
 	p.net_role = Player.NetRole.PUPPET
 	p.is_local = false
 	p.peer_id = peer
-	p.class_data = ClassData.load_by_id(StringName(str(payload[2])))
 	zone.add_player(p)
 	p.global_position = payload[4] as Vector3
 	p.apply_net_state(payload[4] as Vector3, float(payload[5]), Vector3.ZERO, 0, 1.0, 1.0)

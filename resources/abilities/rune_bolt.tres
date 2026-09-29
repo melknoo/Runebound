@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"rune_bolt"
+display_name = "Rune Bolt"
+description = "Quick arcane dart. Hold to keep casting; every hit builds Aether."
+cooldown = 0.3
+resonance_cost = 0.0
+resonance_gain_per_hit = 3.0
+startup = 0.0
+active = 0.0
+recovery = 0.0
+damage = 10.0
+damage_type = 4
+weight = 0
+knockback = 0.5
+projectile_speed = 34.0
+aoe_radius = 0.0
+applies_burn = false
+crit_chance = 0.08
+crit_multiplier = 1.6
+repeat_while_held = true
+unlock = 0
+learn_level = 1
+learn_price = 0
+unlock_power = &""

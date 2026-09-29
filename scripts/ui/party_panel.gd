@@ -57,7 +57,9 @@ func _process(delta: float) -> void:
 			row = _make_row()
 			_row_of[p.peer_id] = row
 		var entry: Dictionary = Net.roster.get(p.peer_id, {})
-		(row["label"] as Label).text = "%s  Lv%d" % [str(entry.get("name", "Hero")), int(entry.get("level", 1))]
+		var cls := ClassData.load_by_id(StringName(str(entry.get("class_id", ClassData.DEFAULT_ID))))
+		var role := (" " + cls.role) if cls != null and cls.role != "" else ""  # M10: who tanks, who deals
+		(row["label"] as Label).text = "%s  Lv%d%s" % [str(entry.get("name", "Hero")), int(entry.get("level", 1)), role]
 		var frac := clampf(p.health.current_health / maxf(p.health.max_health, 1.0), 0.0, 1.0)
 		(row["fill"] as ColorRect).size.x = (WIDTH - 4.0) * frac
 		(row["label"] as Label).modulate = Color(1, 1, 1, 0.5) if p.health.is_dead else Color.WHITE

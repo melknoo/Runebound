@@ -13,4 +13,4 @@ max_rank = 1
 stat = &""
 per_rank = 0.0
 power = &"resonance_burst"
-description = "Unlocks Resonance Burst (6): spend all Resonance (50+) in a 4 m nova, 0.7 damage per point, heavy stagger."
+description = "Unlocks Resonance Burst: spend all Resonance (50+) in a 4 m nova, 0.7 damage per point, heavy stagger."

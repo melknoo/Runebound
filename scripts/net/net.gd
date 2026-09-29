@@ -47,7 +47,8 @@ signal notice_received(text: String)  # client: a server notice (also a HUD toas
 enum Mode { OFFLINE, SERVER, CLIENT }
 enum Transport { ENET, WS }
 
-const PROTOCOL := 8
+## 9 (M10): classes with their own kits (rune bolt HERO_FX, the loadout in CHARACTER).
+const PROTOCOL := 9
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

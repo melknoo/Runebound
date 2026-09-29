@@ -85,6 +85,43 @@ func _ready() -> void:
 	VFX.warm_up(world, hidden)
 	_warm_up_characters(hidden + Vector3(0, -1.2, 0))
 
+	_build_player_ui()
+
+	style_manager = StyleManager.new()
+	add_child(style_manager)
+	style_manager.setup(self, world)
+	if look != null:
+		style_manager.apply_look(look)
+
+	SaveGame.restore_player(player)
+	_zone_ready()
+	_discover()
+	# M10 save migration: a Runebreaker's elemental spells went to the Elementalist.
+	var refund := SaveGame.pop_note("m10_refund:")
+	if refund != "":
+		hud.toast("Your elemental spells now belong to the Elementalist class: %s gold refunded" % refund.get_slice(":", 1),
+			ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
+		SaveGame.request_save()
+	if MusicDirector.instance != null:
+		MusicDirector.instance.play_zone(_zone_music())
+
+	if DisplayServer.get_name() != "headless":
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+	if "--worldcapture" in OS.get_cmdline_user_args():
+		var capture: Node = (load("res://tests/world_capture.gd") as GDScript).new()
+		add_child(capture)
+	_attach_test_runners()
+	Net.zone_entered(scene_file_path)  # M09: a client reports it has loaded the zone
+	if net_world != null:
+		net_world.watch_local_hero(player)  # after ZONE_READY: the server has a proxy for it by then
+		party_panel = PartyPanel.new()
+		hud.add_child(party_panel)
+		party_panel.setup(self)
+
+
+## The HUD and the windows that follow the local hero.
+func _build_player_ui() -> void:
 	hud = Hud.new()
 	hud.layer = 5
 	add_child(hud)
@@ -94,7 +131,8 @@ func _ready() -> void:
 	add_child(debug_overlay)
 	debug_overlay.setup(self)
 
-	# M07b hero window: inventory (I), character (C) and talents (N) as tabs.
+	# M07b hero window: inventory (I), character (C), talents (N) and, M10,
+	# the abilities / loadout (K) as tabs.
 	hero_ui = HeroUI.new()
 	add_child(hero_ui)
 	hero_ui.setup(player)
@@ -117,31 +155,53 @@ func _ready() -> void:
 	add_child(playtest_ui)
 	playtest_ui.setup(player, self)
 
-	style_manager = StyleManager.new()
-	add_child(style_manager)
-	style_manager.setup(self, world)
-	if look != null:
-		style_manager.apply_look(look)
 
-	SaveGame.restore_player(player)
-	_zone_ready()
-	_discover()
-	if MusicDirector.instance != null:
-		MusicDirector.instance.play_zone(_zone_music())
+## Tests and the debug overlay (offline only): the local hero becomes a fresh
+## hero of another class where it stands; camera, targeting and every window
+## follow it. Nothing is saved - the active character stays what it was.
+func debug_swap_class(class_id: StringName) -> Player:
+	var cls := ClassData.load_by_id(class_id)
+	if cls == null or player == null or Net.is_online():
+		return player
+	var old := player
+	var pos := old.global_position
+	for ui: Node in [hud, debug_overlay, hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui]:
+		if ui != null:
+			remove_child(ui)
+			ui.queue_free()
+	remove_player(old)
+	world.remove_child(old)
+	old.queue_free()
+	local_player = Player.create(cls)
+	local_player.name = "Player"
+	local_player.is_local = true
+	add_player(local_player)
+	local_player.global_position = pos
+	camera_rig.set_target(local_player)
+	local_player.camera_rig = camera_rig
+	targeting.player = local_player
+	local_player.targeting = targeting
+	for e in EnemyBase.all_enemies:
+		if is_instance_valid(e) and e.player == old:
+			e.player = local_player
+	for child in world.get_children():  # loot and coins on their way to the old hero
+		if child is WorldPickup and (child as WorldPickup).player == old:
+			(child as WorldPickup).player = local_player
+	_build_player_ui()
+	return local_player
 
-	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-	if "--worldcapture" in OS.get_cmdline_user_args():
-		var capture: Node = (load("res://tests/world_capture.gd") as GDScript).new()
-		add_child(capture)
-	_attach_test_runners()
-	Net.zone_entered(scene_file_path)  # M09: a client reports it has loaded the zone
-	if net_world != null:
-		net_world.watch_local_hero(player)  # after ZONE_READY: the server has a proxy for it by then
-		party_panel = PartyPanel.new()
-		hud.add_child(party_panel)
-		party_panel.setup(self)
+## Tests and captures: the local hero, swapped to the class that owns
+## `ability_id` when it plays another one (learning that class's whole kit).
+func debug_hero_for(ability_id: StringName) -> Player:
+	if player == null or ability_id == &"dodge" or player.ability(ability_id) != null:
+		return player
+	for cls in ClassData.all():
+		if cls.ability(ability_id) != null:
+			var hero := debug_swap_class(cls.id)
+			hero.debug_learn_all()
+			return hero
+	return player
 
 
 ## `-- --shots=<json>` / `-- --perf=<json>`: data-driven capture and perf runs
@@ -508,9 +568,8 @@ func _build_interior_environment(l: ZoneLook) -> void:
 
 
 func _spawn_player() -> void:
-	local_player = Player.new()
+	local_player = Player.create(ClassData.load_by_id(SaveGame.active_class_id()))
 	local_player.name = "Player"
-	local_player.class_data = ClassData.load_by_id(SaveGame.active_class_id())
 	local_player.is_local = true
 	add_player(local_player)
 	# M08: arrive where the gate or shrine we used points, else at the spawn.
@@ -1067,7 +1126,8 @@ func spawn_item_drop(item: ItemData, pos: Vector3, owner: Player = null) -> Item
 
 
 func debug_drop_item(legendary: bool) -> void:
-	var item := ItemGenerator.generate_legendary() if legendary else ItemGenerator.generate(1)
+	var cls := player.class_data.id
+	var item := ItemGenerator.generate_legendary(cls) if legendary else ItemGenerator.generate(1, cls)
 	var offset := Vector3(randf_range(-1.5, 1.5), 0, randf_range(-2.5, -1.5))
 	spawn_item_drop(item, player.global_position + player.facing() * 2.0 + offset)
 
@@ -1122,10 +1182,11 @@ func stress_test() -> void:
 	spawn_elite()
 
 
-## Debug [9] (F1 overlay): a real fresh start. Clears the live character too
-## (gear, inventory, level, talents) and world flags, deletes the save, then
-## reloads Runehold. Wiping only the file kept the items in memory, and the
-## next save wrote them straight back.
+## Debug [9] (F1 overlay): a real fresh start for the active character (M10:
+## the other characters stay). Clears the live character too (gear,
+## inventory, level, talents, loadout) and its world, then reloads Runehold.
+## Wiping only the file kept the items in memory, and the next save wrote them
+## straight back.
 func wipe_save() -> void:
 	player.equipment.inventory.clear()
 	player.equipment.equipped.clear()
@@ -1134,11 +1195,15 @@ func wipe_save() -> void:
 	player.progression.from_dict({})
 	# M07b: the start kit and an empty purse, like a new character
 	player.known_abilities = player.class_data.starting_abilities.duplicate()
+	player.restore_loadout([])
 	player.abilities_changed.emit()
 	player.gold = 0
 	player.gold_changed.emit(0, 0)
-	SaveGame.wipe()
-	hud.toast("Fresh start: save, gear, level, abilities, gold and flags wiped", Color(1, 0.4, 0.4))
+	player.discovered_waypoints = PackedStringArray()
+	player.map_discovered = PackedStringArray()
+	player.discovered_zones = PackedStringArray()
+	SaveGame.reset_active_character()
+	hud.toast("Fresh start: this character's gear, level, abilities, gold and world wiped", Color(1, 0.4, 0.4))
 	if DisplayServer.get_name() != "headless":
 		get_tree().change_scene_to_file.call_deferred("res://scenes/hub.tscn")
 

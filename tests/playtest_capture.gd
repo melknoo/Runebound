@@ -51,7 +51,7 @@ func _recenter() -> void:
 
 
 func _run() -> void:
-	var player := lab.player
+	var player: Player = lab.player
 	player.god_mode = true
 	player.debug_learn_all()  # M07b: harness runs know the whole kit
 	await _wait(0.8)
@@ -85,7 +85,8 @@ func _run() -> void:
 	punchbag.max_health = 5000.0
 	_clear_and_place(punchbag, player.facing() * 1.4)
 	await _wait(0.2)
-	player.try_melee()
+	player = lab.debug_hero_for(&"rune_cleave")
+	player.try_ability(&"rune_cleave")
 	await _wait(0.17)
 	await _shot("melee_impact")
 	await _wait(0.6)
@@ -97,7 +98,8 @@ func _run() -> void:
 	aim_flat.y = 0.0
 	_clear_and_place(ember_target, aim_flat.normalized() * 7.0)
 	await _wait(0.2)
-	player.try_ember()
+	player = lab.debug_hero_for(&"ember_lance")
+	player.try_ability(&"ember_lance")
 	await _wait(0.22)
 	await _shot("ember_flight")
 	await _wait(0.14)
@@ -111,7 +113,8 @@ func _run() -> void:
 	eb_bag.max_health = 5000.0
 	_clear_and_place(eb_bag, Vector3(2, 0, 1))
 	await _wait(0.2)
-	player.try_earthbreaker()
+	player = lab.debug_hero_for(&"earthbreaker")
+	player.try_ability(&"earthbreaker")
 	await _wait(0.42)
 	await _shot("earthbreaker_windup")
 	await _wait(0.22)
@@ -143,7 +146,8 @@ func _run() -> void:
 	_clear_and_place(dash_bag, player.facing() * 3.0)
 	await _wait(0.2)
 	Input.action_press(&"move_forward")
-	player.try_storm_step()
+	player = lab.debug_hero_for(&"storm_step")
+	player.try_ability(&"storm_step")
 	Input.action_release(&"move_forward")
 	await _wait(0.25)
 	await _shot("storm_step_trail")
@@ -162,7 +166,8 @@ func _run() -> void:
 			+ Vector3(i * 1.5 - 1.5, 0, 0)
 	await _wait(0.2)
 	player.reset_cooldowns()
-	player.try_chain_spark()
+	player = lab.debug_hero_for(&"chain_spark")
+	player.try_ability(&"chain_spark")
 	await _wait(0.08)
 	await _shot("chain_spark_arcs")
 	await _wait(0.6)
@@ -174,7 +179,8 @@ func _run() -> void:
 	_clear_and_place(rune_bag, player.facing() * 6.0)
 	await _wait(0.2)
 	player.reset_cooldowns()
-	player.try_fracture_rune()
+	player = lab.debug_hero_for(&"fracture_rune")
+	player.try_ability(&"fracture_rune")
 	await _wait(0.8)
 	await _shot("fracture_rune_armed")
 	await _wait(0.55)
@@ -267,7 +273,8 @@ func _run() -> void:
 	await _wait(0.2)
 	burn_bag.status.apply_burn()
 	player.reset_cooldowns()
-	player.try_ember()
+	player = lab.debug_hero_for(&"ember_lance")
+	player.try_ability(&"ember_lance")
 	await _wait(0.42)
 	await _shot("cindermaw_eruption")
 	await _wait(0.6)
@@ -292,10 +299,12 @@ func _run() -> void:
 			+ Vector3(-3.0 + i * 3.0, 0, -i * 1.0)
 	await _wait(0.2)
 	player.reset_cooldowns()
-	player.try_chain_spark()
+	player = lab.debug_hero_for(&"chain_spark")
+	player.try_ability(&"chain_spark")
 	await _wait(0.5)
 	player.reset_cooldowns()
-	player.try_chain_spark()  # lightning on Conductors: arcs everywhere
+	player = lab.debug_hero_for(&"chain_spark")
+	player.try_ability(&"chain_spark")  # lightning on Conductors: arcs everywhere
 	await _wait(0.08)
 	await _shot("conductor_arcs")
 	await _wait(0.6)
@@ -306,7 +315,8 @@ func _run() -> void:
 	await _shot("stress_combat")
 	player.gain_resonance(100.0)
 	player.reset_cooldowns()
-	player.try_earthbreaker()
+	player = lab.debug_hero_for(&"earthbreaker")
+	player.try_ability(&"earthbreaker")
 	await _wait(0.62)
 	await _shot("stress_earthbreaker")
 	await _wait(1.0)
@@ -314,19 +324,22 @@ func _run() -> void:
 	# --- style comparison: same standing scene, three render styles ---
 	lab.reset_lab()
 	await _wait(0.6)
-	player.try_ember()
+	player = lab.debug_hero_for(&"ember_lance")
+	player.try_ability(&"ember_lance")
 	await _wait(0.2)
 	await _shot("style_c_hybrid")
 	lab.cycle_style()  # -> B native pixel
 	await _wait(0.4)
 	player.reset_cooldowns()
-	player.try_ember()
+	player = lab.debug_hero_for(&"ember_lance")
+	player.try_ability(&"ember_lance")
 	await _wait(0.2)
 	await _shot("style_b_native")
 	lab.cycle_style()  # -> A low res
 	await _wait(0.4)
 	player.reset_cooldowns()
-	player.try_ember()
+	player = lab.debug_hero_for(&"ember_lance")
+	player.try_ability(&"ember_lance")
 	await _wait(0.2)
 	await _shot("style_a_lowres")
 	lab.cycle_style()  # back to hybrid

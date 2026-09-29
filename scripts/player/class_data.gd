@@ -1,27 +1,46 @@
 class_name ClassData
 extends Resource
 ## M07b: a playable class as data (docs/TECHNICAL_ARCHITECTURE.md, "Multi-class
-## seams"). Lists which abilities the class has (HUD order), which of them a
-## fresh character knows, its talent branch names and its rig. Behavior stays
-## in Player; a second class extends Player and supplies its own ClassData.
+## seams"). Lists which abilities the class has, which of them a fresh
+## character knows, its talent branches and its rig. M10: behaviour lives in
+## the class's hero script (scripts/player/classes/, `extends Player`);
+## Player.create(class_data) instantiates it.
 
 const CLASS_DIR := "res://resources/classes/"
 const DEFAULT_ID: StringName = &"runebreaker"
 
 @export var id: StringName = &""
 @export var display_name: String = ""
+## M10: the co-op role in a word ("Tank", "Damage", "Healer").
+@export var role: String = ""
 @export_multiline var description: String = ""
-## Every ability of the class, in HUD slot order.
+## M10: the hero script (extends Player) with this class's ability code.
+@export var hero_script: Script = null
+## Every ability of the class (basic attack first, then the pool in trainer order).
 @export var abilities: Array[AbilityData] = []
+## M10: the fixed LMB ability; every other ability goes into a free slot.
+@export var basic_attack: StringName = &""
 ## Ability ids a fresh character starts with (the rest are learned).
 @export var starting_abilities: Array[StringName] = []
-## Talent branch display names, indexed by TalentData.Branch.
+## Talent branch display names and colour roles, indexed by TalentData.Branch.
 @export var talent_branches: Array[String] = ["Storm", "Ember", "Runic Warden"]
+@export var talent_colors: Array[String] = ["lightning", "fire", "frost"]
 @export var rig_path: String = ""
 @export var material_id: String = ""
-## The class resource (Runebreaker: Resonance).
+## M10: a tint over the body atlas while a class borrows another class's rig.
+@export var body_tint: Color = Color.WHITE
+## Health at level 1 before gear (M10: the tank is sturdier, the caster frailer).
+@export var base_max_hp: float = 100.0
+## The class resource (Runebreaker: Resonance, Elementalist: Aether) and the
+## art_spec colour role of its HUD bar and rig glow.
 @export var resource_label: String = "Resonance"
+@export var resource_color_role: String = "resonance"
 @export var max_resource: float = 100.0
+## M10 bots: how far from its target this class likes to fight.
+@export var preferred_range: float = 1.4
+## M10: the Runehold trainer of this class and where to find them.
+@export var trainer_name: String = ""
+@export var trainer_spot_hint: String = ""
 
 static var _all: Array[ClassData] = []
 

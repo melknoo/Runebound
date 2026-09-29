@@ -103,7 +103,8 @@ func _setup_party() -> void:
 	if not dedicated:
 		party.append(zone.player)
 	for i in heroes - party.size():
-		var p := Player.new()
+		# M10: a mixed party, like real co-op (every other bot an Elementalist)
+		var p := Player.create(ClassData.load_by_id(&"elementalist" if i % 2 == 0 else &"runebreaker"))
 		p.is_local = false
 		p.input_source = BotInputSource.new(i + 2)  # before add_child: never the keyboard
 		zone.add_player(p)

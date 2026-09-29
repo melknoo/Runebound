@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"deep_freeze"
+display_name = "Deep Freeze"
+class_id = &"elementalist"
+branch = 2
+tier = 1
+max_rank = 1
+stat = &""
+per_rank = 0.0
+power = &"deep_freeze"
+description = "Frost Nova roots the enemies it Chills for 1 s."

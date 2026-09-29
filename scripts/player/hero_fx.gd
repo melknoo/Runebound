@@ -22,12 +22,22 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			Sfx.play("ember_cast", a[0] as Vector3, -3.0)
 		&"ember_fire":
 			Sfx.play("ember_fire", a[0] as Vector3, -2.0, 0.1)
-			if hero.net_role == Player.NetRole.PUPPET and hero.ember != null:
+			var ember := hero.ability(&"ember_lance")
+			if hero.net_role == Player.NetRole.PUPPET and ember != null:
 				var proj := EmberLanceProjectile.new()
 				proj.visual_only = true
-				proj.setup(hero.ember, a[1] as Vector3, hero)
+				proj.setup(ember, a[1] as Vector3, hero)
 				proj.position = a[0] as Vector3  # before add_child, like every projectile
 				scene.add_child(proj)
+		&"rune_bolt":  # [muzzle, dir] M10: puppets fly a visual copy
+			Sfx.play("ember_cast", a[0] as Vector3, -12.0, 0.15, 1.6)
+			var bolt_data := hero.ability(&"rune_bolt")
+			if hero.net_role == Player.NetRole.PUPPET and bolt_data != null:
+				var bolt := SpellBolt.new()
+				bolt.visual_only = true
+				bolt.setup(bolt_data, a[1] as Vector3, hero)
+				bolt.position = a[0] as Vector3
+				scene.add_child(bolt)
 		&"slam":
 			VFX.earthbreaker_slam(scene, a[0] as Vector3, float(a[1]))
 			Sfx.play("earthbreaker_impact", a[0] as Vector3, 2.0, 0.06)
@@ -43,10 +53,13 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 		&"ring":
 			VFX.ground_ring(scene, a[0] as Vector3, a[1] as Color, float(a[2]), float(a[3]))
 		&"rune":
-			if hero.net_role == Player.NetRole.PUPPET and hero.fracture_rune != null:
+			var rune_data := hero.ability(&"fracture_rune")
+			if hero.net_role == Player.NetRole.PUPPET and rune_data != null:
 				var rune := FractureRune.new()
 				rune.visual_only = true
-				rune.setup(hero.fracture_rune, hero)
+				if a.size() > 2:
+					rune.radius = float(a[2])
+				rune.setup(rune_data, hero)
 				rune.arm_time = float(a[1])
 				rune.position = a[0] as Vector3
 				scene.add_child(rune)

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"warding_runes"
+display_name = "Warding Runes"
+class_id = &"runebreaker"
+branch = 2
+tier = 1
+max_rank = 2
+stat = &"guard_amount"
+per_rank = 15.0
+power = &""
+description = "Runic Guard absorbs {value} more damage."

@@ -206,6 +206,24 @@
 - The laptop server shows single tick spikes up to ~60 ms under full load
   (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
+## M10 open items (phase 1 built, needs the user's playtest)
+- The Elementalist borrows the Runebreaker rig in a blue tint (sword and
+  all) until phase 3 builds its own; its casts use the Runebreaker's
+  upper-body gestures.
+- Casting on the move keeps the hero facing its aim for 0.45 s; with the
+  borrowed rig a backwards strafe plays the forward run clip.
+- Numbers to feel: Rune Bolt 10 damage every 0.3 s (+3 Aether a hit), the
+  Elementalist's 85 health, the new trainer prices (Ember Lance L2 50 g ...
+  Fracture Rune L5 400 g).
+- Talents of the abilities that come in phases 2-3 can be learned already and
+  do nothing yet (marked (P2) / (P3) in PROGRESSION_DESIGN).
+- The tank has one trainer ability (Earthbreaker) until phase 2.
+- Perf and stress now fight as the Elementalist: full-combat numbers from
+  before M10 are not comparable (the rotation changed).
+- Headless only: swapping the hero's class in tests logs "Parameter
+  material is null" from the dummy renderer when the old rig is freed
+  (cosmetic, like the lab's initial wave).
+
 ## Technical
 - Two game instances at once on the dev iGPU crashed the one in the
   background with "Vulkan device was lost" (Windows GPU resets,
@@ -232,7 +250,7 @@
   `add_child(node, true)`.
 
 ## Test debt
-- tests/debug_ember.gd / debug_camera.gd are throwaway diagnostics; delete or
-  fold into smoke test when convenient.
+- tests/debug_camera.gd is a throwaway diagnostic; delete or fold into the
+  smoke test when convenient (debug_ember went with M10).
 - Capture run asserts nothing automatically — it relies on eyeball review of
   captures/.

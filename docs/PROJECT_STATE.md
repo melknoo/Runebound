@@ -1,10 +1,58 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-29 · Milestone: **M09 Co-op** — built, played by the user
-and a friend over Tailscale. **M09b (friends without Tailscale) in
-progress**, see below. M08 was played by the user; the notes from that playtest
-were built on 2026-09-28. M07 and M07b were accepted on 2026-09-24. Server laptop:
-[SERVER_SETUP.md](SERVER_SETUP.md).
+Updated: 2026-09-29 · Milestone: **M10 Three roles I (tank + Elementalist +
+loadout)** — phase 1 of 4 built (below). M09 Co-op was played by the user and a
+friend; M09b (friends without Tailscale) is deployed. M08 was played by the
+user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
+accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## M10 Three roles I (in progress, 2026-09-29)
+Plan with the user's answers (8 abilities per class now, the rest from M12-M14
+sources; block = hold + parry; the Elementalist builds and spends **Aether**;
+**one world per character**): CLASS_DESIGN "Three roles", ROADMAP M10.
+- **Phase 1 (built): chassis, loadout, characters.**
+  - Classes are their own hero scripts: `Player` is the shared chassis,
+    `RunebreakerHero` (Rune Cleave, Earthbreaker, Runic Guard, Resonance
+    Burst) and `ElementalistHero` (new **Rune Bolt** on LMB, held for
+    auto-fire, plus Ember Lance, Storm Step, Chain Spark, Fracture Rune).
+    `Player.create(class_data)` makes every hero (TECHNICAL_ARCHITECTURE
+    "Classes and the loadout").
+  - **Loadout:** LMB = basic attack, Space = dodge, four free slots RMB / 1 /
+    2 / 3 (keys 4-6 are free again). New abilities take the first free slot;
+    swapping in the hero window's **Abilities tab (K)**, only out of combat.
+    The HUD always shows six slots.
+  - **Characters:** title screen "Characters" (list, play, delete with a
+    second click) and "New character" (class + name). SaveGame **v6**: every
+    character has its own world (flags, camps, zone). The migration refunds a
+    Runebreaker's four elemental spells as gold (toast on the next zone).
+  - **Two trainers** in Runehold: Sigrun (Runebreaker, north-west) and Maren
+    Emberwright (Elementalist, east wall by the spawn; Ember Lance L2 50 g,
+    Storm Step L3 150, Chain Spark L4 275, Fracture Rune L5 400).
+  - **Talent trees per class** (48 nodes): tank Bulwark / Earthshaker / Runic
+    Warden, Elementalist Storm / Ember / Frost. Nodes of the abilities that
+    come in phases 2-3 are listed already (inert until then).
+  - Items follow their ability's class (four spell legendaries to the
+    Elementalist, the tank keeps Glacier Heart and Emberheart Plate; boss
+    legendaries roll per hero class; staves and robes for the Elementalist).
+  - The Elementalist has 85 health, the tank 100; it borrows the Runebreaker
+    rig in a blue tint until phase 3. New colour role `aether` (#F06AC8).
+  - Bots play their class (the caster keeps its distance); `run_godot coop`
+    brings a tank and an Elementalist companion. Net protocol 9.
+  - Tests: smoke 461 checks green (loadout rules, both trainers, v5 -> v6
+    migration, characters on the title screen, the class swap); the
+    harnesses (shots, perf, stress, captures) switch the hero to the class of
+    the ability they ask for (`ZoneBase.debug_hero_for`).
+  - Found on the way: a headless boot without a test flag used the player's
+    real save (it migrated the user's save to v6 early; backup
+    `runebound_save.backup_2026-09-29_m10.json`). Headless runs without
+    `--save=` now use `user://headless_save.json`.
+- **Phase 2 (next): the tank** - threat + taunt, the aggro mark, Rune Wall
+  (block + parry), damage reduction, Rune Challenge, Rune Chain, Warden's
+  Leap, Warding Rune.
+- **Phase 3: the Elementalist** - its own rig (a look preview first), Frost
+  Nova, Flame Wall, Ball Lightning, Ember Fall.
+- **Phase 4:** solo check of both classes, shots, perf, docs, the playtest
+  list, the gate walk.
 
 ## Direction after M09b (user decisions 2026-09-29)
 The user likes the setting, the music and the atmosphere; what is missing

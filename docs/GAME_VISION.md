@@ -34,8 +34,9 @@ in the co-op dungeons:
   and frost; inherits Ember Lance, Chain Spark, Fracture Rune and Storm Step.
 - **Root druid (working name), the healer:** plants breaking out of burnt
   earth; targeted heals, healing zones, shields and buffs.
-Classes are data (`ClassData`). Until M10 the Runebreaker still carries
-today's mixed kit (CLASS_DESIGN "Runebreaker today").
+Classes are data (`ClassData`) plus a hero script each. Since M10 phase 1
+the Runebreaker and the Elementalist are separate classes; a save holds
+several characters, each with its own world (CLASS_DESIGN "Three roles").
 
 ## Anti-goals
 No MMO scope (co-op is 2–5 friends on one server, not a persistent world), no

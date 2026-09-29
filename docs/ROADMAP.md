@@ -208,8 +208,20 @@ sie erst, wenn ihre Fähigkeit eine ID hat. Für den Druiden kommt in M11 eine F
 liegt als `PIXELLAB_API_KEY` in der git-ignorierten `.env`, nie in einem `.mcp.json` im Repo). Für
 Icons wird er nicht gebraucht.
 
-### M10 — Drei Rollen I: Tank + Elementar-Magier + Loadout
+### M10 — Drei Rollen I: Tank + Elementar-Magier + Loadout (in Arbeit)
 Ersetzt die alte „Zweite Klasse“. Details: CLASS_DESIGN „Three roles“.
+**Entscheidungen des Spielers (2026-09-29):** 8 Pool-Fähigkeiten je Klasse jetzt, die übrigen
+~4 kommen ab M12–M14 aus Bossen, Quests und Folianten; Block = halten (vorn −75 %) + Parade in
+den ersten 0,3 s; der Magier baut **Äther** auf und gibt es aus (eigene Farbe); **jeder
+Charakter hat seine eigene Welt**.
+**Stand:** Phase 1 gebaut (Klassen-Chassis, Runenbolzen, Loadout mit Tab K, Charakterwahl,
+SaveGame v6 mit Welt je Charakter, zweite Trainerin Maren, Talentbäume je Klasse, Items je
+Klasse, Bots je Klasse; Smoke 461 grün). Als Nächstes Phase 2 (Tank: Bedrohung, Spott, Block,
+Parade, die 5 neuen Fähigkeiten), dann Phase 3 (Magier-Rig + 4 Zauber) und Phase 4 (Abschluss,
+dein Playtest).
+**Werkzeug:** Posen, Silhouetten und das Magier-Rig entstehen im Live-Blender-Loop
+(`tools/modelgen/live.py` über den Blender-MCP: bauen, posieren, Screenshot); jedes Ergebnis
+wandert zurück ins Skript, das Skript bleibt die einzige Quelle.
 - **Runebreaker wird Tank:** Rune Cleave, Earthbreaker, Runic Guard und Resonance Burst bleiben;
   neu kommen Spott, Block und Schadensreduktion. **Bedrohung + Spott:** Gegner merken sich, wer
   am meisten droht, Tank-Fähigkeiten drohen extra, ein Spott zieht sofort.

@@ -13,4 +13,4 @@ max_rank = 1
 stat = &""
 per_rank = 0.0
 power = &"runic_guard"
-description = "Unlocks Runic Guard (5): spend 30 Resonance for a barrier that absorbs 40 damage (+1 per level) for 4 s."
+description = "Unlocks Runic Guard: spend 30 Resonance for a barrier that absorbs 40 damage (+1 per level) for 4 s."

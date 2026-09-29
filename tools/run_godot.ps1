@@ -165,11 +165,14 @@ switch ($Mode) {
 			"res://scenes/dedicated_server.tscn", "--", "--port=$port", "--save=user://local_server.json"
 		Start-Sleep -Seconds 4
 		$names = @("Sigmund", "Brynja", "Halvard", "Yrsa")
+		# M10: the companions play both classes (Sigmund tanks, Brynja casts, ...)
+		$classes = @("runebreaker", "elementalist", "runebreaker", "elementalist")
 		$procs = @($srv)
 		for ($i = 0; $i -lt [Math]::Min($bots, 4); $i++) {
 			$procs += Start-Process -FilePath $godot -PassThru -WindowStyle Hidden -ArgumentList "--headless", "--path", "`"$proj`"",
 				"res://tests/net_client.tscn", "--", "--connect=127.0.0.1:$port", "--net-test=companion", "--role=bot$i",
-				"--name=$($names[$i])", "--duration=14400", "--save=user://companion_$i.json", "--result=user://companion_$i.result"
+				"--name=$($names[$i])", "--class=$($classes[$i])", "--duration=14400", "--save=user://companion_$i.json",
+				"--result=user://companion_$i.result"
 		}
 		& $godot --path $proj -- "--connect=127.0.0.1:$port"
 		foreach ($p in $procs) { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }

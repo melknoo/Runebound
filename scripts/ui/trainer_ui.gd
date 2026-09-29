@@ -65,7 +65,10 @@ func try_buy(data: AbilityData) -> bool:
 	VFX.ground_ring(scene, player.global_position, ArtKit.color("color_roles.resonance.body"), 2.6, 0.4)
 	var zone := scene as ZoneBase
 	if zone != null and zone.hud != null:
-		zone.hud.toast("Learned %s  -  %s" % [data.display_name, Hud.key_for(player, data.id)],
+		# M10: a new ability takes the first free loadout slot; else it waits in K
+		var slot := player.slot_of(data.id)
+		var where := ("slot %s" % InputSetup.slot_label(slot)) if slot >= 0 else "slots full, swap it in with K"
+		zone.hud.toast("Learned %s  -  %s" % [data.display_name, where],
 			ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 	SaveGame.save_now()
 	_refresh()
@@ -173,6 +176,9 @@ func _refresh() -> void:
 	_gold_label.text = str(player.gold)
 	for child in _rows.get_children():
 		child.queue_free()
+	if _npc != null and not _npc.teaches(player):  # M10: one trainer per class
+		_flavour.text = _npc.referral_line(player)
+		return
 	for data in offers(player):
 		_rows.add_child(_row(data))
 
@@ -200,7 +206,9 @@ func _row(data: AbilityData) -> Control:
 	row.add_child(text)
 	var name_label := Label.new()
 	var element := (HitInfo.DamageType.keys()[data.damage_type] as String).capitalize()
-	name_label.text = "%s   %s   [%s]" % [data.display_name, element, Hud.key_for(player, data.id)]
+	var slot_index := player.slot_of(data.id)
+	name_label.text = "%s   %s%s" % [data.display_name, element,
+		("   [%s]" % InputSetup.slot_label(slot_index)) if slot_index >= 0 else ""]
 	name_label.add_theme_color_override("font_color", UiTheme.MUTED if known else HitInfo.type_color(data.damage_type))
 	text.add_child(name_label)
 	var desc := Label.new()
@@ -238,5 +246,6 @@ func _maybe_announce() -> void:
 		_announced.append(data.id)
 		var zone := get_parent() as ZoneBase
 		if zone != null and zone.hud != null:
-			zone.hud.toast("Sigrun can teach you %s (%d gold)  -  Runehold" % [data.display_name, data.learn_price],
+			zone.hud.toast("%s can teach you %s (%d gold)  -  Runehold" % [player.class_data.trainer_name.get_slice(" ", 0),
+				data.display_name, data.learn_price],
 				ArtKit.color("color_roles.resonance.body", Color("#E8B23A")))

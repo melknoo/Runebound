@@ -6,6 +6,16 @@ const PREFIXES := ["Ashen", "Runic", "Storm-Kissed", "Duskforged", "Emberlit",
 	"Hollow", "Warden's", "Shattered", "Gale", "Deepstone"]
 const WEAPON_NOUNS := ["Blade", "Cleaver", "Edge", "Fang", "Riftbrand"]
 const ARMOR_NOUNS := ["Cuirass", "Bulwark", "Shell", "Plating", "Aegis"]
+## M10: nouns a class's gear uses instead (slot -> nouns); the rest are shared.
+const CLASS_NOUNS := {
+	&"elementalist": {
+		ItemData.Slot.WEAPON: ["Staff", "Wand", "Rod", "Scepter", "Spellbrand"],
+		ItemData.Slot.CHEST: ["Robe", "Vestment", "Mantle", "Raiment"],
+		ItemData.Slot.HELM: ["Hood", "Circlet", "Cowl", "Crown"],
+		ItemData.Slot.GLOVES: ["Wraps", "Handwraps", "Gloves", "Bracers"],
+		ItemData.Slot.BOOTS: ["Slippers", "Treads", "Striders", "Boots"],
+	},
+}
 const RELIC_NOUNS := ["Sigil", "Idol", "Talisman", "Focus", "Runestone"]
 const HELM_NOUNS := ["Helm", "Visor", "Crown", "Greathelm", "Cowl"]
 const GLOVES_NOUNS := ["Gauntlets", "Grips", "Fists", "Handguards"]
@@ -54,7 +64,7 @@ static func generate(rarity_bias: int = 0, class_id: StringName = &"") -> ItemDa
 		ItemData.Rarity.RARE:
 			affix_count = 2 + (randi() % 2)
 	_roll_affixes(item, affix_count, class_id)
-	item.display_name = _roll_name(item.slot)
+	item.display_name = _roll_name(item.slot, class_id)
 	return item
 
 
@@ -143,8 +153,9 @@ static func _roll_affixes(item: ItemData, count: int, class_id: StringName = &""
 				break
 
 
-static func _roll_name(slot: ItemData.Slot) -> String:
+static func _roll_name(slot: ItemData.Slot, class_id: StringName = &"") -> String:
 	var noun: String
+	var own: Dictionary = CLASS_NOUNS.get(class_id, {})
 	match slot:
 		ItemData.Slot.CHEST:
 			noun = ARMOR_NOUNS.pick_random()
@@ -160,6 +171,8 @@ static func _roll_name(slot: ItemData.Slot) -> String:
 			noun = RING_NOUNS.pick_random()
 		_:
 			noun = WEAPON_NOUNS.pick_random()
+	if own.has(slot):
+		noun = (own[slot] as Array).pick_random()
 	var name := "%s %s" % [PREFIXES.pick_random(), noun]
 	var suffix: String = SUFFIXES.pick_random()
 	if suffix != "":

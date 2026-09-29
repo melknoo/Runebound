@@ -62,18 +62,40 @@ Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
 - Drops, XP and gold go to the **attacker** who landed the last hit
   (`HitInfo.attacker_id`), not to "the" player.
 
+## M10: two classes
+- **The class tags follow the abilities.** Elementalist: `ember_pierce`,
+  `chain_jumps`, `rune_arm_reduce`, `storm_cd_pct`, `shocked_dmg_pct` and a
+  new `aether_pct` ("+N % Aether gained", the same `resonance_pct` stat under
+  the Elementalist's resource name). Runebreaker: `cleave_radius_pct`,
+  `eb_cost_reduce`, `resonance_pct`. Shared: damage, health, cooldown,
+  movement, crit, dodge cooldown, Burn damage (the tank's Molten Core burns
+  too).
+- **Legendaries by class:** the Elementalist rolls Cindermaw, Conductor's
+  Oath, Forked Ember and Stormcaller's Band; the Runebreaker Glacier Heart and
+  Emberheart Plate (phase 2 adds a tank legendary). Boss legendaries roll for
+  each hero's own class (they used to ignore it).
+- **Names:** an Elementalist's gear uses its own nouns (`ItemGenerator.CLASS_NOUNS`:
+  staves, wands, rods, scepters; robes and mantles; hoods and circlets;
+  wraps; slippers). A Runebreaker keeps blades and plate.
+- Items already in a bag keep their affixes; an affix of the other class
+  simply does nothing (every ability hook reads its stat by key).
+
 ## Legendary powers
-| Item | Slot | Power |
-|---|---|---|
-| Cindermaw | Weapon | Burning enemies struck by Ember Lance erupt (r2.5 fire, spreads Burn) |
-| Conductor's Oath | Relic | Chain Spark marks Conductors (6s); lightning damage on one arcs 8 dmg to all others (≤14m, no re-chaining) |
-| Glacier Heart | Armor | Earthbreaker leaves a frost field (r4, 4s) that Chills |
+| Item | Class | Slot | Power |
+|---|---|---|---|
+| Cindermaw | Elementalist | Weapon | Burning enemies struck by Ember Lance erupt (r2.5 fire, spreads Burn) |
+| Conductor's Oath | Elementalist | Amulet | Chain Spark marks Conductors (6s); lightning damage on one arcs 8 dmg to all others (≤14m, no re-chaining) |
+| Forked Ember | Elementalist | Weapon | Split Lance |
+| Stormcaller's Band | Elementalist | Ring | Overload |
+| Glacier Heart | Runebreaker | Chest | Earthbreaker leaves a frost field (r4, 4s) that Chills |
+| Emberheart Plate | Runebreaker | Chest | Molten Core |
 
 ## Implementation notes
 - Items are runtime `ItemData` resources from `ItemGenerator`; base ability
   .tres files are never mutated — equipment modifies at the hook points in
-  `player.gd` (`roll_ability_hit`, `_set_cooldown`, `earthbreaker_cost`,
-  radius/jump/pierce/arm-time reads) and `Equipment.stat()/has_power()`.
+  hero scripts (`Player.roll_ability_hit`, `_set_cooldown`,
+  `resource_cost`, radius/jump/pierce/arm-time reads in
+  `scripts/player/classes/`) and `Equipment.stat()/has_power()`.
 - Conductor splash hits carry `HitInfo.is_conductor_arc` to prevent chains.
 - Aim rule added for pierce builds: direct enemy ray hits aim center mass,
   not the surface point (feet hits buried pierced lances into the floor).

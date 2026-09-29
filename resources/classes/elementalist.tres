@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="ClassData" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/class_data.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/player/classes/elementalist_hero.gd" id="10"]
+[ext_resource type="Resource" path="res://resources/abilities/rune_bolt.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/abilities/ember_lance.tres" id="3"]
+[ext_resource type="Resource" path="res://resources/abilities/storm_step.tres" id="5"]
+[ext_resource type="Resource" path="res://resources/abilities/chain_spark.tres" id="6"]
+[ext_resource type="Resource" path="res://resources/abilities/fracture_rune.tres" id="7"]
+
+[resource]
+script = ExtResource("1")
+id = &"elementalist"
+display_name = "Elementalist"
+role = "Damage"
+description = "Ranged caster of fire, lightning and frost. Rune bolts and spell hits build Aether."
+hero_script = ExtResource("10")
+abilities = [ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("6"), ExtResource("7")]
+basic_attack = &"rune_bolt"
+starting_abilities = Array[StringName]([&"rune_bolt"])
+talent_branches = Array[String](["Storm", "Ember", "Frost"])
+talent_colors = Array[String](["lightning", "fire", "frost"])
+rig_path = "res://assets/models/chars/runebreaker.glb"
+material_id = "runebreaker"
+body_tint = Color(0.62, 0.72, 0.98, 1)
+base_max_hp = 85.0
+resource_label = "Aether"
+resource_color_role = "aether"
+max_resource = 100.0
+trainer_name = "Maren Emberwright"
+trainer_spot_hint = "by the east wall, near the spawn"
+preferred_range = 10.0

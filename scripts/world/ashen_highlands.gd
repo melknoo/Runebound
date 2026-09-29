@@ -436,7 +436,7 @@ func _on_boss_died(_enemy: EnemyBase) -> void:
 	apply_world_flag(&"colossus_defeated")
 	# Guaranteed legendary on top of the regular drop roll, one per hero (M09).
 	for hero in party():
-		var legendary := ItemGenerator.generate_legendary()
+		var legendary := ItemGenerator.generate_legendary(hero.class_data.id)  # M10: fits the hero's class
 		ItemGenerator.apply_item_level(legendary, 3)
 		give_reward(hero, 0, 0, 0, [legendary] as Array[ItemData], boss_portal.global_position + Vector3(1.5, 0, 3))
 

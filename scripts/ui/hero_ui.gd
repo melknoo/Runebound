@@ -1,20 +1,21 @@
 class_name HeroUI
 extends CanvasLayer
 ## M07b hero window: one framed panel with the tabs Inventory (I), Character
-## (C) and Talents (N). Each key opens its tab, the same key or Esc closes;
+## (C), Talents (N) and, M10, Abilities (K: the loadout). Each key opens its tab, the same key or Esc closes;
 ## while open, combat input is locked and the mouse is free. The tabs are the
 ## former InventoryUI / TalentUI panels plus the new CharacterTab; ZoneBase
 ## keeps `inventory_ui` / `talent_ui` pointing at them.
 
-enum Tab { INVENTORY, CHARACTER, TALENTS }
+enum Tab { INVENTORY, CHARACTER, TALENTS, LOADOUT }
 
-const TAB_ACTIONS: Array[StringName] = [&"inventory_toggle", &"hero_character", &"talents_toggle"]
-const TAB_TITLES: Array[String] = ["INVENTORY", "CHARACTER", "TALENTS"]
+const TAB_ACTIONS: Array[StringName] = [&"inventory_toggle", &"hero_character", &"talents_toggle", &"loadout_toggle"]
+const TAB_TITLES: Array[String] = ["INVENTORY", "CHARACTER", "TALENTS", "ABILITIES"]
 
 var player: Player
 var inventory_tab: InventoryUI
 var character_tab: CharacterTab
 var talent_tab: TalentUI
+var loadout_tab: LoadoutTab
 var current: Tab = Tab.INVENTORY
 
 var _root: Control
@@ -59,7 +60,7 @@ func _build() -> void:
 		btn.toggle_mode = true
 		btn.button_group = group
 		btn.text = "%s   %s" % [TAB_TITLES[i], InputSetup.key_label(TAB_ACTIONS[i])]
-		btn.custom_minimum_size = Vector2(220, 0)
+		btn.custom_minimum_size = Vector2(200, 0)
 		btn.add_theme_font_override("font", UiTheme.font(true))
 		btn.add_theme_font_size_override("font_size", UiTheme.TITLE)
 		btn.pressed.connect(open_tab.bind(i as Tab))
@@ -89,7 +90,10 @@ func _build() -> void:
 	talent_tab = TalentUI.new()
 	talent_tab.setup(player, self)
 	content.add_child(talent_tab)
-	_pages = [inventory_tab, character_tab, talent_tab]
+	loadout_tab = LoadoutTab.new()
+	loadout_tab.setup(player, self)
+	content.add_child(loadout_tab)
+	_pages = [inventory_tab, character_tab, talent_tab, loadout_tab]
 
 
 func is_open() -> bool:

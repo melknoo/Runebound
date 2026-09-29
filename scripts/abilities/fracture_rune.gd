@@ -7,6 +7,8 @@ extends Node3D
 const ARM_TIME := 1.2
 
 var arm_time: float = ARM_TIME  # equipment can shorten this
+## Blast radius; 0 = the ability's own (M10 Rune Mastery grows it).
+var radius: float = 0.0
 ## M09: another player's rune on a co-op client (arms and bursts, hits nothing).
 var visual_only: bool = false
 var _data: AbilityData
@@ -16,6 +18,8 @@ var _source: Player
 func setup(data: AbilityData, source: Player) -> void:
 	_data = data
 	_source = source
+	if radius <= 0.0:
+		radius = data.aoe_radius
 
 
 func _ready() -> void:
@@ -43,7 +47,7 @@ func _ready() -> void:
 	# Broken frost ring marks the blast radius; its dashes light up as the rune
 	# arms (a player marker, never the enemies' filled red disc).
 	# (Player positions the rune before add_child, so global_position is valid.)
-	VFX.player_ring(self, global_position, _data.aoe_radius, arm_time, ArtKit.color("color_roles.frost.body"))
+	VFX.player_ring(self, global_position, radius, arm_time, ArtKit.color("color_roles.frost.body"))
 
 	var light := OmniLight3D.new()
 	light.light_color = Color(0.5, 0.85, 1.0)
@@ -64,7 +68,7 @@ func _ready() -> void:
 
 func _detonate() -> void:
 	var scene := get_tree().current_scene
-	VFX.frost_burst(scene, global_position, _data.aoe_radius)
+	VFX.frost_burst(scene, global_position, radius)
 	Sfx.play("rune_detonate", global_position, 0.0, 0.08)
 	if visual_only:  # another player's rune on a co-op client: the look only
 		queue_free()
@@ -74,7 +78,7 @@ func _detonate() -> void:
 
 	var space := get_world_3d().direct_space_state
 	var shape := SphereShape3D.new()
-	shape.radius = _data.aoe_radius
+	shape.radius = radius
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = shape
 	query.transform = Transform3D(Basis(), global_position + Vector3(0, 0.5, 0))

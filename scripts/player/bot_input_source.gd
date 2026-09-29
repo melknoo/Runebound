@@ -1,11 +1,12 @@
 class_name BotInputSource
 extends InputSource
-## M09: a scripted hero for load tests and headless co-op bots. Walks to the
-## nearest living enemy, cleaves in reach, throws Ember Lance / Fracture Rune
-## from range, closes gaps with Storm Step, slams with Earthbreaker when it
-## can pay for it and dodges now and then. With no enemy in range it follows
-## `leader` (when set). Bots have no camera: every ability aims along the
-## hero's facing, and walking at the target is what turns the hero to it.
+## M09: a scripted hero for load tests and headless co-op bots. M10: plays its
+## class - a melee hero walks in, cleaves and slams with Earthbreaker when it
+## can pay for it; a ranged hero (ClassData.preferred_range) keeps its
+## distance, fires Rune Bolts and Ember Lances, drops Fracture Runes and
+## escapes with Storm Step when an enemy gets close. Both dodge now and then.
+## With no enemy in range it follows `leader` (when set). Bots have no camera:
+## they aim with PlayerIntent.aim_dir, straight at their target.
 
 const RETARGET_EVERY := 0.5   # seconds between nearest-enemy scans
 const ENGAGE_RADIUS := 35.0   # enemies farther than this are ignored
@@ -50,18 +51,32 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 	to_target.y = 0.0
 	var dist := to_target.length()
 	var dir := to_target / dist if dist > 0.01 else player.facing()
+	intent.aim_dir = (target.global_position + Vector3(0, 1.0, 0) - player.muzzle_position()).normalized()
+	if player.class_data.preferred_range > MELEE_REACH:
+		_ranged(intent, player, dir, dist, player.class_data.preferred_range)
+		return
 	if dist > STAND_OFF:
 		intent.move_dir = dir
 	if dist <= MELEE_REACH:
 		_press(intent, player, &"rune_cleave", 0.35)
 		_press(intent, player, &"earthbreaker", 3.0)
 		_press(intent, player, &"dodge", 6.0)
-	elif dist < 22.0:
+
+
+## A caster's fight: hold the preferred range, back off when an enemy closes in.
+func _ranged(intent: PlayerIntent, player: Player, dir: Vector3, dist: float, preferred: float) -> void:
+	if dist > preferred:
+		intent.move_dir = dir
+	elif dist < preferred * 0.5:
+		intent.move_dir = -dir
+		if dist < 3.0:
+			_press(intent, player, &"storm_step", 5.0)  # dashes along the retreat
+			_press(intent, player, &"dodge", 4.0)
+	if dist < 24.0:
+		_press(intent, player, &"rune_bolt", 0.3)
 		_press(intent, player, &"ember_lance", 1.4)
-		if dist > 5.0 and dist < 12.0:
-			_press(intent, player, &"storm_step", 5.0)
-		if dist > 4.5 and dist < 8.0:
-			_press(intent, player, &"fracture_rune", 7.0)  # lands 6 m ahead of the hero
+		if dist > 4.5 and dist < 11.0:
+			_press(intent, player, &"fracture_rune", 7.0)  # lands 6 m along the aim
 
 
 func _follow(intent: PlayerIntent, player: Player) -> void:
@@ -74,7 +89,7 @@ func _follow(intent: PlayerIntent, player: Player) -> void:
 
 
 func _press(intent: PlayerIntent, player: Player, id: StringName, every: float) -> void:
-	if float(_wait.get(id, 0.0)) > 0.0 or not player.knows(id):
+	if float(_wait.get(id, 0.0)) > 0.0 or not player.can_use(id):
 		return
 	intent.pressed.append(id)
 	_wait[id] = every * _rng.randf_range(0.8, 1.25)

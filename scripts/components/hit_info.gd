@@ -2,7 +2,8 @@ class_name HitInfo
 extends RefCounted
 ## Everything a hit needs to communicate, passed to HealthComponent.apply_hit().
 
-enum DamageType { PHYSICAL, FIRE, FROST, LIGHTNING }
+## M10: ARCANE = the Elementalist's rune bolts (no status of its own).
+enum DamageType { PHYSICAL, FIRE, FROST, LIGHTNING, ARCANE }
 enum Weight { LIGHT, MEDIUM, HEAVY }
 
 var damage: float = 0.0
@@ -60,5 +61,7 @@ static func type_color(dmg_type: DamageType) -> Color:
 			return Color(0.5, 0.85, 1.0)
 		DamageType.LIGHTNING:
 			return Color(1.0, 0.95, 0.4)
+		DamageType.ARCANE:
+			return ArtKit.color("color_roles.player_accent.hot", Color(0.62, 0.95, 0.9))
 		_:
 			return Color(0.95, 0.95, 0.9)

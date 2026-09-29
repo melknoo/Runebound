@@ -129,7 +129,7 @@ func _fill_grid() -> void:
 		var is_burst: bool = r["id"] == &"resonance_burst"
 		var cells: Array[String] = [
 			"%s  [%s]" % [r["name"], r["key"]],
-			("barrier %d" % roundi(float(r["base"]) + float(player.progression.level))) if is_guard
+			("barrier %d" % roundi(StatSheet.guard_amount(player, player.ability(&"runic_guard")))) if is_guard
 				else (("%.1f / pt" % float(r["base"])) if is_burst else "%d" % roundi(float(r["damage"]))),
 			"-" if is_guard or is_burst else "%d" % roundi(float(r["avg"])),
 			"-" if is_guard else "%d%%" % roundi(float(r["crit"]) * 100.0),

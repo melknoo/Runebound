@@ -17,6 +17,11 @@
 			"hot": "#FFF0B8",
 			"rule": "player class resource: armor rune glow + HUD bar; never used on enemies"
 		},
+		"aether": {
+			"body": "#F06AC8",
+			"hot": "#FFD2F0",
+			"rule": "M10 Elementalist class resource: HUD bar + rig rune glow; magenta so it never reads as Resonance gold, the player teal or enemy void violet; never used on enemies"
+		},
 		"player_accent": {
 			"body": "#3CBEB4",
 			"hot": "#9FF2E6",

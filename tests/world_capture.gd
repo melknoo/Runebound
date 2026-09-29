@@ -126,7 +126,7 @@ func _run_spire() -> void:
 	warden.global_position = zone.player.global_position + zone.player.facing() * 3.0
 	await _wait(0.4)
 	warden.visual.rotation.y = zone.player._visual.rotation.y + PI
-	zone.player.try_melee()
+	zone.player.try_ability(zone.player.basic_attack())
 	await _wait(0.2)
 	await _shot("13_warden_block")
 	warden.take_hit(HitInfo.create(9999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, warden.global_position))

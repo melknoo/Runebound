@@ -5,6 +5,9 @@ extends Resource
 ## grant a power id the ability code checks (Player.has_power). Tuning a
 ## node is a .tres edit in resources/talents/.
 
+## A column of the class's tree (0-2); the names and colours are the class's
+## (ClassData.talent_branches / talent_colors). The enum names are the
+## Runebreaker-era labels, kept so the .tres files stay valid.
 enum Branch { STORM, EMBER, WARDEN }
 
 @export var id: StringName
@@ -24,10 +27,6 @@ enum Branch { STORM, EMBER, WARDEN }
 @export_multiline var description: String = ""
 
 const TIER_POINTS: Array[int] = [0, 3, 6, 10]
-
-
-static func branch_name(b: Branch) -> String:
-	return ["Storm", "Ember", "Runic Warden"][b]
 
 
 func describe(rank: int) -> String:

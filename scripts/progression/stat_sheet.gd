@@ -16,16 +16,25 @@ const STAT_NAMES := {
 	&"shocked_dmg_pct": ["%", " damage to Shocked enemies"], &"burn_pct": ["%", " Burn damage"],
 	&"storm_cd_pct": ["%", " Storm Step cooldown reduction"], &"burning_dmg_pct": ["%", " damage to Burning enemies"],
 	&"ember_dmg_pct": ["%", " Ember Lance damage"], &"lightning_res_pct": ["%", " Resonance from lightning"],
+	# M10 talent stats
+	&"dr_pct": ["%", " less damage taken"], &"cleave_dmg_pct": ["%", " Rune Cleave damage"],
+	&"chilled_dmg_pct": ["%", " damage to Chilled enemies"], &"aggro_dmg_pct": ["%", " damage to enemies attacking you"],
+	&"eb_radius": [" m", " Earthbreaker area"], &"rune_radius": [" m", " Fracture Rune area"],
+	&"guard_amount": ["", " Runic Guard barrier"], &"tether_cd_pct": ["%", " Rune Chain cooldown reduction"],
+	&"block_pct": ["%", " Rune Wall block"], &"taunt_duration": [" s", " taunt duration"],
+	&"aegis_pct": ["%", " Warding Rune reduction"], &"block_res": ["", " Resonance per blocked hit"],
+	&"chill_duration": [" s", " Chill duration"],
 }
 
-const LIGHTNING_ABILITIES: Array[StringName] = [&"storm_step", &"chain_spark"]
+## Stat keys whose name is the class resource (Resonance, Aether).
+const RESOURCE_STATS: Array[StringName] = [&"resonance_pct", &"lightning_res_pct"]
 
 
-## Damage of one hit before the crit roll (level and gear %, Ember Lance's own %).
+## Damage of one hit before the crit roll (level and gear %, the ability's own %).
 static func effective_damage(p: Player, d: AbilityData) -> float:
 	var mult := 1.0 + p.stat(&"damage_pct") / 100.0
-	if d.id == &"ember_lance":
-		mult *= 1.0 + p.stat(&"ember_dmg_pct") / 100.0
+	if Player.ABILITY_DAMAGE_STATS.has(d.id):
+		mult *= 1.0 + p.stat(Player.ABILITY_DAMAGE_STATS[d.id]) / 100.0
 	return d.damage * mult
 
 
@@ -44,13 +53,14 @@ static func effective_cooldown(p: Player, d: AbilityData) -> float:
 
 
 static func cost(p: Player, d: AbilityData) -> float:
-	return p.earthbreaker_cost() if d.id == &"earthbreaker" else d.resonance_cost
+	return p.resource_cost(d.id)
 
 
-## Resonance one hit of `d` builds, with the gain bonuses applied.
+## Class resource one hit of `d` builds, with the gain bonuses applied
+## (lightning hits add their own bonus, see Player.gain_resonance).
 static func resonance_gain(p: Player, d: AbilityData) -> float:
 	var pct := p.stat(&"resonance_pct")
-	if LIGHTNING_ABILITIES.has(d.id):
+	if d.damage_type == HitInfo.DamageType.LIGHTNING:
 		pct += p.stat(&"lightning_res_pct")
 	return d.resonance_gain_per_hit * (1.0 + pct / 100.0)
 
@@ -60,7 +70,7 @@ static func resonance_gain(p: Player, d: AbilityData) -> float:
 static func damage_text(p: Player, d: AbilityData) -> String:
 	match d.id:
 		&"runic_guard":
-			return "Barrier %d" % roundi(d.damage + float(p.progression.level))
+			return "Barrier %d" % roundi(guard_amount(p, d))
 		&"resonance_burst":
 			return "Up to %d damage at full Resonance" % roundi(d.damage * p.max_resource() * (1.0 + p.stat(&"damage_pct") / 100.0))
 	if d.damage <= 0.0:
@@ -75,6 +85,8 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 	match d.id:
 		&"rune_cleave":
 			out.append("Reach %.1f m" % (1.5 * (1.0 + p.stat(&"cleave_radius_pct") / 100.0)))
+		&"rune_bolt":
+			out.append("Hold to keep casting")
 		&"ember_lance":
 			var pierce := int(p.stat(&"ember_pierce"))
 			if pierce > 0:
@@ -86,7 +98,7 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 			if p.has_power(&"cindermaw"):
 				out.append("Cindermaw")
 		&"earthbreaker":
-			out.append("Area %.0f m" % d.aoe_radius)
+			out.append("Area %.1f m" % (d.aoe_radius + p.stat(&"eb_radius")))
 			if p.has_power(&"molten_core"):
 				out.append("Molten Core")
 			if p.has_power(&"glacier_heart"):
@@ -104,7 +116,7 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 				out.append("Conductor's Oath")
 		&"fracture_rune":
 			out.append("Arms in %.1f s" % maxf(FractureRune.ARM_TIME - p.stat(&"rune_arm_reduce"), 0.5))
-			out.append("Area %.0f m" % d.aoe_radius)
+			out.append("Area %.1f m" % (d.aoe_radius + p.stat(&"rune_radius")))
 		&"runic_guard":
 			out.append("Lasts %.0f s" % d.active)
 			if p.has_power(&"glacial_bulwark"):
@@ -112,6 +124,11 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 		&"resonance_burst":
 			out.append("%.1f damage per Resonance, area %.0f m" % [d.damage, d.aoe_radius])
 	return out
+
+
+## Runic Guard's barrier: base + level + Warding Runes (RunebreakerHero.guard_amount).
+static func guard_amount(p: Player, d: AbilityData) -> float:
+	return d.damage + float(p.progression.level) + p.stat(&"guard_amount")
 
 
 ## One row per ability the character knows, in class order.
@@ -151,6 +168,7 @@ static func defence_rows(p: Player) -> Array[Array]:
 	var rows: Array[Array] = [
 		["Dodge cooldown", "%.2f s" % p.cooldown_for(&"dodge", Player.DODGE_COOLDOWN)],
 		["Dodge i-frames", "%.2f s" % Player.DODGE_IFRAMES],
+		["Damage taken", "%d%%" % roundi(p.damage_taken_mult() * 100.0)],
 		["Burn damage", "+%d%%" % roundi(p.stat(&"burn_pct"))],
 		["vs Shocked", "+%d%%" % roundi(p.stat(&"shocked_dmg_pct"))],
 		["vs Burning", "+%d%%" % roundi(p.stat(&"burning_dmg_pct"))],
@@ -160,8 +178,12 @@ static func defence_rows(p: Player) -> Array[Array]:
 	return rows
 
 
-## "+15% damage" style text for a stat delta or total.
-static func stat_text(key: StringName, value: float) -> String:
+## "+15% damage" style text for a stat delta or total. With a hero, the
+## resource stats name its class resource ("Aether gained").
+static func stat_text(key: StringName, value: float, p: Player = null) -> String:
 	var fmt: Array = STAT_NAMES.get(key, ["", " " + String(key)])
 	var amount := ("%+.1f" % value) if absf(value) < 1.0 else ("%+d" % roundi(value))
-	return amount + fmt[0] + fmt[1]
+	var label: String = fmt[1]
+	if p != null and RESOURCE_STATS.has(key):
+		label = label.replace("Resonance", p.class_data.resource_label)
+	return amount + fmt[0] + label

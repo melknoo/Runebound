@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"bastion"
+display_name = "Bastion"
+class_id = &"runebreaker"
+branch = 0
+tier = 2
+max_rank = 2
+stat = &"aegis_pct"
+per_rank = 5.0
+power = &""
+description = "Warding Rune reduces damage by {value}% more."

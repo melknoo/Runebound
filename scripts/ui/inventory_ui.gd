@@ -134,7 +134,7 @@ func _render_detail() -> void:
 		for affix in equipped_same.affixes:
 			_add_detail_label("· " + String(affix["label"]), Color(0.55, 0.55, 0.6))
 		# M07 compare: what equipping this would change, stat by stat.
-		for line: Array in compare_lines(item, equipped_same):
+		for line: Array in compare_lines(item, equipped_same, player):
 			_add_detail_label(line[0], line[1])
 
 	if in_inventory:
@@ -190,7 +190,7 @@ func _on_right_click(event: InputEvent, action: Callable) -> void:
 
 ## [text, colour] per stat that differs between two items (green = gain).
 ## Stat names live in StatSheet.STAT_NAMES (shared with the character sheet).
-static func compare_lines(candidate: ItemData, current: ItemData) -> Array:
+static func compare_lines(candidate: ItemData, current: ItemData, hero: Player = null) -> Array:
 	var totals := {}
 	for affix in candidate.affixes:
 		totals[affix["stat"]] = float(totals.get(affix["stat"], 0.0)) + float(affix["value"])
@@ -201,7 +201,7 @@ static func compare_lines(candidate: ItemData, current: ItemData) -> Array:
 		var delta := float(totals[key])
 		if absf(delta) < 0.01:
 			continue
-		lines.append([StatSheet.stat_text(key, delta), Color(0.45, 0.9, 0.5) if delta > 0.0 else Color(0.95, 0.4, 0.38)])
+		lines.append([StatSheet.stat_text(key, delta, hero), Color(0.45, 0.9, 0.5) if delta > 0.0 else Color(0.95, 0.4, 0.38)])
 	if candidate.legendary_id != current.legendary_id:
 		if candidate.legendary_id != &"":
 			lines.append(["+ legendary power: " + candidate.display_name, Color(1.0, 0.6, 0.25)])

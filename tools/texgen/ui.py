@@ -318,10 +318,96 @@ def icon_coin() -> Image.Image:
     return outlined(img)
 
 
+def icon_rune_bolt() -> Image.Image:
+    """M10 Elementalist basic attack: an arcane dart in the player teal, a
+    rune-cut head with a stepped wake (the hero's own bolt, never void violet)."""
+    img, d = canvas()
+    d.polygon([(18, 1), (15, 8), (10, 10), (11, 4)], fill=ACCENT)       # kite head, tip up-right
+    d.polygon([(18, 1), (15, 8), (13, 7)], fill=ACCENT_DIM)             # shaded flank
+    d.line([12, 8, 17, 2], fill=ACCENT_HOT)                             # hot spine
+    d.rectangle([7, 10, 9, 12], fill=ACCENT)                            # wake, stepping down
+    d.rectangle([4, 13, 5, 14], fill=ACCENT_DIM)
+    img.putpixel((2, 16), ACCENT_DIM)
+    img.putpixel((1, 18), ACCENT_DIM)
+    img.putpixel((12, 6), rgb("#FFFFFF"))                               # rune glint
+    img.putpixel((8, 11), ACCENT_HOT)
+    return outlined(img)
+
+
+def icon_rune_wall() -> Image.Image:
+    """M10 tank block: the rune blade held across, a teal ward arcing over it,
+    a spark where a blow glances off."""
+    img, d = canvas()
+    phys = ROLES["physical"]
+    hot = rgb(ROLES["resonance"]["hot"])
+    d.chord([2, 1, 18, 17], 180, 360, fill=ACCENT_DIM, outline=ACCENT)    # the ward, upper half-disc
+    d.arc([5, 4, 15, 14], 200, 340, fill=ACCENT_HOT)                         # inner rim
+    for x in (6, 10, 14):
+        img.putpixel((x, 5 if x != 10 else 3), GOLD)                        # rune ticks on the ward
+    d.line([1, 12, 15, 12], fill=rgb(phys["body"]), width=3)                 # blade across, below the ward
+    d.line([1, 12, 15, 12], fill=rgb(phys["core"]))
+    d.line([15, 10, 15, 14], fill=GOLD, width=2)                             # guard
+    d.line([16, 12, 18, 12], fill=rgb("#624531"), width=2)                   # grip
+    for x, y in ((3, 8), (1, 7), (4, 6)):
+        img.putpixel((x, y), hot)                                            # glancing spark
+    return outlined(img)
+
+
+def icon_rune_chain() -> Image.Image:
+    """M10 pull: a gold rune chain snaking in from the top right, its rune hook
+    biting, an arrow back towards the hero."""
+    img, d = canvas()
+    hot = rgb(ROLES["resonance"]["hot"])
+    dim = rgb("#A67A22")
+    for i, (x, y) in enumerate(((3, 14), (6, 11), (9, 8), (12, 5))):
+        d.ellipse([x, y, x + 4, y + 3], outline=GOLD if i % 2 == 0 else dim)  # links, alternating light
+    d.ellipse([14, 1, 19, 6], fill=ACCENT_DIM, outline=ACCENT)               # the rune hook
+    img.putpixel((16, 3), ACCENT_HOT)
+    img.putpixel((17, 4), ACCENT_HOT)
+    d.line([1, 19, 5, 15], fill=hot)                                         # pull arrow
+    d.line([1, 19, 1, 16], fill=hot)
+    d.line([1, 19, 4, 19], fill=hot)
+    return outlined(img)
+
+
+def icon_warden_leap() -> Image.Image:
+    """M10 leap: a high arc of steel ending in a gold impact on the ground."""
+    img, d = canvas()
+    phys = ROLES["physical"]
+    hot = rgb(ROLES["resonance"]["hot"])
+    d.arc([2, 3, 18, 25], 200, 330, fill=rgb(phys["edge"]), width=2)       # the flight arc
+    d.arc([2, 3, 18, 25], 215, 320, fill=rgb(phys["body"]))
+    d.polygon([(15, 12), (18, 12), (16, 15)], fill=rgb(phys["core"]))       # arrow head coming down
+    d.line([10, 18, 19, 18], fill=GOLD)                                      # ground line
+    for x, y in ((12, 17), (14, 16), (16, 16), (18, 17)):
+        img.putpixel((x, y), hot)                                            # impact burst
+    d.line([15, 18, 13, 19], fill=GOLD)
+    d.line([16, 18, 18, 19], fill=GOLD)
+    d.line([2, 17, 6, 17], fill=rgb(phys["edge"]))                           # take-off scuff
+    return outlined(img)
+
+
+def icon_warding_rune() -> Image.Image:
+    """M10 ally ward: a rune circle on the ground (seen at an angle) with a
+    shield glyph standing in it."""
+    img, d = canvas()
+    hot = rgb(ROLES["resonance"]["hot"])
+    d.ellipse([1, 11, 18, 19], outline=ACCENT)                               # the ground circle
+    d.ellipse([4, 13, 15, 17], outline=ACCENT_DIM)
+    for x, y in ((2, 15), (17, 15), (9, 19), (9, 11)):
+        img.putpixel((x, y), GOLD)                                           # rune marks on the ring
+    shield = [(9, 2), (14, 4), (13, 10), (9, 14), (5, 10), (4, 4)]
+    d.polygon(shield, fill=ACCENT_DIM, outline=ACCENT_HOT)                   # the glyph above it
+    d.line([9, 4, 9, 11], fill=GOLD)
+    d.line([7, 7, 11, 7], fill=hot)
+    return outlined(img)
+
+
 # ---------------------------------------------------------------------------
 # Drafts from the 2026-09-29 icon comparison (ROADMAP "Icon-Quelle"). Not saved
 # by main() yet: register each under its ability id once the ability exists
-# (M10 taunt, frost nova if it joins the elementalist kit, M11 healing zone).
+# (the taunt is Rune Challenge since M10; frost nova comes with M10 phase 3,
+# the healing zone with M11).
 # ---------------------------------------------------------------------------
 
 # Provisional root-druid ramp (hue ~100 deg, yellower than the player teal).
@@ -514,7 +600,9 @@ def main() -> None:
                      ("storm_step", icon_storm_step), ("chain_spark", icon_chain_spark),
                      ("fracture_rune", icon_fracture_rune), ("dodge", icon_dodge),
                      ("runic_guard", icon_runic_guard), ("resonance_burst", icon_resonance_burst),
-                     ("coin", icon_coin)):
+                     ("rune_bolt", icon_rune_bolt), ("rune_challenge", icon_taunt), ("rune_wall", icon_rune_wall),
+                     ("rune_chain", icon_rune_chain), ("warden_leap", icon_warden_leap),
+                     ("warding_rune", icon_warding_rune), ("coin", icon_coin)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

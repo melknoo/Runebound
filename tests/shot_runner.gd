@@ -161,15 +161,17 @@ func _do(action: Dictionary) -> void:
 				player.learn_ability(StringName(id))
 	elif action.has("do"):
 		match str(action["do"]):
-			"melee": player.try_melee()
-			"ember": player.try_ember()
-			"earthbreaker":
-				player.gain_resonance(Player.MAX_RESONANCE)
-				player.try_earthbreaker()
-			"storm_step": player.try_storm_step()
-			"chain_spark": player.try_chain_spark()
-			"fracture_rune": player.try_fracture_rune()
+			"melee": _cast(&"rune_cleave")
+			"rune_bolt": _cast(&"rune_bolt")
+			"ember": _cast(&"ember_lance")
+			"earthbreaker": _cast(&"earthbreaker", true)
+			"storm_step": _cast(&"storm_step")
+			"chain_spark": _cast(&"chain_spark")
+			"fracture_rune": _cast(&"fracture_rune")
 			"dodge": player.try_dodge()
+			"class":  # M10: {"do": "class", "id": "elementalist"} plays that class from here on
+				_zone.debug_swap_class(StringName(str(action.get("id", ClassData.DEFAULT_ID)))).debug_learn_all()
+			"loadout_tab": _zone.hero_ui.toggle_tab(HeroUI.Tab.LOADOUT)
 			"tab": _zone.targeting.cycle_target()
 			"reset": player.reset_cooldowns()
 			"inventory", "hero_inventory": _zone.inventory_ui.toggle()
@@ -197,18 +199,22 @@ func _do(action: Dictionary) -> void:
 						_zone.trainer_ui.open(child)
 			"gold": _zone.spawn_gold_drop(25 + randi() % 30,
 				player.global_position + player.facing() * 3.5 + Vector3(randf_range(-1.0, 1.0), 0, 0))
-			"runic_guard":
-				player.gain_resonance(Player.MAX_RESONANCE)
-				player.try_runic_guard()
-			"resonance_burst":
-				player.gain_resonance(Player.MAX_RESONANCE)
-				player.try_resonance_burst()
+			"runic_guard": _cast(&"runic_guard", true)
+			"resonance_burst": _cast(&"resonance_burst", true)
 			"bossbar": _zone.hud.show_boss_bar("ASHVEIN COLOSSUS")
 			"loot": _zone.spawn_item_drop(ItemGenerator.generate(randi() % 3),
 				player.global_position + player.facing() * 2.0 + Vector3(randf_range(-1.5, 1.5), 0, randf_range(-0.6, 0.6)))
 			"legendary": _zone.spawn_item_drop(ItemGenerator.generate_legendary(),
 				player.global_position + player.facing() * 2.6)
 			_: push_warning("shot_runner: unknown action %s" % action["do"])
+
+
+## M10: an ability of the other class swaps the hero to that class first.
+func _cast(id: StringName, full_resource: bool = false) -> void:
+	var hero := _zone.debug_hero_for(id)
+	if full_resource:
+		hero.gain_resonance(hero.max_resource())
+	hero.try_ability(id)
 
 
 func _set_spawners_enabled(enabled: bool) -> void:

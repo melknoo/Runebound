@@ -5,18 +5,34 @@ extends Node
 signal flag_set(flag: StringName)
 ## Corrupt or missing saves always fall back to a fresh start - never crash.
 ##
-## v4 (M08) layout, see docs/PROGRESSION_DESIGN.md:
-##   {version, world: {zone, flags, camps: {id: {cleared_at}}},
-##    characters: [{class_id, known_abilities, gold, inventory, equipped, progression,
-##                  waypoints, map_discovered, discovered}],
+## v6 (M10) layout, see docs/PROGRESSION_DESIGN.md:
+##   {version, characters: [{name, class_id, known_abilities, loadout, gold, inventory,
+##                           equipped, progression, waypoints, map_discovered, discovered,
+##                           world: {zone, flags, camps: {id: {cleared_at}}}, notes}],
 ##    active}
-## `world` is what a co-op server will own; `characters` stay with the player.
+## Every character has its own world (user, 2026-09-29): bosses, gates and
+## camps are per character. A save without characters (the dedicated server's)
+## keeps one top-level `world` instead. In memory `current_zone` / `flags` /
+## `camps` are the world being played (the active character's, the server's,
+## or a co-op session's).
 
-const VERSION := 5  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map; v5 (M09): discovered zones per character
+const VERSION := 6  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map; v5 (M09): discovered zones per character; v6 (M10): world, name and loadout per character
+const HUB_SCENE := "res://scenes/hub.tscn"
+## Character keys the save keeps although the live hero doesn't hold them.
+const KEPT_KEYS: Array[String] = ["name", "notes"]
+## M10 migration: the spells that moved from the Runebreaker to the
+## Elementalist and the gold a Runebreaker who knew them gets back (their
+## M07b trainer prices, frozen here on purpose).
+const MOVED_TO_ELEMENTALIST := {"ember_lance": 150, "storm_step": 275, "chain_spark": 400, "fracture_rune": 600}
+## The M07b trainer kit (id: [level, price]) the v2 -> v3 migration refunds.
+const M07B_TRAINER_KIT := {"earthbreaker": [2, 50], "ember_lance": [3, 150], "storm_step": [4, 275],
+	"chain_spark": [5, 400], "fracture_rune": [7, 600]}
 const DEBOUNCE := 2.0
 ## Command-line flags (after `--`) that mark an automated capture/perf run.
 const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
 const TEST_SAVE_PATH := "user://capture_save.json"
+## Any other headless run without `--save=` (never the player's real save).
+const HEADLESS_SAVE_PATH := "user://headless_save.json"
 const TEST_RUN_SEED := 1207
 ## M09: the dedicated server's world (flags, camps, zone); no characters.
 const SERVER_SAVE_PATH := "user://runebound_server.json"
@@ -24,7 +40,7 @@ const SERVER_SAVE_PATH := "user://runebound_server.json"
 ## Overridable so tests can run against a scratch file without touching
 ## the real save.
 var save_path: String = "user://runebound_save.json"
-var current_zone: String = "res://scenes/hub.tscn"
+var current_zone: String = HUB_SCENE
 var flags: Dictionary = {}  # persistent world state, e.g. bosses defeated
 ## M08: cleared camps by id -> {"cleared_at": unix seconds}; they re-arm later.
 var camps: Dictionary = {}
@@ -61,6 +77,11 @@ func _ready() -> void:
 		if FileAccess.file_exists(save_path):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
 		seed(TEST_RUN_SEED)
+	elif DisplayServer.get_name() == "headless":
+		# M10: a headless boot (tests, parse checks) never touches the player's
+		# save - one migrated the real save early on 2026-09-29. The dedicated
+		# server switches to its own save right after (use_server_save).
+		save_path = HEADLESS_SAVE_PATH
 	reload_from_disk()
 
 
@@ -165,7 +186,7 @@ func wipe() -> void:
 	flags = {}
 	camps = {}
 	active = 0
-	current_zone = "res://scenes/hub.tscn"
+	current_zone = HUB_SCENE
 	if FileAccess.file_exists(save_path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(save_path))
 
@@ -177,12 +198,128 @@ func has_save() -> bool:
 ## Re-read the save file from disk (tests use this after switching save_path).
 func reload_from_disk() -> void:
 	_loaded_data = _read_file()
-	var world: Dictionary = _loaded_data.get("world", {})
-	if world.has("zone"):
-		current_zone = world["zone"]
-	flags = world.get("flags", {})
-	camps = world.get("camps", {})
 	active = int(_loaded_data.get("active", 0))
+	_load_world(_world_of_active())
+
+
+## The world of the active character; the top-level one without characters.
+func _world_of_active() -> Dictionary:
+	var ch := active_character()
+	if not ch.is_empty() and ch.has("world"):
+		return ch["world"] as Dictionary
+	return _loaded_data.get("world", {}) as Dictionary
+
+
+func _load_world(world: Dictionary) -> void:
+	current_zone = str(world.get("zone", HUB_SCENE))
+	flags = (world.get("flags", {}) as Dictionary).duplicate(true)
+	camps = (world.get("camps", {}) as Dictionary).duplicate(true)
+
+
+func _world_in_memory() -> Dictionary:
+	if online:  # M09: the session world is the server's; our own stays as stashed
+		return _offline_world.duplicate(true)
+	return {"zone": current_zone, "flags": flags.duplicate(true), "camps": camps.duplicate(true)}
+
+
+# ---------------------------------------------------------------------------
+# M10: several characters per save (the title screen picks one)
+# ---------------------------------------------------------------------------
+
+## Every saved character (read-only view; use the functions below to change it).
+func characters() -> Array:
+	return _loaded_data.get("characters", []) as Array
+
+
+## A new character's dict: level 1, the class's start kit, a fresh world.
+static func new_character(class_id: StringName, char_name: String) -> Dictionary:
+	return {"name": char_name, "class_id": String(class_id), "known_abilities": [], "loadout": [], "gold": 0,
+		"inventory": [], "equipped": {}, "progression": {"level": 1, "xp": 0, "talents": {}},
+		"waypoints": [], "map_discovered": [], "discovered": [],
+		"world": {"zone": HUB_SCENE, "flags": {}, "camps": {}}}
+
+
+## Adds a character, makes it the active one and saves. Call it from the
+## title screen (no hero in the scene), never from inside a zone.
+func create_character(class_id: StringName, char_name: String) -> int:
+	var chars := _chars_with_world()
+	chars.append(new_character(class_id, char_name.strip_edges()))
+	active = chars.size() - 1
+	_loaded_data = {"version": VERSION, "characters": chars, "active": active}
+	_load_world(chars[active]["world"] as Dictionary)
+	save_now()
+	return active
+
+
+## Plays character `i` from now on (its world is loaded). Title screen only.
+func select_character(i: int) -> bool:
+	var chars := _chars_with_world()
+	if i < 0 or i >= chars.size():
+		return false
+	active = i
+	_loaded_data = {"version": VERSION, "characters": chars, "active": active}
+	_load_world(_world_of_active())
+	save_now()
+	return true
+
+
+## Deletes character `i` for good. Title screen only.
+func delete_character(i: int) -> bool:
+	var chars := _chars_with_world()
+	if i < 0 or i >= chars.size():
+		return false
+	chars.remove_at(i)
+	if active > i or active >= chars.size():
+		active = maxi(active - 1, 0)
+	_loaded_data = {"version": VERSION, "characters": chars, "active": active}
+	_load_world(_world_of_active())
+	save_now()
+	return true
+
+
+## Debug [9]: the active character starts over (same name and class, level 1,
+## a fresh world); the other characters stay.
+func reset_active_character() -> void:
+	online = false
+	_offline_world = {}
+	var chars := (characters()).duplicate(true)
+	if active >= 0 and active < chars.size():
+		var old: Dictionary = chars[active]
+		chars[active] = new_character(StringName(str(old.get("class_id", ClassData.DEFAULT_ID))), str(old.get("name", "")))
+	_loaded_data = {"version": VERSION, "characters": chars, "active": active}
+	_load_world(_world_of_active())
+	save_now()
+
+
+## The loaded characters with the world in memory written back into the
+## active one (so switching never loses it).
+func _chars_with_world() -> Array:
+	var chars: Array = characters().duplicate(true)
+	if active >= 0 and active < chars.size():
+		(chars[active] as Dictionary)["world"] = _world_in_memory()
+	return chars
+
+
+## Display name of a character dict ("" names read as the class).
+static func character_name(ch: Dictionary) -> String:
+	var n := str(ch.get("name", "")).strip_edges()
+	if n != "":
+		return n
+	var cls := ClassData.load_by_id(StringName(str(ch.get("class_id", ClassData.DEFAULT_ID))))
+	return cls.display_name if cls != null else "Hero"
+
+
+## Takes (and removes) the active character's first note starting with
+## `prefix`, e.g. "m10_refund:" after the migration; "" when there is none.
+func pop_note(prefix: String) -> String:
+	var ch := active_character()
+	var notes: Array = ch.get("notes", []) as Array
+	for i in notes.size():
+		if str(notes[i]).begins_with(prefix):
+			var note := str(notes[i])
+			notes.remove_at(i)
+			return note
+	return ""
 
 
 ## The saved character being played ({} on a fresh start).
@@ -215,12 +352,14 @@ static func apply_character(player: Player, ch: Dictionary) -> void:
 
 static func restore_character(player: Player, ch: Dictionary) -> void:
 	if ch.is_empty():
+		player.restore_loadout([])
 		return
 	for entry: Dictionary in ch.get("inventory", []):
 		player.equipment.inventory.append(ItemData.from_dict(entry))
 	for slot_key: String in ch.get("equipped", {}):
 		var item := ItemData.from_dict(ch["equipped"][slot_key])
 		player.equipment.equipped[int(slot_key) as ItemData.Slot] = item
+	player.equipment._recompute()  # legendary powers first: they may unlock abilities
 	player.progression.from_dict(ch.get("progression", {}))
 	if ch.has("known_abilities"):
 		var known: Array[StringName] = []
@@ -232,6 +371,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 			if not known.has(sid):
 				known.append(sid)
 		player.known_abilities = known
+	player.restore_loadout(ch.get("loadout", []) as Array)  # M10: after the known abilities
 	player.gold = maxi(int(ch.get("gold", 0)), 0)
 	player.discovered_waypoints = PackedStringArray(ch.get("waypoints", []))
 	player.discovered_zones = PackedStringArray(ch.get("discovered", []))
@@ -243,12 +383,14 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 
 
 static func character_dict(player: Player) -> Dictionary:
-	var ch := {"class_id": String(player.class_data.id), "known_abilities": [], "gold": player.gold,
+	var ch := {"class_id": String(player.class_data.id), "known_abilities": [], "loadout": [], "gold": player.gold,
 		"inventory": [], "equipped": {}, "progression": player.progression.to_dict(),
 		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered),
 		"discovered": Array(player.discovered_zones)}
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
+	for id in player.loadout:
+		(ch["loadout"] as Array).append(String(id))
 	for item in player.equipment.inventory:
 		(ch["inventory"] as Array).append(item.to_dict())
 	for slot: ItemData.Slot in player.equipment.equipped:
@@ -259,15 +401,26 @@ static func character_dict(player: Player) -> Dictionary:
 func _collect() -> Dictionary:
 	var player := _find_player()
 	var chars: Array = (_loaded_data.get("characters", []) as Array).duplicate(true)
-	if player != null:
+	var world := _world_in_memory()
+	var data := {"version": VERSION, "characters": chars, "active": active}
+	if player != null or not chars.is_empty():
 		while chars.size() <= active:
 			chars.append({})
-		chars[active] = character_dict(player)
-	# no player in this scene: the loaded characters are kept as they were
-	var world := {"zone": current_zone, "flags": flags, "camps": camps}
-	if online:  # M09: the session world is the server's; keep our own on disk
-		world = _offline_world.duplicate(true)
-	var data := {"version": VERSION, "world": world, "characters": chars, "active": active}
+		var ch: Dictionary = chars[active]
+		# a hero of another class (ZoneBase.debug_swap_class) never overwrites the character
+		if player != null and ch.has("class_id") and str(ch["class_id"]) != String(player.class_data.id):
+			player = null
+		if player != null:
+			var fresh := character_dict(player)
+			for key in KEPT_KEYS:
+				if ch.has(key):
+					fresh[key] = ch[key]
+			ch = fresh
+		# no player in this scene (title screen): the character stays as loaded
+		ch["world"] = world
+		chars[active] = ch
+	else:
+		data["world"] = world  # no characters: the dedicated server's world
 	_loaded_data = data
 	return data
 
@@ -319,9 +472,9 @@ static func migrate(data: Dictionary) -> Dictionary:
 		for id in cls.starting_abilities:
 			known.append(String(id))
 		var refund := 0
-		for ability in cls.trainer_abilities():
-			if ability.learn_level <= level:
-				refund += ability.learn_price
+		for kit_id: String in M07B_TRAINER_KIT:
+			if int(M07B_TRAINER_KIT[kit_id][0]) <= level:
+				refund += int(M07B_TRAINER_KIT[kit_id][1])
 		data = {
 			"version": 3,
 			"world": {"zone": data.get("zone", "res://scenes/hub.tscn"), "flags": data.get("flags", {})},
@@ -352,6 +505,36 @@ static func migrate(data: Dictionary) -> Dictionary:
 				(ch as Dictionary)["discovered"] = found.duplicate()
 		data["version"] = 5
 		version = 5
+	if version == 5:  # M10: each character gets the world, a name and (on restore) a loadout;
+		# a Runebreaker's elemental spells went to the Elementalist and come back as gold
+		var world5: Dictionary = data.get("world", {})
+		var chars5: Array = data.get("characters", [])
+		for ch in chars5:
+			if ch is not Dictionary:
+				continue
+			var c := ch as Dictionary
+			c["world"] = world5.duplicate(true)
+			if not c.has("name"):
+				c["name"] = ""
+			if str(c.get("class_id", ClassData.DEFAULT_ID)) != String(ClassData.DEFAULT_ID):
+				continue
+			var kept: Array = []
+			var refund := 0
+			for id in c.get("known_abilities", []):
+				if MOVED_TO_ELEMENTALIST.has(str(id)):
+					refund += int(MOVED_TO_ELEMENTALIST[str(id)])
+				else:
+					kept.append(id)
+			c["known_abilities"] = kept
+			if refund > 0:
+				c["gold"] = int(c.get("gold", 0)) + refund
+				var notes: Array = c.get("notes", []) as Array
+				notes.append("m10_refund:%d" % refund)
+				c["notes"] = notes
+		if not chars5.is_empty():
+			data.erase("world")
+		data["version"] = 6
+		version = 6
 	if version != VERSION:
 		push_warning("SaveGame: incompatible save version ignored")
 		return {}

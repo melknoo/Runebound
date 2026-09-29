@@ -193,9 +193,8 @@ systems read became data or registries.**
   `has_power(unlock_power)`; else `known_abilities`). `_try_or_buffer` never
   buffers an unknown action. `_register_actions()` maps ids to `try_*`
   Callables (no dispatch `match`); `cooldown_fraction` reads the data.
-  Class 2 = `extends Player`, overriding `_register_actions`,
-  `_load_abilities`, `_anim_profile`; the Runebreaker's `try_*` then move
-  into `runebreaker.gd` mechanically. Not before a second class exists.
+  M10 did the class split this seam planned: see "Classes and the loadout
+  (M10)" below.
 - **Input seam:** `PlayerIntent` (move_dir, pressed) is filled once per
   physics tick by an `InputSource` (`LocalInputSource` = keyboard/mouse
   through the camera basis; tests script one; a peer will send one). Player
@@ -231,6 +230,86 @@ systems read became data or registries.**
   base: prompt, nameplate, re-tinted rig). `StatSheet` (static) holds the
   sheet's formulas; the HUD tooltip uses it too. `WorldPickup` is the base of
   `ItemDrop` and `GoldDrop`.
+
+## Classes and the loadout (M10)
+User decisions of 2026-09-29 (ROADMAP M10, CLASS_DESIGN "Three roles"):
+three roles, a hero takes 4 of about 12 class abilities into the field.
+- **Class scripts:** `Player` (`scripts/player/player.gd`) is the chassis
+  every class shares: movement, dodge, damage intake, barrier, cooldowns,
+  the class resource, stats, the loadout, net roles, `hero_fx`. A class
+  `extends Player` in `scripts/player/classes/` (`RunebreakerHero`,
+  `ElementalistHero`) and brings its ability code: `_load_abilities`
+  (typed caches like `rb.earthbreaker`), `_register_actions` (id ->
+  `try_*`), `_anim_profile`, `_process_class_state` (its own states),
+  `_dodge_allowed` / `_on_dodge_cancel` (the dodge trust rule) and
+  `resource_cost`. `ClassData.hero_script` names the script;
+  **`Player.create(class_data)`** makes every hero (zone, proxies, puppets,
+  tests), never `Player.new()`. `Player.State` stays one enum for every
+  class (the network sends it as an int).
+- **Generic hooks:** `ABILITY_CD_STATS` / `ABILITY_DAMAGE_STATS` map
+  abilities to their stat keys (`storm_cd_pct`, `ember_dmg_pct`, ...);
+  `damage_taken_mult()` folds every damage reduction (M10 `dr_pct`, capped
+  at `MAX_DAMAGE_REDUCTION`) into `take_hit` before the barrier; lightning
+  hits add `lightning_res_pct` by damage type. `try_ability(id)` starts an
+  ability by id (tests, captures). A new damage type `ARCANE` (the
+  Elementalist's Rune Bolt) has no status and the player-teal colour.
+- **The class resource** keeps its code name `resonance` (Player.resonance,
+  `resonance_changed`, `AbilityData.resonance_cost`); players read
+  `ClassData.resource_label` (Resonance, Aether) in the colour role
+  `ClassData.resource_color_role` (`resonance`, new `aether` #F06AC8).
+- **Loadout:** `ClassData.basic_attack` fires on LMB, dodge on Space, and
+  `Player.loadout` holds four ability ids (&"" = empty) for the slots
+  `InputSetup.SLOT_ACTIONS` = RMB (`secondary_ability`), 1 (`ability_q`,
+  also Q), 2 (`ability_e`), 3 (`ability_r`, also R); keys 4-6 are free again
+  and `AbilityData.input_action` is gone. `LocalInputSource` maps a slot key
+  to the id in that slot (so bots and the network keep sending ids);
+  `PlayerIntent.held` carries held keys (Rune Bolt auto-fires,
+  `AbilityData.repeat_while_held`). `Player.can_use(id)` = known and
+  (basic, dodge or slotted) gates input and the buffer; `try_*` themselves
+  only need `knows()`. `set_loadout_slot(slot, id)` refuses in combat
+  (`loadout_locked_reason()`, the sprint's 3 s rule) and swaps an ability
+  that sits elsewhere; `_sync_loadout` (on `abilities_changed` /
+  `talents_changed`) empties the slot of a forgotten ability and puts a newly
+  known one into the first free slot. `key_label_for(id)` names its slot.
+  The HUD has six fixed slots (`Hud.SLOT_KEYS`: basic, slot0-3, dodge); the
+  cost mark on the resource bar shows the cheapest slotted spender.
+  `LoadoutTab` is the hero window's fourth tab (K).
+- **Characters (save v6):** `characters[i]` = {name, class_id, known,
+  loadout, gold, gear, progression, waypoints, map, discovered, **world
+  {zone, flags, camps}**, notes}; a save without characters (the dedicated
+  server's) keeps a top-level `world`. `SaveGame.current_zone / flags /
+  camps` are the world being played; `create_character / select_character /
+  delete_character` (title screen only: they save without a hero in the
+  scene), `reset_active_character` (debug [9]). `_collect` keeps `name` and
+  `notes` and never writes a hero of another class over the character (the
+  debug swap). v5 -> v6 copies the world into each character and refunds a
+  Runebreaker's moved spells at their frozen M07b prices (note
+  `m10_refund:<gold>`, a toast on the next zone). A headless run without
+  `--save=` uses `user://headless_save.json`, never the player's save.
+- **Trainers:** `TrainerNpc.teaches_class`; its name comes from
+  `ClassData.trainer_name`; a hero of another class gets a referral line
+  (no rows). Runehold: Sigrun (Runebreaker, north-west) and Maren
+  (Elementalist, east wall by the spawn).
+- **Talents:** `tools/talents/generate_talents.py` writes one tree per
+  class (`TREES`, 24 nodes each, asserts every tier is reachable);
+  `TalentData.branch` is a column 0-2, the names and colours are the
+  class's (`talent_branches`, `talent_colors`). Nodes whose ability comes
+  later in M10 are listed already; their power / stat is inert until then.
+- **Items:** affixes and legendaries follow their ability's class
+  (`"class"` tags; `aether_pct` is `resonance_pct` under the Elementalist's
+  name); boss legendaries roll for each hero's class; `ItemGenerator.CLASS_NOUNS`
+  gives an Elementalist staves, robes and hoods.
+- **Bots:** `BotInputSource` plays its class: `ClassData.preferred_range`
+  (melee 1.4 m, caster 10 m) picks melee or kiting; bots aim with
+  `PlayerIntent.aim_dir` (a source without a camera). `run_godot coop` mixes
+  the companions (Sigmund tank, Brynja Elementalist, ...); `net_client`
+  takes `--class=`.
+- **Tests:** `ZoneBase.debug_swap_class(id)` turns the local hero into a
+  fresh hero of another class in place (UI rebuilt, enemies and pickups
+  re-pointed, nothing saved); `debug_hero_for(ability)` swaps when a harness
+  asks for another class's ability (shots, perf, stress, captures). Perf and
+  stress fight as the Elementalist by default (`"class"` in a perf scenario):
+  full-combat numbers from before M10 are not comparable.
 
 ## Open world (M08)
 The Ashen Highlands are a 384 m heightmap zone built from data; later zones

@@ -5,7 +5,6 @@ extends VBoxContainer
 ## M07b: a tab of the hero window (HeroUI owns frame, input lock and mouse).
 
 const ACTION := &"talents_toggle"
-const BRANCH_COLORS := ["color_roles.lightning.body", "color_roles.fire.body", "color_roles.frost.body"]
 
 var player: Player
 var hero: HeroUI
@@ -58,7 +57,7 @@ func _build() -> void:
 		name_label.text = player.class_data.talent_branches[b].to_upper()
 		name_label.add_theme_font_override("font", UiTheme.font(true))
 		name_label.add_theme_font_size_override("font_size", UiTheme.TITLE)
-		name_label.add_theme_color_override("font_color", ArtKit.color(BRANCH_COLORS[b]))
+		name_label.add_theme_color_override("font_color", _branch_color(b))
 		col.add_child(name_label)
 		_columns.append(col)
 
@@ -91,6 +90,12 @@ func _build() -> void:
 		col.add_child(btn)
 		_buttons[t.id] = btn
 	_refresh()
+
+
+## M10: each class colours its branches (ClassData.talent_colors).
+func _branch_color(b: int) -> Color:
+	var roles := player.class_data.talent_colors
+	return ArtKit.color("color_roles.%s.body" % (roles[b] if b < roles.size() else "physical"))
 
 
 func try_learn(t: TalentData) -> bool:
@@ -131,7 +136,7 @@ func _refresh() -> void:
 		btn.text = "%s%s   %d/%d" % [tier_label, t.display_name, r, t.max_rank]
 		var open := prog.tier_open(t)
 		var learnable := prog.can_learn(t)
-		var color := ArtKit.color(BRANCH_COLORS[t.branch])
+		var color := _branch_color(t.branch)
 		if r >= t.max_rank:
 			btn.add_theme_color_override("font_color", color)
 		elif learnable:

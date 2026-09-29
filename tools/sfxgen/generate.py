@@ -433,6 +433,65 @@ def waypoint_attune():
     save(pad(rise, shimmer, delay(chord, 0.3), delay(bell, 0.32)), "waypoint_attune_01")
 
 
+
+# --- M10 tank (appended: every synth above must keep its place in the shared RNG order) ---
+
+def rune_challenge():
+    """War cry: a low horn swelling under a gold rune chime - the tank calls
+    every enemy near to itself."""
+    horn = sum(np.sin(2 * np.pi * f * t(0.9) + 0.4 * np.sin(2 * np.pi * 5.0 * t(0.9))) * a
+               for f, a in ((98.0, 0.5), (196.0, 0.3), (294.0, 0.15)))
+    horn = horn * np.minimum(t(0.9) / 0.12, 1.0) * env_exp(0.9, 0.45, attack=0.12)
+    roar = lowpass(noise(0.7), 0.06) * env_exp(0.7, 0.25) * 0.5
+    chime = sum(np.sin(2 * np.pi * f * t(0.8)) * env_exp(0.8, 0.28) * 0.18 for f in (587.33, 880.0, 1174.7))
+    save(pad(horn, roar, delay(chime, 0.08)), "rune_challenge_01")
+
+
+def block_clang(i):
+    """A blow glancing off the rune ward: a short inharmonic steel clang."""
+    tone = sum(np.sin(2 * np.pi * f * (1.0 + 0.03 * i) * t(0.35)) * env_exp(0.35, d) * a
+               for f, a, d in ((520.0, 0.35, 0.09), (1310.0, 0.25, 0.06), (2150.0, 0.18, 0.04)))
+    hit = highpass(noise(0.06), 0.4) * env_exp(0.06, 0.012) * 0.9
+    save(pad(hit, tone), "block_clang_%02d" % i)
+
+
+def parry_ring():
+    """A perfect parry: a bright bell ring and a rune chime over the clang."""
+    click = highpass(noise(0.03), 0.5) * env_exp(0.03, 0.006)
+    bell = sum(np.sin(2 * np.pi * f * t(1.0)) * env_exp(1.0, d) * a
+               for f, a, d in ((1318.5, 0.3, 0.35), (1975.5, 0.22, 0.28), (2637.0, 0.16, 0.2)))
+    low = np.sin(2 * np.pi * 330.0 * t(0.4)) * env_exp(0.4, 0.12) * 0.3
+    save(pad(click, bell, low), "parry_ring_01")
+
+
+def chain_throw():
+    """A rune chain uncoiling: a whoosh with rattling links."""
+    whoosh = lowpass(noise(0.4), 0.15) * np.sin(np.pi * t(0.4) / 0.4) * 0.6
+    rattle = np.zeros_like(t(0.4))
+    for k in range(7):
+        start = int(SR * (0.03 + k * 0.045))
+        n = int(SR * 0.02)
+        rattle[start:start + n] += highpass(noise(0.02), 0.45)[:len(rattle[start:start + n])] * 0.45
+    save(pad(whoosh, rattle), "chain_throw_01")
+
+
+def chain_pull():
+    """The chain snapping taut and yanking its catch in: a thump and a rattle."""
+    thump = sine_sweep(0.3, 150.0, 60.0) * env_exp(0.3, 0.1) * 0.8
+    snap = highpass(noise(0.05), 0.35) * env_exp(0.05, 0.01) * 0.7
+    rattle = highpass(noise(0.35), 0.4) * env_exp(0.35, 0.12) * 0.35
+    save(pad(snap, thump, delay(rattle, 0.03)), "chain_pull_01")
+
+
+def ward_place():
+    """A warding rune set into the ground: a stone thud and a soft rising shimmer."""
+    thud = sine_sweep(0.25, 110.0, 55.0) * env_exp(0.25, 0.08) * 0.8
+    grit = lowpass(noise(0.2), 0.2) * env_exp(0.2, 0.05) * 0.4
+    rise = sine_sweep(0.7, 440.0, 880.0) * env_exp(0.7, 0.3) * 0.25
+    chord = sum(np.sin(2 * np.pi * f * t(0.9)) * env_exp(0.9, 0.3) * 0.15 for f in (523.25, 783.99))
+    save(pad(thud, grit, delay(rise, 0.05), delay(chord, 0.2)), "ward_place_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -454,4 +513,8 @@ if __name__ == "__main__":
     level_up(); runic_guard(); resonance_burst()
     coin_pickup(); ability_learned()
     waypoint_attune()
+    rune_challenge()
+    for i in range(1, 3):
+        block_clang(i)
+    parry_ring(); chain_throw(); chain_pull(); ward_place()
     print("done.")

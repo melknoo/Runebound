@@ -47,7 +47,8 @@ func _run() -> void:
 	get_tree().current_scene = lab
 	await get_tree().create_timer(1.0).timeout
 
-	var player := lab.player
+	# M10: the Elementalist fights - its spells are the heaviest effects.
+	var player := lab.debug_swap_class(&"elementalist")
 	player.god_mode = true
 	player.debug_learn_all()  # M07b: harness runs know the whole kit
 	_frames.clear()
@@ -66,20 +67,20 @@ func _run() -> void:
 		Input.action_press(&"move_forward" if cycle % 4 < 2 else &"move_left")
 		player.gain_resonance(100.0)
 		player.reset_cooldowns()
-		player.try_melee()
+		player.try_ability(player.basic_attack())
 		await get_tree().create_timer(0.2).timeout
-		player.try_ember()
+		player.try_ability(&"ember_lance")
 		await get_tree().create_timer(0.15).timeout
 		if cycle % 3 == 0:
-			player.try_earthbreaker()
+			player.try_ability(&"earthbreaker")
 			await get_tree().create_timer(0.15).timeout
 		if cycle % 3 == 1:
-			player.try_chain_spark()
+			player.try_ability(&"chain_spark")
 			await get_tree().create_timer(0.1).timeout
 		if cycle % 3 == 2:
-			player.try_storm_step()
+			player.try_ability(&"storm_step")
 			await get_tree().create_timer(0.25).timeout
-			player.try_fracture_rune()
+			player.try_ability(&"fracture_rune")
 		player.try_dodge()
 		await get_tree().create_timer(0.15).timeout
 		Input.action_release(&"move_forward")

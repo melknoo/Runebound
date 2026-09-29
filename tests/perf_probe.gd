@@ -82,7 +82,9 @@ func _wait(seconds: float) -> void:
 
 
 func _run() -> void:
-	var player := _zone.player
+	# M10: the fight is played by one class (default the Elementalist: its
+	# spells are the heavier effects); `"class": "runebreaker"` in the scenario.
+	var player := _zone.debug_swap_class(StringName(str(_scn.get("class", "elementalist"))))
 	player.god_mode = true
 	player.debug_learn_all()  # M07b: harness runs know the whole kit
 	for child in _zone.world.get_children():
@@ -188,8 +190,8 @@ func _prefire(item: String) -> void:
 	player.reset_cooldowns()
 	print("perf: prefire ", item)
 	match item:
-		"chain_spark": player.try_chain_spark()
-		"storm_step": player.try_storm_step()
+		"chain_spark": _zone.debug_hero_for(&"chain_spark").try_ability(&"chain_spark")
+		"storm_step": _zone.debug_hero_for(&"storm_step").try_ability(&"storm_step")
 		"vfx:storm_trail": VFX.storm_trail(scene, at, at + Vector3(0, 0, -5))
 		"vfx:arc": VFX.lightning_arc(scene, at, at + Vector3(2, 0, -3), Color(0.8, 0.9, 1.0))
 		"vfx:shock": VFX.shock_tick(scene, at)
@@ -238,29 +240,29 @@ func _fight(duration: float) -> void:
 		player.gain_resonance(Player.MAX_RESONANCE)
 		player.reset_cooldowns()
 		_step = "melee"
-		player.try_melee()
+		player.try_ability(player.basic_attack())
 		await _wait(0.2)
 		_step = "ember"
-		player.try_ember()
+		player.try_ability(&"ember_lance")
 		await _wait(0.15)
 		elapsed += 0.35
 		match cycle % 3:
 			0:
 				_step = "earthbreaker"
-				player.try_earthbreaker()
+				player.try_ability(&"earthbreaker")
 				await _wait(0.15)
 				elapsed += 0.15
 			1:
 				_step = "chain_spark"
-				player.try_chain_spark()
+				player.try_ability(&"chain_spark")
 				await _wait(0.1)
 				elapsed += 0.1
 			2:
 				_step = "storm_step"
-				player.try_storm_step()
+				player.try_ability(&"storm_step")
 				await _wait(0.25)
 				_step = "fracture_rune"
-				player.try_fracture_rune()
+				player.try_ability(&"fracture_rune")
 				elapsed += 0.25
 		_step = "dodge"
 		player.try_dodge()

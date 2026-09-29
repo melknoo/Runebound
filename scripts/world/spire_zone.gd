@@ -420,7 +420,7 @@ func _on_boss_died(_enemy: EnemyBase) -> void:
 	# One legendary and two rares per hero (M09 personal loot).
 	for hero in party():
 		var items: Array[ItemData] = []
-		var legendary := ItemGenerator.generate_legendary()
+		var legendary := ItemGenerator.generate_legendary(hero.class_data.id)  # M10: fits the hero's class
 		ItemGenerator.apply_item_level(legendary, 4)
 		items.append(legendary)
 		for i in 2:

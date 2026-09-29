@@ -13,6 +13,9 @@ const PORTAL_SPOTS := {"highlands": Vector3(0, 0, -13), "lab": Vector3(13, 0, 0)
 const WAYPOINT_SPOT := Vector3(5.5, 0, -10.5)
 ## M07b: Sigrun stands north of the west hut, by the training gear, facing the hearth.
 const TRAINER_SPOT := Vector3(-14.2, 0, -11.6)
+## M10: Maren, the Elementalist trainer, by the east wall south of the
+## training-grounds gate, between it and the spawn.
+const MAGE_TRAINER_SPOT := Vector3(12.6, 0, 8.4)
 
 
 ## M06 Phase C: the Runehold kit look (warm dawn, granite, sod roofs).
@@ -85,13 +88,23 @@ func _build_zone() -> void:
 	else:
 		_legacy_fire()
 
-	# M07b: the trainer (abilities for gold and level).
+	# M07b: the trainers (abilities for gold and level), one per class (M10).
 	var trainer := TrainerNpc.new()
 	trainer.name = "Trainer"
+	trainer.teaches_class = &"runebreaker"
 	world.add_child(trainer)
 	trainer.global_position = TRAINER_SPOT
 	var to_fire := FIRE_POS - TRAINER_SPOT
 	trainer.rotation.y = atan2(-to_fire.x, -to_fire.z)
+	var mage_trainer := TrainerNpc.new()
+	mage_trainer.name = "TrainerElementalist"
+	mage_trainer.teaches_class = &"elementalist"
+	mage_trainer.body_tint = Color(0.52, 0.6, 0.92)  # borrows the Runebreaker rig until M10 phase 3
+	mage_trainer.rune_color = ArtKit.color("color_roles.aether.body", Color("#F06AC8"))
+	world.add_child(mage_trainer)
+	mage_trainer.global_position = MAGE_TRAINER_SPOT
+	var mage_to_fire := FIRE_POS - MAGE_TRAINER_SPOT
+	mage_trainer.rotation.y = atan2(-mage_to_fire.x, -mage_to_fire.z)
 
 	# Portals.
 	var highlands := Portal.new()
@@ -138,6 +151,7 @@ func _paved_ground() -> Material:
 		paths.append(Vector4(f.x, f.y, spot.x, spot.z))
 	paths.append(Vector4(f.x, f.y, 0.0, 12.0))  # spawn
 	paths.append(Vector4(f.x, f.y, TRAINER_SPOT.x + 1.2, TRAINER_SPOT.z + 0.8))  # M07b trainer
+	paths.append(Vector4(f.x, f.y, MAGE_TRAINER_SPOT.x - 1.0, MAGE_TRAINER_SPOT.z - 0.8))  # M10 trainer
 	for hut in HUTS:
 		var door := _hut_door(hut)
 		paths.append(Vector4(door.x, door.y, lerpf(door.x, f.x, 0.55), lerpf(door.y, f.y, 0.55)))
@@ -181,7 +195,7 @@ func _dress_runehold(walls: Array[StaticBody3D], huts: Array[StaticBody3D], roof
 		SetPieces.prop(dressing(), "rh_weapon_rack" if z < -8.0 else "rh_training_post",
 			Vector3(-inner, 0, z) + Vector3.RIGHT * 0.14, PI * 0.5)
 	var keep_clear: Array[Vector3] = [Vector3(0, 10, 3.0), Vector3(FIRE_POS.x, FIRE_POS.z, 6.0),
-		Vector3(TRAINER_SPOT.x, TRAINER_SPOT.z, 2.2)]
+		Vector3(TRAINER_SPOT.x, TRAINER_SPOT.z, 2.2), Vector3(MAGE_TRAINER_SPOT.x, MAGE_TRAINER_SPOT.z, 2.2)]
 	for spot: Vector3 in PORTAL_SPOTS.values():
 		keep_clear.append(Vector3(spot.x, spot.z, 2.6))
 	for hut in HUTS:

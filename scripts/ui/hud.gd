@@ -14,7 +14,8 @@ var _gold_box: HBoxContainer
 var _gold_label: Label
 var _cost_tick: ColorRect
 var _hurt_flash: ColorRect
-var _slots: Dictionary = {}  # id -> {overlay, slot, icon, key, name, desc, type, data}
+## M10: six fixed slots (SLOT_KEYS); each shows whatever the loadout puts there.
+var _slots: Dictionary = {}  # slot key -> {overlay, slot, icon, key, key_label, id, name, desc, type, data}
 var _toast_box: VBoxContainer
 var _slot_row: HBoxContainer
 ## M08 compass strip (top centre); hidden while a boss bar shows.
@@ -42,14 +43,22 @@ const TOOLTIP_WIDTH := 300.0
 ## Above the inventory (8), below the debug overlay (10) and travel fade (20).
 const TOOLTIP_LAYER := 9
 const ICON_DIR := "res://assets/ui/icons/"
+## M10 slot row: LMB basic attack, the four free slots (RMB, 1, 2, 3), dodge.
+const SLOT_KEYS: Array[StringName] = [&"basic", &"slot0", &"slot1", &"slot2", &"slot3", &"dodge"]
 
 
+## Names of the abilities in the slot row (empty slots left out).
 func ability_names() -> Array[String]:
 	var out: Array[String] = []
-	for id: StringName in _slots:
-		if (_slots[id]["slot"] as Control).visible:  # only abilities the character knows
-			out.append(_slots[id]["name"] as String)
+	for key: StringName in SLOT_KEYS:
+		if _slots[key]["id"] != &"":
+			out.append(_slots[key]["name"] as String)
 	return out
+
+
+## Ability id shown in a slot (&"" when empty); `key` is one of SLOT_KEYS.
+func slot_ability(key: StringName) -> StringName:
+	return _slots[key]["id"] if _slots.has(key) else &""
 
 
 ## Pixel icon of an ability (or dodge) by id; null when none is generated.
@@ -58,17 +67,20 @@ static func icon(id: StringName) -> Texture2D:
 	return load(path) as Texture2D if ResourceLoader.exists(path) else null
 
 
-## Key label for an ability id, as shown on its slot ("LMB", "1", "SPC").
+## Key label for an ability id, as shown on its slot ("LMB", "1", "SPC"; "-"
+## when it sits in no slot).
 static func key_for(player_: Player, id: StringName) -> String:
-	if id == &"dodge":
-		return "SPC"
-	var data := player_.ability(id)
-	return InputSetup.key_label(data.input_action) if data != null else "?"
+	var label := player_.key_label_for(id)
+	return label if label != "" else "-"
 
 
-## Screen rect of an ability slot (tests use it to simulate hovering).
+## Screen rect of the slot holding ability `id` (tests use it to simulate
+## hovering); empty when no slot shows it.
 func slot_rect(id: StringName) -> Rect2:
-	return (_slots[id]["slot"] as Control).get_global_rect()
+	for key: StringName in SLOT_KEYS:
+		if _slots[key]["id"] == id:
+			return (_slots[key]["slot"] as Control).get_global_rect()
+	return Rect2()
 
 
 func tooltip_visible() -> bool:
@@ -115,11 +127,13 @@ func _build() -> void:
 	root.add_child(cluster)
 
 	_health_fill = _bar(cluster, HEALTH_HEIGHT, Color("#D8404A"), Color("#5A1A22"))
-	var resonance := ArtKit.color("color_roles.resonance.body", Color("#FFC34D"))
+	var role := player.class_data.resource_color_role
+	var resonance := ArtKit.color("color_roles.%s.body" % role, Color("#FFC34D"))
 	_resonance_fill = _bar(cluster, RESONANCE_HEIGHT, resonance, resonance.darkened(0.7))
-	# Earthbreaker's cost marked on the Resonance bar: affordable = past the tick.
+	# The cheapest slotted spender's cost marked on the class resource bar:
+	# affordable = past the tick.
 	_cost_tick = ColorRect.new()
-	_cost_tick.color = ArtKit.color("color_roles.resonance.hot", Color("#FFF0B8"))
+	_cost_tick.color = ArtKit.color("color_roles.%s.hot" % role, Color("#FFF0B8"))
 	_cost_tick.size = Vector2(2, RESONANCE_HEIGHT - BAR_INSET * 2.0 + 4.0)
 	_cost_tick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_resonance_fill.get_parent().add_child(_cost_tick)
@@ -161,22 +175,23 @@ func _build() -> void:
 	slot_row.position = Vector2(0, -98)
 	root.add_child(slot_row)
 
-	# M07b: one slot per class ability (ClassData order); dodge sits after the
-	# last learnable ability, the talent abilities (7-8) follow it. Slots show
-	# only while the character knows the ability (_refresh_slots).
-	var dodge_added := false
-	for data in player.class_data.abilities:
-		if data == null:
-			continue
-		if not dodge_added and data.unlock == AbilityData.Unlock.TALENT:
-			_add_slot(slot_row, &"dodge", "SPC", null)
-			dodge_added = true
-		_add_slot(slot_row, data.id, InputSetup.key_label(data.input_action), data)
-	if not dodge_added:
-		_add_slot(slot_row, &"dodge", "SPC", null)
+	# M10: six fixed slots - LMB (basic attack), RMB / 1 / 2 / 3 (the loadout),
+	# SPC (dodge). An empty slot shows its frame and key only.
+	for key: StringName in SLOT_KEYS:
+		var label := "LMB"
+		if key == &"dodge":
+			label = "SPC"
+		elif key != &"basic":
+			label = InputSetup.slot_label(SLOT_KEYS.find(key) - 1)
+		_add_slot(slot_row, key, label)
 	_slot_row = slot_row
+	var row_width := SLOT_SIZE * SLOT_KEYS.size() + SLOT_GAP * (SLOT_KEYS.size() - 1)
+	# offsets, not position: once laid out, position is in parent space
+	_slot_row.offset_left = -row_width * 0.5
+	_slot_row.offset_right = row_width * 0.5
 	player.progression.talents_changed.connect(_refresh_slots)
 	player.abilities_changed.connect(_refresh_slots)
+	player.loadout_changed.connect(_refresh_slots)
 	_refresh_slots()
 	_slots_built = true
 
@@ -313,7 +328,7 @@ func _bar(parent: Control, height: float, fill_color: Color, back_color: Color, 
 	return fill
 
 
-func _add_slot(parent: Control, id: StringName, key_label: String, data: AbilityData) -> void:
+func _add_slot(parent: Control, key: StringName, key_label: String) -> void:
 	var slot := Control.new()
 	slot.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
 	slot.pivot_offset = Vector2(SLOT_SIZE, SLOT_SIZE) * 0.5  # the learn pop scales around the centre
@@ -326,9 +341,6 @@ func _add_slot(parent: Control, id: StringName, key_label: String, data: Ability
 	slot.add_child(frame)
 
 	var icon := TextureRect.new()
-	var icon_path := ICON_DIR + String(id) + ".png"
-	if ResourceLoader.exists(icon_path):
-		icon.texture = load(icon_path)
 	icon.position = Vector2(2, 2)
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(icon)
@@ -353,16 +365,29 @@ func _add_slot(parent: Control, id: StringName, key_label: String, data: Ability
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(label)
 
-	var entry := {"overlay": sweep, "slot": slot, "icon": icon, "key": key_label, "data": data}
+	_slots[key] = {"overlay": sweep, "slot": slot, "icon": icon, "key": key_label, "key_label": label,
+		"id": &"", "data": null, "name": "", "desc": "", "type": -1}
+
+
+## Shows ability `id` (&"" = empty) in the slot entry.
+func _assign(entry: Dictionary, id: StringName) -> void:
+	entry["id"] = id
+	var data: AbilityData = player.ability(id) if id != &"dodge" and id != &"" else null
+	entry["data"] = data
+	(entry["icon"] as TextureRect).texture = Hud.icon(id) if id != &"" else null
+	(entry["key_label"] as Label).modulate = Color.WHITE if id != &"" else Color(0.55, 0.55, 0.6, 0.8)
 	if data != null:
 		entry["name"] = data.display_name
 		entry["desc"] = data.description
 		entry["type"] = data.damage_type
-	else:  # Dodge has no AbilityData.
+	elif id == &"dodge":  # Dodge has no AbilityData.
 		entry["name"] = "Dodge"
 		entry["desc"] = "Quick evasive dash with brief invulnerability. Cancels attack recovery."
 		entry["type"] = -1
-	_slots[id] = entry
+	else:
+		entry["name"] = ""
+		entry["desc"] = ""
+		entry["type"] = -1
 
 
 func _build_tooltip() -> void:
@@ -408,8 +433,9 @@ func _tooltip_label(parent: Control, color: Color) -> Label:
 func _update_tooltip(mouse_pos: Vector2) -> void:
 	var hovered: StringName = &""
 	if player.input_locked:
-		for id: StringName in _slots:
-			if slot_rect(id).has_point(mouse_pos):
+		for key: StringName in SLOT_KEYS:
+			var id: StringName = _slots[key]["id"]
+			if id != &"" and slot_rect(id).has_point(mouse_pos):
 				hovered = id
 				break
 	if hovered == &"":
@@ -436,7 +462,11 @@ static func tooltip_position(slot: Rect2, tip_size: Vector2, view: Vector2) -> V
 
 
 func _fill_tooltip(id: StringName) -> void:
-	var entry: Dictionary = _slots[id]
+	var entry: Dictionary = {}
+	for key: StringName in SLOT_KEYS:
+		if _slots[key]["id"] == id:
+			entry = _slots[key]
+			break
 	_tooltip_title.text = entry["name"]
 	var type: int = entry["type"]
 	if type < 0:
@@ -459,31 +489,34 @@ func _stats_line(id: StringName, data: AbilityData) -> String:
 	var dmg := StatSheet.damage_text(player, data)  # M07b: the sheet's numbers
 	if dmg != "":
 		parts.append(dmg)
-	var cost := player.earthbreaker_cost() if id == &"earthbreaker" else data.resonance_cost
+	var res := player.class_data.resource_label
+	var cost := player.resource_cost(id)
 	if cost > 0.0:
-		parts.append("Costs %s Resonance" % String.num(cost, 0))
+		parts.append("Costs %s %s" % [String.num(cost, 0), res])
 	if data.cooldown > 0.0:
 		parts.append("Cooldown %ss" % String.num(data.cooldown, 2))
 	if data.resonance_gain_per_hit > 0.0:
-		parts.append("+%s Resonance per hit" % String.num(data.resonance_gain_per_hit, 0))
+		parts.append("+%s %s per hit" % [String.num(data.resonance_gain_per_hit, 0), res])
 	return "  ·  ".join(parts)
 
 
 func _process(_delta: float) -> void:
 	if player == null or not is_instance_valid(player):
 		return
-	for id: StringName in _slots.keys():
-		if not (_slots[id]["slot"] as Control).visible:
+	for key: StringName in SLOT_KEYS:
+		var id: StringName = _slots[key]["id"]
+		var sweep := _slots[key]["overlay"] as TextureProgressBar
+		if id == &"":
+			sweep.value = 0.0
 			continue
-		var sweep := _slots[id]["overlay"] as TextureProgressBar
-		var icon_rect := _slots[id]["icon"] as TextureRect
+		var icon_rect := _slots[key]["icon"] as TextureRect
 		sweep.value = player.cooldown_fraction(id) * 100.0
-		# Earthbreaker also dims fully while Resonance is below its cost.
-		if id == &"earthbreaker":
-			var starved := player.resonance < player.earthbreaker_cost()
-			if starved:
-				sweep.value = 100.0
-			icon_rect.modulate = Color(0.6, 0.6, 0.65) if starved else Color.WHITE
+		# A spender also dims fully while the class resource is below its cost.
+		var cost := player.resource_cost(id) if id != &"dodge" else 0.0
+		var starved := cost > 0.0 and player.resonance < cost
+		if starved:
+			sweep.value = 100.0
+		icon_rect.modulate = Color(0.6, 0.6, 0.65) if starved else Color.WHITE
 	if _hurt_flash.color.a > 0.0:
 		_hurt_flash.color.a = maxf(_hurt_flash.color.a - _delta * 1.4, 0.0)
 	_update_tooltip(get_viewport().get_mouse_position())
@@ -496,27 +529,42 @@ func _on_health_changed(current: float, maximum: float) -> void:
 		_hurt_flash.color.a = maxf(_hurt_flash.color.a, 0.22)
 
 
-## A slot shows only while the character knows its ability (start kit,
-## trainer, or a held talent power); the row stays centred. A slot that just
-## appeared pops in, so learning at the trainer reads on the HUD.
+## M10: each slot shows what the loadout puts there (the basic attack once
+## known, the four free slots, dodge). A slot that just got an ability pops,
+## so learning at the trainer or a loadout swap reads on the HUD.
 func _refresh_slots() -> void:
-	var shown := 0
-	for id: StringName in _slots:
-		var slot := _slots[id]["slot"] as Control
-		var visible_now := player.knows(id)
-		if visible_now and not slot.visible and _slots_built:
+	for key: StringName in SLOT_KEYS:
+		var id: StringName = &""
+		if key == &"dodge":
+			id = &"dodge"
+		elif key == &"basic":
+			id = player.basic_attack() if player.knows(player.basic_attack()) else &""
+		else:
+			var i := SLOT_KEYS.find(key) - 1
+			id = player.loadout[i] if i < player.loadout.size() else &""
+		var entry: Dictionary = _slots[key]
+		if entry["id"] == id:
+			continue
+		_assign(entry, id)
+		var slot := entry["slot"] as Control
+		if id != &"" and _slots_built:
 			slot.scale = Vector2.ZERO
 			var tw := slot.create_tween()
 			tw.tween_property(slot, "scale", Vector2.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		slot.visible = visible_now
-		if visible_now:
-			shown += 1
-	var row_width := SLOT_SIZE * shown + SLOT_GAP * maxi(shown - 1, 0)
-	# offsets, not position: once laid out, position is in parent space
-	_slot_row.offset_left = -row_width * 0.5
-	_slot_row.offset_right = row_width * 0.5
-	if _cost_tick != null:  # Earthbreaker's cost mark means nothing before it is learned
-		_cost_tick.visible = player.knows(&"earthbreaker")
+	_on_resonance_changed(player.resonance, player.max_resource())
+
+
+## The cheapest resource cost among the slotted abilities (0 = no spender).
+func _cheapest_slotted_cost() -> float:
+	var best := 0.0
+	for key: StringName in SLOT_KEYS:
+		var id: StringName = _slots[key]["id"]
+		if id == &"" or id == &"dodge":
+			continue
+		var cost := player.resource_cost(id)
+		if cost > 0.0 and (best <= 0.0 or cost < best):
+			best = cost
+	return best
 
 
 func gold_text() -> String:
@@ -584,6 +632,7 @@ func title_card(title: String, subtitle: String = "") -> void:
 func _on_resonance_changed(current: float, maximum: float) -> void:
 	var inner := BAR_WIDTH - BAR_INSET * 2.0
 	_resonance_fill.size.x = inner * clampf(current / maximum, 0.0, 1.0)
-	if _cost_tick != null:
-		_cost_tick.position = Vector2(BAR_INSET + inner * clampf(player.earthbreaker_cost() / maximum, 0.0, 1.0) - 1.0,
-			BAR_INSET - 2.0)
+	if _cost_tick != null and not _slots.is_empty():
+		var cost := _cheapest_slotted_cost()
+		_cost_tick.visible = cost > 0.0  # no spender slotted: the mark means nothing
+		_cost_tick.position = Vector2(BAR_INSET + inner * clampf(cost / maximum, 0.0, 1.0) - 1.0, BAR_INSET - 2.0)

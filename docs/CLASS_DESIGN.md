@@ -1,8 +1,11 @@
 # RUNEBOUND — Class Design
 
-## Three roles (planned, M10–M11)
+## Three roles (M10–M11)
 User decisions of 2026-09-29 (ROADMAP "Spieler-Leitlinien"). Each milestone
 gets its own plan with the numbers; this section records the direction.
+**M10 phase 1 is built** (2026-09-29): both classes as their own hero
+scripts, the loadout, several characters per save; phases 2 (tank) and 3
+(Elementalist) add the new abilities.
 
 ### Roles
 | Class | Role | Range | Built in |
@@ -24,7 +27,8 @@ gets its own plan with the numbers; this section records the direction.
 - **Free:** 4 slots, **RMB, 1, 2, 3**, filled from a pool of about 12
   abilities per class.
 - **Changing** works anywhere out of combat (the sprint's rule: no hit taken
-  or thrown for 3 s).
+  or thrown for 3 s): the hero window's Abilities tab (K). A newly learned
+  ability takes the first free slot.
 - **Sources for the pool:** the class trainer (gold + level, as today),
   quests and bosses, secrets and dungeons (tomes), the talent tree (like
   Runic Guard and Resonance Burst today). M10 starts with the trainer and the
@@ -34,18 +38,60 @@ gets its own plan with the numbers; this section records the direction.
   it inherits, druid ~12), each with an icon drawn in `tools/texgen/ui.py`
   (ROADMAP "Icon-Quelle").
 
-### Runebreaker, the tank
-- **Keeps the melee core:** Rune Cleave (LMB, builds Resonance), Earthbreaker,
-  Runic Guard, Resonance Burst. The BUILD → SPEND rhythm stays.
-- **New:** a taunt, a block, damage reduction; abilities that make threat.
-- **Gives away** the elemental spells (Ember Lance, Chain Spark, Fracture
-  Rune, Storm Step) to the elementalist.
+### M10 decisions (user, 2026-09-29)
+- **8 pool abilities per class in M10**; the remaining ~4 per class arrive in
+  M12-M14 as rewards from bosses, quests and tomes (those sources then have
+  something to give).
+- **Block:** held (frontal hits -75 %, a blocked hit gives Resonance) plus a
+  **parry** in the first 0.3 s (no damage and a rune counter, a HEAVY hit on
+  the attacker).
+- **The Elementalist's resource:** build -> spend like the Runebreaker's,
+  under its own name and colour: **Aether** (magenta, `color_roles.aether`).
+- **One world per character** (flags, camps, zone); co-op keeps the
+  server's world.
 
-### Elementalist, the damage dealer
-- Ranged fire, lightning and frost; the statuses Burn, Shock and Chill and
-  their interactions move with the spells.
-- **Inherits** Ember Lance, Chain Spark, Fracture Rune and Storm Step, plus
-  new spells and its own basic attack.
+### Runebreaker, the tank (M10)
+Armored rune warrior. Rune Cleave builds Resonance, heavy rune abilities spend
+it; rhythm BUILD -> SPEND, max 100. 100 health at level 1.
+- **LMB (fixed):** Rune Cleave.
+- **Pool (8):**
+
+  | Ability | Role | Source | Built |
+  |---|---|---|---|
+  | Earthbreaker | leaping AoE slam, big stagger, -40 Resonance | trainer L2, 50 g | yes |
+  | Runic Guard | barrier (40 + level), -30 Resonance | talent (Runic Warden) | yes |
+  | Resonance Burst | finisher nova, spends all Resonance (50+) | talent (Runic Warden) | yes |
+  | Rune Challenge | taunt shout, 8 m, 4 s | trainer | phase 2 |
+  | Rune Wall | hold to block (-75 % from the front), parry in the first 0.3 s | trainer | phase 2 |
+  | Rune Chain | pulls one enemy to you and taunts it | trainer | phase 2 |
+  | Warden's Leap | leap to the aim point, the landing taunts briefly | trainer | phase 2 |
+  | Warding Rune | ground zone, allies inside take -25 % damage | trainer | phase 2 |
+
+- **Talents** (`Bulwark`, `Earthshaker`, `Runic Warden`, 24 nodes, PROGRESSION_DESIGN).
+- **Gave away** the elemental spells (Ember Lance, Chain Spark, Fracture Rune,
+  Storm Step) to the Elementalist.
+
+### Elementalist, the damage dealer (M10)
+Ranged caster of fire, lightning and frost; Rune Bolts and spell hits build
+**Aether**, the big spells spend it. 85 health at level 1 (frailer than the
+tank). Burn, Shock and Chill and their interactions moved with the spells.
+- **LMB (fixed):** Rune Bolt - a quick arcane dart in the player teal
+  (damage type ARCANE); held down it keeps casting and never roots.
+- **Pool (8):**
+
+  | Ability | Role | Source | Built |
+  |---|---|---|---|
+  | Ember Lance | fast fire lance + Burn | trainer L2, 50 g | yes |
+  | Storm Step | lightning dash through enemies, Shocks the path | trainer L3, 150 g | yes |
+  | Chain Spark | jump-bolt, 3 jumps (+1 through Shocked) | trainer L4, 275 g | yes |
+  | Fracture Rune | ground rune, arms 1.2 s, AoE + Chill | trainer L5, 400 g | yes |
+  | Frost Nova | ring around you, Chill; spends Aether | trainer | phase 3 |
+  | Flame Wall | a burning line on the ground | trainer | phase 3 |
+  | Ball Lightning | a slow orb that zaps and Shocks along its way | trainer | phase 3 |
+  | Ember Fall | meteor with a telegraph, big Burn; spends Aether | trainer | phase 3 |
+
+- **Talents** (`Storm`, `Ember`, `Frost`, 24 nodes). Until its own rig
+  exists (phase 3) it borrows the Runebreaker's rig in a blue tint.
 
 ### Root druid, the healer
 - Plants breaking out of burnt earth, totems, thorns.
@@ -65,47 +111,34 @@ gets its own plan with the numbers; this section records the direction.
 - Character select, several characters per save (one class each), a trainer
   per class.
 
-## Runebreaker today (until M10)
-Armored magical warrior: melee builds **Resonance**, heavy rune abilities
-spend it. Rhythm: BUILD → SPEND. Max Resonance 100.
+## The kit before M10 (history)
+Until M10 the Runebreaker carried all eight abilities: Rune Cleave, Earthbreaker,
+Ember Lance, Storm Step, Chain Spark, Fracture Rune (trainer, keys LMB / 1 /
+RMB / 2 / 3 / 4) and Runic Guard / Resonance Burst (talents, keys 5 / 6). The
+M10 split moved the four elemental spells to the Elementalist; a v5 save's
+Runebreaker got their price back as gold.
 
-### Current kit (6 base abilities; M07b: learned, not given)
-A fresh Runebreaker knows **Rune Cleave and Dodge only**. The other five are
-bought from the trainer **Sigrun Runewright** in Runehold for gold, each with
-a level requirement (PROGRESSION_DESIGN.md "Gold and the trainer"). Keys are
-fixed per ability (number row, applied at runtime by `InputSetup`).
-
-| Key | Ability | Element | Role | Resonance | Learned |
-|---|---|---|---|---|---|
-| LMB | Rune Cleave | Physical | melee builder, alternating sweeps | +12/hit | start |
-| 1 | Earthbreaker | Physical | heavy AoE slam, big stagger | −40 | trainer, L2, 50 g |
-| RMB | Ember Lance | Fire | fast projectile + Burn | +4/hit | trainer, L3, 150 g |
-| 2 | Storm Step | Lightning | offensive dash through enemies, Shocks path | +5/hit | trainer, L4, 275 g |
-| 3 | Chain Spark | Lightning | instant jump-bolt (Tab target), 3 jumps, 4 vs Shocked | +4/hit | trainer, L5, 400 g |
-| 4 | Fracture Rune | Frost | ground rune, 1.2s arm, AoE + Chill | +6/hit | trainer, L7, 600 g |
-| SPC | Dodge | — | i-frame reposition, cancels recovery | — | always |
-
-Earthbreaker comes first so the class rhythm (BUILD → SPEND) is complete from
-level 2. The class itself is data: `resources/classes/runebreaker.tres`
-(`ClassData`: abilities in HUD order, starting kit, branch names, rig).
-
-### Elemental statuses (StatusEffectComponent)
-- **Burn** (Fire): 4 dps · 3s. Source: Ember Lance.
-- **Chill** (Frost): −45% move/AI speed · 3s. Source: Fracture Rune.
+### Elemental statuses (StatusEffectComponent, the Elementalist's)
+- **Burn** (Fire): 4 dps · 3s. Sources: Ember Lance; the tank's Molten Core
+  talent sets Earthbreaker's victims ablaze too.
+- **Chill** (Frost): −45% move/AI speed · 3s. Sources: Fracture Rune; the
+  tank's Glacial Bulwark / Glacier Heart.
 - **Shock** (Lightning): +20% damage taken · 4s ("Conductive"). Sources:
   Storm Step, Chain Spark. Interaction: Chain Spark gains a 4th jump when it
   touches a Shocked enemy.
 
 ### Intended play patterns
-- Melee loop: Cleave to build → Earthbreaker crowds.
-- Lightning loop: Storm Step through a pack → Chain Spark the Shocked group.
-- Control loop: Fracture Rune ahead of a chase → kite Chilled enemies into it.
+- **Runebreaker:** Cleave to build → Earthbreaker the crowd → Runic Guard when
+  the pack turns on you; Resonance Burst to finish (phase 2 adds taunt, block
+  and pull so the tank holds the enemies' attention).
+- **Elementalist:** Rune Bolts from range to build Aether; Storm Step through a
+  pack → Chain Spark the Shocked group; Fracture Rune ahead of a chase → kite
+  Chilled enemies into it.
 
-### M07: specializations and abilities 7-8 (talent unlocks)
-The talent tree has three branches, Storm, Ember and Runic Warden
-(PROGRESSION_DESIGN.md). The Runic Warden branch unlocks two abilities:
+### Talent unlocks (Runebreaker's Runic Warden branch)
+| Ability | Element | Role | Resonance |
+|---|---|---|---|
+| Runic Guard | — | barrier: absorbs 40 + level for 4 s, 12 s cooldown (Glacial Bulwark chills attackers) | −30 |
+| Resonance Burst | Physical | finisher nova, 4 m, 0.7 damage per point spent, heavy stagger | all (≥ 50) |
 
-| Key | Ability | Element | Role | Resonance |
-|---|---|---|---|---|
-| 5 | Runic Guard | — | barrier: absorbs 40 + level for 4 s, 12 s cooldown (Glacial Bulwark chills attackers) | −30 |
-| 6 | Resonance Burst | Physical | finisher nova, 4 m, 0.7 damage per point spent, heavy stagger | all (≥ 50) |
+Learned, they join the loadout pool like any trainer ability.

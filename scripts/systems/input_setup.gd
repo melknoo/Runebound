@@ -1,26 +1,34 @@
 class_name InputSetup
 extends Object
-## Keyboard layout applied at runtime (user, 2026-09-24): every ability on the
-## number row, Q / R kept as alternates, interaction on E. Done here instead of
+## Keyboard layout applied at runtime (user, 2026-09-24): abilities on the
+## number row, Q / R kept as alternates, interaction on E. M10: the keys belong
+## to the loadout's slots (SLOT_ACTIONS), 4-6 are free again. Done here instead of
 ## in project.godot on purpose (the editor may be open and would overwrite
 ## external edits). Mouse buttons, Space and the rest stay as the project
 ## defines them. Idempotent: each listed action gets exactly these keys.
 
 const KEYS := {
-	&"ability_q": [KEY_1, KEY_Q],              # Earthbreaker
-	&"ability_e": [KEY_2],                     # Storm Step (E is interaction now)
-	&"ability_r": [KEY_3, KEY_R],              # Chain Spark
-	&"ability_f": [KEY_4],                     # Fracture Rune (F is free)
-	&"ability_runic_guard": [KEY_5],
-	&"ability_resonance_burst": [KEY_6],
+	&"ability_q": [KEY_1, KEY_Q],              # M10 loadout slot 2
+	&"ability_e": [KEY_2],                     # slot 3 (E is interaction now)
+	&"ability_r": [KEY_3, KEY_R],              # slot 4
 	&"interact": [KEY_E],                      # portals, chests, NPCs
 	&"talents_toggle": [KEY_N],
 	&"hero_character": [KEY_C],                # M07b character sheet tab
+	&"loadout_toggle": [KEY_K],                # M10 abilities tab (the loadout)
 	&"map_toggle": [KEY_M],                    # M08 zone map
 	&"party_cancel": [KEY_X],                  # M09 cancels a party travel countdown
 	&"sprint": [KEY_SHIFT],                    # M08 notes: held, out of combat
 	&"playtest_toggle": [KEY_J],               # the playtest checklist (PlaytestUI)
 }
+
+
+## M10 loadout: the four free slots in order (RMB, 1, 2, 3); LMB (primary_attack)
+## always fires the class's basic attack, Space the dodge.
+const SLOT_ACTIONS: Array[StringName] = [&"secondary_ability", &"ability_q", &"ability_e", &"ability_r"]
+
+
+static func slot_label(slot: int) -> String:
+	return key_label(SLOT_ACTIONS[slot]) if slot >= 0 and slot < SLOT_ACTIONS.size() else ""
 
 
 static func ensure() -> void:
