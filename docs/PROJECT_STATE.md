@@ -21,9 +21,11 @@ ROADMAP "Spieler-Leitlinien" and the design docs:
 - **Story with meta seasoning** (M14): dark story, rare explicit and loving
   "written by an AI" breaks, answer options, German + English.
   [STORY_DESIGN](STORY_DESIGN.md).
-- **Icons:** a PixelLab-MCP vs. generator comparison before M10. The MCP
-  server is registered (local scope, connected); the key is
-  `PIXELLAB_API_KEY` in the git-ignored `.env`.
+- **Icons stay with the generator** (decided 2026-09-29): the same three
+  motifs were made both in `tools/texgen/ui.py` and with PixelLab, and the
+  user liked the generator's best. New ability icons are drawn in `ui.py`
+  as their abilities arrive (M10 tank + elementalist, M11 druid with a
+  `nature` colour role). Results and costs: ROADMAP "Icon-Quelle".
 Old numbers: M10 Open World II is now M15, M11 Story is M14, the second
 class (M12) became M10/M11, Endgame M16, Release polish M17.
 

@@ -54,7 +54,8 @@ gefallen schon sehr, es fehlt Substanz.“ Details in den Design-Docs.
    Chain Spark, Fracture Rune und Storm Step, ein **Wurzel-Druide** heilt (gezielt, Zonen, Schilde
    + Buffs). LMB und Dodge fest, **4 freie Slots (RMB, 1, 2, 3) aus etwa 12**, Wechsel überall
    außerhalb des Kampfs. Rollen: solo weich, Koop-Dungeons fordern sie.
-5. **Icons:** zuerst ein Vergleich, PixelLab-MCP gegen den heutigen Generator (Nebenstrang unten).
+5. **Icons:** bleiben beim Generator (`tools/texgen/ui.py`), entschieden am 2026-09-29 nach einem
+   Vergleich mit PixelLab (Nebenstrang unten).
 
 ## Abgeschlossen
 - **M01 Combat Lab** — Controller, Kamera, Dodge, Rune Cleave, Ember Lance, Earthbreaker, Feedback-Stack.
@@ -179,16 +180,31 @@ zuerst, Tank und Magier zusammen, der Druide direkt danach). Die Reihenfolge ab 
 Vorschlag und bleibt tauschbar. Frühere Nummern: die „Zweite Klasse“ war M12, Open World II war
 M10, Story & RPG war M11, Endgame M13, Release-Politur M14.
 
-### Nebenstrang vor M10 — Icon-Quelle
-M10 braucht etwa 20 neue Fähigkeits-Icons. Heute zeichnet `tools/texgen/ui.py` jedes Icon in
-Code. Spieler-Entscheidung: **zuerst vergleichen**. Der PixelLab-MCP-Server (KI-Pixelart) ist
-seit 2026-09-29 eingerichtet: `claude mcp add -s local -t http pixellab https://api.pixellab.ai/mcp
--H "Authorization: Bearer <KEY>"`, der Key liegt als `PIXELLAB_API_KEY` in der git-ignorierten
-`.env`. Der Scope `local` legt ihn in `~/.claude.json` ab, nie in ein `.mcp.json` im öffentlichen
-Repo. Offen: 3 Icons mit PixelLab und 3 mit dem Generator auf einer Vergleichsseite, danach
-entscheidet der Spieler. Vorher werden Preis und Bildlizenz geprüft; alles, was entsteht, muss
-ART_BIBLE (Palette, Umriss, Pixelraster) bestehen. Alternative ohne KI:
-Aseprite-MCP (`pixel-mcp`, braucht Aseprite).
+### Nebenstrang vor M10 — Icon-Quelle (entschieden 2026-09-29)
+**Spieler-Entscheidung: Die Icons kommen weiter aus dem Generator.** `tools/texgen/ui.py`
+zeichnet jedes Icon in Code: 20×20-Kunst, Rollenfarben aus `art_spec.json`, Tintenumriss,
+gespeichert in 2×. M10 und M11 brauchen zusammen etwa 30 neue Fähigkeits-Icons.
+
+Grundlage war ein Vergleich derselben drei Motive (Spott, Frostnova, Heilzone) auf beiden Wegen.
+Jedes Icon stand im echten HUD-Slot und lief durch einen ART_BIBLE-Check (Raster, Palette, Umriss):
+- **Generator:** Alle drei bestehen jeden Check und treffen die Formsprache des Sets. Dem Spieler
+  gefielen sie am besten.
+- **PixelLab pixen** (nativ 20×20): der beste KI-Weg. pixen wählt aber eigene Farben (12 bis 56
+  statt 4 bis 6). Erst nach dem Runden auf die Rollenfarben und einem neuen Umriss bestehen die
+  Icons die Checks.
+- **PixelLab pixflux** (erzwungene Palette): Die Leinwand ist mindestens 32×32, beim
+  Herunterrechnen auf 20×20 gehen Details verloren. 3 von 7 Versuchen waren brauchbar.
+- **PixelLab Pro:** Ein Aufruf mit 64 Kandidaten brachte keinen brauchbaren. Die Stilvorlage war
+  ein 2×2-Blatt aus vier Icons, und das Modell übernahm dessen Aufteilung.
+- **Kosten:** 30 der 40 Test-Generationen, bezahlt 0 $ (zum Listenpreis etwa 0,17 $). Die Lizenz
+  wäre kein Hindernis gewesen: Die Bilder gehören dem Nutzer, kommerzielle Nutzung ist frei.
+
+Umsetzung: Die neuen Icons entstehen zusammen mit ihren Fähigkeiten als Funktionen in `ui.py`.
+In M10 kommen die Tank- und Magier-Icons, in M11 die Druiden-Icons. Für den Druiden kommt dann eine
+Farbrolle `nature` in `art_spec.json`, im Vergleich vorläufig #2E6B34 / #7ED957 / #E4FFC4 (deutlich
+gelber als das Spieler-Türkis). Der PixelLab-MCP-Server bleibt registriert (Scope `local`, der Key
+liegt als `PIXELLAB_API_KEY` in der git-ignorierten `.env`, nie in einem `.mcp.json` im Repo). Für
+Icons wird er nicht gebraucht.
 
 ### M10 — Drei Rollen I: Tank + Elementar-Magier + Loadout
 Ersetzt die alte „Zweite Klasse“. Details: CLASS_DESIGN „Three roles“.

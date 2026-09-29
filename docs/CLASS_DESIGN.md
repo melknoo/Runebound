@@ -31,7 +31,8 @@ gets its own plan with the numbers; this section records the direction.
   talent tree; the other sources arrive with M12–M14.
 - **Need:** about 12 pool abilities plus a basic attack per class, about 30
   new abilities in total (tank ~9, elementalist ~8 on top of the four spells
-  it inherits, druid ~12), each with an icon (ROADMAP "Icon-Quelle").
+  it inherits, druid ~12), each with an icon drawn in `tools/texgen/ui.py`
+  (ROADMAP "Icon-Quelle").
 
 ### Runebreaker, the tank
 - **Keeps the melee core:** Rune Cleave (LMB, builds Resonance), Earthbreaker,
