@@ -1,8 +1,9 @@
 class_name StatusEffectComponent
 extends Node
 ## Elemental statuses on one entity: Burn (fire DoT), Chill (slow),
-## Shock (increased damage taken). Applied from HitInfo flags by the owner,
-## queried by movement/damage code. Reapplying refreshes duration.
+## Shock (increased damage taken), M10 Root (frozen in place: no movement).
+## Applied from HitInfo flags by the owner, queried by movement/damage code.
+## Reapplying refreshes duration.
 
 const BURN_DPS := 4.0
 const BURN_DURATION := 3.0
@@ -24,6 +25,9 @@ var _burn_accum: float = 0.0
 var _chill_left: float = 0.0
 var _shock_left: float = 0.0
 var _conductor_left: float = 0.0
+var _root_left: float = 0.0
+## M10 Absolute Zero: when the last chills landed (seconds, engine time).
+var _chill_times: Array[float] = []
 var _tick_vfx_accum: float = 0.0
 
 
@@ -50,8 +54,37 @@ func has_shock() -> bool:
 	return _shock_left > 0.0
 
 
+func is_rooted() -> bool:
+	return _root_left > 0.0
+
+
 func speed_multiplier() -> float:
+	if is_rooted():
+		return 0.0
 	return CHILL_SPEED_MULT if has_chill() else 1.0
+
+
+## M10 Deep Freeze / Absolute Zero: frozen in place (it can still strike what
+## is in reach).
+func apply_root(duration: float) -> void:
+	if puppet_of != null:
+		puppet_of.call(&"forward_status", &"root", duration, 0.0)
+		return
+	_root_left = maxf(_root_left, duration)
+
+
+## Chills that landed within the last `window` seconds (Absolute Zero).
+func chills_within(window: float) -> int:
+	var now := Time.get_ticks_msec() / 1000.0
+	var n := 0
+	for at in _chill_times:
+		if now - at <= window:
+			n += 1
+	return n
+
+
+func clear_chill_count() -> void:
+	_chill_times.clear()
 
 
 func damage_taken_multiplier() -> float:
@@ -73,7 +106,7 @@ func apply_from_hit(hit: HitInfo) -> void:
 	if hit.applies_burn:
 		apply_burn(BURN_DPS * hit.burn_mult, BURN_DURATION, hit.attacker_id)
 	if hit.applies_chill:
-		apply_chill()
+		apply_chill(CHILL_DURATION + hit.chill_bonus)  # M10 Cold Snap
 	if hit.applies_shock:
 		apply_shock()
 
@@ -93,6 +126,9 @@ func apply_chill(duration: float = CHILL_DURATION) -> void:
 		puppet_of.call(&"forward_status", &"chill", duration, 0.0)
 		return
 	_chill_left = maxf(_chill_left, duration)
+	_chill_times.append(Time.get_ticks_msec() / 1000.0)
+	if _chill_times.size() > 6:
+		_chill_times.remove_at(0)
 
 
 func apply_shock(duration: float = SHOCK_DURATION) -> void:
@@ -112,6 +148,7 @@ func set_net_bits(bits: int) -> void:
 	_chill_left = NET_HOLD if bits & NetCodec.ST_CHILL else 0.0
 	_shock_left = NET_HOLD if bits & NetCodec.ST_SHOCK else 0.0
 	_conductor_left = NET_HOLD if bits & NetCodec.ST_CONDUCTOR else 0.0
+	_root_left = NET_HOLD if bits & NetCodec.ST_ROOT else 0.0
 
 
 ## The snapshot bits for this component (server side).
@@ -125,6 +162,8 @@ func net_bits() -> int:
 		bits |= NetCodec.ST_SHOCK
 	if is_conductor():
 		bits |= NetCodec.ST_CONDUCTOR
+	if is_rooted():
+		bits |= NetCodec.ST_ROOT
 	return bits
 
 
@@ -132,6 +171,8 @@ func clear_all() -> void:
 	_burn_left = 0.0
 	_chill_left = 0.0
 	_shock_left = 0.0
+	_root_left = 0.0
+	_chill_times.clear()
 	_burn_dps = 0.0
 
 
@@ -141,6 +182,7 @@ func _process(delta: float) -> void:
 	_chill_left = maxf(_chill_left - delta, 0.0)
 	_shock_left = maxf(_shock_left - delta, 0.0)
 	_conductor_left = maxf(_conductor_left - delta, 0.0)
+	_root_left = maxf(_root_left - delta, 0.0)
 
 	var owner_3d := get_parent() as Node3D
 	if _burn_left > 0.0:

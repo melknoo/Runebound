@@ -69,7 +69,8 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 		_press(intent, player, &"rune_cleave", 0.35)
 		_press(intent, player, &"earthbreaker", 3.0)
 		# M10 tank: a wind-up aimed at us -> raise Rune Wall and parry it
-		if target.ai_state == EnemyBase.AIState.WINDUP and target.target == player 				and player.can_use(&"rune_wall") and not _hold.has(&"rune_wall"):
+		if target.ai_state == EnemyBase.AIState.WINDUP and target.target == player \
+				and player.can_use(&"rune_wall") and not _hold.has(&"rune_wall"):
 			_press(intent, player, &"rune_wall", 0.5)
 			_hold[&"rune_wall"] = 0.7
 			intent.held.append(&"rune_wall")
@@ -108,11 +109,19 @@ func _ranged(intent: PlayerIntent, player: Player, dir: Vector3, dist: float, pr
 		if dist < 3.0:
 			_press(intent, player, &"storm_step", 5.0)  # dashes along the retreat
 			_press(intent, player, &"dodge", 4.0)
+	if dist < 4.0:
+		_press(intent, player, &"frost_nova", 10.0)  # too close: freeze them off
 	if dist < 24.0:
 		_press(intent, player, &"rune_bolt", 0.3)
 		_press(intent, player, &"ember_lance", 1.4)
 		if dist > 4.5 and dist < 11.0:
 			_press(intent, player, &"fracture_rune", 7.0)  # lands 6 m along the aim
+		if dist > 5.0 and dist < 12.0:
+			_press(intent, player, &"flame_wall", 12.0)
+		if dist < 15.0:
+			_press(intent, player, &"ball_lightning", 9.0)
+		if dist < 16.0 and player.resonance >= 60.0:
+			_press(intent, player, &"ember_fall", 14.0)
 
 
 func _follow(intent: PlayerIntent, player: Player) -> void:

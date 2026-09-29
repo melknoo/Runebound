@@ -123,6 +123,8 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 		&"fracture_rune":
 			out.append("Arms in %.1f s" % maxf(FractureRune.ARM_TIME - p.stat(&"rune_arm_reduce"), 0.5))
 			out.append("Area %.1f m" % (d.aoe_radius + p.stat(&"rune_radius")))
+			if p.has_power(&"echo_rune"):
+				out.append("Echo Rune")
 		&"runic_guard":
 			out.append("Lasts %.0f s" % d.active)
 			if p.has_power(&"glacial_bulwark"):
@@ -147,6 +149,18 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 				out.append("Quake Leap")
 		&"warding_rune":
 			out.append("Lasts %.0f s, %.0f m" % [d.active, d.aoe_radius])
+		&"frost_nova":
+			out.append("Area %.0f m, Chills" % d.aoe_radius)
+			if p.has_power(&"deep_freeze"):
+				out.append("Deep Freeze")
+		&"flame_wall":
+			out.append("%.0f m for %.0f s, hits every 0.5 s" % [d.aoe_radius, d.active])
+		&"ball_lightning":
+			out.append("Zaps within %.0f m every 0.5 s for %.0f s" % [d.aoe_radius, d.active])
+		&"ember_fall":
+			out.append("Strikes %.1f s after the call, %.1f m" % [d.startup + d.active, d.aoe_radius])
+			if p.has_power(&"cinderfall"):
+				out.append("Cinderfall")
 	return out
 
 

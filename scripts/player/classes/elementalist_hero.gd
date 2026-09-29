@@ -1,14 +1,18 @@
 class_name ElementalistHero
 extends Player
 ## M10: the Elementalist, the ranged damage dealer. Rune Bolt (LMB, held for
-## auto-fire) and spell hits build Aether; the inherited spells (Ember Lance,
-## Storm Step, Chain Spark, Fracture Rune) came over from the Runebreaker with
-## their statuses and talents (CLASS_DESIGN "Three roles").
+## auto-fire) and spell hits build Aether; Frost Nova and Ember Fall spend it.
+## The inherited spells (Ember Lance, Storm Step, Chain Spark, Fracture Rune)
+## came over from the Runebreaker with their statuses and talents; Flame Wall,
+## Ball Lightning, Frost Nova and Ember Fall are its own (CLASS_DESIGN "Three
+## roles").
 
 const STORM_STEP_SPEED := 50.0  # ~6m over the 0.12s active window
 const FRACTURE_RUNE_MAX_RANGE := 12.0
 const OVERLOAD_RADIUS := 2.5
 const THUNDERCLAP_RADIUS := 2.0
+## Deep Freeze roots what Frost Nova chills this long.
+const DEEP_FREEZE_ROOT := 1.0
 
 # Ability tuning: derived caches of `abilities` (the tests read them by name).
 var rune_bolt: AbilityData
@@ -16,6 +20,14 @@ var ember: AbilityData
 var storm_step: AbilityData
 var chain_spark: AbilityData
 var fracture_rune: AbilityData
+var frost_nova: AbilityData       # M10: ring of ice, spends Aether
+var flame_wall: AbilityData       # M10: burning line at the aim
+var ball_lightning: AbilityData   # M10: a slow zapping orb
+var ember_fall: AbilityData       # M10: the meteor, spends Aether
+
+## The spell State.CAST is winding up (Ember Lance, Ember Fall).
+var _cast_id: StringName = &""
+var _cast_at: Vector3 = Vector3.ZERO
 
 var _dash_dir: Vector3 = Vector3.ZERO
 var _dash_start: Vector3 = Vector3.ZERO
@@ -29,6 +41,10 @@ func _load_abilities() -> void:
 	storm_step = ability(&"storm_step")
 	chain_spark = ability(&"chain_spark")
 	fracture_rune = ability(&"fracture_rune")
+	frost_nova = ability(&"frost_nova")
+	flame_wall = ability(&"flame_wall")
+	ball_lightning = ability(&"ball_lightning")
+	ember_fall = ability(&"ember_fall")
 
 
 func _register_actions() -> void:
@@ -39,16 +55,21 @@ func _register_actions() -> void:
 		&"storm_step": try_storm_step,
 		&"chain_spark": try_chain_spark,
 		&"fracture_rune": try_fracture_rune,
+		&"frost_nova": try_frost_nova,
+		&"flame_wall": try_flame_wall,
+		&"ball_lightning": try_ball_lightning,
+		&"ember_fall": try_ember_fall,
 	})
 
 
-## Until the Elementalist rig exists (M10 phase 3) it borrows the Runebreaker's
-## clips: casts are upper-body gestures, so the legs keep running.
+## The Elementalist rig's clips (tools/modelgen: elementalist_clips). Quick
+## casts are upper-body gestures, so the legs keep running.
 func _anim_profile() -> Dictionary:
 	var profile := super()
-	(profile["actions"] as Dictionary).merge({&"ember": &"ember", &"storm_step": &"storm_step"})
-	(profile["upper"] as Dictionary).merge({&"rune_bolt": &"chain_spark", &"chain_spark": &"chain_spark",
-		&"fracture_rune": &"fracture_rune"})
+	(profile["actions"] as Dictionary).merge({&"ember": &"ember", &"storm_step": &"storm_step",
+		&"frost_nova": &"frost_nova", &"ember_fall": &"ember_fall"})
+	(profile["upper"] as Dictionary).merge({&"rune_bolt": &"bolt", &"chain_spark": &"chain_spark",
+		&"fracture_rune": &"fracture_rune", &"flame_wall": &"flame_wall", &"ball_lightning": &"ball_lightning"})
 	return profile
 
 
@@ -98,6 +119,7 @@ func try_ember() -> bool:
 		return false
 	state = State.CAST
 	_state_timer = 0.0
+	_cast_id = &"ember_lance"
 	_set_cooldown(&"ember_lance", ember.cooldown)
 	_face_aim_instant()
 	hero_fx(&"ember_cast", [muzzle_position()])
@@ -106,13 +128,22 @@ func try_ember() -> bool:
 	return true
 
 
+## A short wind-up that roots the hero, then the spell lets go (Ember Lance,
+## Ember Fall: `startup` of the spell's data).
 func _process_cast(delta: float) -> void:
 	_state_timer += delta
 	velocity.x = move_toward(velocity.x, 0, DECEL * 2.0 * delta)
 	velocity.z = move_toward(velocity.z, 0, DECEL * 2.0 * delta)
-	_face_aim_instant()
-	if _state_timer >= ember.startup:
-		_fire_ember()
+	var data := ability(_cast_id)
+	if _cast_id == &"ember_lance":
+		_face_aim_instant()
+	if data == null or _state_timer >= data.startup:
+		match _cast_id:
+			&"ember_fall":
+				_call_ember_fall()
+			_:
+				_fire_ember()
+		_cast_id = &""
 		state = State.MOVE
 		_consume_buffer()
 
@@ -336,3 +367,119 @@ func try_fracture_rune() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"fracture_rune")
 	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: Frost Nova (a ring of ice around the caster, spends Aether)
+# ---------------------------------------------------------------------------
+
+func try_frost_nova() -> bool:
+	if not knows(&"frost_nova") or state != State.MOVE or _on_cooldown(&"frost_nova"):
+		return false
+	if resonance < frost_nova.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(frost_nova.resonance_cost)
+	_set_cooldown(&"frost_nova", frost_nova.cooldown)
+	var pos := global_position
+	hero_fx(&"frost_nova", [pos, frost_nova.aoe_radius])
+	feel_shake(0.25)
+	var hits := _query_hurtboxes(pos + Vector3(0, 0.8, 0), frost_nova.aoe_radius)
+	for enemy: Node in hits:
+		var hit := roll_ability_hit(frost_nova)
+		hit.source_position = pos
+		if enemy.call(&"take_hit", hit) and has_power(&"deep_freeze") and enemy is EnemyBase:
+			(enemy as EnemyBase).status.apply_root(DEEP_FREEZE_ROOT)  # M10 Deep Freeze
+	if not hits.is_empty():
+		GameFeel.hitstop(hits, 0.05)
+	cooldowns_changed.emit()
+	action_started.emit(&"frost_nova")
+	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: Flame Wall (a burning line across the aim)
+# ---------------------------------------------------------------------------
+
+func try_flame_wall() -> bool:
+	if not knows(&"flame_wall") or state != State.MOVE or _on_cooldown(&"flame_wall"):
+		return false
+	_set_cooldown(&"flame_wall", flame_wall.cooldown)
+	var at := _ground_aim(flame_wall.projectile_speed)
+	var dir := at - global_position
+	dir.y = 0.0
+	if dir.length() < 0.1:
+		dir = facing()
+	var across := Vector3(-dir.z, 0.0, dir.x).normalized()  # the wall stands across the aim line
+	var wall := FlameWall.new()
+	wall.setup(flame_wall, self)
+	wall.length = flame_wall.aoe_radius
+	wall.duration = flame_wall.active
+	wall.axis = across
+	wall.position = at
+	get_tree().current_scene.add_child(wall)
+	hero_fx(&"flame_wall", [at, across, wall.length, wall.duration])  # puppets raise a visual copy
+	_hold_aim()
+	cooldowns_changed.emit()
+	action_started.emit(&"flame_wall")
+	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: Ball Lightning (a slow orb that zaps what it passes)
+# ---------------------------------------------------------------------------
+
+func try_ball_lightning() -> bool:
+	if not knows(&"ball_lightning") or state != State.MOVE or _on_cooldown(&"ball_lightning"):
+		return false
+	_set_cooldown(&"ball_lightning", ball_lightning.cooldown)
+	_hold_aim()
+	var ball := BallLightning.new()
+	ball.setup(ball_lightning, aim_direction(), self)
+	ball.position = muzzle_position()  # before add_child, like every projectile
+	get_tree().current_scene.add_child(ball)
+	hero_fx(&"ball_lightning", [muzzle_position(), aim_direction()])  # puppets fly a visual copy
+	cooldowns_changed.emit()
+	action_started.emit(&"ball_lightning")
+	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: Ember Fall (a telegraphed meteor on the aim, spends Aether)
+# ---------------------------------------------------------------------------
+
+func try_ember_fall() -> bool:
+	if not knows(&"ember_fall") or state != State.MOVE or _on_cooldown(&"ember_fall"):
+		return false
+	if resonance < ember_fall.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(ember_fall.resonance_cost)
+	_set_cooldown(&"ember_fall", ember_fall.cooldown)
+	_cast_at = _ground_aim(ember_fall.projectile_speed)
+	_cast_id = &"ember_fall"
+	state = State.CAST
+	_state_timer = 0.0
+	_hold_aim()
+	cooldowns_changed.emit()
+	action_started.emit(&"ember_fall")
+	return true
+
+
+func _call_ember_fall() -> void:
+	var rock := EmberFall.new()
+	rock.setup(ember_fall, self)
+	rock.position = _cast_at
+	get_tree().current_scene.add_child(rock)
+	hero_fx(&"ember_fall", [_cast_at])  # puppets drop a visual copy
+
+
+## The ground under the aim, at most `reach` away (the camera's aim point;
+## a bot's aim direction).
+func _ground_aim(reach: float) -> Vector3:
+	var exclude: Array[RID] = [get_rid()]
+	var aim_point := camera_rig.get_aim_point(exclude) if camera_rig != null else global_position + aim_direction() * reach
+	var offset := Vector3(aim_point.x - global_position.x, 0.0, aim_point.z - global_position.z)
+	if offset.length() > reach:
+		offset = offset.normalized() * reach
+	return ZoneBase.ground_under(self, global_position + offset, 0.02)

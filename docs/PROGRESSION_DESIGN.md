@@ -58,9 +58,7 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
 - One point per level: by the cap (24 points) a build finishes one branch
   and dips into a second.
 - **Respec:** free, in the talent panel (key N).
-- Behavior nodes are marked ⚙. Nodes marked (P3) belong to the
-  Elementalist's spells of M10 phase 3; they can be learned already but do
-  nothing until then (the tank's phase-2 nodes all work since phase 2).
+- Behavior nodes are marked ⚙.
 - M10 moved the Storm and Ember branches with their spells to the
   Elementalist; Molten Core (an Earthbreaker talent) stayed with the tank.
   A migrated Runebreaker's spell talents drop out of its tree (the points are
@@ -110,7 +108,7 @@ jump), Galvanize (+8 % vs Shocked), ⚙ Overload, ⚙ Thunderclap, Storm Surge
 (+15 % Aether from lightning), ⚙ Eye of the Storm (capstone).
 
 **Ember** (fire, damage over time) - the M07 branch with one change: Kindling,
-Searing Lance, ⚙ Split Lance, Piercing Heat, **⚙ Cinderfall (P3)** (Ember Fall
+Searing Lance, ⚙ Split Lance, Piercing Heat, **⚙ Cinderfall** (Ember Fall
 leaves burning ground for 3 s; replaces Molten Core), ⚙ Wildfire, Fuel the
 Fire, ⚙ Phoenix Burst (capstone).
 
@@ -120,11 +118,11 @@ Fire, ⚙ Phoenix Burst (capstone).
 | 1 | Frost Ward | 2 | Fracture Rune arms 0.2 s faster per rank |
 | 1 | Aether Flow | 3 | +10 % Aether gained per rank |
 | 2 | Shatter | 3 | +8 % damage per rank to Chilled enemies |
-| 2 | ⚙ Deep Freeze (P3) | 1 | Frost Nova roots the enemies it Chills for 1 s |
+| 2 | ⚙ Deep Freeze | 1 | Frost Nova roots the enemies it Chills for 1 s |
 | 2 | Rune Mastery | 2 | Fracture Rune's area +0.5 m per rank |
-| 3 | ⚙ Echo Rune (P3) | 1 | Fracture Rune detonates a second time, at half damage |
-| 3 | Cold Snap (P3) | 2 | Chill lasts 0.5 s longer per rank |
-| Cap | ⚙ Absolute Zero (P3) | 1 | an enemy Chilled three times within 6 s freezes for 2 s |
+| 3 | ⚙ Echo Rune | 1 | Fracture Rune detonates a second time, at half damage |
+| 3 | Cold Snap | 2 | Chill lasts 0.5 s longer per rank |
+| Cap | ⚙ Absolute Zero | 1 | an enemy Chilled three times within 6 s freezes for 2 s |
 
 ## Gold and the trainers (M07b, M10: one per class)
 - **Start kit:** the class's basic attack and Dodge. The rest is bought from
@@ -136,8 +134,9 @@ Fire, ⚙ Phoenix Burst (capstone).
     (cumulative 50 / 200 / 475 / 875 / 1,375 / 2,025).
   - **Maren Emberwright** (Elementalist, by the east wall near the spawn):
     Ember Lance L2 / 50, Storm Step L3 / 150, Chain Spark L4 / 275, Fracture
-    Rune L5 / 400 (cumulative 50 / 200 / 475 / 875). Phase 3 adds the new
-    spells.
+    Rune L5 / 400, Frost Nova L6 / 525, Flame Wall L7 / 650, Ball Lightning
+    L8 / 800, Ember Fall L9 / 1,000 (cumulative 50 / 200 / 475 / 875 / 1,400
+    / 2,050 / 2,850 / 3,850).
 
   Runic Guard and Resonance Burst stay talent unlocks. All of it is data on
   the `AbilityData` (`unlock`, `learn_level`, `learn_price`). The M07b list

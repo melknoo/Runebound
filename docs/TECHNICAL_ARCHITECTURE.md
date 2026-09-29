@@ -293,8 +293,7 @@ three roles, a hero takes 4 of about 12 class abilities into the field.
 - **Talents:** `tools/talents/generate_talents.py` writes one tree per
   class (`TREES`, 24 nodes each, asserts every tier is reachable);
   `TalentData.branch` is a column 0-2, the names and colours are the
-  class's (`talent_branches`, `talent_colors`). Nodes whose ability comes
-  later in M10 are listed already; their power / stat is inert until then.
+  class's (`talent_branches`, `talent_colors`).
 - **Items:** affixes and legendaries follow their ability's class
   (`"class"` tags; `aether_pct` is `resonance_pct` under the Elementalist's
   name); boss legendaries roll for each hero's class; `ItemGenerator.CLASS_NOUNS`
@@ -338,6 +337,27 @@ three roles, a hero takes 4 of about 12 class abilities into the field.
   clip: every key the same brace pose, re-fired seamlessly; `rune_wall_end`
   fades it out). `RunebreakerHero` shows a translucent ward in front while
   `State.BLOCK` (on puppets too, from the net state).
+- **Elementalist spell nodes (phase 3):** `FlameWall` (a line across the aim,
+  ticks every 0.5 s, `distance_to_line`), `BallLightning` (a slow orb, zaps
+  every 0.5 s within its radius, stops at walls via a ray on layer 1) and
+  `EmberFall` (a `VFX.player_ring` telegraph that fills while the rock falls,
+  then the strike; Cinderfall keeps burning ground) live in
+  `scripts/abilities/`. Each deals damage through its caster's
+  `roll_ability_hit`, so talents and gear apply; each has `visual_only` for
+  the HeroFx copy on other screens (the owner's node deals the damage). Frost
+  Nova is instant (hurtbox query, no node). Aimed ground spells use
+  `ElementalistHero._ground_aim(reach)`: the camera's aim point (a bot's aim
+  direction), clamped to the reach, snapped to the ground. Ember Fall winds up
+  in the generic `State.CAST` (`_cast_id`), like Ember Lance.
+- **Root and the Frost talents:** `StatusEffectComponent.apply_root(s)` stops
+  movement (`speed_multiplier()` 0; attacks still fire), on the wire as
+  `NetCodec.ST_ROOT` and forwarded from a puppet as `forward_status("root")`.
+  `chills_within(6)` counts recent Chills for Absolute Zero (a 2 s root and
+  the `frozen` fx in `EnemyBase.take_hit`); Deep Freeze roots Frost Nova's
+  victims for 1 s. Cold Snap rides the hit as `HitInfo.chill_bonus` (the
+  `chill_duration` stat, element 14 of the hit array) so a client's hit
+  chills as long on the server. Echo Rune: `FractureRune` detonates a second
+  time at half damage.
 - **Fixed on the way:** the Hollow Warden halved frontal hits twice in co-op
   (on the puppet and again on the server); `Equipment` now takes the class's
   base health.

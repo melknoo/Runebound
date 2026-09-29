@@ -99,7 +99,9 @@ func _build_zone() -> void:
 	var mage_trainer := TrainerNpc.new()
 	mage_trainer.name = "TrainerElementalist"
 	mage_trainer.teaches_class = &"elementalist"
-	mage_trainer.body_tint = Color(0.52, 0.6, 0.92)  # borrows the Runebreaker rig until M10 phase 3
+	mage_trainer.rig_path = "res://assets/models/chars/elementalist.glb"
+	mage_trainer.material_id = "elementalist"
+	mage_trainer.body_tint = Color(0.92, 0.8, 0.66)  # a warmer coat than a player's: she is no hero
 	mage_trainer.rune_color = ArtKit.color("color_roles.aether.body", Color("#F06AC8"))
 	world.add_child(mage_trainer)
 	mage_trainer.global_position = MAGE_TRAINER_SPOT

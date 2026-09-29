@@ -3,10 +3,10 @@
 ## Three roles (M10–M11)
 User decisions of 2026-09-29 (ROADMAP "Spieler-Leitlinien"). Each milestone
 gets its own plan with the numbers; this section records the direction.
-**M10 phases 1 and 2 are built** (2026-09-29): both classes as their own
-hero scripts, the loadout, several characters per save, and the tank with
-threat, taunts, Rune Wall and its five new abilities; phase 3 (Elementalist)
-adds its own rig and four spells.
+**M10 phases 1 to 3 are built** (2026-09-29): both classes as their own
+hero scripts, the loadout, several characters per save, the tank with
+threat, taunts, Rune Wall and its five new abilities, and the Elementalist
+with its own rig, four new spells and the Frost branch.
 
 ### Roles
 | Class | Role | Range | Built in |
@@ -95,13 +95,18 @@ tank). Burn, Shock and Chill and their interactions moved with the spells.
   | Storm Step | lightning dash through enemies, Shocks the path | trainer L3, 150 g | yes |
   | Chain Spark | jump-bolt, 3 jumps (+1 through Shocked) | trainer L4, 275 g | yes |
   | Fracture Rune | ground rune, arms 1.2 s, AoE + Chill | trainer L5, 400 g | yes |
-  | Frost Nova | ring around you, Chill; spends Aether | trainer | phase 3 |
-  | Flame Wall | a burning line on the ground | trainer | phase 3 |
-  | Ball Lightning | a slow orb that zaps and Shocks along its way | trainer | phase 3 |
-  | Ember Fall | meteor with a telegraph, big Burn; spends Aether | trainer | phase 3 |
+  | Frost Nova | 25 Aether: a 5 m ring around you, 22 Frost damage + Chill, knocks back; 10 s | trainer L6, 525 g | yes |
+  | Flame Wall | a 6 m line of fire across the aim (up to 12 m away) for 4 s; every 0.5 s 8 Fire + Burn to what stands in it; 12 s | trainer L7, 650 g | yes |
+  | Ball Lightning | a slow orb (6 m/s, 3 s) along the aim, passes through enemies, stops at walls; every 0.5 s 9 Lightning + Shock to all within 3 m; 9 s | trainer L8, 800 g | yes |
+  | Ember Fall | 40 Aether: a meteor on the aim (up to 16 m); a fire ring fills 0.9 s, then 60 Fire, HEAVY stagger and Burn in 3.5 m; 14 s | trainer L9, 1,000 g | yes |
 
-- **Talents** (`Storm`, `Ember`, `Frost`, 24 nodes). Until its own rig
-  exists (phase 3) it borrows the Runebreaker's rig in a blue tint.
+- **Talents** (`Storm`, `Ember`, `Frost`, 24 nodes, PROGRESSION_DESIGN).
+- **Look:** its own rig (`elementalist.glb`, modelgen): a steel-blue coat
+  with a teal mantle and trim, tall leather boots, a gold circlet, swept-back
+  hair, and a rune rod with a gold ring and a glowing Aether crystal in the
+  right hand (material slot 2, so a legendary weapon like Cindermaw swaps its
+  look). A clip for every spell; Rune Bolt and the aimed spells play on the
+  upper body, so casting never roots the legs.
 
 ### Root druid, the healer
 - Plants breaking out of burnt earth, totems, thorns.
@@ -131,8 +136,11 @@ Runebreaker got their price back as gold.
 ### Elemental statuses (StatusEffectComponent, the Elementalist's)
 - **Burn** (Fire): 4 dps · 3s. Sources: Ember Lance; the tank's Molten Core
   talent sets Earthbreaker's victims ablaze too.
-- **Chill** (Frost): −45% move/AI speed · 3s. Sources: Fracture Rune; the
-  tank's Glacial Bulwark / Glacier Heart.
+- **Chill** (Frost): −45% move/AI speed · 3s. Sources: Fracture Rune, Frost
+  Nova; the tank's Glacial Bulwark / Glacier Heart. Frost talents stretch it
+  (Cold Snap), root in place (Deep Freeze) or freeze solid (Absolute Zero).
+- **Root** (M10): the enemy stands still (no movement, still turns and
+  strikes) for its seconds. Sources: Deep Freeze, Absolute Zero.
 - **Shock** (Lightning): +20% damage taken · 4s ("Conductive"). Sources:
   Storm Step, Chain Spark. Interaction: Chain Spark gains a 4th jump when it
   touches a Shocked enemy.
@@ -143,7 +151,9 @@ Runebreaker got their price back as gold.
   and pull so the tank holds the enemies' attention).
 - **Elementalist:** Rune Bolts from range to build Aether; Storm Step through a
   pack → Chain Spark the Shocked group; Fracture Rune ahead of a chase → kite
-  Chilled enemies into it.
+  Chilled enemies into it. Frost Nova when a pack reaches you (then Storm Step
+  out), Flame Wall across a choke, Ball Lightning down a corridor, Ember Fall
+  on a staggered or rooted group.
 
 ### Talent unlocks (Runebreaker's Runic Warden branch)
 | Ability | Element | Role | Resonance |

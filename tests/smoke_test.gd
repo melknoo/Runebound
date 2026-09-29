@@ -417,7 +417,7 @@ func _run() -> void:
 		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0),
 		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 8, 6 of them from the trainer")
 	var mage_cls := ClassData.load_by_id(&"elementalist")
-	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 4
+	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 8
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
 		and (mage_cls.hero_script as Script).get_global_name() == &"ElementalistHero" and mage_cls.resource_label == "Aether",
 		"ClassData: the Elementalist casts Rune Bolt on LMB, builds Aether and trains the four spells the Runebreaker gave away")
@@ -465,7 +465,8 @@ func _run() -> void:
 		and lab.hero_ui.player == player and lab.trainer_ui.player == player,
 		"debug_swap_class: the lab hero turns into a fresh Elementalist and every window follows it")
 	var m_offers := TrainerUI.offers(player)
-	_check(m_offers.size() == 4 and m_offers[0].id == &"ember_lance", "the Elementalist's trainer offers its 4 spells, Ember Lance first")
+	_check(m_offers.size() == 8 and m_offers[0].id == &"ember_lance" and m_offers[7].id == &"ember_fall",
+		"the Elementalist's trainer offers its 8 spells, Ember Lance first, Ember Fall last")
 	var ember_data := player.ability(&"ember_lance")
 	_check(TrainerUI.deny_reason(player, ember_data) == "Requires level 2", "trainer refuses below the level requirement")
 	var saved_level := player.progression.level
@@ -906,6 +907,15 @@ func _run() -> void:
 	_check(mage != null and lab.hud.ability_names().size() == 6 and player.loadout.count(&"") == 0
 		and player.health.max_health < 100.0,
 		"the Elementalist knows its trainer kit: Rune Bolt, four slotted spells, Dodge; frailer than the tank")
+	var m_anim := player.animator
+	var mage_clips_ok := m_anim != null and player.class_data.rig_path.ends_with("elementalist.glb")
+	if m_anim != null:
+		for clip: StringName in [&"idle", &"run", &"dodge", &"bolt", &"ember", &"storm_step", &"chain_spark",
+				&"fracture_rune", &"frost_nova", &"flame_wall", &"ball_lightning", &"ember_fall", &"flinch"]:
+			mage_clips_ok = mage_clips_ok and m_anim.anim.has_animation(clip)
+		var dodge_clip := Player.DODGE_DURATION + Player.DODGE_RECOVERY
+		mage_clips_ok = mage_clips_ok and absf(m_anim.anim.get_animation(&"dodge").length - dodge_clip) < 1.5 / 60.0
+	_check(mage_clips_ok, "M10: the Elementalist has its own rig with a clip for every spell (dodge at gameplay timing)")
 
 	# --- rune bolt (the Elementalist's LMB, auto-fire while held) ---
 	lab.kill_all_enemies()
@@ -1109,6 +1119,142 @@ func _run() -> void:
 	_check(rune_hit, "fracture rune detonates and damages")
 	if is_instance_valid(rune_victim) and not rune_victim.health.is_dead:
 		_check(rune_victim.status.has_chill(), "fracture rune applies Chill")
+
+	# ===== M10 phase 3: the Elementalist's own spells and the Frost / Ember talents =====
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
+	player.reset_cooldowns()
+	var spawn_still := func(at: Vector3) -> MeleeRusher:
+		var e := MeleeRusher.new()
+		lab.enemies_root.add_child(e)
+		e.player = player
+		e.global_position = at
+		return e
+	# Frost Nova: spends 25 Aether, hits and Chills everything within 5 m; Deep Freeze roots.
+	var nova_a: MeleeRusher = spawn_still.call(player.global_position + Vector3(2.5, 0.2, 0))
+	var nova_b: MeleeRusher = spawn_still.call(player.global_position + Vector3(-3.5, 0.2, 1))
+	await _wait_frames(2)
+	nova_a.set_physics_process(false)
+	nova_b.set_physics_process(false)
+	player.resonance = 10.0
+	_check(not mage.try_frost_nova(), "Frost Nova needs 25 Aether")
+	player.resonance = 40.0
+	player.progression.ranks[&"deep_freeze"] = 1
+	player.progression._changed()
+	var nova_hp := nova_a.health.current_health
+	_check(mage.try_frost_nova() and is_equal_approx(player.resonance, 15.0), "Frost Nova spends 25 Aether")
+	_check(nova_a.health.current_health < nova_hp and nova_a.status.has_chill() and nova_b.status.has_chill()
+		and nova_a.status.is_rooted() and is_zero_approx(nova_a.status.speed_multiplier()),
+		"Frost Nova hits and Chills everything within 5 m; Deep Freeze roots them in place")
+	player.progression.ranks.clear()
+	player.progression._changed()
+	# Cold Snap: a longer Chill.
+	player.progression.ranks[&"cold_snap"] = 2
+	player.progression._changed()
+	nova_a.status.clear_all()
+	var snap_hit := player.roll_ability_hit(mage.frost_nova)
+	nova_a.take_hit(snap_hit)
+	_check(nova_a.status._chill_left > StatusEffectComponent.CHILL_DURATION + 0.9, "Cold Snap: the Chill lasts 1 s longer at 2 ranks")
+	player.progression.ranks.clear()
+	player.progression._changed()
+	# Absolute Zero: the third Chill within 6 s freezes solid.
+	player.progression.ranks[&"absolute_zero"] = 1
+	player.progression._changed()
+	nova_b.status.clear_all()
+	nova_b.health.max_health = 1.0e5  # three frost hits must not kill it
+	nova_b.health.heal_full()
+	for i in 3:
+		nova_b.take_hit(player.roll_ability_hit(mage.frost_nova))
+	_check(nova_b.status.is_rooted(), "Absolute Zero: a third Chill within 6 s freezes the enemy solid")
+	player.progression.ranks.clear()
+	player.progression._changed()
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	# Flame Wall: a burning line at the aim; what stands in it burns.
+	player.reset_cooldowns()
+	var wall_exclude: Array[RID] = [player.get_rid()]
+	var wall_aim := lab.camera_rig.get_aim_point(wall_exclude)
+	var wall_off := Vector3(wall_aim.x - player.global_position.x, 0.0, wall_aim.z - player.global_position.z).limit_length(12.0)
+	var burner_t: MeleeRusher = spawn_still.call(player.global_position + wall_off + Vector3(0, 0.2, 0))
+	await _wait_frames(2)
+	burner_t.set_physics_process(false)
+	var burner_hp := burner_t.health.current_health
+	_check(mage.try_flame_wall(), "Flame Wall raises a wall at the aim")
+	await _wait_frames(40)
+	var wall_node: FlameWall = null
+	for child in lab.get_children():
+		if child is FlameWall:
+			wall_node = child
+	_check(wall_node != null and burner_t.health.current_health < burner_hp and burner_t.status.has_burn(),
+		"Flame Wall burns an enemy standing in it")
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	# Ball Lightning: a slow orb that zaps and Shocks what it passes.
+	player.reset_cooldowns()
+	var orb_dir := player.aim_direction()
+	orb_dir.y = 0.0
+	var orb_t: MeleeRusher = spawn_still.call(player.global_position + orb_dir.normalized() * 5.0 + Vector3(1.0, 0.2, 0))
+	await _wait_frames(2)
+	orb_t.set_physics_process(false)
+	var orb_hp := orb_t.health.current_health
+	_check(mage.try_ball_lightning(), "Ball Lightning sends its orb")
+	await _wait_frames(80)
+	_check(orb_t.health.current_health < orb_hp and orb_t.status.has_shock(), "the orb zaps and Shocks an enemy it passes")
+	for child in lab.get_children():  # the wall and the orb from above would burn and zap the next dummy
+		if child is FlameWall or child is BallLightning:
+			child.queue_free()
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	# Ember Fall: 40 Aether, a telegraphed meteor on the aim; Cinderfall burns the ground after.
+	player.reset_cooldowns()
+	player.resonance = 50.0
+	player.progression.ranks[&"cinderfall"] = 1
+	player.progression._changed()
+	var fall_exclude: Array[RID] = [player.get_rid()]
+	var fall_aim := lab.camera_rig.get_aim_point(fall_exclude)
+	var fall_off := Vector3(fall_aim.x - player.global_position.x, 0.0, fall_aim.z - player.global_position.z).limit_length(16.0)
+	var meteor_t: MeleeRusher = spawn_still.call(player.global_position + fall_off + Vector3(0.6, 0.2, 0))
+	await _wait_frames(2)
+	meteor_t.set_physics_process(false)
+	meteor_t.health.max_health = 1.0e4
+	meteor_t.health.heal_full()
+	var meteor_hp := meteor_t.health.current_health
+	_check(mage.try_ember_fall() and is_equal_approx(player.resonance, 10.0) and player.state == Player.State.CAST,
+		"Ember Fall spends 40 Aether and winds up")
+	await _wait_frames(30)
+	_check(meteor_t.health.current_health == meteor_hp, "the meteor has not landed during its fall")
+	await _wait_frames(50)
+	var after_rock := meteor_t.health.current_health
+	_check(after_rock < meteor_hp and meteor_t.status.has_burn(), "Ember Fall lands on the aim: damage and Burn")
+	await _wait_frames(70)
+	_check(meteor_t.health.current_health < after_rock - 0.01, "Cinderfall: the ground keeps burning after the rock")
+	player.progression.ranks.clear()
+	player.progression._changed()
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	# Echo Rune: the Fracture Rune detonates a second time at half damage.
+	player.reset_cooldowns()
+	player.progression.ranks[&"echo_rune"] = 1
+	player.progression._changed()
+	var echo_t: MeleeRusher = spawn_still.call(player.global_position + player.facing() * 5.0)
+	await _wait_frames(2)
+	echo_t.set_physics_process(false)
+	echo_t.health.max_health = 1.0e5
+	echo_t.health.heal_full()
+	var echo_hp := echo_t.health.current_health
+	mage.try_fracture_rune()
+	await _wait_frames(80)
+	var after_first := echo_t.health.current_health
+	await _wait_frames(45)
+	_check(after_first < echo_hp and echo_t.health.current_health < after_first, "Echo Rune: the rune bursts twice")
+	player.progression.ranks.clear()
+	player.progression._changed()
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
 
 	await _play_as(&"runebreaker")
 
@@ -2916,9 +3062,11 @@ func _run() -> void:
 	h0.taunt = 3.0
 	h0.pull_to = Vector3(7, 0, 8)
 	h0.source_net_id = 77
+	h0.chill_bonus = 1.0
 	var h1 := NetCodec.hit_from_array(NetCodec.hit_to_array(h0))
 	_check(is_equal_approx(h1.threat_mult, 2.5) and is_equal_approx(h1.taunt, 3.0) and h1.pull_to == Vector3(7, 0, 8)
-		and h1.source_net_id == 77, "M10: threat, taunt, the pull and the striking enemy survive the wire")
+		and h1.source_net_id == 77 and is_equal_approx(h1.chill_bonus, 1.0),
+		"M10: threat, taunt, the pull, the striking enemy and Cold Snap survive the wire")
 	_check(is_equal_approx(h1.damage, 23.5) and h1.type == HitInfo.DamageType.FIRE and h1.weight == HitInfo.Weight.HEAVY
 		and h1.is_crit and h1.applies_burn and not h1.applies_chill and is_equal_approx(h1.burn_mult, 1.5)
 		and h1.ability == &"ember_lance" and h1.area_center == Vector3(4, 5, 6) and is_equal_approx(h1.area_radius, 1.1)

@@ -80,6 +80,38 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			Sfx.play("resonance_burst", a[0] as Vector3, 0.0, 0.05)
 		&"sfx":
 			Sfx.play(str(a[0]), a[1] as Vector3, float(a[2]), 0.1)
+		# --- M10 Elementalist ---
+		&"frost_nova":  # [pos, radius]
+			VFX.frost_burst(scene, a[0] as Vector3, float(a[1]))
+			VFX.ground_ring(scene, a[0] as Vector3, ArtKit.color("color_roles.frost.body"), float(a[1]), 0.3)
+			Sfx.play("frost_nova", a[0] as Vector3, 0.0, 0.05)
+		&"flame_wall":  # [center, axis, length, duration] - a visual copy on puppets
+			var wall_data := hero.ability(&"flame_wall")
+			if hero.net_role == Player.NetRole.PUPPET and wall_data != null:
+				var wall := FlameWall.new()
+				wall.visual_only = true
+				wall.setup(wall_data, hero)
+				wall.axis = a[1] as Vector3
+				wall.length = float(a[2])
+				wall.duration = float(a[3])
+				wall.position = a[0] as Vector3
+				scene.add_child(wall)
+		&"ball_lightning":  # [muzzle, dir] - a visual copy on puppets
+			var ball_data := hero.ability(&"ball_lightning")
+			if hero.net_role == Player.NetRole.PUPPET and ball_data != null:
+				var ball := BallLightning.new()
+				ball.visual_only = true
+				ball.setup(ball_data, a[1] as Vector3, hero)
+				ball.position = a[0] as Vector3
+				scene.add_child(ball)
+		&"ember_fall":  # [pos] - a visual copy on puppets
+			var fall_data := hero.ability(&"ember_fall")
+			if hero.net_role == Player.NetRole.PUPPET and fall_data != null:
+				var rock := EmberFall.new()
+				rock.visual_only = true
+				rock.setup(fall_data, hero)
+				rock.position = a[0] as Vector3
+				scene.add_child(rock)
 		# --- M10 tank ---
 		&"challenge":  # [pos, radius] the war cry's ring
 			var gold := ArtKit.color("color_roles.resonance.body")

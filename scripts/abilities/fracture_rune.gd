@@ -7,6 +7,9 @@ extends Node3D
 const ARM_TIME := 1.2
 
 var arm_time: float = ARM_TIME  # equipment can shorten this
+## M10 Echo Rune: the second detonation a moment after the first (half damage).
+const ECHO_DELAY := 0.6
+var echo: bool = false  # this rune IS the echo
 ## Blast radius; 0 = the ability's own (M10 Rune Mastery grows it).
 var radius: float = 0.0
 ## M09: another player's rune on a co-op client (arms and bursts, hits nothing).
@@ -95,6 +98,8 @@ func _detonate() -> void:
 			if _source != null and is_instance_valid(_source):
 				hit = _source.roll_ability_hit(_data)
 				hit.source_position = global_position
+				if echo:
+					hit.damage *= 0.5  # M10 Echo Rune: the second burst
 			else:
 				hit = _data.roll_hit(global_position)
 			if bool(hb.owner_entity.call(&"take_hit", hit)):
@@ -103,4 +108,15 @@ func _detonate() -> void:
 					_source.gain_resonance(6.0)
 	if hit_any and _source != null and is_instance_valid(_source):
 		_source.feel_impulse(Vector3.UP, 0.04)
+	if not echo and _source != null and is_instance_valid(_source) and _source.has_power(&"echo_rune"):
+		_echo_later()
+		return
 	queue_free()
+
+
+## M10 Echo Rune: the same rune bursts once more, at half damage.
+func _echo_later() -> void:
+	echo = true
+	var tw := create_tween()
+	tw.tween_interval(ECHO_DELAY)
+	tw.tween_callback(_detonate)

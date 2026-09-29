@@ -775,6 +775,7 @@ func roll_ability_hit(data: AbilityData) -> HitInfo:
 	hit.attacker_id = get_instance_id()  # M07b: talent mults, XP and loot follow the attacker
 	hit.ability = data.id
 	hit.burn_mult = 1.0 + stat(&"burn_pct") / 100.0
+	hit.chill_bonus = stat(&"chill_duration")  # M10 Cold Snap
 	return hit
 
 

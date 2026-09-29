@@ -206,17 +206,24 @@
 - The laptop server shows single tick spikes up to ~60 ms under full load
   (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
-## M10 open items (phase 1 built, needs the user's playtest)
-- The Elementalist borrows the Runebreaker rig in a blue tint (sword and
-  all) until phase 3 builds its own; its casts use the Runebreaker's
-  upper-body gestures.
-- Casting on the move keeps the hero facing its aim for 0.45 s; with the
-  borrowed rig a backwards strafe plays the forward run clip.
+## M10 open items (phases 1-3 built, needs the user's playtest)
+- The Elementalist's rig (phase 3) has been reviewed on contact sheets only;
+  the user's look preview is pending.
+- Casting on the move keeps the hero facing its aim for 0.45 s; a backwards
+  strafe plays the forward run clip (neither rig has a backwards run).
 - Numbers to feel: Rune Bolt 10 damage every 0.3 s (+3 Aether a hit), the
-  Elementalist's 85 health, the new trainer prices (Ember Lance L2 50 g ...
-  Fracture Rune L5 400 g).
-- Talents of the abilities that come in phases 2-3 can be learned already and
-  do nothing yet (marked (P2) / (P3) in PROGRESSION_DESIGN).
+  Elementalist's 85 health, the trainer prices (Ember Lance L2 50 g ...
+  Ember Fall L9 1,000 g).
+- Elementalist numbers to feel (phase 3): Frost Nova 25 Aether / 5 m / 10 s,
+  Flame Wall 8 per 0.5 s for 4 s, Ball Lightning 9 per 0.5 s for 3 s at
+  6 m/s, Ember Fall 40 Aether / 60 damage / 0.9 s fall / 14 s. Deep Freeze
+  roots 1 s, Absolute Zero 2 s; a rooted enemy still strikes what is in
+  reach.
+- Flame Wall and Ember Fall land at the camera's aim point, clamped to their
+  reach (12 m / 16 m); aimed at the sky they fall at the reach in the aim
+  direction.
+- Ball Lightning stops at the first wall on its path and crackles there
+  until it fades.
 - Tank numbers to feel (phase 2): block -75 % in a 70-degree frontal arc,
   parry window 0.3 s, Rune Challenge 4 s taunt / 12 s cooldown, threat x2,
   120 health, Warden's Leap 10 m / Rune Chain 16 m. A parry counters a

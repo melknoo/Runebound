@@ -349,11 +349,16 @@ func play_fx(fx: StringName) -> void:
 
 ## M10: looks every enemy shares - a taunt flashes a gold "!" over the head.
 func _present_common_fx(fx: StringName) -> void:
-	if fx != &"taunted" or not Net.has_view() or not is_inside_tree():
+	if not Net.has_view() or not is_inside_tree():
 		return
-	var head := global_position + Vector3(0, nameplate_height() + 0.2, 0)
-	GameFeel.float_text(head, "!", ArtKit.color("color_roles.resonance.hot", Color("#FFF0B8")))
-	VFX.flash(get_tree().current_scene, head, ArtKit.color("color_roles.resonance.body"), 0.6, 0.15)
+	match fx:
+		&"taunted":
+			var head := global_position + Vector3(0, nameplate_height() + 0.2, 0)
+			GameFeel.float_text(head, "!", ArtKit.color("color_roles.resonance.hot", Color("#FFF0B8")))
+			VFX.flash(get_tree().current_scene, head, ArtKit.color("color_roles.resonance.body"), 0.6, 0.15)
+		&"frozen":  # M10 Absolute Zero
+			VFX.frost_burst(get_tree().current_scene, global_position, 1.2)
+			Sfx.play("frost_nova", global_position, -6.0, 0.1, 1.4)
 
 
 ## The elite affix presents its own actions (nova) through the same channel.
@@ -727,6 +732,12 @@ func take_hit(hit: HitInfo) -> bool:
 		if hit.taunt > 0.0:
 			taunt(attacker, hit.taunt)
 	status.apply_from_hit(hit)
+	# M10 Absolute Zero: the third Chill within 6 s freezes the enemy solid
+	if hit.applies_chill and attacker != null and attacker.has_power(&"absolute_zero") \
+			and status.chills_within(6.0) >= 3:
+		status.clear_chill_count()
+		status.apply_root(2.0)
+		play_fx(&"frozen")
 	# Conductor's Oath: lightning damage on a Conductor arcs to all other
 	# Conductors. Splash hits are flagged so they never chain again.
 	if hit.type == HitInfo.DamageType.LIGHTNING and not hit.is_conductor_arc and status.is_conductor():

@@ -626,6 +626,8 @@ func _on_status_msg(from: int, payload: Array) -> void:
 			e.status.apply_shock(duration)
 		"conductor":
 			e.status.apply_conductor(duration)
+		"root":
+			e.status.apply_root(minf(duration, 3.0))  # M10 Deep Freeze / Absolute Zero
 
 
 # --- client: what the server tells us --------------------------------------

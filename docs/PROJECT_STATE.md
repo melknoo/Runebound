@@ -29,13 +29,13 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     Emberwright (Elementalist, east wall by the spawn; Ember Lance L2 50 g,
     Storm Step L3 150, Chain Spark L4 275, Fracture Rune L5 400).
   - **Talent trees per class** (48 nodes): tank Bulwark / Earthshaker / Runic
-    Warden, Elementalist Storm / Ember / Frost. Nodes of the abilities that
-    come in phases 2-3 are listed already (inert until then).
+    Warden, Elementalist Storm / Ember / Frost (every node works since
+    phase 3).
   - Items follow their ability's class (four spell legendaries to the
     Elementalist, the tank keeps Glacier Heart and Emberheart Plate; boss
     legendaries roll per hero class; staves and robes for the Elementalist).
-  - The Elementalist has 85 health, the tank 100; it borrows the Runebreaker
-    rig in a blue tint until phase 3. New colour role `aether` (#F06AC8).
+  - The Elementalist has 85 health, the tank 100 (120 since phase 2). New
+    colour role `aether` (#F06AC8).
   - Bots play their class (the caster keeps its distance); `run_godot coop`
     brings a tank and an Elementalist companion. Net protocol 9.
   - Tests: smoke 461 checks green (loadout rules, both trainers, v5 -> v6
@@ -68,8 +68,24 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     health of a class was lost on the first gear change.
   - Tests: smoke 485 green; net scenario `threat` (the caster pulls a dummy,
     the tank's war cry takes it away, both clients see the change).
-- **Phase 3: the Elementalist** - its own rig (a look preview first), Frost
-  Nova, Flame Wall, Ball Lightning, Ember Fall.
+- **Phase 3 (built): the Elementalist.**
+  - **Own rig** (`elementalist.glb`, modelgen): steel-blue coat, teal mantle,
+    gold circlet, rune rod with an Aether crystal; 13 clips (idle, run, dodge,
+    one per spell, flinch). The blue-tinted Runebreaker stand-in is gone.
+    Maren in Runehold wears it too. Look preview for the user pending.
+  - **Four new spells** (Maren sells them, L6-L9): **Frost Nova** (25 Aether,
+    a 5 m Chill ring), **Flame Wall** (a 6 m line of fire at the aim),
+    **Ball Lightning** (a slow orb that zaps and Shocks), **Ember Fall**
+    (40 Aether, a telegraphed meteor on the aim, HEAVY stagger + Burn). Icons
+    (ui.py), SFX (sfxgen), HeroFx copies on the other screens in co-op.
+  - **Frost branch works:** Deep Freeze and Absolute Zero root (new status
+    `root`, on the wire as `ST_ROOT`), Cold Snap stretches the Chill (the hit
+    carries `chill_bonus`), Echo Rune bursts the Fracture Rune twice; Ember's
+    Cinderfall leaves burning ground.
+  - Elementalist bots use all eight spells (Frost Nova when a pack is close,
+    the rest from range).
+  - Tests: smoke 500 green (every new spell and Frost talent); the whole net
+    suite green.
 - **Phase 4:** solo check of both classes, shots, perf, docs, the playtest
   list, the gate walk.
 

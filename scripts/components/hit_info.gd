@@ -41,6 +41,8 @@ var pull_to: Vector3 = Vector3.INF
 ## carries its net id): a parry counters it.
 var source_id: int = 0
 var source_net_id: int = 0
+## M10 Cold Snap: seconds the Chill this hit applies lasts longer.
+var chill_bonus: float = 0.0
 
 
 ## The attacker node, or null when it is gone or unknown.

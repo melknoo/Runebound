@@ -17,6 +17,7 @@ const ST_CHILL := 2
 const ST_SHOCK := 4
 const ST_CONDUCTOR := 8
 const ST_INVULNERABLE := 16
+const ST_ROOT := 32  # M10 Deep Freeze / Absolute Zero
 
 const _HIT_BURN := 1
 const _HIT_CHILL := 2
@@ -41,7 +42,7 @@ static func hit_to_array(h: HitInfo) -> Array:
 	if h.from_player:
 		flags |= _HIT_FROM_PLAYER
 	return [h.damage, int(h.type), int(h.weight), flags, h.knockback, h.source_position, String(h.ability),
-		h.burn_mult, h.area_center, h.area_radius, h.threat_mult, h.taunt, h.pull_to, h.source_net_id]
+		h.burn_mult, h.area_center, h.area_radius, h.threat_mult, h.taunt, h.pull_to, h.source_net_id, h.chill_bonus]
 
 
 ## The attacker is not on the wire (an instance id means nothing on another
@@ -71,6 +72,8 @@ static func hit_from_array(a: Array) -> HitInfo:
 		h.taunt = clampf(float(a[11]), 0.0, 10.0)
 		h.pull_to = a[12] as Vector3
 		h.source_net_id = int(a[13])
+	if a.size() >= 15:
+		h.chill_bonus = clampf(float(a[14]), 0.0, 5.0)  # M10 Cold Snap
 	return h
 
 
