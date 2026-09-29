@@ -26,7 +26,7 @@ signal waypoint_discovered(id: String)
 signal loadout_changed
 
 ## One enum for every class: the network sends the state as an int.
-enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP }
+enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP, BLOCK, LEAP }
 
 const MAX_SPEED := 6.8
 const ACCEL := 60.0
@@ -1112,6 +1112,8 @@ func take_hit(hit: HitInfo) -> bool:
 			and float(_cooldowns.get(&"unbroken", 0.0)) <= 0.0:
 		_cooldowns[&"unbroken"] = UNBROKEN_COOLDOWN
 		grant_barrier(UNBROKEN_BARRIER, 3.0)
+	if not health.invulnerable and not health.is_dead and _guard_hit(hit):
+		return false  # M10: a class stance took the whole hit (the tank's parry)
 	hit.damage *= damage_taken_mult()
 	if barrier > 0.0 and not health.invulnerable and not health.is_dead:
 		var absorbed := minf(barrier, hit.damage)
@@ -1130,11 +1132,29 @@ func take_hit(hit: HitInfo) -> bool:
 	return true
 
 
-## M10: the share of an enemy hit this hero still takes (talents, gear; a
-## class adds its stances). Never below 1 - MAX_DAMAGE_REDUCTION.
+## M10: the share of an enemy hit this hero still takes: talents and gear
+## (`dr_pct`), a Warding Rune it stands in, the class's own (the tank's
+## Unyielding). Never below 1 - MAX_DAMAGE_REDUCTION. A block comes on top.
 func damage_taken_mult() -> float:
-	var reduction := stat(&"dr_pct") / 100.0
+	var reduction := stat(&"dr_pct") / 100.0 + WardingRune.reduction_at(self) + _class_damage_reduction()
 	return clampf(1.0 - reduction, 1.0 - MAX_DAMAGE_REDUCTION, 1.0)
+
+
+## A class's own damage reduction right now (0-1).
+func _class_damage_reduction() -> float:
+	return 0.0
+
+
+## A class stance meeting an enemy hit before damage reduction (the tank's
+## block shrinks `hit.damage`); true = the whole hit is taken care of.
+func _guard_hit(_hit: HitInfo) -> bool:
+	return false
+
+
+## M10 threat: how much the enemies mind this hero's damage (the class's
+## factor; the tank threatens double).
+func threat_mult() -> float:
+	return class_data.threat_mult if class_data != null else 1.0
 
 
 func _on_damaged(hit: HitInfo) -> void:

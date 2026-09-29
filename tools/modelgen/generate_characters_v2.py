@@ -2,6 +2,7 @@
 atlas-baked, animated characters for the gold target.
 
   assets/models/chars/runebreaker.glb     + assets/textures/char/runebreaker_atlas.png
+  assets/models/chars/elementalist.glb    + assets/textures/char/elementalist_atlas.png (M10)
   assets/models/chars/cinder_marauder.glb + assets/textures/char/cinder_marauder_atlas.png
   assets/models/chars/duskweaver.glb      + assets/textures/char/duskweaver_atlas.png
 
@@ -22,7 +23,7 @@ the character's stance, so crossfades between clips never pop limbs to rest.
 
 Run:
   & "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe" --background
-      --python tools/modelgen/generate_characters_v2.py -- [runebreaker] [marauder] [duskweaver]
+      --python tools/modelgen/generate_characters_v2.py -- [runebreaker] [elementalist] [marauder] [duskweaver]
       [stonehulk] [veilstalker] [warden] [colossus] [vessel] [--sheets]
 --sheets also renders per-clip contact sheets to captures_contact/ (review).
 """
@@ -449,7 +450,320 @@ def runebreaker_clips(arm):
         (32, k()),
     ], {0: EXPO_OUT, 3: BACK_OUT, 12: QUART_OUT})
 
+    # --- M10 tank ------------------------------------------------------------
+    # block (upper body, HELD): the blade across the chest, flat towards the
+    # enemy, the left hand bracing it - Rune Wall. Every key is the brace, so
+    # the animator can re-fire it while the key stays down without a pump; the
+    # one-shot's fade-in is the raise.
+    brace = k({"chest": (0.1, 0, 0), "head": (-0.06, 0, 0), "spine": (0.04, 0, 0),
+               "_reach.R": (pos(fwd=0.42, left=-0.3, up=1.28), way(left=-1.0, up=-0.4)),
+               "_blade.R": way(left=1.0, up=0.1),
+               "_reach.L": (pos(fwd=0.44, left=0.26, up=1.3), way(left=1.0, up=-0.4)), "hand.L": (-0.2, 0, 0)})
+    action(arm, "block", [
+        (0, brace),
+        (90, {**brace, "chest": (0.12, 0, 0)}),
+        (180, brace),
+    ], sheet=[0, 90])
+    # challenge (full body, instant): a war cry - chest thrown forward and up,
+    # arms wide and low behind, the head back; Rune Challenge.
+    roar = k({**crouch(0.08, RB_LEG), "chest": (-0.22, 0, 0), "spine": (-0.08, 0, 0), "head": (-0.32, 0, 0),
+              "upper_arm.R": (0.35, 0, 0.95), "forearm.R": (-0.25, 0, 0), "_blade.R": way(fwd=-0.4, left=-1.0, up=-0.5),
+              "upper_arm.L": (0.35, 0, -0.95), "forearm.L": (-0.25, 0, 0)})
+    action(arm, "challenge", [
+        (0, k({**crouch(0.1, RB_LEG), "chest": (0.2, 0, 0)})),
+        (5, roar),
+        (20, {**roar, "head": (-0.36, 0, 0)}),
+        (34, k()),
+    ], {0: EXPO_OUT, 5: BACK_OUT, 20: QUART_OUT}, sheet=[5, 20])
+
     # --- Hit flinch: ADDITIVE (keys are offsets from rest, zero at both ends) --
+    zero = {b: (0.0, 0.0, 0.0) for b in ("spine", "chest", "head", "upper_arm.L", "upper_arm.R")}
+    action(arm, "flinch", [
+        (0, zero),
+        (3, {"spine": (-0.12, 0, 0), "chest": (-0.22, 0.08, 0), "head": (-0.25, 0, 0),
+             "upper_arm.L": (0.25, 0, -0.15), "upper_arm.R": (0.15, 0, 0.1)}),
+        (16, zero),
+    ], {0: EXPO_OUT, 3: QUART_OUT})
+
+
+# ---------------------------------------------------------------------------
+# ELEMENTALIST (M10) — the ranged caster: slimmer than the tank, a long
+# steel-blue coat, the player teal on the mantle and trim, a gold circlet, a
+# rune rod in the right hand. Its glow is the Aether magenta: a hero caster
+# must never read as the violet, hooded Duskweaver.
+# ---------------------------------------------------------------------------
+
+EL_LEG = 0.9 - 0.1  # hip height minus ankle
+
+
+def build_elementalist(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("elementalist", humanoid_bones(
+        hip=0.9, chest_top=1.47, shoulder_x=0.27, arm_len=0.6, leg_x=0.12, head_base=1.5, head_top=1.8))
+    el = PAL["elementalist"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    coat = pm.paint(el["coat"], 3, "cloth")
+    coat_dark = pm.paint(el["coat"], 1, "cloth")
+    trim = pm.paint(el["trim"], 3, "cloth")
+    leather = pm.paint(el["leather"], 2, "hide")
+    skin = pm.paint(el["skin"], 2)
+    hair = pm.paint(el["hair"], 2)
+    gold = pm.paint(el["gold_trim"], 3)
+    rod = pm.paint(el["rod"], 2)
+
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.12 * x
+        # tall leather boots with a teal cuff
+        pm.loft("foot." + side, [(0.0, 0.09, 0.15, lx, -0.04), (0.07, 0.095, 0.14, lx, -0.03),
+                                 (0.15, 0.085, 0.1, lx, 0.0)], paint=leather)
+        pm.loft("shin." + side, [(0.14, 0.08, 0.085, lx, 0.0), (0.34, 0.088, 0.092, lx, 0.0),
+                                 (0.5, 0.082, 0.088, lx, 0.0)], paint=leather)
+        pm.loft("shin." + side, [(0.46, 0.092, 0.097, lx, 0.0), (0.52, 0.094, 0.099, lx, 0.0)], paint=trim)
+        pm.loft("thigh." + side, [(0.5, 0.082, 0.088, lx, 0.0), (0.72, 0.095, 0.1, lx, 0.0),
+                                  (0.9, 0.1, 0.105, lx, 0.0)], paint=coat_dark)
+        # sleeves, leather bracers with a gold ring, bare hands
+        sx = 0.27 * x
+        pm.loft("upper_arm." + side, [(1.42, 0.075, 0.08, sx, 0.0), (1.14, 0.066, 0.07, sx * 1.08, 0.0)], paint=coat)
+        pm.loft("forearm." + side, [(1.15, 0.066, 0.07, sx * 1.1, 0.0), (1.0, 0.074, 0.078, sx * 1.12, 0.0),
+                                    (0.92, 0.078, 0.082, sx * 1.13, 0.0)], paint=leather)
+        pm.loft("forearm." + side, [(1.03, 0.082, 0.086, sx * 1.12, 0.0), (1.06, 0.082, 0.086, sx * 1.12, 0.0)], paint=gold)
+        pm.box("hand." + side, (0.1, 0.12, 0.12), (sx * 1.14, -0.01, 0.85), paint=skin)
+
+    # belt + buckle; the coat's split skirt (two front flaps, a longer back)
+    pm.loft("hips", [(0.86, 0.19, 0.13, 0, 0), (0.96, 0.2, 0.14, 0, 0)], paint=leather)
+    pm.box("hips", (0.1, 0.035, 0.08), (0, -0.145, 0.91), paint=gold)
+    for x in (1.0, -1.0):
+        pm.box("hips", (0.15, 0.03, 0.4), (0.085 * x, -0.13, 0.68), rot=(0.1, 0.0, 0.05 * x), paint=coat)
+        pm.box("hips", (0.02, 0.032, 0.4), (0.012 * x, -0.145, 0.68), rot=(0.1, 0.0, 0.05 * x), paint=trim)
+    pm.box("hips", (0.34, 0.03, 0.5), (0, 0.13, 0.62), rot=(-0.1, 0.0, 0.0), paint=coat)
+    # a lean torso in the coat, teal lapels, the Aether rune on the chest
+    pm.loft("spine", [(0.95, 0.18, 0.13, 0, 0), (1.1, 0.2, 0.14, 0, 0), (1.22, 0.23, 0.155, 0, 0)], paint=coat)
+    pm.loft("chest", [(1.21, 0.235, 0.16, 0, 0), (1.34, 0.265, 0.175, 0, -0.005), (1.43, 0.255, 0.17, 0, 0),
+                      (1.49, 0.17, 0.12, 0, 0)], paint=coat)
+    for x in (1.0, -1.0):
+        pm.box("chest", (0.05, 0.02, 0.3), (0.06 * x, -0.17, 1.3), rot=(0.0, 0.0, -0.25 * x), paint=trim)
+    pm.loft("chest", [(1.28, 0.045, 0.02, 0, -0.18), (1.36, 0.045, 0.02, 0, -0.18)], sides=6, mat_index=1)  # rune
+    # the mantle: a short teal capelet over the shoulders, gold clasp
+    pm.loft("chest", [(1.52, 0.2, 0.15, 0, 0.01), (1.45, 0.32, 0.21, 0, 0.02), (1.33, 0.33, 0.22, 0, 0.03)],
+            paint=trim, sides=10)
+    pm.box("chest", (0.06, 0.03, 0.05), (0, -0.19, 1.47), paint=gold)
+    # neck, head, swept-back hair with a tail, the circlet and its gem
+    pm.loft("head", [(1.47, 0.055, 0.055, 0, 0), (1.53, 0.055, 0.055, 0, 0)], paint=skin)
+    pm.loft("head", [(1.52, 0.095, 0.105, 0, 0), (1.6, 0.11, 0.12, 0, -0.005), (1.69, 0.105, 0.115, 0, 0),
+                     (1.77, 0.075, 0.085, 0, 0.01)], paint=skin)
+    pm.loft("head", [(1.58, 0.114, 0.09, 0, 0.05), (1.7, 0.118, 0.1, 0, 0.04), (1.79, 0.1, 0.1, 0, 0.03),
+                     (1.83, 0.06, 0.07, 0, 0.02)], paint=hair)  # swept back: the face stays open
+    pm.box("head", (0.07, 0.07, 0.22), (0, 0.12, 1.56), rot=(0.35, 0, 0), paint=hair)
+    pm.loft("head", [(1.685, 0.116, 0.124, 0, 0), (1.705, 0.116, 0.124, 0, 0)], paint=gold)
+    pm.box("head", (0.03, 0.02, 0.03), (0, -0.125, 1.695), mat_index=1)
+    # the rune rod in the right fist (rest: pointing forward like the tank's
+    # blade), a gold ring and the Aether crystal at its head. Slot 2 = the rod
+    # (a legendary weapon swaps its look, e.g. Cindermaw).
+    hx = -0.27 * 1.14
+    pm.loft("hand.R", [(0.0, 0.03, 0.03, 0, 0), (0.62, 0.027, 0.027, 0, 0), (0.7, 0.036, 0.036, 0, 0)],
+            sides=6, center=(hx, 0.1, 0.85), rot=(1.5708, 0, 0), paint=rod, mat_index=2)
+    pm.loft("hand.R", [(0.0, 0.065, 0.065, 0, 0), (0.035, 0.065, 0.065, 0, 0)], sides=8,
+            center=(hx, -0.55, 0.85), rot=(1.5708, 0, 0), paint=gold, mat_index=2)
+    pm.box("hand.R", (0.1, 0.17, 0.1), (hx, -0.68, 0.85), rot=(0.0, 0.0, 0.785), mat_index=1)
+
+    mat_body = rig.make_material("el_body", "#FFFFFF")
+    mat_glow = rig.make_material("el_glow", ROLES["aether"]["body"], emission_hex=ROLES["aether"]["body"], strength=3.0)
+    mat_rod = rig.make_material("el_rod", "#FFFFFF")
+    body = pm.to_object("elementalist", [mat_body, mat_glow, mat_rod], arm)
+
+    elementalist_clips(arm)
+    finish(body, arm, "elementalist", "elementalist", (1,), sheets)
+
+
+def elementalist_clips(arm):
+    # Ready stance: upright, the rod held up-forward in the right fist (crystal
+    # at shoulder height), the open left hand a little out - the casting hand.
+    rod_up = way(fwd=0.45, up=0.9)
+    ready = {
+        **crouch(0.015, EL_LEG),
+        "spine": (0.02, 0, 0), "chest": (0.03, 0, 0), "head": (0.0, 0, 0),
+        "upper_arm.R": (-0.3, 0, 0.18), "forearm.R": (-0.75, 0, 0), "hand.R": (0.0, 0, 0),
+        "upper_arm.L": (-0.12, 0, -0.28), "forearm.L": (-0.5, 0, 0), "hand.L": (0.0, 0, 0),
+        "_blade.R": rod_up,
+    }
+    k = keyed(ready)
+
+    action(arm, "idle", [
+        (0, k()),
+        (45, k({"chest": (0.01, 0, 0), "upper_arm.L": (-0.16, 0, -0.32), "head": (-0.03, 0, 0),
+                "hips": {"rot": (0, 0, 0), "loc": (0, -0.01, 0)}, "_blade.R": way(fwd=0.5, up=0.87)})),
+        (90, k()),
+    ], sheet=[0, 45])
+
+    run_keys = []
+    for frame, sgn in ((0, 1.0), (18, -1.0), (36, 1.0)):
+        run_keys.append((frame, k({
+            "thigh.L": (-0.75 * sgn, 0, 0), "thigh.R": (0.75 * sgn, 0, 0),
+            "shin.L": (0.25 + 0.55 * max(-sgn, 0), 0, 0), "shin.R": (0.25 + 0.55 * max(sgn, 0), 0, 0),
+            "foot.L": (0.0, 0, 0), "foot.R": (0.0, 0, 0),
+            "upper_arm.L": (0.45 * sgn, 0, -0.2), "forearm.L": (-0.6, 0, 0),
+            "spine": (0.12, 0.1 * sgn, 0), "chest": (0.03, -0.07 * sgn, 0),
+            "hips": {"rot": (0, 0, 0), "loc": (0, -0.01, 0)},
+        })))
+    for frame in (9, 27):
+        run_keys.append((frame, {"hips": {"rot": (0, 0, 0), "loc": (0, 0.035, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 9, 18, 27])
+
+    # --- Dodge: the tank's low dash, the rod tucked along the forearm --------
+    dash_t = f(const_from("player/player.gd", "DODGE_DURATION"))
+    dodge_end = f(const_from("player/player.gd", "DODGE_DURATION") + const_from("player/player.gd", "DODGE_RECOVERY"))
+    dash = k({"hips": {"rot": (0, 0, 0), "loc": (0, -0.12, 0)},
+              "spine": (0.38, 0, 0), "chest": (0.2, 0, 0), "head": (-0.4, 0, 0),
+              "thigh.L": (-0.95, 0, 0), "shin.L": (1.15, 0, 0), "foot.L": (-0.2, 0, 0),
+              "thigh.R": (0.5, 0, 0), "shin.R": (0.35, 0, 0), "foot.R": (0.3, 0, 0),
+              "upper_arm.R": (0.55, 0, 0.3), "forearm.R": (-0.35, 0, 0), "_blade.R": way(fwd=-1.0, up=0.3),
+              "upper_arm.L": (0.6, 0, -0.35), "forearm.L": (-0.45, 0, 0)})
+    land = k({**crouch(0.08, EL_LEG), "spine": (0.2, 0, 0), "chest": (0.1, 0, 0), "head": (-0.15, 0, 0),
+              "upper_arm.L": (0.1, 0, -0.35)})
+    action(arm, "dodge", [
+        (0, k()),
+        (3, dash),
+        (dash_t - 3, {**dash, "thigh.L": (-0.8, 0, 0), "shin.L": (0.95, 0, 0), "thigh.R": (0.35, 0, 0)}),
+        (dash_t + 1, land),
+        (dodge_end, k()),
+    ], {0: EXPO_OUT, dash_t - 3: QUART_OUT, dash_t + 1: QUART_OUT})
+
+    # --- Rune Bolt (upper, held for auto-fire): a quick flick of the rod -----
+    flick = k({"chest": (0.06, -0.15, 0),
+               "_reach.R": (pos(fwd=0.48, left=-0.18, up=1.34), way(left=-1.0, up=-0.4)),
+               "_blade.R": way(fwd=1.0, up=0.12)})
+    action(arm, "bolt", [
+        (0, k()),
+        (3, flick),
+        (7, {**flick, "chest": (0.05, -0.12, 0)}),
+        (16, k()),
+    ], {0: EXPO_OUT, 3: QUART_OUT, 7: QUART_OUT})
+
+    # --- Ember Lance: the open left hand thrusts the fire out (release = startup)
+    em = ability_timing("ember_lance")
+    rel = f(em["startup"])
+    thrust = k({"chest": (0.12, -0.3, 0), "spine": (0.06, -0.12, 0), "head": (0, 0.15, 0),
+                "thigh.L": (-0.32, 0, 0), "shin.L": (0.45, 0, 0), "foot.L": (-0.13, 0, 0),
+                "_reach.L": (pos(fwd=0.62, left=0.05, up=1.35), way(left=1.0, up=-1.0))})
+    action(arm, "ember", [
+        (0, k()),
+        (rel - 3, k({"chest": (0.0, 0.4, 0), "spine": (0.0, 0.15, 0),
+                     "_reach.L": (pos(fwd=-0.12, left=0.4, up=1.52), way(fwd=-0.3, left=1.0, up=-0.6))})),
+        (rel, thrust),
+        (rel + 6, {**thrust, "chest": (0.1, -0.34, 0),
+                   "_reach.L": (pos(fwd=0.6, left=0.07, up=1.37), way(left=1.0, up=-1.0))}),
+        (rel + 16, k()),
+    ], {rel - 3: EXPO_IN, rel: BACK_OUT, rel + 6: QUART_OUT})
+
+    # --- Storm Step: a lightning lunge, the rod leading --------------------------
+    ss = ability_timing("storm_step")
+    dash_end = f(ss["active"])
+    ss_end = f(ss["active"] + ss["recovery"]) + 4
+    lunge = k({"hips": {"rot": (0, 0, 0), "loc": (0, -0.14, 0)},
+               "spine": (0.5, 0, 0), "chest": (0.25, 0, 0), "head": (-0.6, 0, 0),
+               "thigh.L": (-1.05, 0, 0), "shin.L": (0.95, 0, 0), "foot.L": (0.1, 0, 0),
+               "thigh.R": (0.65, 0, 0), "shin.R": (0.25, 0, 0), "foot.R": (0.4, 0, 0),
+               "_reach.R": (pos(fwd=0.45, left=-0.25, up=1.1), way(left=-1.0, up=-0.5)),
+               "_blade.R": way(fwd=1.0, up=-0.1),
+               "upper_arm.L": (0.75, 0, -0.35), "forearm.L": (-0.3, 0, 0)})
+    action(arm, "storm_step", [
+        (0, k()),
+        (2, lunge),
+        (dash_end, {**lunge, "spine": (0.45, 0, 0)}),
+        (ss_end, k()),
+    ], {0: EXPO_OUT, dash_end: QUART_OUT})
+
+    # --- Chain Spark (upper): the rod levelled at the target ---------------------
+    point = k({"chest": (0.05, -0.25, 0),
+               "_reach.R": (pos(fwd=0.5, left=-0.22, up=1.4), way(left=-1.0, up=-0.5)),
+               "_blade.R": way(fwd=1.0, up=0.05)})
+    action(arm, "chain_spark", [
+        (0, k()),
+        (4, point),
+        (9, {**point, "chest": (0.06, -0.3, 0)}),
+        (22, k()),
+    ], {0: EXPO_OUT, 4: QUART_OUT, 9: QUART_OUT})
+
+    # --- Fracture Rune (upper): the rod raised, then stabbed at the rune ---------
+    raised = k({"chest": (-0.1, 0, 0), "upper_arm.L": (-0.6, 0, -0.5), "forearm.L": (-0.8, 0, 0),
+                "_reach.R": (pos(fwd=0.12, left=-0.25, up=1.9), way(fwd=-0.2, left=-1.0)),
+                "_blade.R": way(fwd=0.25, up=1.0)})
+    stab = k({"chest": (0.3, 0, 0), "spine": (0.15, 0, 0), "head": (-0.2, 0, 0),
+              "_reach.R": (pos(fwd=0.48, left=-0.18, up=1.0), way(left=-1.0, up=-0.3)),
+              "_blade.R": way(fwd=0.7, up=-0.7)})
+    action(arm, "fracture_rune", [
+        (0, k()),
+        (3, raised),
+        (6, stab),
+        (12, {**stab, "chest": (0.26, 0, 0)}),
+        (26, k()),
+    ], {0: QUART_OUT, 3: EXPO_IN, 6: BACK_OUT, 12: QUART_OUT})
+
+    # --- Frost Nova (full body, instant): gather low, then fling both arms wide --
+    gather = k({**crouch(0.1, EL_LEG), "chest": (0.3, 0, 0), "spine": (0.12, 0, 0), "head": (-0.15, 0, 0),
+                "upper_arm.R": (-0.5, 0, -0.35), "forearm.R": (-0.9, 0, 0),
+                "upper_arm.L": (-0.5, 0, 0.35), "forearm.L": (-0.9, 0, 0), "_blade.R": way(left=1.0, up=0.3)})
+    burst = k({**crouch(0.05, EL_LEG), "chest": (-0.25, 0, 0), "spine": (-0.08, 0, 0), "head": (-0.2, 0, 0),
+               "upper_arm.R": (-0.1, 0, 1.2), "forearm.R": (-0.15, 0, 0), "_blade.R": way(left=-1.0, up=0.2),
+               "upper_arm.L": (-0.1, 0, -1.2), "forearm.L": (-0.15, 0, 0)})
+    action(arm, "frost_nova", [
+        (0, k()),
+        (4, gather),
+        (7, burst),
+        (16, {**burst, "chest": (-0.2, 0, 0)}),
+        (30, k()),
+    ], {0: QUART_OUT, 4: EXPO_IN, 7: BACK_OUT, 16: QUART_OUT})
+
+    # --- Flame Wall (upper): the rod sweeps from the left across to the right ----
+    sweep_l = k({"chest": (0.05, 0.45, 0),
+                 "_reach.R": (pos(fwd=0.35, left=0.25, up=1.25), way(fwd=0.2, left=-0.5, up=-1.0)),
+                 "_blade.R": way(fwd=0.4, left=1.0, up=-0.2)})
+    sweep_r = k({"chest": (0.08, -0.45, 0),
+                 "_reach.R": (pos(fwd=0.35, left=-0.5, up=1.15), way(left=-1.0, up=-0.6)),
+                 "_blade.R": way(fwd=0.4, left=-1.0, up=-0.3)})
+    action(arm, "flame_wall", [
+        (0, k()),
+        (4, sweep_l),
+        (11, sweep_r),
+        (26, k()),
+    ], {0: QUART_OUT, 4: EXPO_IN, 11: QUART_OUT})
+
+    # --- Ball Lightning (upper): both hands push the orb away from the chest ----
+    pull = k({"chest": (-0.05, 0, 0),
+              "_reach.R": (pos(fwd=0.2, left=-0.1, up=1.3), way(left=-1.0, up=-0.6)),
+              "_reach.L": (pos(fwd=0.2, left=0.1, up=1.3), way(left=1.0, up=-0.6)),
+              "_blade.R": way(fwd=0.2, up=1.0)})
+    push = k({"chest": (0.12, 0, 0),
+              "_reach.R": (pos(fwd=0.55, left=-0.12, up=1.32), way(left=-1.0, up=-0.4)),
+              "_reach.L": (pos(fwd=0.55, left=0.12, up=1.32), way(left=1.0, up=-0.4)),
+              "_blade.R": way(fwd=0.6, up=0.8)})
+    action(arm, "ball_lightning", [
+        (0, k()),
+        (5, pull),
+        (9, push),
+        (24, k()),
+    ], {0: QUART_OUT, 5: EXPO_IN, 9: BACK_OUT})
+
+    # --- Ember Fall (full body): the rod raised to the sky, then brought down on
+    # the spot (release = startup: the meteor is called) ---------------------------
+    efa = ability_timing("ember_fall")
+    call = f(efa["startup"])
+    high = k({"chest": (-0.25, 0, 0), "spine": (-0.1, 0, 0), "head": (-0.35, 0, 0),
+              "_reach.R": (pos(fwd=0.1, left=-0.2, up=2.05), way(left=-1.0, up=0.2)),
+              "_blade.R": way(up=1.0), "upper_arm.L": (-0.3, 0, -0.6), "forearm.L": (-0.4, 0, 0)})
+    down = k({**crouch(0.08, EL_LEG), "chest": (0.3, 0, 0), "spine": (0.12, 0, 0), "head": (-0.1, 0, 0),
+              "_reach.R": (pos(fwd=0.55, left=-0.2, up=1.05), way(left=-1.0, up=-0.3)),
+              "_blade.R": way(fwd=0.8, up=-0.55)})
+    action(arm, "ember_fall", [
+        (0, k()),
+        (max(call - 4, 2), high),
+        (call, down),
+        (call + 6, {**down, "chest": (0.26, 0, 0)}),
+        (call + 20, k()),
+    ], {0: QUART_OUT, max(call - 4, 2): EXPO_IN, call: BACK_OUT})
+
+    # --- Hit flinch: ADDITIVE (offsets from rest, zero at both ends) ------------
     zero = {b: (0.0, 0.0, 0.0) for b in ("spine", "chest", "head", "upper_arm.L", "upper_arm.R")}
     action(arm, "flinch", [
         (0, zero),
@@ -1333,7 +1647,8 @@ def vessel_clips(arm):
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
-    builders = {"runebreaker": build_runebreaker, "marauder": build_marauder, "duskweaver": build_duskweaver,
+    builders = {"runebreaker": build_runebreaker, "elementalist": build_elementalist,
+                "marauder": build_marauder, "duskweaver": build_duskweaver,
                 "stonehulk": build_stonehulk, "veilstalker": build_veilstalker, "warden": build_warden,
                 "colossus": build_colossus, "vessel": build_vessel}
     only = [a for a in args if not a.startswith("--")] or list(builders)

@@ -6,6 +6,7 @@ extends Node
 signal changed  # equipment or inventory contents changed
 
 const INVENTORY_CAP := 24
+## Fallback only: a hero's base health is its class's (ClassData.base_max_hp).
 const BASE_MAX_HP := 100.0
 
 var player: Player
@@ -86,6 +87,7 @@ func _apply_max_hp() -> void:
 	var fraction := 1.0
 	if health.max_health > 0.0:
 		fraction = clampf(health.current_health / health.max_health, 0.0, 1.0)
-	health.max_health = BASE_MAX_HP + player.stat(&"max_hp")  # gear + levels + talents
+	var base := player.class_data.base_max_hp if player.class_data != null else BASE_MAX_HP  # M10: per class
+	health.max_health = base + player.stat(&"max_hp")  # gear + levels + talents
 	health.current_health = health.max_health * fraction
 	health.health_changed.emit(health.current_health, health.max_health)

@@ -6,7 +6,7 @@ extends Node
 ## reads it after the clients are done and then stops the server.
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
-const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "enemy_types", "look_boss", "rewards",
+const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "enemy_types", "look_boss", "rewards",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -108,6 +108,46 @@ func _enemies_verdict() -> String:
 	if zone.net_world.hurts_forwarded < 1:
 		return "fail: no enemy hit was forwarded to a hero's owner"
 	return "ok"
+
+
+var _threat_dummy: EnemyBase = null
+var _threat_spawned := false
+var _saw_on_caster := false
+var _saw_taunt := false
+
+
+## M10: a dummy (huge health, never moves) that c1 hurts first and c2 taunts.
+func _threat_verdict() -> String:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone == null or zone.net_world == null:
+		return "fail: no zone replication on the server"
+	if not _threat_spawned:
+		if zone.net_world.heroes.size() < 2 or Net.ready_peers().size() < 2:
+			return "fail: waiting for both heroes"
+		_threat_spawned = true
+		for child in zone.enemies_root.get_children():
+			child.queue_free()  # the lab's first wave would only get in the way
+		_threat_dummy = ZoneBase.make_enemy("rusher")
+		zone._spawn_enemy(_threat_dummy, zone._player_spawn_point() + Vector3(0, 0, -6))
+		_threat_dummy.health.max_health = 1.0e6
+		_threat_dummy.health.heal_full()
+		_threat_dummy.move_speed = 0.0
+		return "fail: the dummy just spawned"
+	if not is_instance_valid(_threat_dummy):
+		return "fail: the dummy is gone"
+	var target := _threat_dummy.target
+	if target != null and is_instance_valid(target) and _role_of(target) == "c1":
+		_saw_on_caster = true
+	var taunter := _threat_dummy.taunted_by()
+	if taunter != null and _role_of(taunter) == "c2":
+		_saw_taunt = true
+	if _saw_on_caster and _saw_taunt:
+		return "ok"
+	return "fail: hunted the caster %s, taunted by the tank %s" % [_saw_on_caster, _saw_taunt]
+
+
+func _role_of(p: Player) -> String:
+	return str((Net.roster.get(p.peer_id, {}) as Dictionary).get("name", "")).to_lower()
 
 
 var _types_spawned := false
@@ -251,6 +291,8 @@ func _update() -> void:
 			verdict = _heroes_verdict()
 		"enemies":
 			verdict = _enemies_verdict()
+		"threat":
+			verdict = _threat_verdict()
 		"enemy_types":
 			verdict = _types_verdict()
 		"look_boss":

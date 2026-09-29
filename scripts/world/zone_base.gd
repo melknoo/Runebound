@@ -27,6 +27,7 @@ var trainer_ui: TrainerUI
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
 var map_ui: MapUI            # M08 zone map (M)
 var playtest_ui: PlaytestUI  # the playtest checklist (J)
+var aggro_marks: AggroMarks  # M10: "!" over the enemies after this hero (in a party)
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
 var look: ZoneLook = null
@@ -155,6 +156,11 @@ func _build_player_ui() -> void:
 	add_child(playtest_ui)
 	playtest_ui.setup(player, self)
 
+	aggro_marks = AggroMarks.new()
+	aggro_marks.name = "AggroMarks"
+	add_child(aggro_marks)
+	aggro_marks.setup(self)
+
 
 ## Tests and the debug overlay (offline only): the local hero becomes a fresh
 ## hero of another class where it stands; camera, targeting and every window
@@ -165,7 +171,7 @@ func debug_swap_class(class_id: StringName) -> Player:
 		return player
 	var old := player
 	var pos := old.global_position
-	for ui: Node in [hud, debug_overlay, hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui]:
+	for ui: Node in [hud, debug_overlay, hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks]:
 		if ui != null:
 			remove_child(ui)
 			ui.queue_free()

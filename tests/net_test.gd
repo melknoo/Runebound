@@ -58,6 +58,14 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=100,20,2"]}],
 		"timeout": 150.0,
 	},
+	# M10: c1 (Elementalist) hurts a dummy until it hunts c1; c2 (Runebreaker)
+	# walks up and taunts it away with Rune Challenge; ENEMY_TARGET tells both.
+	"threat": {
+		"server": ["--zone=res://scenes/combat_lab.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--class=elementalist"]},
+			{"role": "c2", "delay": 0.5, "args": ["--class=runebreaker", "--netsim=80,20,1"]}],
+		"timeout": 120.0,
+	},
 	"enemy_types": {
 		"server": ["--zone=res://scenes/combat_lab.tscn"],
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
@@ -82,7 +90,7 @@ const SCENARIOS := {
 	"companions": {
 		"server": [],
 		"clients": [{"role": "c1", "delay": 0.0, "args": ["--net-test=companion", "--name=Sigmund", "--duration=80"]},
-			{"role": "c2", "delay": 0.5, "args": ["--net-test=companion", "--name=Brynja", "--duration=80"]},
+			{"role": "c2", "delay": 0.5, "args": ["--net-test=companion", "--name=Brynja", "--duration=80", "--class=elementalist"]},
 			{"role": "c3", "delay": 1.0, "args": ["--net-test=lead", "--name=Melvin"]}],
 		"timeout": 180.0,
 	},

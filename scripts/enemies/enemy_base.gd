@@ -10,6 +10,8 @@ signal state_entered(state: AIState)
 ## M09: an action's look that is not a state of its own (play_fx); the co-op
 ## server repeats it on the puppets.
 signal fx_played(fx: StringName)
+## M10: the hunted hero changed (the co-op server tells the clients).
+signal target_changed
 
 enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT, RETURN }
 
@@ -26,9 +28,15 @@ const AGGRO_RANGE := 16.0
 var ai_state: AIState = AIState.IDLE
 ## M07b: the hero this enemy hunts. `player` is the read/write alias every
 ## subclass helper uses; with `auto_retarget` (set by ZoneBase._spawn_enemy)
-## it is re-evaluated: the last attacker while the fight is fresh, else the
-## nearest hero. Hand-built test enemies keep whatever they were given.
-var target: Player = null
+## it is re-evaluated (M10: by threat, see _retarget). Hand-built test enemies
+## keep whatever they were given.
+var target: Player = null:
+	set(v):
+		if v != target:
+			target = v
+			target_changed.emit()
+## M10 co-op client: the peer whose hero this puppet hunts (ENEMY_TARGET).
+var target_peer: int = 0
 var player: Player:
 	get:
 		return target
@@ -38,6 +46,21 @@ var auto_retarget: bool = false
 const RETARGET_INTERVAL := 0.3
 const LAST_ATTACKER_MEMORY := 4.0
 var _retarget_left: float = 0.0
+## M10 threat (the authority keeps it): hero instance id -> threat. A hit adds
+## its damage x HitInfo.threat_mult x the attacker's class factor; threat fades
+## by THREAT_DECAY a second; a new favourite needs THREAT_SWITCH x the current
+## target's threat. A taunt pulls at once and holds for its seconds.
+var threat: Dictionary = {}
+const THREAT_DECAY := 0.06
+const THREAT_SWITCH := 1.1
+const THREAT_RANGE := AGGRO_RANGE * 2.0
+var _taunt_id: int = 0
+var _taunt_until: float = -1.0
+## M10 Rune Chain pull (the authority moves the enemy; clients see it in snapshots).
+const PULL_TIME := 0.25
+var _pull_from: Vector3 = Vector3.INF
+var _pull_to: Vector3 = Vector3.INF
+var _pull_t: float = 0.0
 ## M08 leash: camp members walk back to `home` and heal when the fight drags
 ## them further than `leash` (0 = never), when their target is out of reach,
 ## or when they have been stuck for a while. Handled here for every subclass
@@ -192,6 +215,8 @@ func _physics_process(delta: float) -> void:
 		if _retarget_left <= 0.0:
 			_retarget_left = RETARGET_INTERVAL
 			_retarget()
+	if _pull_to != Vector3.INF:
+		_process_pull(delta)
 	if leash > 0.0 and home != Vector3.INF:
 		if ai_state == AIState.RETURN:
 			_return_home(delta)
@@ -316,9 +341,19 @@ func present_forward() -> Vector3:
 ## retreat, a slam, a nova, a blink): plays here, and the co-op server sends
 ## it to the puppets (ENEMY_FX), which play the same `_present_fx`.
 func play_fx(fx: StringName) -> void:
+	_present_common_fx(fx)
 	_present_fx(fx)
 	_present_affix_fx(fx)
 	fx_played.emit(fx)
+
+
+## M10: looks every enemy shares - a taunt flashes a gold "!" over the head.
+func _present_common_fx(fx: StringName) -> void:
+	if fx != &"taunted" or not Net.has_view() or not is_inside_tree():
+		return
+	var head := global_position + Vector3(0, nameplate_height() + 0.2, 0)
+	GameFeel.float_text(head, "!", ArtKit.color("color_roles.resonance.hot", Color("#FFF0B8")))
+	VFX.flash(get_tree().current_scene, head, ArtKit.color("color_roles.resonance.body"), 0.6, 0.15)
 
 
 ## The elite affix presents its own actions (nova) through the same channel.
@@ -346,6 +381,7 @@ func net_play_fx(fx: StringName, pos: Vector3, yaw: float) -> void:
 	_net_origin = pos
 	_net_yaw = yaw
 	_net_pose_valid = true
+	_present_common_fx(fx)
 	_present_fx(fx)
 	_present_affix_fx(fx)
 	_net_pose_valid = false
@@ -437,13 +473,38 @@ func forward_status(kind: StringName, duration: float, amount: float) -> void:
 		zone.net_world.send_status(self, kind, duration, amount)
 
 
-## Pick who to hunt: whoever hit us in the last LAST_ATTACKER_MEMORY seconds
-## and is still close, else the nearest hero in the zone. Never mid-attack
-## (only called from the roaming states).
+## Pick who to hunt (only from the roaming states, never mid-attack). M10: a
+## running taunt wins; else the hero with the most threat (a new one needs
+## THREAT_SWITCH x the current target's); with no threat at all the old rule:
+## whoever hit us in the last LAST_ATTACKER_MEMORY seconds and is still close,
+## else the nearest hero in the zone.
 func _retarget() -> void:
 	if _zone == null:
 		_zone = get_tree().current_scene as ZoneBase
 	if _zone == null:
+		return
+	_decay_threat(RETARGET_INTERVAL)
+	var taunter := taunted_by()
+	if taunter != null:
+		target = taunter
+		return
+	var best: Player = null
+	var best_threat := 0.0
+	for id: int in threat.keys():
+		var hero := instance_from_id(id) as Player
+		if hero == null or not is_instance_valid(hero) or hero.health.is_dead \
+				or hero.global_position.distance_to(global_position) > THREAT_RANGE:
+			threat.erase(id)
+			continue
+		if float(threat[id]) > best_threat:
+			best_threat = float(threat[id])
+			best = hero
+	if best != null:
+		var current := 0.0
+		if target != null and is_instance_valid(target) and not target.health.is_dead:
+			current = float(threat.get(target.get_instance_id(), 0.0))
+		if current <= 0.0 or best_threat > current * THREAT_SWITCH:
+			target = best
 		return
 	var recent := last_attacker()
 	if recent != null and not recent.health.is_dead \
@@ -454,6 +515,77 @@ func _retarget() -> void:
 	var nearest := _zone.nearest_player(global_position)
 	if nearest != null:
 		target = nearest
+
+
+func _decay_threat(seconds: float) -> void:
+	var keep := maxf(1.0 - THREAT_DECAY * seconds, 0.0)
+	for id: int in threat.keys():
+		threat[id] = float(threat[id]) * keep
+
+
+## M10: add `amount` threat for `hero`.
+func add_threat(hero: Player, amount: float) -> void:
+	if hero == null or amount <= 0.0:
+		return
+	var id := hero.get_instance_id()
+	threat[id] = float(threat.get(id, 0.0)) + amount
+
+
+func threat_of(hero: Player) -> float:
+	return float(threat.get(hero.get_instance_id(), 0.0)) if hero != null else 0.0
+
+
+## M10 taunt: `hero` becomes the target now (unless we are mid-strike: then
+## right after it) and stays it for `seconds`; it also tops the threat list,
+## so the enemy keeps at it afterwards until someone out-threatens it. An enemy
+## walking home on its leash ignores taunts.
+func taunt(hero: Player, seconds: float) -> void:
+	if hero == null or ai_state == AIState.DEAD or ai_state == AIState.RETURN or seconds <= 0.0:
+		return
+	var top := 0.0
+	for v: float in threat.values():
+		top = maxf(top, v)
+	threat[hero.get_instance_id()] = top * THREAT_SWITCH + 10.0
+	_taunt_id = hero.get_instance_id()
+	_taunt_until = Time.get_ticks_msec() / 1000.0 + seconds
+	sleeping = false
+	_retarget_left = 0.0
+	if ai_state != AIState.WINDUP and ai_state != AIState.ATTACK:  # a committed strike lands where it aimed
+		target = hero
+	play_fx(&"taunted")
+
+
+## The hero whose taunt holds this enemy right now (null when none).
+func taunted_by() -> Player:
+	if _taunt_id == 0 or Time.get_ticks_msec() / 1000.0 >= _taunt_until:
+		return null
+	var hero := instance_from_id(_taunt_id) as Player
+	if hero == null or not is_instance_valid(hero) or hero.health.is_dead:
+		return null
+	return hero
+
+
+## M10 Rune Chain: drag towards `dest` over PULL_TIME with a short stagger.
+## Heavy enemies (stagger_resist: brutes, wardens, bosses) don't budge.
+func pull_towards(dest: Vector3) -> void:
+	if stagger_resist or ai_state == AIState.DEAD or dest == Vector3.INF:
+		return
+	_pull_from = global_position
+	_pull_to = Vector3(dest.x, global_position.y, dest.z)
+	_pull_t = 0.0
+	_stagger(PULL_TIME + 0.15)
+
+
+func _process_pull(delta: float) -> void:
+	_pull_t += delta
+	var k := clampf(_pull_t / PULL_TIME, 0.0, 1.0)
+	var want := _pull_from.lerp(_pull_to, 1.0 - (1.0 - k) * (1.0 - k))  # ease out
+	velocity.x = (want.x - global_position.x) / maxf(delta, 0.001)
+	velocity.z = (want.z - global_position.z) / maxf(delta, 0.001)
+	if k >= 1.0:
+		_pull_to = Vector3.INF
+		velocity.x = 0.0
+		velocity.z = 0.0
 
 
 func distance_to_player() -> float:
@@ -533,6 +665,7 @@ func strike_circle(center: Vector3, radius: float, damage: float, type: HitInfo.
 		hit.knockback = knockback
 		hit.area_center = center
 		hit.area_radius = radius + STRIKE_TOLERANCE
+		hit.source_id = get_instance_id()  # M10: a parry counters us
 		victim.take_hit(hit)
 	return victims
 
@@ -580,9 +713,19 @@ func take_hit(hit: HitInfo) -> bool:
 		hit.damage *= attacker.talent_damage_mult(hit, self)  # M07: Galvanize, Fuel the Fire, Searing Lance
 		last_attacker_id = attacker.get_instance_id()
 		last_attack_time = Time.get_ticks_msec() / 1000.0
+	if hit.pull_to != Vector3.INF:
+		pull_towards(hit.pull_to)  # M10 Rune Chain (before a taunt: the pull staggers)
+	if hit.damage <= 0.0 and hit.taunt > 0.0:  # M10: a taunt without damage (Rune Challenge)
+		if attacker != null:
+			taunt(attacker, hit.taunt)
+		return true
 	hit.damage *= status.damage_taken_multiplier()
 	if not health.apply_hit(hit):
 		return false
+	if attacker != null:  # M10 threat: damage x the ability's and the class's factor
+		add_threat(attacker, hit.damage * hit.threat_mult * attacker.threat_mult())
+		if hit.taunt > 0.0:
+			taunt(attacker, hit.taunt)
 	status.apply_from_hit(hit)
 	# Conductor's Oath: lightning damage on a Conductor arcs to all other
 	# Conductors. Splash hits are flagged so they never chain again.

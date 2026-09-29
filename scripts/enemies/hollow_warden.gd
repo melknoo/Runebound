@@ -55,6 +55,8 @@ func _build_body() -> void:
 
 ## Frontal hits are blocked to half damage; flanking bypasses it entirely.
 func take_hit(hit: HitInfo) -> bool:
+	if net_puppet:
+		return super(hit)  # M10 fix: the server's warden halves it (it used to happen twice in co-op)
 	if ai_state != AIState.DEAD:
 		var to_source := hit.source_position - global_position
 		to_source.y = 0.0

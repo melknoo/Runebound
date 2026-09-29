@@ -3,9 +3,10 @@
 ## Three roles (M10–M11)
 User decisions of 2026-09-29 (ROADMAP "Spieler-Leitlinien"). Each milestone
 gets its own plan with the numbers; this section records the direction.
-**M10 phase 1 is built** (2026-09-29): both classes as their own hero
-scripts, the loadout, several characters per save; phases 2 (tank) and 3
-(Elementalist) add the new abilities.
+**M10 phases 1 and 2 are built** (2026-09-29): both classes as their own
+hero scripts, the loadout, several characters per save, and the tank with
+threat, taunts, Rune Wall and its five new abilities; phase 3 (Elementalist)
+adds its own rig and four spells.
 
 ### Roles
 | Class | Role | Range | Built in |
@@ -52,20 +53,29 @@ scripts, the loadout, several characters per save; phases 2 (tank) and 3
 
 ### Runebreaker, the tank (M10)
 Armored rune warrior. Rune Cleave builds Resonance, heavy rune abilities spend
-it; rhythm BUILD -> SPEND, max 100. 100 health at level 1.
+it; rhythm BUILD -> SPEND, max 100. 120 health at level 1; its damage
+threatens double (ClassData `threat_mult` 2).
 - **LMB (fixed):** Rune Cleave.
 - **Pool (8):**
 
   | Ability | Role | Source | Built |
   |---|---|---|---|
-  | Earthbreaker | leaping AoE slam, big stagger, -40 Resonance | trainer L2, 50 g | yes |
+  | Earthbreaker | leaping AoE slam, big stagger, -40 Resonance, threat x1.5 | trainer L2, 50 g | yes |
+  | Rune Wall | hold: frontal hits -75 %, walk at 40 %; the first 0.3 s parry (no damage, a 30-damage HEAVY counter on the striker, +10 Resonance); +5 Resonance per blocked hit; 1 s cooldown after lowering | trainer L3, 150 g | yes |
+  | Rune Challenge | war cry: every enemy within 8 m targets you for 4 s, +5 Resonance each; 12 s | trainer L4, 275 g | yes |
+  | Warden's Leap | leap up to 10 m to the aim (over enemies); the 3 m landing deals 22 and taunts 2 s; 9 s | trainer L5, 400 g | yes |
+  | Rune Chain | chain to the target (16 m): 14 damage, pulls it 2 m in front of you, taunts 3 s; heavy foes hold their ground; 10 s | trainer L6, 500 g | yes |
+  | Warding Rune | 30 Resonance: a 4 m ward, allies inside take 25 % less damage for 8 s; 18 s | trainer L7, 650 g | yes |
   | Runic Guard | barrier (40 + level), -30 Resonance | talent (Runic Warden) | yes |
   | Resonance Burst | finisher nova, spends all Resonance (50+) | talent (Runic Warden) | yes |
-  | Rune Challenge | taunt shout, 8 m, 4 s | trainer | phase 2 |
-  | Rune Wall | hold to block (-75 % from the front), parry in the first 0.3 s | trainer | phase 2 |
-  | Rune Chain | pulls one enemy to you and taunts it | trainer | phase 2 |
-  | Warden's Leap | leap to the aim point, the landing taunts briefly | trainer | phase 2 |
-  | Warding Rune | ground zone, allies inside take -25 % damage | trainer | phase 2 |
+
+- **Threat** (all numbers data): an enemy remembers every hero's threat
+  (damage x the ability's `threat_mult` x the class's; fades 6 % a second)
+  and hunts the highest; a new favourite needs 10 % more than the current
+  one. A **taunt** pulls at once and holds for its seconds, then leaves the
+  tank on top of the list. Without any threat the old rule stays (the recent
+  attacker, else the nearest). In a party an enemy that hunts you wears a red
+  **"!"**.
 
 - **Talents** (`Bulwark`, `Earthshaker`, `Runic Warden`, 24 nodes, PROGRESSION_DESIGN).
 - **Gave away** the elemental spells (Ember Lance, Chain Spark, Fracture Rune,

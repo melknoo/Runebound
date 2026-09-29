@@ -5,6 +5,10 @@ extends Object
 ## also sends it (HERO_FX) and every other client plays the same entry on its
 ## puppet of that hero. Gameplay never lives here: the projectile and rune a
 ## puppet shows are visual copies (the owner's real ones deal the damage).
+## M10 exception, the ally effects: a Warding Rune and an Aegis barrier are
+## built on every machine, and each machine applies them to the heroes it
+## simulates itself (its own hero; offline every hero) - an owner takes its
+## own hits, so it must also own its own protection.
 
 
 static func play(hero: Player, kind: StringName, a: Array) -> void:
@@ -76,3 +80,38 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			Sfx.play("resonance_burst", a[0] as Vector3, 0.0, 0.05)
 		&"sfx":
 			Sfx.play(str(a[0]), a[1] as Vector3, float(a[2]), 0.1)
+		# --- M10 tank ---
+		&"challenge":  # [pos, radius] the war cry's ring
+			var gold := ArtKit.color("color_roles.resonance.body")
+			VFX.ground_ring(scene, a[0] as Vector3, gold, float(a[1]), 0.45)
+			VFX.flash(scene, a[0] as Vector3 + Vector3(0, 1.5, 0), ArtKit.color("color_roles.resonance.hot"), 1.8, 0.2)
+			Sfx.play("rune_challenge", a[0] as Vector3, 0.0, 0.03)
+		&"block":  # [pos] a blow glancing off Rune Wall
+			VFX.flash(scene, a[0] as Vector3, ArtKit.color("color_roles.player_accent.hot"), 0.8, 0.08)
+			VFX.burst(scene, a[0] as Vector3, {"tex": "spark", "amount": 6, "lifetime": 0.25, "size": 0.08,
+				"spread": 60.0, "vel_min": 2.0, "vel_max": 4.5,
+				"colors": [ArtKit.color("color_roles.player_accent.hot"), Color(ArtKit.color("color_roles.player_accent.body"), 0.0)] as Array[Color]})
+			Sfx.play("block_clang", a[0] as Vector3, -2.0, 0.1)
+		&"parry":  # [pos] a perfect parry
+			VFX.flash(scene, a[0] as Vector3, ArtKit.color("color_roles.resonance.hot"), 1.5, 0.14)
+			VFX.ground_ring(scene, hero.global_position, ArtKit.color("color_roles.resonance.body"), 2.5, 0.25)
+			Sfx.play("parry_ring", a[0] as Vector3, 0.0, 0.03)
+		&"rune_chain":  # [from, to]
+			VFX.rune_chain(scene, a[0] as Vector3, a[1] as Vector3)
+			Sfx.play("chain_throw", a[0] as Vector3, -2.0, 0.08)
+		&"warding_rune":  # [pos, radius, duration, reduction] - an ally effect (see the header)
+			var ward := WardingRune.new()
+			ward.radius = float(a[1])
+			ward.duration = float(a[2])
+			ward.reduction = float(a[3])
+			ward.position = a[0] as Vector3
+			scene.add_child(ward)
+			Sfx.play("ward_place", a[0] as Vector3, -1.0, 0.05)
+		&"ally_barrier":  # [pos, amount, duration, radius] - Aegis of Runes, an ally effect
+			var zone := ZoneBase.zone_of(hero)
+			if zone != null:
+				for ally in zone.players:
+					if ally == hero or not is_instance_valid(ally) or ally.net_role != Player.NetRole.OWNER \
+							or ally.health.is_dead or ally.global_position.distance_to(a[0] as Vector3) > float(a[3]):
+						continue
+					ally.grant_barrier(float(a[1]), float(a[2]))

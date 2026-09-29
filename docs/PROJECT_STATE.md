@@ -46,9 +46,28 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     real save (it migrated the user's save to v6 early; backup
     `runebound_save.backup_2026-09-29_m10.json`). Headless runs without
     `--save=` now use `user://headless_save.json`.
-- **Phase 2 (next): the tank** - threat + taunt, the aggro mark, Rune Wall
-  (block + parry), damage reduction, Rune Challenge, Rune Chain, Warden's
-  Leap, Warding Rune.
+- **Phase 2 (built): the tank.**
+  - **Threat:** enemies hunt whoever threatens them most (the tank's damage
+    counts double, a new favourite needs 10 % more); taunts pull at once and
+    hold; in a party a red "!" marks the enemies after you (co-op: the server
+    tells the clients, `ENEMY_TARGET`).
+  - **Rune Wall:** hold to block (frontal hits -75 %), the first 0.3 s parry
+    (no damage, a staggering counter on the striker, even on a caster whose
+    bolt it was). New `block` clip on the rig (the brace, held) and a
+    translucent ward in front.
+  - **Rune Challenge** (war cry, new `challenge` clip), **Warden's Leap**,
+    **Rune Chain** (pulls, heavy foes hold their ground), **Warding Rune**
+    (allies inside take 25 % less); Sigrun sells all five (L3-L7). The tank
+    has 120 health now.
+  - Every Bulwark / Earthshaker / Runic Warden talent works (Shield Wall,
+    Provoker, Riposte, Bastion, Unyielding, Quake Leap, Tectonic, Steadfast,
+    Binding Chains, Aegis of Runes); new tank legendary Warden's Oath.
+  - Tank bots block wind-ups aimed at them, shout at groups, leap and chain
+    at range. Protocol 10.
+  - Fixed: the Hollow Warden halved frontal hits twice in co-op; the base
+    health of a class was lost on the first gear change.
+  - Tests: smoke 485 green; net scenario `threat` (the caster pulls a dummy,
+    the tank's war cry takes it away, both clients see the change).
 - **Phase 3: the Elementalist** - its own rig (a look preview first), Frost
   Nova, Flame Wall, Ball Lightning, Ember Fall.
 - **Phase 4:** solo check of both classes, shots, perf, docs, the playtest

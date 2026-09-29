@@ -272,6 +272,7 @@ func _charge_contact_check() -> void:
 			var rel := victim.global_position - _strike_origin
 			var on_axis := _strike_origin + _charge_dir * rel.dot(_charge_dir)
 			var hit := HitInfo.create(CHARGE_DAMAGE, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, global_position - _charge_dir)
+			hit.source_id = get_instance_id()  # M10: a parried charge counters the Colossus
 			hit.knockback = 10.0
 			hit.area_center = on_axis
 			hit.area_radius = CHARGE_HALF_WIDTH + STRIKE_TOLERANCE

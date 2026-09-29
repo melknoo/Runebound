@@ -304,6 +304,43 @@ three roles, a hero takes 4 of about 12 class abilities into the field.
   `PlayerIntent.aim_dir` (a source without a camera). `run_godot coop` mixes
   the companions (Sigmund tank, Brynja Elementalist, ...); `net_client`
   takes `--class=`.
+- **Threat and taunts (phase 2, the authority's):** `EnemyBase.threat`
+  {hero instance id: value}; `take_hit` adds damage x `HitInfo.threat_mult` x
+  `Player.threat_mult()` (the class's); `_retarget` (every 0.3 s in the
+  roaming states) decays it (`THREAT_DECAY`), drops heroes beyond
+  `THREAT_RANGE` or dead, keeps a running `taunt` first, switches only at
+  `THREAT_SWITCH` x the current target's threat, and falls back to the M07b
+  rule without threat. `taunt(hero, s)` sets the target at once (not
+  mid-strike), tops the list and plays `taunted` (a gold "!" for everyone,
+  `_present_common_fx`). A taunt may carry no damage (`HitInfo.taunt` > 0,
+  damage 0: `take_hit` stops before the health). `HitInfo.pull_to` makes
+  `pull_towards` drag a non-stagger-resistant enemy (Rune Chain). All of it
+  rides the hit array (protocol **10**: threat_mult, taunt, pull_to,
+  source_net_id), so a client's taunt acts on the server's enemy.
+  `target_changed` -> **`ENEMY_TARGET [id, peer]`** (also right after
+  ENEMY_SPAWN and to late joiners) -> `EnemyBase.target_peer` on the
+  puppets; `AggroMarks` puts a red "!" over the enemies after this machine's
+  hero while two or more heroes share the zone.
+- **Guarding hits:** `Player.take_hit` asks `_guard_hit(hit)` before damage
+  reduction (the tank's Rune Wall: `State.BLOCK`, frontal arc, a parry in
+  `PARRY_WINDOW` returns true and counters the striker). Enemy hits name
+  their striker (`HitInfo.source_id`: `strike_circle`, bolts via
+  `EnemyBolt.shooter_id`, the Colossus charge); the server's `forward_hurt`
+  turns it into its net id and the owner's `_on_hurt_msg` back into the
+  puppet, so a co-op parry counters the right enemy.
+- **Ally effects:** `WardingRune` (static registry, `reduction_at(hero)` in
+  `damage_taken_mult`) and Aegis of Runes (`HeroFx` "ally_barrier") are built
+  on every machine by HeroFx; each machine applies them to the heroes it
+  simulates (its own; offline all of them) - owners take their own hits,
+  so they also own their protection. M11's heals will use the same path.
+- **Held gestures:** a `_anim_profile` "hold" entry {start action: end
+  action} keeps an upper-body clip up while the key is held (the `block`
+  clip: every key the same brace pose, re-fired seamlessly; `rune_wall_end`
+  fades it out). `RunebreakerHero` shows a translucent ward in front while
+  `State.BLOCK` (on puppets too, from the net state).
+- **Fixed on the way:** the Hollow Warden halved frontal hits twice in co-op
+  (on the puppet and again on the server); `Equipment` now takes the class's
+  base health.
 - **Tests:** `ZoneBase.debug_swap_class(id)` turns the local hero into a
   fresh hero of another class in place (UI rebuilt, enemies and pickups
   re-pointed, nothing saved); `debug_hero_for(ability)` swaps when a harness

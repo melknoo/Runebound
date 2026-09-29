@@ -73,6 +73,12 @@ static func damage_text(p: Player, d: AbilityData) -> String:
 			return "Barrier %d" % roundi(guard_amount(p, d))
 		&"resonance_burst":
 			return "Up to %d damage at full Resonance" % roundi(d.damage * p.max_resource() * (1.0 + p.stat(&"damage_pct") / 100.0))
+		&"warding_rune":
+			return "Allies take -%d%% damage" % roundi(d.damage + p.stat(&"aegis_pct"))
+		&"rune_wall":
+			return "Parry counter %d" % roundi(effective_damage(p, d))
+		&"rune_challenge":
+			return "Taunts for %.0f s" % (d.active + p.stat(&"taunt_duration"))
 	if d.damage <= 0.0:
 		return ""
 	return "Damage %d (avg %d)" % [roundi(effective_damage(p, d)), roundi(expected_damage(p, d))]
@@ -123,6 +129,24 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 				out.append("Glacial Bulwark")
 		&"resonance_burst":
 			out.append("%.1f damage per Resonance, area %.0f m" % [d.damage, d.aoe_radius])
+		&"rune_wall":
+			out.append("Blocks %d%% from the front, parries in the first 0.3 s"
+				% roundi(minf(75.0 + p.stat(&"block_pct"), 95.0)))
+			if p.has_power(&"riposte"):
+				out.append("Riposte")
+			if p.has_power(&"wardens_oath"):
+				out.append("Warden's Oath")
+		&"rune_challenge":
+			out.append("Every enemy within %.0f m" % d.aoe_radius)
+		&"rune_chain":
+			out.append("Range %.0f m, taunts %.0f s" % [d.aoe_radius, d.active + p.stat(&"taunt_duration")])
+		&"warden_leap":
+			out.append("Range %.0f m, landing %.0f m, taunts %.0f s" % [d.projectile_speed, d.aoe_radius,
+				d.active + p.stat(&"taunt_duration")])
+			if p.has_power(&"quake_leap"):
+				out.append("Quake Leap")
+		&"warding_rune":
+			out.append("Lasts %.0f s, %.0f m" % [d.active, d.aoe_radius])
 	return out
 
 

@@ -410,11 +410,12 @@ func _run() -> void:
 		"target name plate shows the enemy name")
 	# --- M07b / M10: one ability at the start, the rest are learned; two classes ---
 	var cls := ClassData.load_by_id(&"runebreaker")
-	_check(cls != null and cls.abilities.size() == 4 and cls.basic_attack == &"rune_cleave"
+	_check(cls != null and cls.abilities.size() == 9 and cls.basic_attack == &"rune_cleave"
 		and cls.starting_abilities.size() == 1 and cls.starting_abilities[0] == &"rune_cleave"
-		and cls.trainer_abilities().size() == 1 and cls.trainer_abilities()[0].id == &"earthbreaker"
-		and cls.ability(&"ember_lance") == null and cls.role == "Tank",
-		"ClassData: the Runebreaker tanks with 4 abilities (Rune Cleave on LMB) and trains Earthbreaker")
+		and cls.trainer_abilities().size() == 6 and cls.trainer_abilities()[0].id == &"earthbreaker"
+		and cls.trainer_abilities()[5].id == &"warding_rune" and cls.ability(&"ember_lance") == null
+		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0),
+		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 8, 6 of them from the trainer")
 	var mage_cls := ClassData.load_by_id(&"elementalist")
 	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 4
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
@@ -446,8 +447,9 @@ func _run() -> void:
 		and player.key_label_for(&"earthbreaker") == "RMB",
 		"M10: a learned ability takes the first free slot (RMB) and shows on the HUD")
 	var offers := TrainerUI.offers(player)
-	_check(offers.size() == 1 and offers[0].id == &"earthbreaker" and TrainerUI.deny_reason(player, offers[0]) == "Learned",
-		"the Runebreaker's trainer offers Earthbreaker (learned now)")
+	_check(offers.size() == 6 and offers[0].id == &"rune_wall" and offers[5].id == &"earthbreaker"
+		and TrainerUI.deny_reason(player, offers[5]) == "Learned" and TrainerUI.deny_reason(player, offers[0]) == "Requires level 3",
+		"the Runebreaker's trainer offers its 6 abilities, Rune Wall next (level 3), the learned ones last")
 	# Debug fresh start (key 9) resets abilities, the loadout and gold too.
 	player.add_gold(70)
 	lab.wipe_save()
@@ -486,10 +488,13 @@ func _run() -> void:
 	sigrun.free()
 	await _play_as(&"runebreaker", false)
 	player.debug_learn_all()
-	_check(lab.hud.ability_names().size() == 3, "debug_learn_all knows the whole trainer kit (Rune Cleave, Earthbreaker, Dodge)")
+	_check(lab.hud.ability_names().size() == 6 and player.loadout == ([&"earthbreaker", &"rune_wall", &"rune_challenge",
+		&"warden_leap"] as Array[StringName]) and player.knows(&"warding_rune") and not player.loadout.has(&"warding_rune"),
+		"debug_learn_all: the trainer kit is known, the first four fill the slots, the rest waits in the pool")
 
 	# --- M10 loadout: 4 free slots, swaps out of combat only, only slotted abilities fire ---
 	player._last_combat_msec = -1000000
+	player.restore_loadout([&"earthbreaker", &"", &"", &""])
 	player.progression.ranks[&"runic_guard"] = 1
 	player.progression.ranks[&"resonance_burst"] = 1
 	player.progression._changed()
@@ -587,8 +592,8 @@ func _run() -> void:
 		"I opens the hero window on the inventory tab")
 	lab.hero_ui.close()
 	var sheet_rows := StatSheet.ability_rows(player)
-	_check(sheet_rows.size() == 2 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
-		and sheet_rows[1]["id"] == &"earthbreaker" and sheet_rows[1]["key"] == "RMB",
+	_check(sheet_rows.size() == 7 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
+		and sheet_rows[1]["id"] == &"earthbreaker" and sheet_rows[1]["key"] == "RMB" and sheet_rows[6]["key"] == "-",
 		"character sheet lists the known abilities in class order with their slot keys")
 	var d_pct := player.stat(&"damage_pct")
 	var c_pct := player.stat(&"crit_pct")
@@ -698,10 +703,10 @@ func _run() -> void:
 		for affix in tank_item.affixes:
 			if affix["id"] in [&"ember_pierce", &"chain_jumps", &"storm_cd_pct", &"aether_pct"]:
 				tank_rolls_spell_affix = true
-	_check(own_legendary and not tank_rolls_spell_affix and AffixPool.legendaries_for(&"runebreaker").size() == 2
+	_check(own_legendary and not tank_rolls_spell_affix and AffixPool.legendaries_for(&"runebreaker").size() == 3
 		and AffixPool.legendaries_for(&"elementalist").size() == 4
 		and AffixPool.legendaries_for(&"runebreaker").size() + AffixPool.legendaries_for(&"elementalist").size() == AffixPool.LEGENDARIES.size(),
-		"M10: legendaries and spell affixes follow their ability to its class (tank 2, Elementalist 4)")
+		"M10: legendaries and spell affixes follow their ability to its class (tank 3 with Warden's Oath, Elementalist 4)")
 	var staff_named := false
 	for i in 60:
 		var mage_item := ItemGenerator.generate(0, &"elementalist")
@@ -840,7 +845,7 @@ func _run() -> void:
 		"world labels: pixel font at a fixed screen size (1 font px = 1 screen px)")
 	plate.free()
 	var hud_names := lab.hud.ability_names()
-	_check(hud_names.size() == 3 and hud_names.has("Earthbreaker") and hud_names.has("Dodge"),
+	_check(hud_names.size() == 6 and hud_names.has("Earthbreaker") and hud_names.has("Rune Wall") and hud_names.has("Dodge"),
 		"HUD shows the slotted abilities by name (%s)" % str(hud_names))
 	lab.targeting.cycle_target()
 	_check(lab.targeting.current == rusher, "tab cycle wraps with single candidate")
@@ -1107,6 +1112,193 @@ func _run() -> void:
 
 	await _play_as(&"runebreaker")
 
+	# ===== M10 phase 2: the tank - threat, taunts, Rune Wall, the new abilities =====
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
+	player.reset_cooldowns()
+	var ally := Player.create(ClassData.load_by_id(&"elementalist"))
+	ally.is_local = false
+	ally.input_source = InputSource.new()
+	lab.add_player(ally)
+	ally.global_position = player.global_position + Vector3(4, 0, 0)
+	var foe_t := lab.spawn_by_id("rusher", player.global_position + Vector3(0, 0.2, -5))
+	await _wait_frames(3)
+	foe_t.health.max_health = 1.0e6
+	foe_t.health.heal_full()
+	foe_t.move_speed = 0.0
+	var ally_hit := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ally.global_position)
+	ally_hit.from_player = true
+	ally_hit.attacker_id = ally.get_instance_id()
+	foe_t.take_hit(ally_hit)
+	var threat_ally := foe_t.threat_of(ally)
+	foe_t._retarget()
+	_check(foe_t.target == ally and is_equal_approx(threat_ally, 20.0),
+		"threat: the enemy turns on the hero that hurt it (20 damage = 20 threat)")
+	var tank_hit := HitInfo.create(12.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, player.global_position)
+	tank_hit.from_player = true
+	tank_hit.attacker_id = player.get_instance_id()
+	foe_t.take_hit(tank_hit)
+	var threat_tank := foe_t.threat_of(player)
+	foe_t._retarget()
+	_check(foe_t.target == player and absf(threat_tank - 24.0) < 0.01,
+		"the tank's damage threatens double: its 12 outweighs the caster's 20 (%.1f)" % threat_tank)
+	var nudge := HitInfo.create(5.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ally.global_position)
+	nudge.from_player = true
+	nudge.attacker_id = ally.get_instance_id()
+	foe_t.take_hit(nudge)
+	foe_t._retarget()
+	_check(foe_t.target == player, "a new favourite needs 10 %% more threat than the current target (%.1f vs %.1f)"
+		% [foe_t.threat_of(ally), foe_t.threat_of(player)])
+	foe_t.add_threat(ally, 500.0)
+	foe_t._retarget()
+	var went_to_caster := foe_t.target == ally
+	player.reset_cooldowns()
+	_check(went_to_caster and rb.try_rune_challenge() and foe_t.taunted_by() == player and foe_t.target == player,
+		"Rune Challenge pulls every enemy within 8 m onto the tank at once, past any threat")
+	foe_t._retarget()
+	_check(foe_t.target == player and foe_t.threat_of(player) > foe_t.threat_of(ally),
+		"the taunt holds, and it leaves the tank on top of the threat list")
+	foe_t._taunt_until = 0.0
+	foe_t.add_threat(ally, 1.0e5)
+	foe_t._retarget()
+	_check(foe_t.target == ally and foe_t.taunted_by() == null, "once the taunt runs out, threat decides again")
+	foe_t.auto_retarget = false  # the mark checks below set the target by hand
+	await _wait_frames(15)
+	lab.aggro_marks._left = 0.0
+	foe_t.target = player
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(lab.aggro_marks.mark_count() >= 1, "in a party, an enemy that hunts you wears the '!' mark")
+	foe_t.target = ally
+	lab.aggro_marks._left = 0.0
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(lab.aggro_marks.mark_count() == 0, "the mark goes when it hunts someone else")
+	# Rune Wall: hold to block (-75 % from the front), the first 0.3 s parry.
+	player.god_mode = false
+	player.health.invulnerable = false
+	player.health.heal_full()
+	player.barrier = 0.0
+	player.reset_cooldowns()
+	player.resonance = 0.0
+	var wall_probe := ScriptedInput.new()
+	var wall_local := player.input_source
+	player.input_source = wall_probe
+	wall_probe.held.append(&"rune_wall")
+	wall_probe.queue.append(&"rune_wall")
+	await _wait_frames(2)
+	_check(player.state == Player.State.BLOCK and rb.is_blocking(), "holding the key raises Rune Wall")
+	var hp_wall := player.health.current_health
+	var foe_hp := foe_t.health.current_health
+	var parry_hit := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM,
+		player.global_position + player.facing() * 2.0)
+	parry_hit.source_id = foe_t.get_instance_id()
+	_check(not player.take_hit(parry_hit) and is_equal_approx(player.health.current_health, hp_wall)
+		and foe_t.health.current_health < foe_hp and foe_t.ai_state == EnemyBase.AIState.STAGGER and player.resonance > 10.0,
+		"a hit in the first 0.3 s is parried: no damage, the striker takes a staggering counter, Resonance")
+	await _wait_frames(25)
+	var block_hit := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM,
+		player.global_position + player.facing() * 2.0)
+	player.take_hit(block_hit)
+	_check(absf(hp_wall - player.health.current_health - 5.0) < 0.01,
+		"after the parry window a frontal hit is blocked: 20 -> 5 (%.1f)" % (hp_wall - player.health.current_health))
+	var hp_back := player.health.current_health
+	player.take_hit(HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM,
+		player.global_position - player.facing() * 2.0))
+	_check(absf(hp_back - player.health.current_health - 20.0) < 0.01, "a hit from behind gets through Rune Wall")
+	wall_probe.held.clear()
+	await _wait_frames(2)
+	player.input_source = wall_local
+	_check(player.state == Player.State.MOVE and player._on_cooldown(&"rune_wall"), "letting go lowers the ward (short cooldown)")
+	player.health.heal_full()
+	# Rune Chain: drags an enemy in and taunts it; heavy foes hold their ground.
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.reset_cooldowns()
+	var catch := MeleeRusher.new()
+	lab.enemies_root.add_child(catch)
+	catch.player = ally
+	catch.global_position = player.global_position + player.facing() * 9.0
+	await _wait_frames(2)
+	lab.targeting.current = catch
+	_check(rb.try_rune_chain(), "Rune Chain throws at the held target")
+	await _wait_frames(30)
+	var pulled_to := catch.global_position.distance_to(player.global_position)
+	_check(pulled_to < 3.8 and catch.taunted_by() == player, "Rune Chain drags the enemy to the tank and taunts it (%.1f m)" % pulled_to)
+	var heavy := Brute.new()
+	lab.enemies_root.add_child(heavy)
+	heavy.player = ally
+	heavy.global_position = player.global_position + player.facing() * 8.0
+	await _wait_frames(2)
+	heavy.set_physics_process(false)  # a taunted brute would walk off towards the tank
+	var heavy_from := heavy.global_position
+	lab.targeting.current = heavy
+	player.reset_cooldowns()
+	rb.try_rune_chain()
+	await _wait_frames(20)
+	_check(heavy.global_position.distance_to(heavy_from) < 1.5 and heavy.taunted_by() == player,
+		"a heavy foe holds its ground but is taunted")
+	# Warden's Leap: lands at the aim, strikes and taunts what stands there.
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.reset_cooldowns()
+	var leap_exclude: Array[RID] = [player.get_rid()]
+	var leap_aim := lab.camera_rig.get_aim_point(leap_exclude)
+	var leap_off := Vector3(leap_aim.x - player.global_position.x, 0.0, leap_aim.z - player.global_position.z).limit_length(10.0)
+	var lander := MeleeRusher.new()
+	lab.enemies_root.add_child(lander)
+	lander.player = ally
+	lander.global_position = player.global_position + leap_off + Vector3(0.8, 0.2, 0)
+	await _wait_frames(2)
+	lander.set_physics_process(false)
+	var leap_start := player.global_position
+	_check(rb.try_warden_leap() and player.state == Player.State.LEAP, "Warden's Leap takes off")
+	await _wait_frames(45)
+	_check(player.state == Player.State.MOVE and player.global_position.distance_to(leap_start) > 2.0
+		and lander.taunted_by() == player and lander.health.current_health < lander.health.max_health
+		and player.collision_mask == 0b101,
+		"the tank lands at the aim, strikes and taunts what stands there (%.1f m)" % player.global_position.distance_to(leap_start))
+	# Warding Rune: every hero inside takes 25 % less damage.
+	player.reset_cooldowns()
+	player.resonance = 100.0
+	ally.global_position = player.global_position + Vector3(1.5, 0, 0)
+	_check(rb.try_warding_rune() and player.resonance < 71.0, "Warding Rune costs 30 Resonance")
+	await _wait_frames(2)
+	_check(is_equal_approx(player.damage_taken_mult(), 0.75) and is_equal_approx(ally.damage_taken_mult(), 0.75),
+		"the tank and an ally inside the ward take 25 % less damage")
+	ally.global_position = player.global_position + Vector3(10, 0, 0)
+	_check(is_equal_approx(ally.damage_taken_mult(), 1.0), "outside the ward no reduction")
+	# Aegis of Runes: Runic Guard shields allies near for half.
+	ally.global_position = player.global_position + Vector3(2, 0, 0)
+	ally.barrier = 0.0
+	player.progression.ranks[&"runic_guard"] = 1
+	player.progression.ranks[&"aegis_of_runes"] = 1
+	player.progression._changed()
+	player.reset_cooldowns()
+	player.resonance = 100.0
+	rb.try_runic_guard()
+	_check(absf(ally.barrier - rb.guard_amount() * 0.5) < 0.01, "Aegis of Runes: Runic Guard also shields allies within 6 m for half")
+	player.progression.ranks[&"unyielding"] = 1
+	player.progression._changed()
+	player.health.current_health = player.health.max_health * 0.2
+	_check(is_equal_approx(rb._class_damage_reduction(), 0.3), "Unyielding: below 30 % health the tank takes 30 % less")
+	player.health.heal_full()
+	player.progression.ranks.clear()
+	player.progression._changed()
+	player.barrier = 0.0
+	for child in lab.get_children():
+		if child is WardingRune:
+			child.queue_free()
+	lab.remove_player(ally)
+	ally.queue_free()
+	lab.targeting.current = null
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
+
 	# --- brute: stagger resistance ---
 	lab.kill_all_enemies()
 	await _wait_frames(20)
@@ -1179,7 +1371,7 @@ func _run() -> void:
 	hp_item.affixes = [{"id": &"max_hp", "label": "+30 maximum health", "stat": &"max_hp", "value": 30.0}]
 	player.equipment.add_item(hp_item)
 	player.equipment.equip(hp_item)
-	_check(absf(player.health.max_health - (130.0 + player.progression.stat(&"max_hp"))) < 0.01,
+	_check(absf(player.health.max_health - (150.0 + player.progression.stat(&"max_hp"))) < 0.01,
 		"equipping +30 HP raises max health (on top of level bonuses)")
 
 	# Keyboard layout (user, 2026-09-24): abilities on the number row, Q/R kept, E = interact.
@@ -1826,9 +2018,9 @@ func _run() -> void:
 	player.restore_loadout([])
 	SaveGame.reload_from_disk()
 	SaveGame.restore_player(player)
-	_check(player.gold == 123 and player.known_abilities.size() == 2 and player.knows(&"earthbreaker")
-		and player.loadout == ([&"", &"", &"earthbreaker", &""] as Array[StringName]),
-		"save restores gold, the learned abilities and the loadout")
+	_check(player.gold == 123 and player.known_abilities.size() == 7 and player.knows(&"warding_rune")
+		and player.loadout == ([&"rune_challenge", &"rune_wall", &"earthbreaker", &"warden_leap"] as Array[StringName]),
+		"save restores gold, the learned abilities and the loadout (%s)" % str(player.loadout))
 	var restored_names: Array[String] = []
 	for it in player.equipment.inventory:
 		restored_names.append(it.display_name)
@@ -2720,7 +2912,13 @@ func _run() -> void:
 	h0.area_center = Vector3(4, 5, 6)
 	h0.area_radius = 1.1
 	h0.from_player = true
+	h0.threat_mult = 2.5
+	h0.taunt = 3.0
+	h0.pull_to = Vector3(7, 0, 8)
+	h0.source_net_id = 77
 	var h1 := NetCodec.hit_from_array(NetCodec.hit_to_array(h0))
+	_check(is_equal_approx(h1.threat_mult, 2.5) and is_equal_approx(h1.taunt, 3.0) and h1.pull_to == Vector3(7, 0, 8)
+		and h1.source_net_id == 77, "M10: threat, taunt, the pull and the striking enemy survive the wire")
 	_check(is_equal_approx(h1.damage, 23.5) and h1.type == HitInfo.DamageType.FIRE and h1.weight == HitInfo.Weight.HEAVY
 		and h1.is_crit and h1.applies_burn and not h1.applies_chill and is_equal_approx(h1.burn_mult, 1.5)
 		and h1.ability == &"ember_lance" and h1.area_center == Vector3(4, 5, 6) and is_equal_approx(h1.area_radius, 1.1)

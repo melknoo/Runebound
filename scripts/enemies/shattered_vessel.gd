@@ -238,6 +238,7 @@ func _fire_fan() -> void:
 		var dir := base_dir.rotated(Vector3.UP, angle)
 		var bolt := EnemyBolt.new()
 		bolt.setup(dir, 12.0, 10.0)
+		bolt.shooter_id = get_instance_id()
 		bolt.position = origin + dir * 1.2
 		get_tree().current_scene.add_child(bolt)
 	play_fx(&"fan")

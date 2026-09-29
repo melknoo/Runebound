@@ -41,7 +41,7 @@ static func hit_to_array(h: HitInfo) -> Array:
 	if h.from_player:
 		flags |= _HIT_FROM_PLAYER
 	return [h.damage, int(h.type), int(h.weight), flags, h.knockback, h.source_position, String(h.ability),
-		h.burn_mult, h.area_center, h.area_radius]
+		h.burn_mult, h.area_center, h.area_radius, h.threat_mult, h.taunt, h.pull_to, h.source_net_id]
 
 
 ## The attacker is not on the wire (an instance id means nothing on another
@@ -66,6 +66,11 @@ static func hit_from_array(a: Array) -> HitInfo:
 	h.burn_mult = float(a[7])
 	h.area_center = a[8] as Vector3
 	h.area_radius = float(a[9])
+	if a.size() >= 14:  # M10 (protocol 10): threat, taunt, pull, the striking enemy
+		h.threat_mult = clampf(float(a[10]), 0.0, 20.0)
+		h.taunt = clampf(float(a[11]), 0.0, 10.0)
+		h.pull_to = a[12] as Vector3
+		h.source_net_id = int(a[13])
 	return h
 
 

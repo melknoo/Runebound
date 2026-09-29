@@ -1,17 +1,50 @@
 class_name RunebreakerHero
 extends Player
 ## M10: the Runebreaker, the tank. Melee (Rune Cleave) builds Resonance; heavy
-## rune abilities spend it (Earthbreaker, Runic Guard, Resonance Burst). The
-## elemental spells went to the Elementalist (CLASS_DESIGN "Three roles").
+## rune abilities spend it (Earthbreaker, Runic Guard, Resonance Burst). It
+## holds the enemies' attention: its damage threatens double (ClassData
+## threat_mult), Rune Challenge / Rune Chain / Warden's Leap taunt, Rune Wall
+## blocks and parries, Warding Rune shields the party (CLASS_DESIGN "Three
+## roles"). The elemental spells went to the Elementalist.
 
 # Ability tuning: derived caches of `abilities` (the tests read them by name).
 var cleave: AbilityData
 var earthbreaker: AbilityData
 var runic_guard: AbilityData        # M07 talent ability
 var resonance_burst: AbilityData    # M07 talent ability
+var rune_wall: AbilityData          # M10: hold to block, parry in the first moment
+var rune_challenge: AbilityData     # M10: taunt shout
+var rune_chain: AbilityData         # M10: pull + taunt one enemy
+var warden_leap: AbilityData        # M10: leap, the landing taunts
+var warding_rune: AbilityData       # M10: ground ward, allies take less damage
 
 var _melee_flip: bool = false
 var _melee_did_hit_window: bool = false
+
+## Rune Wall: frontal arc it covers, the parry window, how much a block keeps
+## off, how slow the hero walks behind it, the Resonance a blocked hit gives.
+const BLOCK_ARC := deg_to_rad(70.0)
+const PARRY_WINDOW := 0.3
+const BLOCK_REDUCTION := 0.75
+const BLOCK_MOVE := 0.4
+const PARRY_RESONANCE := 10.0
+const RIPOSTE_RADIUS := 2.5
+const WARDENS_OATH_BARRIER := 20.0
+## Warden's Leap: flight time and apex height.
+const LEAP_TIME := 0.5
+const LEAP_HEIGHT := 2.2
+## Rune Chain lands its catch this far in front of the hero.
+const CHAIN_DROP := 2.0
+## Aegis of Runes shields allies within this radius (half the guard).
+const AEGIS_RADIUS := 6.0
+## Unyielding: below this share of health, this much less damage.
+const UNYIELDING_BELOW := 0.3
+const UNYIELDING_REDUCTION := 0.3
+
+var _block_time: float = 0.0
+var _leap_from: Vector3 = Vector3.ZERO
+var _leap_to: Vector3 = Vector3.ZERO
+var _ward: MeshInstance3D = null
 
 
 func _load_abilities() -> void:
@@ -20,6 +53,11 @@ func _load_abilities() -> void:
 	earthbreaker = ability(&"earthbreaker")
 	runic_guard = ability(&"runic_guard")
 	resonance_burst = ability(&"resonance_burst")
+	rune_wall = ability(&"rune_wall")
+	rune_challenge = ability(&"rune_challenge")
+	rune_chain = ability(&"rune_chain")
+	warden_leap = ability(&"warden_leap")
+	warding_rune = ability(&"warding_rune")
 
 
 func _register_actions() -> void:
@@ -29,6 +67,11 @@ func _register_actions() -> void:
 		&"earthbreaker": try_earthbreaker,
 		&"runic_guard": try_runic_guard,
 		&"resonance_burst": try_resonance_burst,
+		&"rune_wall": try_rune_wall,
+		&"rune_challenge": try_rune_challenge,
+		&"rune_chain": try_rune_chain,
+		&"warden_leap": try_warden_leap,
+		&"warding_rune": try_warding_rune,
 	})
 
 
@@ -36,9 +79,13 @@ func _anim_profile() -> Dictionary:
 	var profile := super()
 	(profile["actions"] as Dictionary).merge({&"cleave_l": &"cleave_l", &"cleave_r": &"cleave_r",
 		&"earthbreaker": &"earthbreaker_rise", &"earthbreaker_impact": &"earthbreaker_impact",
-		&"resonance_burst": &"resonance_burst"})
+		&"resonance_burst": &"resonance_burst", &"rune_challenge": &"challenge",
+		&"warden_leap": &"earthbreaker_rise", &"warden_leap_land": &"earthbreaker_impact", &"rune_chain": &"ember"})
 	# instant casts keep the legs running: upper-body layer only
-	(profile["upper"] as Dictionary).merge({&"runic_guard": &"runic_guard"})
+	(profile["upper"] as Dictionary).merge({&"runic_guard": &"runic_guard", &"rune_wall": &"block",
+		&"warding_rune": &"fracture_rune"})
+	# M10: the block is held for as long as the key stays down
+	profile["hold"] = {&"rune_wall": &"rune_wall_end"}
 	return profile
 
 
@@ -48,13 +95,25 @@ func _process_class_state(delta: float) -> void:
 			_process_melee(delta)
 		State.SLAM:
 			_process_slam(delta)
+		State.BLOCK:
+			_process_block(delta)
+		State.LEAP:
+			_process_leap(delta)
 		_:
 			state = State.MOVE
 
 
-## Earthbreaker is committed once the hero leaves the ground.
+## Earthbreaker is committed once the hero leaves the ground; so is a leap.
 func _dodge_allowed() -> bool:
+	if state == State.LEAP:
+		return false
 	return not (state == State.SLAM and _state_timer < earthbreaker.startup + earthbreaker.active)
+
+
+## A dodge out of Rune Wall lowers the ward (its cooldown starts).
+func _on_dodge_cancel() -> void:
+	if state == State.BLOCK:
+		_lower_ward()
 
 
 func resource_cost(id: StringName) -> float:
@@ -211,8 +270,11 @@ func _do_slam_hit() -> void:
 	for enemy: Node in hits:
 		var hit := roll_ability_hit(earthbreaker)
 		hit.source_position = pos
+		hit.threat_mult = earthbreaker.threat_mult
 		if has_power(&"molten_core"):
 			hit.applies_burn = true  # M07 Molten Core
+		if has_power(&"tectonic"):
+			hit.taunt = taunt_seconds(3.0)  # M10 Tectonic
 		enemy.call(&"take_hit", hit)
 	if not hits.is_empty():
 		GameFeel.hitstop(hits, 0.07)
@@ -236,6 +298,8 @@ func try_runic_guard() -> bool:
 	spend_resonance(runic_guard.resonance_cost)
 	_set_cooldown(&"runic_guard", runic_guard.cooldown)
 	grant_barrier(guard_amount(), runic_guard.active)
+	if has_power(&"aegis_of_runes"):  # M10: half the guard for every ally near
+		hero_fx(&"ally_barrier", [global_position, guard_amount() * 0.5, runic_guard.active, AEGIS_RADIUS])
 	hero_fx(&"sfx", ["runic_guard", global_position, -2.0])
 	cooldowns_changed.emit()
 	action_started.emit(&"runic_guard")
@@ -265,3 +329,317 @@ func try_resonance_burst() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"resonance_burst")
 	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: threat and taunts
+# ---------------------------------------------------------------------------
+
+## A taunt's hold with the Provoker talent on top.
+func taunt_seconds(base: float) -> float:
+	return base + stat(&"taunt_duration")
+
+
+## M10 Unyielding: badly hurt, the tank takes less.
+func _class_damage_reduction() -> float:
+	if has_power(&"unyielding") and health != null and health.max_health > 0.0 \
+			and health.current_health / health.max_health < UNYIELDING_BELOW:
+		return UNYIELDING_REDUCTION
+	return 0.0
+
+
+## Living enemies within `radius` of `center`, flat (the registry, not the
+## hurtbox query: a shout reaches every one of them).
+func _enemies_near(center: Vector3, radius: float) -> Array[EnemyBase]:
+	var out: Array[EnemyBase] = []
+	for e in EnemyBase.all_enemies:
+		if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD:
+			continue
+		var d := e.global_position - center
+		d.y = 0.0
+		if d.length() <= radius:
+			out.append(e)
+	return out
+
+
+func try_rune_challenge() -> bool:
+	if not knows(&"rune_challenge") or state != State.MOVE or _on_cooldown(&"rune_challenge"):
+		return false
+	_set_cooldown(&"rune_challenge", rune_challenge.cooldown)
+	var hold := taunt_seconds(rune_challenge.active)
+	var taunted := 0
+	for e in _enemies_near(global_position, rune_challenge.aoe_radius):
+		var hit := roll_ability_hit(rune_challenge)  # no damage: the shout only taunts
+		hit.damage = 0.0
+		hit.taunt = hold
+		if e.take_hit(hit):
+			taunted += 1
+	gain_resonance(rune_challenge.resonance_gain_per_hit * taunted)
+	hero_fx(&"challenge", [global_position, rune_challenge.aoe_radius])
+	feel_shake(0.2)
+	cooldowns_changed.emit()
+	action_started.emit(&"rune_challenge")
+	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: Rune Wall (hold to block; the first moment parries)
+# ---------------------------------------------------------------------------
+
+func try_rune_wall() -> bool:
+	if not knows(&"rune_wall") or state != State.MOVE or _on_cooldown(&"rune_wall"):
+		return false
+	state = State.BLOCK
+	_state_timer = 0.0
+	_block_time = 0.0
+	_hold_aim()
+	hero_fx(&"sfx", ["equip", global_position, -8.0])
+	action_started.emit(&"rune_wall")
+	return true
+
+
+func is_blocking() -> bool:
+	return state == State.BLOCK
+
+
+func _process_block(delta: float) -> void:
+	_block_time += delta
+	if input_locked or not intent.held.has(&"rune_wall"):
+		_lower_ward()
+		state = State.MOVE
+		_consume_buffer()
+		return
+	# a slow walk behind the ward, always facing the aim
+	var dir := _move_input_dir()
+	var target_vel := dir * MAX_SPEED * BLOCK_MOVE
+	velocity.x = move_toward(velocity.x, target_vel.x, ACCEL * delta)
+	velocity.z = move_toward(velocity.z, target_vel.z, ACCEL * delta)
+	_face_aim_instant()
+
+
+func _lower_ward() -> void:
+	_set_cooldown(&"rune_wall", rune_wall.cooldown)
+	cooldowns_changed.emit()
+	action_started.emit(&"rune_wall_end")
+
+
+## A hit from the front while Rune Wall is up: a parry in the first
+## PARRY_WINDOW (no damage, a rune counter on the striker), a block after
+## (BLOCK_REDUCTION + Shield Wall off). Both give Resonance. Hits from above
+## or behind get through.
+func _guard_hit(hit: HitInfo) -> bool:
+	if state != State.BLOCK:
+		return false
+	var from := hit.source_position - global_position
+	from.y = 0.0
+	if from.length() < 0.3 or facing().angle_to(from.normalized()) > BLOCK_ARC:
+		return false
+	var gain := rune_wall.resonance_gain_per_hit + stat(&"block_res")
+	var at := global_position + Vector3(0, 1.2, 0) + facing() * 0.7
+	if _block_time <= PARRY_WINDOW:
+		gain_resonance(gain + PARRY_RESONANCE)
+		_parry(hit, at)
+		return true
+	hit.damage *= 1.0 - clampf(BLOCK_REDUCTION + stat(&"block_pct") / 100.0, 0.0, 0.95)
+	hit.knockback *= 0.3
+	gain_resonance(gain)
+	hero_fx(&"block", [at])
+	return false
+
+
+func _parry(hit: HitInfo, at: Vector3) -> void:
+	hero_fx(&"parry", [at])
+	feel_shake(0.15)
+	var foes: Array[EnemyBase] = []
+	if has_power(&"riposte"):  # M10 Riposte: the counter hits everything close
+		foes = _enemies_near(global_position, RIPOSTE_RADIUS)
+		gain_resonance(15.0)
+	else:
+		var striker := instance_from_id(hit.source_id) as EnemyBase if hit.source_id != 0 else null
+		if striker != null and is_instance_valid(striker) and striker.ai_state != EnemyBase.AIState.DEAD:
+			foes.append(striker)
+	for foe in foes:
+		var counter := roll_ability_hit(rune_wall)
+		counter.weight = HitInfo.Weight.HEAVY  # the counter staggers
+		counter.threat_mult = rune_wall.threat_mult
+		counter.source_position = global_position
+		foe.take_hit(counter)
+	if has_power(&"wardens_oath"):  # M10 legendary: a parry leaves a barrier
+		grant_barrier(WARDENS_OATH_BARRIER, 3.0)
+
+
+# ---------------------------------------------------------------------------
+# M10: Rune Chain (pull one enemy in and taunt it)
+# ---------------------------------------------------------------------------
+
+func try_rune_chain() -> bool:
+	if not knows(&"rune_chain") or state != State.MOVE or _on_cooldown(&"rune_chain"):
+		return false
+	var catch := _chain_target(rune_chain.aoe_radius)
+	if catch == null:
+		ui_denied()
+		return false
+	_set_cooldown(&"rune_chain", rune_chain.cooldown)
+	var to_catch := catch.global_position - global_position
+	to_catch.y = 0.0
+	var dir := to_catch.normalized() if to_catch.length() > 0.05 else facing()
+	_visual.rotation.y = atan2(-dir.x, -dir.z)
+	_aim_hold_until = Time.get_ticks_msec() + AIM_HOLD_MSEC
+	hero_fx(&"rune_chain", [muzzle_position(), catch.global_position + Vector3(0, 1.0, 0)])
+	var hit := roll_ability_hit(rune_chain)
+	hit.taunt = taunt_seconds(rune_chain.active)
+	hit.threat_mult = rune_chain.threat_mult
+	if to_catch.length() > CHAIN_DROP + 0.5:
+		hit.pull_to = global_position + dir * CHAIN_DROP
+		hero_fx(&"sfx", ["chain_pull", catch.global_position, -1.0])
+	if catch.take_hit(hit):
+		gain_resonance(rune_chain.resonance_gain_per_hit)
+	cooldowns_changed.emit()
+	action_started.emit(&"rune_chain")
+	return true
+
+
+## The held Tab target if it is in range, else the best candidate in view,
+## else (bots, no targeting) the nearest enemy along the aim.
+func _chain_target(reach: float) -> EnemyBase:
+	if targeting != null:
+		var held := targeting.current
+		if held != null and is_instance_valid(held) and held.ai_state != EnemyBase.AIState.DEAD \
+				and held.global_position.distance_to(global_position) <= reach:
+			return held
+		var best := targeting.best_candidate()
+		if best != null and best.global_position.distance_to(global_position) <= reach:
+			return best
+		return null
+	var aim := aim_direction()
+	aim.y = 0.0
+	var pick: EnemyBase = null
+	var pick_d := reach
+	for e in _enemies_near(global_position, reach):
+		var to_e := e.global_position - global_position
+		to_e.y = 0.0
+		if to_e.length() < pick_d and (aim.length() < 0.01 or aim.normalized().dot(to_e.normalized()) > 0.5):
+			pick_d = to_e.length()
+			pick = e
+	return pick
+
+
+# ---------------------------------------------------------------------------
+# M10: Warden's Leap (a leap to the aim point; the landing taunts)
+# ---------------------------------------------------------------------------
+
+func try_warden_leap() -> bool:
+	if not knows(&"warden_leap") or state != State.MOVE or _on_cooldown(&"warden_leap"):
+		return false
+	var reach := warden_leap.projectile_speed  # data: the leap's range in metres
+	var exclude: Array[RID] = [get_rid()]
+	var aim_point := camera_rig.get_aim_point(exclude) if camera_rig != null else global_position + aim_direction() * reach
+	var offset := Vector3(aim_point.x - global_position.x, 0.0, aim_point.z - global_position.z)
+	if offset.length() > reach:
+		offset = offset.normalized() * reach
+	_leap_from = global_position
+	_leap_to = ZoneBase.ground_under(self, global_position + offset, 0.0)
+	_set_cooldown(&"warden_leap", warden_leap.cooldown)
+	state = State.LEAP
+	_state_timer = 0.0
+	collision_mask = 0b001  # over the enemies, not into them
+	if offset.length() > 0.2:
+		_visual.rotation.y = atan2(-offset.x, -offset.z)
+	hero_fx(&"sfx", ["earthbreaker_windup", global_position, -4.0])
+	cooldowns_changed.emit()
+	action_started.emit(&"warden_leap")
+	return true
+
+
+func _process_leap(delta: float) -> void:
+	_state_timer += delta
+	var k := clampf(_state_timer / LEAP_TIME, 0.0, 1.0)
+	var want := _leap_from.lerp(_leap_to, k) + Vector3.UP * LEAP_HEIGHT * 4.0 * k * (1.0 - k)
+	velocity = (want - global_position) / maxf(delta, 0.001)
+	velocity.y += GRAVITY * delta  # the chassis adds gravity after this
+	if k >= 1.0:
+		velocity = Vector3.ZERO
+		collision_mask = 0b101
+		_land_leap()
+		state = State.MOVE
+		_consume_buffer()
+
+
+func _land_leap() -> void:
+	action_started.emit(&"warden_leap_land")
+	var pos := global_position
+	var radius := warden_leap.aoe_radius
+	hero_fx(&"slam", [pos, radius])
+	feel_shake(0.4)
+	var hits := _query_hurtboxes(pos + Vector3(0, 0.5, 0), radius)
+	for enemy: Node in hits:
+		var hit := roll_ability_hit(warden_leap)
+		hit.source_position = pos
+		hit.taunt = taunt_seconds(warden_leap.active)
+		hit.threat_mult = warden_leap.threat_mult
+		if has_power(&"quake_leap"):
+			hit.weight = HitInfo.Weight.HEAVY  # M10 Quake Leap
+		if enemy.call(&"take_hit", hit):
+			gain_resonance(warden_leap.resonance_gain_per_hit)
+	if not hits.is_empty():
+		GameFeel.hitstop(hits, 0.05)
+
+
+# ---------------------------------------------------------------------------
+# M10: Warding Rune (allies inside take less damage)
+# ---------------------------------------------------------------------------
+
+func warding_reduction() -> float:
+	return warding_rune.damage / 100.0 + stat(&"aegis_pct") / 100.0
+
+
+func try_warding_rune() -> bool:
+	if not knows(&"warding_rune") or state != State.MOVE or _on_cooldown(&"warding_rune"):
+		return false
+	if resonance < warding_rune.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(warding_rune.resonance_cost)
+	_set_cooldown(&"warding_rune", warding_rune.cooldown)
+	var at := ZoneBase.ground_under(self, global_position, 0.02)
+	hero_fx(&"warding_rune", [at, warding_rune.aoe_radius, warding_rune.active, warding_reduction()])
+	cooldowns_changed.emit()
+	action_started.emit(&"warding_rune")
+	return true
+
+
+# ---------------------------------------------------------------------------
+# M10: the ward's look while Rune Wall is up (every machine: puppets too)
+# ---------------------------------------------------------------------------
+
+func _process(_delta: float) -> void:
+	var up := state == State.BLOCK
+	if up and _ward == null and Net.has_view() and _visual != null:
+		_ward = _build_ward()
+	if _ward != null:
+		_ward.visible = up
+
+
+func _build_ward() -> MeshInstance3D:
+	var m := MeshInstance3D.new()
+	m.name = "RuneWard"
+	var dome := SphereMesh.new()
+	dome.radius = 0.8
+	dome.height = 1.6
+	dome.radial_segments = 16
+	dome.rings = 8
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(ArtKit.color("color_roles.player_accent.body", Color(0.24, 0.75, 0.7)), 0.28)
+	mat.emission_enabled = true
+	mat.emission = ArtKit.color("color_roles.player_accent.hot", Color(0.62, 0.95, 0.9))
+	mat.emission_energy_multiplier = 0.9
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	dome.material = mat
+	m.mesh = dome
+	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	m.scale = Vector3(1.0, 1.0, 0.22)  # a shallow ward in front of the hero
+	m.position = Vector3(0, 1.1, -0.75)
+	_visual.add_child(m)
+	return m

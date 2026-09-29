@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ball_lightning"
+display_name = "Ball Lightning"
+description = "A slow orb of lightning drifts along your aim, zapping and Shocking everything near it."
+cooldown = 9.0
+resonance_cost = 0.0
+resonance_gain_per_hit = 2.0
+startup = 0.0
+active = 3.0
+recovery = 0.0
+damage = 9.0
+damage_type = 3
+weight = 0
+knockback = 0.5
+projectile_speed = 6.0
+aoe_radius = 3.0
+applies_burn = false
+applies_chill = false
+applies_shock = true
+crit_chance = 0.08
+crit_multiplier = 1.6
+repeat_while_held = false
+threat_mult = 1.0
+unlock = 1
+learn_level = 8
+learn_price = 800
+unlock_power = &""

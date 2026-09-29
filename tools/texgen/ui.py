@@ -26,6 +26,7 @@ ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 UI_DIR = os.path.join(ROOT, "assets", "ui")
 SPEC = json.load(open(os.path.join(ROOT, "assets", "art_spec.json"), encoding="utf-8"))
 ROLES = SPEC["color_roles"]
+PALETTES = SPEC["palettes"]
 
 
 def rgb(h: str, a: int = 255) -> tuple:
@@ -403,6 +404,52 @@ def icon_warding_rune() -> Image.Image:
     return outlined(img)
 
 
+def icon_flame_wall() -> Image.Image:
+    """M10 Elementalist: a low wall of flame tongues standing on a line."""
+    img, d = canvas()
+    fire = ROLES["fire"]
+    edge, body, core = rgb(fire["edge"]), rgb(fire["body"]), rgb(fire["core"])
+    d.line([1, 17, 18, 17], fill=edge, width=2)                                # the burning line
+    for x, h in ((2, 7), (6, 11), (10, 13), (14, 10), (17, 6)):
+        d.polygon([(x - 2, 17), (x, 17 - h), (x + 2, 17)], fill=body)         # flame tongues
+        d.line([x, 16, x, 17 - h + 3], fill=core)
+    for x, y in ((4, 6), (12, 2), (16, 8)):
+        img.putpixel((x, y), core)                                            # sparks
+    return outlined(img)
+
+
+def icon_ball_lightning() -> Image.Image:
+    """M10 Elementalist: a crackling orb with forks reaching out."""
+    img, d = canvas()
+    lt = ROLES["lightning"]
+    edge, body, core = rgb(lt["edge"]), rgb(lt["body"]), rgb(lt["core"])
+    d.ellipse([5, 5, 14, 14], fill=edge)
+    d.ellipse([6, 6, 13, 13], fill=body)
+    d.ellipse([8, 8, 11, 11], fill=core)
+    for pts in (((14, 7), (16, 5), (18, 6)), ((5, 12), (3, 14), (1, 13)), ((12, 14), (13, 17), (11, 19)),
+                ((7, 5), (6, 2), (8, 1))):
+        d.line([pts[0], pts[1]], fill=body)
+        d.line([pts[1], pts[2]], fill=core)
+    return outlined(img)
+
+
+def icon_ember_fall() -> Image.Image:
+    """M10 Elementalist: a burning rock plunging down onto a ground burst."""
+    img, d = canvas()
+    fire = ROLES["fire"]
+    edge, body, core = rgb(fire["edge"]), rgb(fire["body"]), rgb(fire["core"])
+    rock = rgb(PALETTES["highlands"]["basalt"][2]) if "basalt" in PALETTES.get("highlands", {}) else rgb("#3A3438")
+    d.line([3, 1, 9, 9], fill=edge, width=3)                                   # the fiery tail
+    d.line([4, 1, 9, 8], fill=body)
+    d.ellipse([7, 6, 13, 12], fill=rock)                                       # the rock
+    d.ellipse([10, 9, 13, 12], fill=core)                                      # its molten face
+    d.line([4, 18, 18, 18], fill=edge)                                         # ground
+    d.polygon([(8, 18), (11, 13), (14, 18)], fill=body)                        # impact burst
+    for x, y in ((6, 16), (16, 15), (12, 12)):
+        img.putpixel((x, y), core)
+    return outlined(img)
+
+
 # ---------------------------------------------------------------------------
 # Drafts from the 2026-09-29 icon comparison (ROADMAP "Icon-Quelle"). Not saved
 # by main() yet: register each under its ability id once the ability exists
@@ -602,7 +649,9 @@ def main() -> None:
                      ("runic_guard", icon_runic_guard), ("resonance_burst", icon_resonance_burst),
                      ("rune_bolt", icon_rune_bolt), ("rune_challenge", icon_taunt), ("rune_wall", icon_rune_wall),
                      ("rune_chain", icon_rune_chain), ("warden_leap", icon_warden_leap),
-                     ("warding_rune", icon_warding_rune), ("coin", icon_coin)):
+                     ("warding_rune", icon_warding_rune), ("frost_nova", icon_frost_nova),
+                     ("flame_wall", icon_flame_wall), ("ball_lightning", icon_ball_lightning),
+                     ("ember_fall", icon_ember_fall), ("coin", icon_coin)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

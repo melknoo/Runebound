@@ -127,12 +127,14 @@ func _fill_grid() -> void:
 		var type_color := HitInfo.type_color(r["type"] as HitInfo.DamageType)
 		var is_guard: bool = r["id"] == &"runic_guard"
 		var is_burst: bool = r["id"] == &"resonance_burst"
+		var is_ward: bool = r["id"] == &"warding_rune" or r["id"] == &"rune_challenge"  # M10: no damage of its own
 		var cells: Array[String] = [
 			"%s  [%s]" % [r["name"], r["key"]],
-			("barrier %d" % roundi(StatSheet.guard_amount(player, player.ability(&"runic_guard")))) if is_guard
+			StatSheet.damage_text(player, player.ability(r["id"])) if is_ward
+				else ("barrier %d" % roundi(StatSheet.guard_amount(player, player.ability(&"runic_guard")))) if is_guard
 				else (("%.1f / pt" % float(r["base"])) if is_burst else "%d" % roundi(float(r["damage"]))),
-			"-" if is_guard or is_burst else "%d" % roundi(float(r["avg"])),
-			"-" if is_guard else "%d%%" % roundi(float(r["crit"]) * 100.0),
+			"-" if is_guard or is_burst or is_ward else "%d" % roundi(float(r["avg"])),
+			"-" if is_guard or is_ward else "%d%%" % roundi(float(r["crit"]) * 100.0),
 			("%.1f s" % float(r["cooldown"])) if float(r["cooldown"]) > 0.0 else "-",
 			("%d" % roundi(float(r["cost"]))) if float(r["cost"]) > 0.0 else ("all" if is_burst else "-"),
 			("+%d" % roundi(float(r["gain"]))) if float(r["gain"]) > 0.0 else "-",

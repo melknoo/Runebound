@@ -217,7 +217,16 @@
   Fracture Rune L5 400 g).
 - Talents of the abilities that come in phases 2-3 can be learned already and
   do nothing yet (marked (P2) / (P3) in PROGRESSION_DESIGN).
-- The tank has one trainer ability (Earthbreaker) until phase 2.
+- Tank numbers to feel (phase 2): block -75 % in a 70-degree frontal arc,
+  parry window 0.3 s, Rune Challenge 4 s taunt / 12 s cooldown, threat x2,
+  120 health, Warden's Leap 10 m / Rune Chain 16 m. A parry counters a
+  caster at any range (its bolt's shooter) - intended as a reward, check it
+  doesn't feel odd.
+- Warden's Leap flies over enemies (no collision in the air) and lands at
+  the camera's aim point; on a cliff edge it lands where the ground is.
+- Rune Chain only pulls enemies that are not stagger-resistant (brutes,
+  wardens and bosses are taunted, not moved).
+- The aggro "!" shows only with two or more heroes in the zone.
 - Perf and stress now fight as the Elementalist: full-combat numbers from
   before M10 are not comparable (the rotation changed).
 - Headless only: swapping the hero's class in tests logs "Parameter

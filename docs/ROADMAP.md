@@ -216,9 +216,10 @@ den ersten 0,3 s; der Magier baut **Äther** auf und gibt es aus (eigene Farbe);
 Charakter hat seine eigene Welt**.
 **Stand:** Phase 1 gebaut (Klassen-Chassis, Runenbolzen, Loadout mit Tab K, Charakterwahl,
 SaveGame v6 mit Welt je Charakter, zweite Trainerin Maren, Talentbäume je Klasse, Items je
-Klasse, Bots je Klasse; Smoke 461 grün). Als Nächstes Phase 2 (Tank: Bedrohung, Spott, Block,
-Parade, die 5 neuen Fähigkeiten), dann Phase 3 (Magier-Rig + 4 Zauber) und Phase 4 (Abschluss,
-dein Playtest).
+Klasse, Bots je Klasse). Phase 2 gebaut (Tank: Bedrohung mit Aggro-Zeichen im Koop, Spott,
+Runenwall mit Parade, Runen-Herausforderung, Wächtersprung, Runenkette, Schutzrune, alle
+Tank-Talente, Legendary „Warden's Oath“; Smoke 485 grün, Netz-Szenario `threat`). Als Nächstes
+Phase 3 (Magier-Rig + 4 Zauber), dann Phase 4 (Abschluss, dein Playtest).
 **Werkzeug:** Posen, Silhouetten und das Magier-Rig entstehen im Live-Blender-Loop
 (`tools/modelgen/live.py` über den Blender-MCP: bauen, posieren, Screenshot); jedes Ergebnis
 wandert zurück ins Skript, das Skript bleibt die einzige Quelle.

@@ -56,6 +56,10 @@ var _base: AnimationNodeTransition
 var _upper_clip: AnimationNodeAnimation
 var _lod_accum: float = 0.0
 var _dead: bool = false
+## M10: an upper-body gesture held until its end action (profile "hold":
+## {start action: end action}; the tank's block). Re-fired when it runs out.
+var _held_upper: StringName = &""
+
 ## Player rigs never drop rate (animation precision next to the camera).
 var full_rate: bool = false
 
@@ -197,9 +201,16 @@ func flinch() -> void:
 
 
 func _on_action(action: StringName) -> void:
+	var holds := profile.get("hold", {}) as Dictionary
+	if holds.values().has(action):  # the held gesture ends
+		if _held_upper != &"" and tree != null:
+			tree.set(&"parameters/upper/request", AnimationNodeOneShot.ONE_SHOT_REQUEST_FADE_OUT)
+		_held_upper = &""
+		return
 	var gesture: StringName = (profile.get("upper", {}) as Dictionary).get(action, &"")
 	if gesture != &"":
 		play_upper(gesture)
+		_held_upper = gesture if holds.has(action) else &""
 		return
 	var clip: StringName = (profile.get("actions", {}) as Dictionary).get(action, &"")
 	if clip != &"":
@@ -249,6 +260,8 @@ func _physics_process(delta: float) -> void:
 			rate = clampf(speed / float(profile.get("run_speed", 6.8)), 0.5, 1.8)
 		_play_loco(target, rate)
 	if tree != null:
+		if _held_upper != &"" and not bool(tree.get(&"parameters/upper/active")):
+			play_upper(_held_upper)  # still held: the gesture goes on
 		tree.advance(delta)
 		return
 	var interval := _lod_interval()

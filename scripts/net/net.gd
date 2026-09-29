@@ -48,7 +48,8 @@ enum Mode { OFFLINE, SERVER, CLIENT }
 enum Transport { ENET, WS }
 
 ## 9 (M10): classes with their own kits (rune bolt HERO_FX, the loadout in CHARACTER).
-const PROTOCOL := 9
+## 10 (M10 phase 2): threat, taunt and pulls in the hit array, ENEMY_TARGET.
+const PROTOCOL := 10
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

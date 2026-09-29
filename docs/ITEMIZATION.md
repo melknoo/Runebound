@@ -71,8 +71,8 @@ Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
   movement, crit, dodge cooldown, Burn damage (the tank's Molten Core burns
   too).
 - **Legendaries by class:** the Elementalist rolls Cindermaw, Conductor's
-  Oath, Forked Ember and Stormcaller's Band; the Runebreaker Glacier Heart and
-  Emberheart Plate (phase 2 adds a tank legendary). Boss legendaries roll for
+  Oath, Forked Ember and Stormcaller's Band; the Runebreaker Glacier Heart,
+  Emberheart Plate and (M10 phase 2) Warden's Oath. Boss legendaries roll for
   each hero's own class (they used to ignore it).
 - **Names:** an Elementalist's gear uses its own nouns (`ItemGenerator.CLASS_NOUNS`:
   staves, wands, rods, scepters; robes and mantles; hoods and circlets;
@@ -89,6 +89,7 @@ Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
 | Stormcaller's Band | Elementalist | Ring | Overload |
 | Glacier Heart | Runebreaker | Chest | Earthbreaker leaves a frost field (r4, 4s) that Chills |
 | Emberheart Plate | Runebreaker | Chest | Molten Core |
+| Warden's Oath | Runebreaker | Helm | a parry with Rune Wall grants a 20-health barrier for 3 s |
 
 ## Implementation notes
 - Items are runtime `ItemData` resources from `ItemGenerator`; base ability

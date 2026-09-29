@@ -11,6 +11,8 @@ var damage: float = 12.0
 ## (the server decides whom it hits; NetWorld pops it when the server's does).
 var visual_only: bool = false
 var net_id: int = 0
+## M10: the enemy that shot it (instance id): a parried bolt counters its shooter.
+var shooter_id: int = 0
 var _dir: Vector3 = Vector3.FORWARD
 var _age: float = 0.0
 var _dead: bool = false
@@ -140,6 +142,7 @@ func _pop(victim: Node) -> void:
 		hit.knockback = 2.5
 		hit.area_center = global_position
 		hit.area_radius = 0.8  # the bolt's 0.3 plus the hurtbox's 0.5: it touched the body
+		hit.source_id = shooter_id
 		victim.call(&"take_hit", hit)
 	if net_id != 0 and not visual_only:
 		var zone := ZoneBase.zone_of(self)

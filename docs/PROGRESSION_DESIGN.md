@@ -58,9 +58,9 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
 - One point per level: by the cap (24 points) a build finishes one branch
   and dips into a second.
 - **Respec:** free, in the talent panel (key N).
-- Behavior nodes are marked ⚙. Nodes marked (P2) / (P3) belong to abilities
-  that arrive in M10 phase 2 (tank) / phase 3 (Elementalist); they can be
-  learned already but do nothing until then.
+- Behavior nodes are marked ⚙. Nodes marked (P3) belong to the
+  Elementalist's spells of M10 phase 3; they can be learned already but do
+  nothing until then (the tank's phase-2 nodes all work since phase 2).
 - M10 moved the Storm and Ember branches with their spells to the
   Elementalist; Molten Core (an Earthbreaker talent) stayed with the tank.
   A migrated Runebreaker's spell talents drop out of its tree (the points are
@@ -72,12 +72,12 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
 |---|---|---|---|
 | 1 | Runic Plate | 3 | +15 max health per rank |
 | 1 | Stalwart | 3 | take 3 % less damage per rank |
-| 2 | Shield Wall (P2) | 2 | Rune Wall blocks 5 % more per rank |
-| 2 | Provoker (P2) | 2 | taunts hold 1 s longer per rank |
+| 2 | Shield Wall | 2 | Rune Wall blocks 5 % more per rank |
+| 2 | Provoker | 2 | taunts hold 1 s longer per rank |
 | 2 | ⚙ Unbroken | 1 | dodging through an attack grants a 15-health barrier (8 s cooldown) |
-| 3 | ⚙ Riposte (P2) | 1 | a parry's counter hits every enemy within 2.5 m, +15 Resonance |
-| 3 | Bastion (P2) | 2 | Warding Rune reduces damage 5 % more per rank |
-| Cap | ⚙ Unyielding (P2) | 1 | below 30 % health you take 30 % less damage |
+| 3 | ⚙ Riposte | 1 | a parry's counter hits every enemy within 2.5 m, +15 Resonance |
+| 3 | Bastion | 2 | Warding Rune reduces damage 5 % more per rank |
+| Cap | ⚙ Unyielding | 1 | below 30 % health you take 30 % less damage |
 
 **Earthshaker** (Rune Cleave, Earthbreaker, Warden's Leap)
 | Tier | Node | Ranks | Effect |
@@ -87,21 +87,21 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
 | 2 | ⚙ Molten Core | 1 | Earthbreaker sets every enemy it hits ablaze |
 | 2 | Aftershock | 2 | Earthbreaker's area +0.5 m per rank |
 | 2 | Wide Arc | 2 | Rune Cleave reaches 15 % further per rank |
-| 3 | ⚙ Quake Leap (P2) | 1 | Warden's Leap lands like Earthbreaker (heavy stagger) |
+| 3 | ⚙ Quake Leap | 1 | Warden's Leap lands like Earthbreaker (heavy stagger) |
 | 3 | Hold the Line | 2 | +8 % damage per rank to enemies that are attacking you |
-| Cap | ⚙ Tectonic (P2) | 1 | Earthbreaker taunts every enemy it hits for 3 s |
+| Cap | ⚙ Tectonic | 1 | Earthbreaker taunts every enemy it hits for 3 s |
 
 **Runic Warden** (Resonance, barrier, the burst)
 | Tier | Node | Ranks | Effect |
 |---|---|---|---|
 | 1 | Resonant Strikes | 3 | +10 % Resonance gained per rank |
-| 1 | Steadfast (P2) | 2 | +3 Resonance per hit Rune Wall blocks, per rank |
+| 1 | Steadfast | 2 | +3 Resonance per hit Rune Wall blocks, per rank |
 | 2 | ⚙ Runic Guard | 1 | **unlocks Runic Guard** (30 Resonance: a barrier of 40 + 1 per level for 4 s) |
 | 2 | Warding Runes | 2 | Runic Guard absorbs 15 more per rank |
 | 2 | ⚙ Glacial Bulwark | 1 | enemies that strike your Runic Guard are Chilled |
 | 3 | ⚙ Resonance Burst | 1 | **unlocks Resonance Burst** (all Resonance, 50+, in a 4 m nova) |
-| 3 | Binding Chains (P2) | 2 | Rune Chain cooldown -15 % per rank |
-| Cap | ⚙ Aegis of Runes (P2) | 1 | Runic Guard also shields allies within 6 m for half its amount |
+| 3 | Binding Chains | 2 | Rune Chain cooldown -15 % per rank |
+| Cap | ⚙ Aegis of Runes | 1 | Runic Guard also shields allies within 6 m for half its amount |
 
 ### Elementalist (damage)
 **Storm** (lightning, tempo) - the M07 branch unchanged: Static Charge (+3 %
@@ -131,7 +131,9 @@ Fire, ⚙ Phoenix Burst (capstone).
   the class's trainer in Runehold (`[E]`; a hero of another class is sent to
   its own):
   - **Sigrun Runewright** (Runebreaker, by the training gear, north-west):
-    Earthbreaker L2, 50 g. The tank's new abilities (phase 2) join her list.
+    Earthbreaker L2 / 50, Rune Wall L3 / 150, Rune Challenge L4 / 275,
+    Warden's Leap L5 / 400, Rune Chain L6 / 500, Warding Rune L7 / 650
+    (cumulative 50 / 200 / 475 / 875 / 1,375 / 2,025).
   - **Maren Emberwright** (Elementalist, by the east wall near the spawn):
     Ember Lance L2 / 50, Storm Step L3 / 150, Chain Spark L4 / 275, Fracture
     Rune L5 / 400 (cumulative 50 / 200 / 475 / 875). Phase 3 adds the new

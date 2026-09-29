@@ -90,6 +90,7 @@ func setup(z: ZoneBase) -> void:
 		NetMsg.BOLT: _on_bolt_msg, NetMsg.BOLT_POP: _on_bolt_pop_msg,
 		NetMsg.HIT: _on_hit_msg, NetMsg.STATUS: _on_status_msg, NetMsg.HURT: _on_hurt_msg,
 		NetMsg.ENEMY_FX: _on_enemy_fx_msg, NetMsg.HAZARD: _on_hazard_msg, NetMsg.ENEMY_SCALE: _on_enemy_scale_msg,
+		NetMsg.ENEMY_TARGET: _on_enemy_target_msg,
 		NetMsg.GRANT: _on_grant_msg, NetMsg.CHEST_OPEN: _on_chest_open_msg, NetMsg.CHEST_OPENED: _on_chest_opened_msg,
 		NetMsg.FLAG: _on_flag_msg,
 		NetMsg.TRAVEL_REQUEST: _on_travel_request_msg, NetMsg.TRAVEL_COUNTDOWN: _on_travel_countdown_msg,
@@ -174,6 +175,7 @@ func _on_peer_ready(peer: int) -> void:
 		var e := enemies[id] as EnemyBase
 		if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
 			Net.send_to_peer(peer, NetMsg.ENEMY_SPAWN, _enemy_spawn_payload(e))
+			Net.send_to_peer(peer, NetMsg.ENEMY_TARGET, [e.net_id, _target_peer(e)])  # M10: whom it hunts
 	Net.log_line("%s's hero is in the world at %s" % [Net.peer_name(peer), proxy.global_position.round()])
 
 
@@ -485,11 +487,13 @@ func register_enemy(e: EnemyBase) -> void:
 	_scale_health(e, false)
 	e.state_entered.connect(_on_enemy_state.bind(e))
 	e.fx_played.connect(_on_enemy_fx.bind(e))
+	e.target_changed.connect(_on_enemy_target.bind(e))  # M10: clients mark who hunts them
 	e.health.damaged.connect(_on_enemy_damaged.bind(e))
 	e.health.dot_damaged.connect(_on_enemy_dot.bind(e))
 	e.enemy_died.connect(_on_enemy_killed)
 	e.tree_exiting.connect(_on_enemy_gone.bind(e))
 	Net.broadcast_zone(NetMsg.ENEMY_SPAWN, _enemy_spawn_payload(e))
+	_on_enemy_target(e)  # M10: the target it spawned with (it may never change)
 
 
 func _enemy_spawn_payload(e: EnemyBase) -> Array:
@@ -553,7 +557,28 @@ func bolt_popped(b: EnemyBolt) -> void:
 ## Server: an enemy attack struck a client's proxy; its owner decides.
 func forward_hurt(proxy: Player, hit: HitInfo) -> void:
 	hurts_forwarded += 1
+	var source := instance_from_id(hit.source_id) as EnemyBase if hit.source_id != 0 else null
+	hit.source_net_id = source.net_id if source != null and is_instance_valid(source) else 0  # M10: parries counter it
 	Net.send_to_peer(proxy.peer_id, NetMsg.HURT, [NetCodec.hit_to_array(hit)])
+
+
+## M10 server: an enemy hunts another hero now.
+func _on_enemy_target(e: EnemyBase) -> void:
+	if not is_instance_valid(e) or e.net_id == 0:
+		return
+	Net.broadcast_zone(NetMsg.ENEMY_TARGET, [e.net_id, _target_peer(e)])
+
+
+func _target_peer(e: EnemyBase) -> int:
+	return _peer_of(e.target.get_instance_id()) if e.target != null and is_instance_valid(e.target) else 0
+
+
+func _on_enemy_target_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 2:
+		return
+	var e := enemies.get(int(payload[0])) as EnemyBase
+	if e != null and is_instance_valid(e):
+		e.target_peer = int(payload[1])
 
 
 ## Client: our hero hit an enemy puppet.
@@ -712,6 +737,9 @@ func _on_hurt_msg(_from: int, payload: Array) -> void:
 	if hero == null or not is_instance_valid(hero) or hero.health.is_dead:
 		return
 	var hit := NetCodec.hit_from_array(payload[0] as Array)
+	var source := enemies.get(hit.source_net_id) as EnemyBase if hit.source_net_id != 0 else null
+	if source != null and is_instance_valid(source):
+		hit.source_id = source.get_instance_id()  # M10: our parry counters the puppet
 	if hit.area_radius > 0.0 and hit.area_center != Vector3.INF:
 		var flat := hero.global_position - hit.area_center
 		flat.y = 0.0

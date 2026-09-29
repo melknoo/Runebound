@@ -169,6 +169,17 @@
 				"#D2D8E2"
 			]
 		},
+		"elementalist": {
+			"coat": ["#18263A", "#203450", "#2A4566", "#36577E", "#476E98"],
+			"trim": ["#123A3A", "#1A5250", "#236B67", "#2E8680", "#3CBEB4"],
+			"leather": ["#2A1D16", "#3A281D", "#4D3526", "#624531"],
+			"skin": ["#6E4A3A", "#8C6049", "#A87A5E", "#C4957A"],
+			"hair": ["#1E1210", "#2E1A15", "#40241C", "#552F24"],
+			"gold_trim": ["#5A4220", "#8A6A2A", "#B8903A", "#E0B84E", "#FFE08A"],
+			"rod": ["#2A1C18", "#3E2A22", "#54392C", "#6C4A38"],
+			"rune_glow": "aether",
+			"comment": "M10: the ranged caster. Steel-blue coat, the player teal on trim and mantle, a gold circlet; the glow is the Aether magenta - never the Duskweaver violet, so a hero caster never reads as the enemy one."
+		},
 		"cinder_marauder": {
 			"hide": [
 				"#4A2A20",

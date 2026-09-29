@@ -60,6 +60,9 @@ const LEGENDARIES: Array[Dictionary] = [
 		"text": "Storm Step's end point Shocks every enemy within 2.5 m."},
 	{"id": &"molten_core", "name": "Emberheart Plate", "class": &"runebreaker", "slot": ItemData.Slot.CHEST,
 		"text": "Earthbreaker sets every enemy it hits ablaze."},
+	# M10: the tank's own
+	{"id": &"wardens_oath", "name": "Warden's Oath", "class": &"runebreaker", "slot": ItemData.Slot.HELM,
+		"text": "A parry with Rune Wall grants a 20-health barrier for 3 s."},
 ]
 
 

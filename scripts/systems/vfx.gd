@@ -611,6 +611,42 @@ static func lightning_arc(root: Node, from: Vector3, to: Vector3, color: Color =
 
 
 ## Lightning dash trail: arcs skimming the ground along the dash path.
+## M10 Rune Chain: gold links from the hand to the catch, flickering out.
+static func rune_chain(root: Node, from: Vector3, to: Vector3) -> void:
+	if not Net.has_view() or root == null:
+		return
+	var holder := Node3D.new()
+	root.add_child(holder)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = ArtKit.color("color_roles.resonance.body", Color("#FFC34D"))
+	mat.emission_enabled = true
+	mat.emission = ArtKit.color("color_roles.resonance.hot", Color("#FFF0B8"))
+	mat.emission_energy_multiplier = 2.0
+	var link := BoxMesh.new()
+	link.size = Vector3(0.1, 0.04, 0.26)
+	link.material = mat
+	var span := to - from
+	var count := clampi(int(span.length() / 0.3), 3, 60)
+	var flat := absf(span.normalized().dot(Vector3.UP)) < 0.98
+	for i in count:
+		var m := MeshInstance3D.new()
+		m.mesh = link
+		m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		holder.add_child(m)
+		var at := from.lerp(to, (float(i) + 0.5) / float(count))
+		if flat:
+			m.look_at_from_position(at, at + span, Vector3.UP)
+		else:
+			m.global_position = at
+		m.rotate_object_local(Vector3.FORWARD, PI * 0.5 if i % 2 == 1 else 0.0)  # alternate the links
+	var tw := holder.create_tween()
+	tw.tween_interval(0.12)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.25)
+	tw.tween_callback(holder.queue_free)
+
+
 static func storm_trail(root: Node, from: Vector3, to: Vector3) -> void:
 	if not Net.has_view():
 		return  # M09: the dedicated server draws nothing

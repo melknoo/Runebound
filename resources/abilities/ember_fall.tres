@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ember_fall"
+display_name = "Ember Fall"
+description = "Call a burning rock down on your aim: a moment later it strikes 3.5 m around, staggers and Burns. Costs 40 Aether."
+cooldown = 14.0
+resonance_cost = 40.0
+resonance_gain_per_hit = 0.0
+startup = 0.25
+active = 0.9
+recovery = 0.0
+damage = 60.0
+damage_type = 1
+weight = 2
+knockback = 6.0
+projectile_speed = 16.0
+aoe_radius = 3.5
+applies_burn = true
+applies_chill = false
+applies_shock = false
+crit_chance = 0.08
+crit_multiplier = 1.6
+repeat_while_held = false
+threat_mult = 1.0
+unlock = 1
+learn_level = 9
+learn_price = 1000
+unlock_power = &""

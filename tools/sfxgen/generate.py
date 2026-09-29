@@ -492,6 +492,51 @@ def ward_place():
     save(pad(thud, grit, delay(rise, 0.05), delay(chord, 0.2)), "ward_place_01")
 
 
+
+# --- M10 Elementalist (appended: every synth above must keep its place in the shared RNG order) ---
+
+def frost_nova():
+    """A ring of ice cracking outwards: a glassy crack and a cold shimmer."""
+    crack = highpass(noise(0.12), 0.45) * env_exp(0.12, 0.03) * 0.8
+    shards = sum(np.sin(2 * np.pi * f * t(0.6)) * env_exp(0.6, d) * 0.18
+                 for f, d in ((1760.0, 0.18), (2217.5, 0.14), (2960.0, 0.1)))
+    breath = lowpass(noise(0.7), 0.1) * env_exp(0.7, 0.25) * 0.45
+    save(pad(crack, shards, breath), "frost_nova_01")
+
+
+def flame_wall():
+    """Fire roaring up along a line: a whoosh and a crackling bed."""
+    whoosh = lowpass(noise(0.8), 0.12) * np.minimum(t(0.8) / 0.15, 1.0) * env_exp(0.8, 0.4, attack=0.15) * 0.8
+    crackle = np.zeros_like(t(0.8))
+    for k in range(14):
+        start = int(SR * (0.05 + k * 0.05))
+        n = int(SR * 0.01)
+        crackle[start:start + n] += highpass(noise(0.01), 0.5)[:len(crackle[start:start + n])] * 0.5
+    save(pad(whoosh, crackle), "flame_wall_01")
+
+
+def ball_lightning_zap():
+    """A short electric snap for each zap of the orb."""
+    snap = highpass(noise(0.08), 0.55) * env_exp(0.08, 0.02) * 0.7
+    buzz = np.sign(np.sin(2 * np.pi * 110.0 * t(0.15))) * env_exp(0.15, 0.05) * 0.15
+    save(pad(snap, buzz), "ball_lightning_01")
+
+
+def ember_fall_call():
+    """The rock called down: a rising, rumbling whistle."""
+    whistle = sine_sweep(0.9, 900.0, 300.0) * env_exp(0.9, 0.5, attack=0.3) * 0.25
+    rumble = lowpass(noise(0.9), 0.05) * env_exp(0.9, 0.5, attack=0.4) * 0.6
+    save(pad(whistle, rumble), "ember_fall_call_01")
+
+
+def ember_fall_impact():
+    """The rock lands: a deep boom, a burst of fire and falling grit."""
+    boom = sine_sweep(0.6, 90.0, 35.0) * env_exp(0.6, 0.2) * 0.9
+    burst = lowpass(noise(0.5), 0.2) * env_exp(0.5, 0.12) * 0.7
+    grit = highpass(noise(0.6), 0.35) * env_exp(0.6, 0.25) * 0.25
+    save(pad(boom, burst, delay(grit, 0.05)), "ember_fall_impact_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -517,4 +562,5 @@ if __name__ == "__main__":
     for i in range(1, 3):
         block_clang(i)
     parry_ring(); chain_throw(); chain_pull(); ward_place()
+    frost_nova(); flame_wall(); ball_lightning_zap(); ember_fall_call(); ember_fall_impact()
     print("done.")

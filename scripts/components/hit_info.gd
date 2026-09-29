@@ -30,6 +30,17 @@ var attacker_id: int = 0
 ## still inside it: dodging out on your own screen counts.
 var area_center: Vector3 = Vector3.INF
 var area_radius: float = 0.0
+## M10 threat: the enemy takes this hit's damage x threat_mult (x the
+## attacker's class factor) as threat; `taunt` > 0 pulls it onto the attacker
+## for that many seconds (a taunt may deal no damage at all).
+var threat_mult: float = 1.0
+var taunt: float = 0.0
+## M10 Rune Chain: drag the struck enemy towards this point (INF = no pull).
+var pull_to: Vector3 = Vector3.INF
+## M10: the enemy that dealt an enemy hit (instance id here; the co-op wire
+## carries its net id): a parry counters it.
+var source_id: int = 0
+var source_net_id: int = 0
 
 
 ## The attacker node, or null when it is gone or unknown.

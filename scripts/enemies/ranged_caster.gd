@@ -163,6 +163,7 @@ func _fire() -> void:
 	var target := player.global_position + Vector3(0, 1.0, 0)
 	var bolt := EnemyBolt.new()
 	bolt.setup((target - origin).normalized(), BOLT_SPEED, BOLT_DAMAGE)
+	bolt.shooter_id = get_instance_id()
 	bolt.position = origin  # position before add_child: no origin-frame overlap
 	get_tree().current_scene.add_child(bolt)
 

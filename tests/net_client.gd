@@ -316,6 +316,49 @@ class Driver extends Node:
 					world.hurts_dodged])
 				await _seconds(2.0)
 				_finish("ok")
+			"threat":
+				# M10: c1 (Elementalist) hurts the server's dummy until it hunts c1; c2
+				# (Runebreaker) then walks up and pulls it away with Rune Challenge.
+				if not await _in_zone():
+					return
+				var tz := get_tree().current_scene as ZoneBase
+				var tworld := tz.net_world
+				tz.player.god_mode = true
+				if not await _until(func() -> bool: return _threat_dummy(tworld) != null, 40.0, "the server's dummy"):
+					return
+				var dummy := _threat_dummy(tworld)
+				var me := Net.my_id()
+				if role == "c1":
+					for i in 6:
+						var bolt_hit := tz.player.roll_ability_hit(tz.player.ability(&"rune_bolt"))
+						dummy.take_hit(bolt_hit)
+						await _seconds(0.25)
+					if not await _until(func() -> bool: return dummy.target_peer == me, 20.0, "the dummy hunting the caster"):
+						return
+					if not await _until(func() -> bool: return dummy.target_peer != 0 and dummy.target_peer != me, 50.0,
+							"the tank's taunt taking the dummy away"):
+						return
+					_finish("ok")
+				else:
+					await _seconds(4.0)  # the caster's bolts land first
+					if not await _until(func() -> bool: return dummy.target_peer != 0 and dummy.target_peer != me, 40.0,
+							"the dummy on the caster first"):
+						return
+					var walk := Goto.new()
+					tz.player.input_source = walk
+					var near_dummy := func() -> bool:
+						walk.target = dummy.global_position + Vector3(2.5, 0, 0)
+						return tz.player.global_position.distance_to(dummy.global_position) < 5.0
+					if not await _until(near_dummy, 25.0, "the tank next to the dummy"):
+						return
+					tz.player.learn_ability(&"rune_challenge")
+					if not tz.player.try_ability(&"rune_challenge"):
+						_finish("fail: Rune Challenge refused")
+						return
+					if not await _until(func() -> bool: return dummy.target_peer == me, 20.0, "the taunt pulling the dummy onto the tank"):
+						return
+					await _seconds(3.0)  # stay while the server and the caster see the taunt
+					_finish("ok")
 			"enemy_types":
 				# The server spawns every enemy type (low health) once both heroes are in.
 				if not await _in_zone():
@@ -641,6 +684,14 @@ class Driver extends Node:
 		print("[test %s] echo: %d sent, %d back (%.1f %% lost, %.1f %% after the first second) | rtt p50 %.0f / p95 %.0f / max %.0f ms | ENet rtt %d ms" % [
 			role, sent, n, loss, steady_loss, rtts[int(n * 0.5)], rtts[mini(int(n * 0.95), n - 1)], rtts[n - 1], Net.ping_ms()])
 		_finish("ok" if steady_loss <= MAX_STEADY_LOSS else "fail: %.0f %% of the packets were lost" % steady_loss)
+
+	## M10 threat scenario: the server's big dummy among the puppets.
+	func _threat_dummy(world: NetWorld) -> EnemyBase:
+		for id: int in world.enemies:
+			var e := world.enemies[id] as EnemyBase
+			if e != null and is_instance_valid(e) and e.health.max_health > 10000.0:
+				return e
+		return null
 
 	func _arg(prefix: String, fallback: String) -> String:
 		for a in OS.get_cmdline_user_args():

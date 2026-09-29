@@ -38,6 +38,8 @@ const DEFAULT_ID: StringName = &"runebreaker"
 @export var max_resource: float = 100.0
 ## M10 bots: how far from its target this class likes to fight.
 @export var preferred_range: float = 1.4
+## M10 threat: enemies take this class's damage x this as threat (tank 2).
+@export var threat_mult: float = 1.0
 ## M10: the Runehold trainer of this class and where to find them.
 @export var trainer_name: String = ""
 @export var trainer_spot_hint: String = ""

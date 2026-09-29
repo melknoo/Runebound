@@ -22,6 +22,7 @@ aoe_radius = 4.0
 applies_burn = false
 crit_chance = 0.05
 crit_multiplier = 1.6
+threat_mult = 1.5
 unlock = 1
 learn_level = 2
 learn_price = 50

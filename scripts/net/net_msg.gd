@@ -86,3 +86,6 @@ const HERO_FX := 34
 ## server -> one client, any epoch: [reason] - you are out (invite revoked or
 ## used from another game); the client goes to the title screen with it (M09b)
 const KICK := 35
+## server -> client: [enemy_id, peer] - whom an enemy hunts now (0 = nobody or
+## not a player): clients mark the enemies that are after their own hero (M10)
+const ENEMY_TARGET := 36
