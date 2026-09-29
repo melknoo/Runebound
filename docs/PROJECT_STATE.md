@@ -21,8 +21,9 @@ ROADMAP "Spieler-Leitlinien" and the design docs:
 - **Story with meta seasoning** (M14): dark story, rare explicit and loving
   "written by an AI" breaks, answer options, German + English.
   [STORY_DESIGN](STORY_DESIGN.md).
-- **Icons:** a PixelLab-MCP vs. generator comparison before M10 (the user
-  sets up the key).
+- **Icons:** a PixelLab-MCP vs. generator comparison before M10. The MCP
+  server is registered (local scope, connected); the key is
+  `PIXELLAB_API_KEY` in the git-ignored `.env`.
 Old numbers: M10 Open World II is now M15, M11 Story is M14, the second
 class (M12) became M10/M11, Endgame M16, Release polish M17.
 

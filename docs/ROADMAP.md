@@ -181,11 +181,11 @@ M10, Story & RPG war M11, Endgame M13, Release-Politur M14.
 
 ### Nebenstrang vor M10 — Icon-Quelle
 M10 braucht etwa 20 neue Fähigkeits-Icons. Heute zeichnet `tools/texgen/ui.py` jedes Icon in
-Code. Spieler-Entscheidung: **zuerst vergleichen**. Der Spieler richtet den PixelLab-MCP-Server
-(KI-Pixelart) mit seinem API-Key ein, und zwar im User-Scope, damit der Key nicht ins öffentliche
-Repo kommt:
-`claude mcp add -s user pixellab https://api.pixellab.ai/mcp -t http -H "Authorization: Bearer <KEY>"`.
-Dann entstehen 3 Icons mit PixelLab und 3 mit dem Generator auf einer Vergleichsseite, danach
+Code. Spieler-Entscheidung: **zuerst vergleichen**. Der PixelLab-MCP-Server (KI-Pixelart) ist
+seit 2026-09-29 eingerichtet: `claude mcp add -s local -t http pixellab https://api.pixellab.ai/mcp
+-H "Authorization: Bearer <KEY>"`, der Key liegt als `PIXELLAB_API_KEY` in der git-ignorierten
+`.env`. Der Scope `local` legt ihn in `~/.claude.json` ab, nie in ein `.mcp.json` im öffentlichen
+Repo. Offen: 3 Icons mit PixelLab und 3 mit dem Generator auf einer Vergleichsseite, danach
 entscheidet der Spieler. Vorher werden Preis und Bildlizenz geprüft; alles, was entsteht, muss
 ART_BIBLE (Palette, Umriss, Pixelraster) bestehen. Alternative ohne KI:
 Aseprite-MCP (`pixel-mcp`, braucht Aseprite).
