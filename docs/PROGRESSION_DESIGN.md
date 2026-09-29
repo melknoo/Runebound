@@ -121,6 +121,14 @@ in the enemy scripts and in `Progression`, and talents are `.tres` files in
   lists effective damage, average with crit, cooldown, cost and Resonance
   gain per known ability (`StatSheet`, same formulas as the hits).
 
+## Planned: the loadout (M10)
+From M10 on a hero takes **4 of about 12** class abilities into the field
+(RMB, 1, 2, 3; the basic attack on LMB and Dodge stay fixed) and swaps them
+anywhere out of combat. Abilities join the pool through the class trainer
+(this section's gold and level rule), quests and bosses, secrets and
+dungeons (tomes) and the talent tree. The Storm and Ember branches move to
+the elementalist with their spells. See CLASS_DESIGN "Three roles".
+
 ## Save format
 SaveGame **v4** (M08): `{version, world: {zone, flags, camps: {id:
 {cleared_at}}}, characters: [{class_id, known_abilities, gold, inventory,

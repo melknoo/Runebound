@@ -147,7 +147,7 @@
 - Resonance fills with nothing to spend on until Earthbreaker (level 2); the
   cost tick is hidden until then and Sigrun's toast points to the hub.
 - Sigrun borrows the Runebreaker rig (bronze tint); a real NPC model and her
-  story come with M11.
+  story come with M14.
 
 ## M08 open items (played by the user; notes follow after M09)
 - The user played M08 and has a few small notes; they are scheduled right
@@ -167,10 +167,10 @@
 - Storm Step keeps `velocity.y = 0`: over a crest the dash flies level and
   drops after; Earthbreaker's jump works on slopes.
 - No navmesh: enemies steer straight; the leash (return home + heal) covers
-  stuck enemies and long chases. A navmesh is the M10 candidate if pads and
-  passes are not enough.
+  stuck enemies and long chases. A navmesh is an M12 candidate (the Highlands
+  with substance) if pads and passes are not enough.
 - The map shows what the character has seen (no fog-of-war layer); the two
-  sealed gates are placeholders until M10/M11 give them dungeons.
+  sealed gates are placeholders until M13 gives them dungeons.
 - Portal labels of the two arena gates overlap from a distance (the gates
   are 8 m apart). The boss bar hides the compass; that is intended.
 - Camp clear time is wall-clock (`Time.get_unix_time_from_system`): a clock

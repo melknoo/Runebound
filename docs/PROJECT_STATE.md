@@ -1,10 +1,30 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-25 · Milestone: **M09 Co-op** — built, played by the user
+Updated: 2026-09-29 · Milestone: **M09 Co-op** — built, played by the user
 and a friend over Tailscale. **M09b (friends without Tailscale) in
-progress**, see below. M08 was played by the user; small notes follow after
-M09. M07 and M07b were accepted on 2026-09-24. Server laptop:
+progress**, see below. M08 was played by the user; the notes from that playtest
+were built on 2026-09-28. M07 and M07b were accepted on 2026-09-24. Server laptop:
 [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## Direction after M09b (user decisions 2026-09-29)
+The user likes the setting, the music and the atmosphere; what is missing
+is substance. Eight rounds of questions settled four points, recorded in
+ROADMAP "Spieler-Leitlinien" and the design docs:
+- **Three classes + loadout first** (new M10: Runebreaker becomes the tank
+  with threat + taunt, an elementalist takes over the elemental spells; M11:
+  a root druid heals). 4 free slots (RMB, 1, 2, 3) out of about 12 per
+  class. [CLASS_DESIGN](CLASS_DESIGN.md) "Three roles".
+- **The Highlands with substance** (M12: sub-biomes, POI types, animals,
+  enemy families, secrets + lore, places that tell a story) and **dungeons
+  with puzzles** (M13, plus co-op dungeons for 3–5 players, locked solo).
+  [WORLD_DESIGN](WORLD_DESIGN.md) "Planned".
+- **Story with meta seasoning** (M14): dark story, rare explicit and loving
+  "written by an AI" breaks, answer options, German + English.
+  [STORY_DESIGN](STORY_DESIGN.md).
+- **Icons:** a PixelLab-MCP vs. generator comparison before M10 (the user
+  sets up the key).
+Old numbers: M10 Open World II is now M15, M11 Story is M14, the second
+class (M12) became M10/M11, Endgame M16, Release polish M17.
 
 ## Auto-deploy and the playtest log (built 2026-09-28)
 - **Auto-deploy** (user: "no more SSH restarts"; with players online a
@@ -297,7 +317,7 @@ The Ashen Highlands are an open 384 x 384 m heightmap zone built from data.
     2 pass ambushes that spawn around the hero, a roaming elite patrol,
     3 masonry ruins with chests, 4 free chests, 5 waypoint shrines, rune
     monoliths / charred groves / a bone field, 2 sealed dungeon gates
-    (M10/M11 placeholders) and the Colossus arena on the plateau. Level
+    (placeholders for the M13 dungeons) and the Colossus arena on the plateau. Level
     bands south 1 / middle 2 / north + Emberfall Ridge 3.
   - **Camp members have a leash:** dragged beyond it (or stuck, or with
     their target out of reach) they walk home, heal and rest.

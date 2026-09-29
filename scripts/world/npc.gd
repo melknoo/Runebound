@@ -2,7 +2,7 @@ class_name Npc
 extends Node3D
 ## M07b: a friendly character standing in a zone. Nameplate, "[E] Talk"
 ## prompt, turns towards a nearby player; `interacted` fires on the interact
-## key. Visual: a class rig re-tinted (a proper NPC model comes with M11), a
+## key. Visual: a class rig re-tinted (a proper NPC model comes with M14), a
 ## capsule when the GLB is missing. Subclasses set the name, prompt and what
 ## talking does.
 

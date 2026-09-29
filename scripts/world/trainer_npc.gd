@@ -2,7 +2,7 @@ class_name TrainerNpc
 extends Npc
 ## M07b: Sigrun Runewright, the Runehold trainer. Talking opens the zone's
 ## TrainerUI, which sells the class's TRAINER abilities for gold and level.
-## The name and lines are placeholders until M11 gives her a story.
+## The name and lines are placeholders until M14 gives her a story.
 
 const FLAVOUR: Array[String] = [
 	"Runes don't care how hard you swing. They care that you paid attention. And paid.",

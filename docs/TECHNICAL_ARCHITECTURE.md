@@ -233,8 +233,8 @@ systems read became data or registries.**
   `ItemDrop` and `GoldDrop`.
 
 ## Open world (M08)
-The Ashen Highlands are a 384 m heightmap zone built from data; M10's zones
-copy the pattern.
+The Ashen Highlands are a 384 m heightmap zone built from data; later zones
+(M15) copy the pattern.
 - **Bake** (`tools/worldgen/highlands_layout.py` → `bake.py`): base fbm
   relief, Gaussian ridges, plateaus, a rim wall, graded routes (profiles
   smoothed, clamped to `grade_max`, fixed to the flat pads they cross and to

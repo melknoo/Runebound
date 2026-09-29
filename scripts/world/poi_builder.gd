@@ -153,7 +153,7 @@ static func waypoint(zone: ZoneBase, poi: Dictionary) -> Waypoint:
 	return w
 
 
-## Sealed entrance of a later dungeon (M10/M11): a locked gate the map and
+## Sealed entrance of a later dungeon (M13): a locked gate the map and
 ## compass can point at. The rock notch around it is baked into the terrain.
 static func dungeon(zone: ZoneBase, poi: Dictionary) -> Portal:
 	var p := Portal.new()

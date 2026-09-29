@@ -18,7 +18,7 @@ Colossus has fallen). New game and every return lands here. No enemies, ever.
 - **Sigrun Runewright** (M07b, `TrainerNpc`) stands north of the west hut by
   the weapon rack and training post, facing the hearth, on her own paved
   path. `[E] Talk` opens the trainer panel (abilities for gold + level). She
-  borrows the Runebreaker rig in bronze until M11 gives her a model and a
+  borrows the Runebreaker rig in bronze until M14 gives her a model and a
   story; the three flavour lines are placeholders.
 - **Runehold shrine** (M08, `Waypoint`, by the Highlands gate): always
   attuned; `[E] Travel` lists every shrine the character has attuned.
@@ -55,7 +55,7 @@ combat POI stands on a baked flat pad):
 | Chests | 4 free (+3 in ruins) | detours and dead ends; rare bias in the north |
 | Waypoint shrines | 5 | Ashford, Crossroads Cairn, Eastwatch, Northreach, Colossus Gate |
 | Landmarks | 5 | two rune monoliths, two charred groves, a bone field |
-| Sealed gates | 2 | Hollow Cistern (east), Ember Warrens (west): placeholders for M10/M11 dungeons |
+| Sealed gates | 2 | Hollow Cistern (east), Ember Warrens (west): placeholders for the M13 dungeons |
 | Arena | 1 | the Colossus plateau in the north with its rock ring and the gates to Runehold and the Spire |
 | Gates | 3 | south gate (Runehold), arena gates (Runehold, Spire) |
 
@@ -120,5 +120,60 @@ script builds every POI through `PoiBuilder`. Rules the bake asserts: every
 combat POI on a flat pad (< 3 deg), route grades <= `grade_max`, camps
 >= 45 m apart and >= 40 m from the spawn, every POI with a neighbour within
 80 m. Activation, spawners and triggers work with *all* heroes in range
-(`players_within`); enemies only through the zone factory. M10's two new
-zones copy this pattern.
+(`players_within`); enemies only through the zone factory. M15's two new
+zones copy this pattern (with the M12 additions below).
+
+## Planned: the Highlands with substance (M12)
+User decisions of 2026-09-29 (ROADMAP "Spieler-Leitlinien"). The user's
+verdict on today's Highlands: visually uniform (ash and brown everywhere, the
+same rocks and trees), too little to do (between POIs only walking, POIs are
+nearly always a camp or a chest), no life, nothing to discover off the
+trails. The Highlands get this first and become the template for every later
+zone.
+
+Wanted:
+- **Sub-biomes:** every corner with its own look, for example a burnt forest,
+  lava fissures, an abandoned village, a frozen lake, the bone field grown
+  into an area. Palette, props, scatter and ground layers per sub-biome.
+- **More POI types** next to camps and chests: small puzzles outdoors, trial
+  shrines, nests, cursed places, small caves.
+- **Harmless animals and creatures** for life, not for combat: carrion
+  crows, ash hares, neutral things that flee or watch.
+- **New enemy families per sub-biome** instead of the same raiders
+  everywhere.
+- **Secrets and lore:** hidden caves, climbing paths, graves, notes, ghosts,
+  collectibles with a small reward, ability tomes (CLASS_DESIGN "Loadout").
+  Lore objects may carry the rare meta breaks of STORY_DESIGN.
+- **Places that tell a story without text:** fallen warriors, barricades,
+  traces of a fight, abandoned camps.
+
+Not chosen for now (don't propose them again without a reason): weather and
+time of day, world events, NPCs in the open world, more music tracks, a
+richer soundscape, light and sky changes. The music is liked as it is.
+
+## Planned: dungeons (M13)
+User decisions of 2026-09-29. Dungeons should be more varied.
+- **Puzzle types:** ability puzzles (light braziers with fire, freeze water
+  with frost, lead lightning to a gate), mechanical puzzles (pressure plates,
+  levers, pushable blocks, light beams and mirrors), traps and skill (blade
+  corridors, collapsing floors, timing runs with Dodge). Not chosen: memory
+  and logic puzzles (rune sequences, symbol riddles).
+- **Size, mixed:** mostly short (under 2 min) as a break from combat; per
+  dungeon one bigger puzzle that opens a secret.
+- **Secret rooms and branches:** hidden walls, optional paths, bonus chests,
+  shortcuts back to the entrance.
+- **Mid-bosses**, each with its own idea (for example using the room against
+  it).
+- Not chosen: in-dungeon events (waves, escapes, escorts), room modifiers.
+- **Normal dungeons** (first: the Hollow Cistern and the Ember Warrens behind
+  the Highlands' sealed gates) are solvable alone and with every class, so
+  an ability puzzle needs a way for each class (derived from the co-op
+  answer, not asked directly).
+
+**Co-op dungeons** (the user: "there should be extra dungeons for co-op"):
+- for **3–5 players**, locked for fewer; extra content with their own loot,
+  the story is complete without them;
+- built for the roles (CLASS_DESIGN "Three roles"): without a tank or a
+  healer they get clearly harder; real co-op puzzles are allowed here;
+- proposal, not decided: scaling from 3 to 5 like today's enemy health
+  (+70 % per extra hero), plus mechanics that use the group.

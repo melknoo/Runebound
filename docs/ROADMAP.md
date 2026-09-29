@@ -1,16 +1,21 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-09-25 · M01–M09 gebaut (M07/M07b abgenommen am 24.09., M08 angespielt: kleine Notizen
-folgen nach M09). **M09 Co-op ist gebaut und mit einem Freund angespielt.** Server-Laptop steht
+Stand: 2026-09-29 · M01–M09 gebaut (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
+**M09 Co-op ist gebaut und mit einem Freund angespielt.** Server-Laptop steht
 (`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve. **M09b (Freunde
-ohne Tailscale) läuft.**
+ohne Tailscale) läuft.** Am 29.09. hat der Spieler die Richtung nach M09b festgelegt
+(„Spieler-Leitlinien“ unten): zuerst drei Klassen mit Loadout, danach Substanz für Welt, Dungeons
+und Story.
 
-## Nordstern (aktualisiert 2026-09-24)
+## Nordstern (aktualisiert 2026-09-29)
 RUNEBOUND wird ein **Koop-Action-RPG für 2–5 Spieler** in einer stilisierten Pixel-Fantasy-Welt:
-eigener Charakter mit Klasse, Fähigkeiten, die gelernt statt geschenkt werden, Gold, Talente und
-Loot; eine kleine, gut erzählte Story mit Dungeons, Bossen und Rätseln, die man zusammen löst.
-Gehostet auf einem eigenen dedizierten Server (Linux-Laptop zuhause). Kein MMO.
-Singleplayer bleibt jederzeit vollständig spielbar.
+eigener Charakter in einer von **drei Klassen (Tank, Heiler, Damage Dealer)**, Fähigkeiten, die
+gelernt statt geschenkt werden, und davon **nimmt man 4 aus etwa 12 mit**; Gold, Talente und
+Loot; eine kleine, düstere Story mit Dungeons, Bossen und Rätseln, die sich an wenigen Stellen
+**selbstironisch nicht ernst nimmt** („von einer KI geschrieben“). Gehostet auf einem eigenen
+dedizierten Server (Linux-Laptop zuhause). Kein MMO.
+Singleplayer bleibt vollständig spielbar, **außer den Koop-Dungeons** (3–5 Spieler, Extra-Content
+mit eigenem Loot; die Story ist ohne sie komplett).
 
 ## Warum die Reihenfolge so ist
 - **Fundament vor Welt:** Koop und mehrere Klassen kosten wenig, wenn die Nahtstellen früh sitzen
@@ -20,7 +25,36 @@ Singleplayer bleibt jederzeit vollständig spielbar.
   nicht das alte.
 - **Story nach Koop:** Rätsel und Quests brauchen im Koop andere Regeln (geteilter Fortschritt,
   wer löst was). Erst wenn die stehen, lohnt sich Story-Content.
+- **Klassen vor Rätseln und Quests (2026-09-29):** Fähigkeiten-Rätsel, Koop-Dungeons mit Rollen,
+  Quest-Belohnungen und Folianten in Geheimnissen hängen alle am Fähigkeiten-Pool der drei Klassen.
+  Wer sie vorher baut, baut sie zweimal.
+- **Highlands als Vorlage vor neuen Zonen:** Unter-Biome, POI-Arten und Geheimnisse entstehen
+  zuerst in der Zone, die du schon kennst; neue Zonen kopieren dann das bessere Muster.
 - **Feel vor Content** bleibt: jeder Meilenstein endet mit Smoke grün + Captures + deinem Playtest.
+
+## Spieler-Leitlinien (2026-09-29)
+Die Wünsche des Spielers nach M09, in acht Fragerunden geklärt. „Setting, Musik und Atmosphäre
+gefallen schon sehr, es fehlt Substanz.“ Details in den Design-Docs.
+1. **Open World weniger eintönig** ([WORLD_DESIGN](WORLD_DESIGN.md) „Planned: the Highlands with
+   substance“): heute optisch gleichförmig, zu wenig zu tun, zu wenig Leben, nichts zu entdecken.
+   Gewünscht: Unter-Biome, mehr POI-Arten, harmlose Tiere und Kreaturen, neue Gegnerfamilien je
+   Unter-Biom, Geheimnisse + Lore, erzählende Umgebung. Die Highlands zuerst, als Vorlage.
+   Vorerst nicht gewählt: Wetter/Tageszeit, Welt-Events, NPCs draußen, mehr Musikstücke,
+   Klangkulisse, Licht/Himmel. Die Musik gefällt so, wie sie ist.
+2. **Dungeons abwechslungsreicher** ([WORLD_DESIGN](WORLD_DESIGN.md) „Planned: dungeons“):
+   Fähigkeiten-, Mechanik- und Fallen-Rätsel, meist kurz, pro Dungeon ein größeres für ein
+   Geheimnis; Geheimräume + Abzweige, Zwischenbosse. **Eigene Koop-Dungeons für 3–5 Spieler**,
+   solo gesperrt, dort zählen die Rollen.
+3. **Story mit Meta-Würze** ([STORY_DESIGN](STORY_DESIGN.md)): die Story bleibt ernst und düster;
+   seltene, explizite Brüche der vierten Wand („Ich wurde von einer KI geschrieben“), Ton
+   selbstironisch-liebevoll, in NPC-Dialogen, Items + Quests und Lore-Objekten. Dialoge mit
+   Antwortoptionen (meist Geschmack). Alle Texte **Deutsch + Englisch mit Sprachwahl**.
+4. **Drei Klassen + Loadout** ([CLASS_DESIGN](CLASS_DESIGN.md) „Three roles“): Runebreaker wird
+   **Tank** (Bedrohung + Spott), ein **Elementar-Magier** (Fernkampf-DD) übernimmt Ember Lance,
+   Chain Spark, Fracture Rune und Storm Step, ein **Wurzel-Druide** heilt (gezielt, Zonen, Schilde
+   + Buffs). LMB und Dodge fest, **4 freie Slots (RMB, 1, 2, 3) aus etwa 12**, Wechsel überall
+   außerhalb des Kampfs. Rollen: solo weich, Koop-Dungeons fordern sie.
+5. **Icons:** zuerst ein Vergleich, PixelLab-MCP gegen den heutigen Generator (Nebenstrang unten).
 
 ## Abgeschlossen
 - **M01 Combat Lab** — Controller, Kamera, Dodge, Rune Cleave, Ember Lance, Earthbreaker, Feedback-Stack.
@@ -99,14 +133,14 @@ Phasen:
 Nicht in M09b: direktes UDP per Hole-Punching (nur falls Funnel zu langsam ist), IPv6 direkt,
 Accounts.
 
-### M08 — Open World I: Ashen Highlands, offen (angespielt; Notizen folgen nach M09)
+### M08 — Open World I: Ashen Highlands, offen (angespielt; Notizen am 28.09. umgesetzt)
 Sichtbar:
 - **Heightmap-Terrain 384 × 384 m** aus einem deklarativen Layout gebacken (`tools/worldgen`):
   Südhänge → Nordplateau, Randgebirge, Grate mit Felsen, eingeschnittene Trampelpfade, flache
   Kampf-Pads unter jedem POI. Kamera-Far 560 m, Dunst am Rand.
 - **32 POIs an fünf Routen** (alle 50–80 m): 8 Camps, 2 Hinterhalte (Pack erscheint um den
   Spieler), 1 Elite-Patrouille, 3 Ruinen mit Truhen, 4 freie Truhen, 5 Wegpunkt-Schreine,
-  Landmarken, 2 versiegelte Dungeon-Tore (Platzhalter für M10/M11), Colossus-Arena. Level-Bänder
+  Landmarken, 2 versiegelte Dungeon-Tore (Platzhalter für M13), Colossus-Arena. Level-Bänder
   Süd 1 / Mitte 2 / Nord + Emberfall Ridge 3.
 - **Camps leben:** gecleart → im Save gemerkt → nach ~10 min wieder da, aber nie, solange ein Held
   in 45 m steht. Camp-Gegner haben eine Leine (gehen heim und heilen).
@@ -116,7 +150,7 @@ Sichtbar:
 - **Kompass** oben im HUD und **Karte auf M** mit allem, was der Charakter gesehen hat.
 Unsichtbar: Boden-Seam (nichts kodiert mehr y = 0), `EncounterSpawner` v2, `EnemyBase.RETURN`,
 SaveGame v4, `WaypointRegistry`, Ankunfts-Hints, Runner-Positionen per POI-ID.
-Angespielt vom Spieler; seine kleinen Notizen werden direkt nach M09 umgesetzt. Offen: KNOWN_ISSUES
+Angespielt vom Spieler; seine Notizen sind am 28.09. umgesetzt (PROJECT_STATE „M08 notes“). Offen: KNOWN_ISSUES
 „M08 open items" (Respawn-Minuten, Camp-Dichte, Randgebirge-Look, NavMesh später).
 
 ### M07b — Character Foundations (abgenommen)
@@ -140,34 +174,82 @@ Earthbreaker lernen → C-Fenster).
 
 ## Geplant
 
-### M10 — Open World II: zwei weitere Zonen
-Mit der M08-Technik: zwei neue Regionen mit eigener Identität (Palette, Gegnerfamilie, Wetter),
-je ein Dungeon + Boss. Alles von Anfang an im Koop gebaut und getestet.
+Neu geordnet am 2026-09-29 nach den Spieler-Leitlinien. M10 und M11 sind entschieden (Klassen
+zuerst, Tank und Magier zusammen, der Druide direkt danach). Die Reihenfolge ab M12 ist ein
+Vorschlag und bleibt tauschbar. Frühere Nummern: die „Zweite Klasse“ war M12, Open World II war
+M10, Story & RPG war M11, Endgame M13, Release-Politur M14.
 
-### M11 — Story & RPG
-- NPCs mit Dialog (Sigrun bekommt als Erste eine Geschichte), Quest-System (Haupt- + Nebenquests,
-  Journal), Story-Bogen um die Shattered Rune über Hub und drei Zonen.
-- **Koop-Rätsel** in den Dungeons (Platten, Runen-Sequenzen, geteilte Mechaniken), die allein
-  lösbar bleiben.
-- Mehr Dungeons (klein, 10–15 min) und Boss-Varianten; Händler (Gold-Senke: Tränke, Reparatur,
+### Nebenstrang vor M10 — Icon-Quelle
+M10 braucht etwa 20 neue Fähigkeits-Icons. Heute zeichnet `tools/texgen/ui.py` jedes Icon in
+Code. Spieler-Entscheidung: **zuerst vergleichen**. Der Spieler richtet den PixelLab-MCP-Server
+(KI-Pixelart) mit seinem API-Key ein, und zwar im User-Scope, damit der Key nicht ins öffentliche
+Repo kommt:
+`claude mcp add -s user pixellab https://api.pixellab.ai/mcp -t http -H "Authorization: Bearer <KEY>"`.
+Dann entstehen 3 Icons mit PixelLab und 3 mit dem Generator auf einer Vergleichsseite, danach
+entscheidet der Spieler. Vorher werden Preis und Bildlizenz geprüft; alles, was entsteht, muss
+ART_BIBLE (Palette, Umriss, Pixelraster) bestehen. Alternative ohne KI:
+Aseprite-MCP (`pixel-mcp`, braucht Aseprite).
+
+### M10 — Drei Rollen I: Tank + Elementar-Magier + Loadout
+Ersetzt die alte „Zweite Klasse“. Details: CLASS_DESIGN „Three roles“.
+- **Runebreaker wird Tank:** Rune Cleave, Earthbreaker, Runic Guard und Resonance Burst bleiben;
+  neu kommen Spott, Block und Schadensreduktion. **Bedrohung + Spott:** Gegner merken sich, wer
+  am meisten droht, Tank-Fähigkeiten drohen extra, ein Spott zieht sofort.
+- **Elementar-Magier (Fernkampf-DD):** erbt Ember Lance, Chain Spark, Fracture Rune und Storm
+  Step, dazu neue Zauber; eigener Grundangriff, Rig, Trainer.
+- **Loadout:** LMB-Grundangriff und Dodge sind fest, **4 freie Slots (RMB, 1, 2, 3) aus einem
+  Pool von etwa 12 je Klasse**. Wechsel überall außerhalb des Kampfs (die 3-s-Regel des Sprints).
+  Neue Fähigkeiten kommen vom Trainer, aus Quests und von Bossen, aus Geheimnissen und Dungeons
+  (Folianten) und über den Talentbaum. In M10 zuerst Trainer + Talentbaum, die anderen Quellen
+  kommen mit M12–M14.
+- Charakterwahl-/Erstell-Screen, mehrere Charaktere pro Save (je eine Klasse), klassen-eigene
+  Talentäste, Affixe und Legendaries, Save-Migration für bestehende Runebreaker.
+
+### M11 — Drei Rollen II: Wurzel-Druide (Heiler)
+Pflanzen aus verbrannter Erde, Totems, Dornen. Heilt **gezielt** (Verbündeter unter dem
+Fadenkreuz, sonst der mit dem wenigsten Leben in Reichweite, allein man selbst), mit **Zonen am
+Boden** und **Schilden + Buffs**. Genug eigener Schaden, um die Story solo zu schaffen. Eigenes
+Kit (etwa 12), Rig, Talentbaum, Trainer.
+
+### M12 — Highlands mit Substanz
+Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands
+with substance“): **Unter-Biome** mit eigenem Look, **neue POI-Arten** (Mini-Rätsel draußen,
+Prüfungs-Schreine, Nester, verfluchte Orte, kleine Höhlen), **harmlose Tiere und Kreaturen**,
+**neue Gegnerfamilien je Unter-Biom**, **Geheimnisse + Lore** (versteckte Höhlen, Kletterwege,
+Gräber, Notizen, Geister, Sammelkram, Folianten), **erzählende Umgebung**. Mit den ersten
+Lore-Texten kommt die **Text-Tabelle Deutsch/Englisch** mit Sprachwahl; ab da ist jeder neue
+Spielertext zweisprachig.
+
+### M13 — Dungeons mit Rätseln
+- **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons
+  mit Fähigkeiten-, Mechanik- und Fallen-Rätseln (meist unter 2 min, pro Dungeon ein größeres für
+  ein Geheimnis), Geheimräumen, Abzweigen und Zwischenbossen. Allein und mit jeder Klasse lösbar.
+- **Der erste Koop-Dungeon:** für 3–5 Spieler, solo gesperrt, eigener Loot, Rollen zählen (ohne
+  Tank oder Heiler wird es deutlich schwerer).
+
+### M14 — Story & RPG
+- NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein
+  Extra-Satz), Quest-System (Haupt- + Nebenquests, Journal), Story-Bogen um die Shattered Rune
+  über Hub und Zonen; Sigrun bekommt als Erste eine Geschichte.
+- **Meta-Würze** nach STORY_DESIGN: seltene, explizite Brüche, selbstironisch-liebevoll.
+- Die bestehende UI wird zweisprachig nachgezogen; Händler (Gold-Senke: Tränke, Reparatur,
   Umskillen kostet später Gold?).
 
-### M12 — Zweite Klasse
-Erste echte Nutzung der ClassData-Seams: eine zweite Klasse mit eigenem Kit (6 Fähigkeiten +
-2 Talent-Unlocks), Rig, Talentbaum (3 Äste), klassen-eigenen Affixen/Legendaries, Trainer-Angebot.
-Charakterwahl-/Erstell-Screen, mehrere Charaktere pro Save. Weitere Klassen danach nach demselben
-Muster.
+### M15 — Open World II: zwei weitere Zonen
+Mit der M08-Technik und dem M12-Muster: zwei neue Regionen mit eigener Identität (Palette,
+Unter-Biome, Gegnerfamilien), je ein Dungeon + Boss. Alles von Anfang an im Koop gebaut und
+getestet.
 
-### M13 — Endgame: Shattered Expeditions
+### M16 — Endgame: Shattered Expeditions
 Wiederholbare 10–20-min-Runs (Koop): prozedurale Encounter aus Kit und Zonen, Difficulty-Tiers mit
 Mechanik-Eskalation, Risk/Reward-Modifier, Ziel-Loot. Setzt Cap, Talente und Klassen voraus.
 
-### M14 — Release-Politur
+### M17 — Release-Politur
 Hauptmenü, Settings (Rebinding, Sensitivity, Shake/Flash, Accessibility), Damage-Number-Optionen,
 Performance-Pass auf Zielhardware (Server-Laptop + Clients), Balancing-Runde, Bugfest, Server-Setup-
 Anleitung.
 
 ## Prinzip bleibt
 Jeder Meilenstein endet mit Smoke-Tests grün + Capture-Review + deinem Playtest als Gate. Zahlen sind
-Daten und werden nach deinem Feedback getunt, nicht vorher diskutiert. Die Reihenfolge M09 ↔ M10 ist
-tauschbar, wenn dir Content wichtiger ist als früher Koop — sag Bescheid.
+Daten und werden nach deinem Feedback getunt, nicht vorher diskutiert. Jeder Meilenstein bekommt
+vor dem Bau seinen eigenen Plan mit Rückfragen.
