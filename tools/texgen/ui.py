@@ -16,6 +16,7 @@ so it reads on any slot. Deterministic. Run: python tools/texgen/ui.py
 from __future__ import annotations
 
 import json
+import math
 import os
 
 import numpy as np
@@ -314,6 +315,89 @@ def icon_coin() -> Image.Image:
     d.line([9, 7, 9, 12], fill=dim)                              # rune notch
     d.line([7, 9, 11, 9], fill=dim)
     img.putpixel((6, 5), (255, 255, 255, 230))                   # glint
+    return outlined(img)
+
+
+# ---------------------------------------------------------------------------
+# Drafts from the 2026-09-29 icon comparison (ROADMAP "Icon-Quelle"). Not saved
+# by main() yet: register each under its ability id once the ability exists
+# (M10 taunt, frost nova if it joins the elementalist kit, M11 healing zone).
+# ---------------------------------------------------------------------------
+
+# Provisional root-druid ramp (hue ~100 deg, yellower than the player teal).
+# M11 moves it into art_spec.json as color_roles.nature.
+NATURE = {"edge": "#2E6B34", "body": "#7ED957", "core": "#E4FFC4"}
+
+
+def icon_taunt() -> Image.Image:
+    """War cry: the Runebreaker's great helm with a T visor, gold shout arcs to both sides."""
+    img, d = canvas()
+    phys = ROLES["physical"]
+    edge, body, core = rgb(phys["edge"]), rgb(phys["body"]), rgb(phys["core"])
+    hot = rgb(ROLES["resonance"]["hot"])
+    d.rectangle([6, 5, 13, 16], fill=edge)                       # helm shell (shadowed steel)
+    d.line([7, 4, 12, 4], fill=edge)                             # rounded crown
+    d.rectangle([6, 5, 9, 16], fill=body)                        # lit half
+    d.line([7, 4, 9, 4], fill=body)
+    d.line([6, 5, 6, 8], fill=core)                              # glint
+    d.line([6, 7, 13, 7], fill=GOLD)                             # rune band
+    img.putpixel((9, 7), hot)
+    d.line([7, 10, 12, 10], fill=INK)                            # T visor
+    d.line([9, 11, 9, 14], fill=INK)
+    d.line([10, 11, 10, 14], fill=INK)
+    d.arc([2, 4, 17, 17], 320, 40, fill=GOLD)                    # inner shout arcs
+    d.arc([2, 4, 17, 17], 140, 220, fill=GOLD)
+    d.arc([0, 2, 19, 19], 325, 35, fill=hot)                     # outer arcs
+    d.arc([0, 2, 19, 19], 145, 215, fill=hot)
+    return outlined(img)
+
+
+def icon_frost_nova() -> Image.Image:
+    """A ring of angular ice shards bursting out of a bright core."""
+    img, d = canvas()
+    fr = ROLES["frost"]
+    edge, body, core = rgb(fr["edge"]), rgb(fr["body"]), rgb(fr["core"])
+    cx = cy = 9.5
+    for k in range(8):
+        a = k * math.tau / 8 - math.pi / 2
+        r_out = 9.2 if k % 2 == 0 else 7.2
+        tip = (cx + math.cos(a) * r_out, cy + math.sin(a) * r_out)
+        side = a + math.pi / 2
+        base = 4.0
+        w = 1.9 if k % 2 == 0 else 1.5
+        left = (cx + math.cos(a) * base + math.cos(side) * w, cy + math.sin(a) * base + math.sin(side) * w)
+        right = (cx + math.cos(a) * base - math.cos(side) * w, cy + math.sin(a) * base - math.sin(side) * w)
+        mid = (cx + math.cos(a) * (base + 0.6), cy + math.sin(a) * (base + 0.6))
+        d.polygon([left, tip, mid], fill=body)                   # lit face
+        d.polygon([mid, tip, right], fill=edge)                  # shadow face
+    d.ellipse([6, 6, 13, 13], fill=edge)                         # nova ring
+    d.ellipse([7, 7, 12, 12], fill=INK)
+    d.polygon([(9.5, 7.5), (11.5, 9.5), (9.5, 11.5), (7.5, 9.5)], fill=core)   # core crystal
+    return outlined(img)
+
+
+def icon_healing_zone() -> Image.Image:
+    """A rune circle on the ground, a sprout rising from it, healing motes above."""
+    img, d = canvas()
+    edge, body, core = rgb(NATURE["edge"]), rgb(NATURE["body"]), rgb(NATURE["core"])
+    d.ellipse([1, 12, 18, 18], fill=edge)                        # zone on the ground
+    d.ellipse([2, 13, 17, 17], outline=body)                     # rune ring
+    for x, y in ((4, 14), (15, 14), (9, 17), (10, 13)):
+        img.putpixel((x, y), core)                               # ring runes
+    d.line([9, 15, 9, 8], fill=body)                             # stem
+    d.line([10, 15, 10, 9], fill=edge)
+    leaves = {9: (4, 5), 10: (4, 7), 11: (5, 8), 12: (7, 8)}     # left leaf, row: (x0, x1)
+    leaves_r = {8: (14, 15), 9: (12, 15), 10: (11, 14), 11: (11, 12)}
+    for rows in (leaves, leaves_r):
+        for y, (x0, x1) in rows.items():
+            d.line([x0, y, x1, y], fill=body)
+    img.putpixel((5, 10), core)                                  # leaf veins
+    img.putpixel((13, 9), core)
+    img.putpixel((9, 8), core)                                   # bud
+    d.rectangle([13, 1, 14, 6], fill=core)                       # healing cross
+    d.rectangle([11, 3, 16, 4], fill=core)
+    for x, y in ((4, 5), (3, 6), (4, 6), (5, 6), (4, 7)):
+        img.putpixel((x, y), body)                               # small rising cross
     return outlined(img)
 
 

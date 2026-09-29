@@ -200,9 +200,11 @@ Jedes Icon stand im echten HUD-Slot und lief durch einen ART_BIBLE-Check (Raster
   wäre kein Hindernis gewesen: Die Bilder gehören dem Nutzer, kommerzielle Nutzung ist frei.
 
 Umsetzung: Die neuen Icons entstehen zusammen mit ihren Fähigkeiten als Funktionen in `ui.py`.
-In M10 kommen die Tank- und Magier-Icons, in M11 die Druiden-Icons. Für den Druiden kommt dann eine
-Farbrolle `nature` in `art_spec.json`, im Vergleich vorläufig #2E6B34 / #7ED957 / #E4FFC4 (deutlich
-gelber als das Spieler-Türkis). Der PixelLab-MCP-Server bleibt registriert (Scope `local`, der Key
+In M10 kommen die Tank- und Magier-Icons, in M11 die Druiden-Icons. Die drei Vergleichs-Entwürfe
+(`icon_taunt`, `icon_frost_nova`, `icon_healing_zone`) stehen schon in `ui.py`. `main()` speichert
+sie erst, wenn ihre Fähigkeit eine ID hat. Für den Druiden kommt in M11 eine Farbrolle `nature` in
+`art_spec.json`. Bis dahin gilt die vorläufige Rampe `NATURE` in `ui.py` (#2E6B34 / #7ED957 /
+#E4FFC4, deutlich gelber als das Spieler-Türkis). Der PixelLab-MCP-Server bleibt registriert (Scope `local`, der Key
 liegt als `PIXELLAB_API_KEY` in der git-ignorierten `.env`, nie in einem `.mcp.json` im Repo). Für
 Icons wird er nicht gebraucht.
 
