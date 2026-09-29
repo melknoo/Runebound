@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-09-29 · Milestone: **M10 Three roles I (tank + Elementalist +
-loadout)** — phase 1 of 4 built (below). M09 Co-op was played by the user and a
+loadout)** — all four phases built (below); the user's playtest is the gate. M09 Co-op was played by the user and a
 friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
@@ -72,7 +72,8 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
   - **Own rig** (`elementalist.glb`, modelgen): steel-blue coat, teal mantle,
     gold circlet, rune rod with an Aether crystal; 13 clips (idle, run, dodge,
     one per spell, flinch). The blue-tinted Runebreaker stand-in is gone.
-    Maren in Runehold wears it too. Look preview for the user pending.
+    Maren in Runehold wears it too. Look preview for the user:
+    `captures_shots/m10_classes/_look_preview.png`.
   - **Four new spells** (Maren sells them, L6-L9): **Frost Nova** (25 Aether,
     a 5 m Chill ring), **Flame Wall** (a 6 m line of fire at the aim),
     **Ball Lightning** (a slow orb that zaps and Shocks), **Ember Fall**
@@ -86,8 +87,55 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     the rest from range).
   - Tests: smoke 500 green (every new spell and Frost talent); the whole net
     suite green.
-- **Phase 4:** solo check of both classes, shots, perf, docs, the playtest
-  list, the gate walk.
+- **Phase 4 (built): wrap-up.**
+  - **Shots** `tests/shots/m10_classes.json` (17: the Elementalist from three
+    sides and each spell, the tank's wall, war cry, leap, chain and ward, the
+    loadout tab). They showed Flame Wall too faint and Ember Fall's rock too
+    white; both were fixed in phase 3's commit. Shot lists can now switch
+    the class per shot, cast any ability and fill a slot.
+  - **Solo check** (`tools\run_godot.cmd solocheck <class> [level]`, a bot
+    hero alone through the 10 stationary Highlands camps, then the Colossus;
+    trainer kit of its level, rolled gear, no talents):
+
+    | | level 6 | level 4 |
+    |---|---|---|
+    | Elementalist | 11/11 won, 0 deaths, 89 s, 88 damage taken (0.7 bars) | 11/11, 0 deaths, 106 s, 76 (0.7) |
+    | Runebreaker | 11/11 won, 0 deaths, 78 s, 372 damage taken (2.4 bars) | 11/11, 0 deaths, 83 s, 356 (2.4) |
+
+    The Colossus falls in 13-19 s either way. Two open points for the
+    user: there is no healing between fights, and the Colossus may be too
+    easy (KNOWN_ISSUES "M10 open items"). The check found a bot stall
+    (a caster and an enemy caster on either side of a ruin wall); casters
+    now walk in when a wall blocks their line.
+  - **Perf** (interleaved A/B against the state before M10, `highlands_open`,
+    median of 3 each): before M10 55.7 FPS / GPU 16.5 ms (runs 55.7, 57.8;
+    a cold first run of 48.1 left out), M10 with the Elementalist's full
+    rotation incl. the four new spells 56.4 FPS / GPU 16.2 ms (55.9, 56.4,
+    60.1): no measurable cost. Both builds ran below the M08 value (66.3 FPS)
+    on this day and rose from round to round - the machine, not the build;
+    the interleaving takes that out.
+  - Playtest log (J): new group "M10: Klassen" (17 points).
+  - **Gate walk (user):**
+    1. Title -> "Neuer Charakter": an Elementalist. Runehold: Maren at the
+       east wall by the spawn; Rune Bolt held down, buy Ember Lance (L2).
+       The four new spells need levels 6-9: F1 -> [L] learns the whole kit
+       (or play there). K: swap the slots around. The Highlands: a camp from
+       range, Frost Nova when they reach you, Ember Fall on a group.
+    2. Title -> "Charaktere": your old Runebreaker (it has the gold for its
+       four spells already - 2,442 gold; the refund toast was used up by the
+       test boot that migrated the save early) or a new tank; its own world.
+       Sigrun: Rune Wall (L3). Hold RMB against a brute's wind-up, tap it
+       just before the hit for a parry.
+    3. `tools\run_godot.cmd coop` (a tank and an Elementalist companion):
+       a camp as the tank - do the enemies stay on you (the red "!")?
+    4. The Colossus as the Elementalist, alone.
+    5. The J list, group "M10: Klassen"; the look of the Elementalist
+       (the preview sheet above).
+- **Tooling:** the live Blender loop (`tools/modelgen/live.py` through the
+  Blender MCP: build, pose, screenshot) is there for poses and silhouettes;
+  whatever it finds goes back into the generator script, the only model
+  source. M10's rig and clips were checked on the generator's contact
+  sheets (`captures_contact/`) and the in-game shots.
 
 ## Direction after M09b (user decisions 2026-09-29)
 The user likes the setting, the music and the atmosphere; what is missing

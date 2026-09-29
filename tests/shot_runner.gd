@@ -18,7 +18,11 @@ extends Node
 ## learns talents, {"do": "talents" | "runic_guard" | "resonance_burst"}.
 ## M07b: {"gold": n}, {"learn_abilities": [ids] | "all"}, {"do": "trainer" |
 ## "hero_inventory" | "hero_character" | "hero_talents" | "gold"}; a list with
-## "fresh_abilities": true starts with the one-ability kit.
+## "fresh_abilities": true starts with the one-ability kit. M10: a shot's
+## "class" plays that class from this shot on (swapped before the hero is
+## placed); {"cast": "<ability id>", "full": true} starts any ability (full =
+## a full resource bar first); {"slot": [i, "<id>"]} puts an ability into a
+## loadout slot (e.g. Rune Wall on RMB, then {"hold": "secondary_ability"}).
 
 var list_path: String = ""
 
@@ -71,11 +75,18 @@ func _run() -> void:
 
 
 func _take(shot: Dictionary, variant_name: String) -> void:
+	if shot.has("class") and _zone.player.class_data.id != StringName(shot["class"]):
+		_zone.debug_swap_class(StringName(shot["class"])).debug_learn_all()
+		await _wait(0.3)
 	var player := _zone.player
 	_set_spawners_enabled(shot.get("spawners", false))
 	if shot.get("clear", true):
 		for child in _zone.enemies_root.get_children():
 			child.free()
+		for child in _zone.get_children():  # M10: the hero's lasting effects of the shot before
+			if child is FlameWall or child is BallLightning or child is EmberFall or child is FractureRune \
+					or child is WardingRune:
+				child.free()
 		_zone.hud.hide_boss_bar()  # a boss freed with the wave must not keep its bar (and hide the compass)
 	if shot.has("player"):
 		player.global_position = _pos(_zone, shot["player"])
@@ -141,6 +152,12 @@ func _do(action: Dictionary) -> void:
 			player.progression.learn(Progression.talent(StringName(id)))
 	elif action.has("gold"):  # M07b
 		player.add_gold(int(action["gold"]))
+	elif action.has("cast"):  # M10: any ability by id
+		_cast(StringName(action["cast"]), bool(action.get("full", false)))
+	elif action.has("slot"):  # M10: [slot index, ability id]
+		var why := player.set_loadout_slot(int(action["slot"][0]), StringName(action["slot"][1]))
+		if why != "":
+			push_warning("shot_runner: slot refused (%s)" % why)
 	elif action.has("give_items"):  # M07b: straight into the inventory (no pickup walk)
 		for i in int(action["give_items"]):
 			player.equipment.add_item(ItemGenerator.generate(randi() % 3))

@@ -3,6 +3,29 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m10",
+			"title": "M10: Klassen",
+			"items": [
+				{"id": "m10_characters", "src": "M10", "title": "Zwei Charaktere anlegen", "hint": "Im Titel unter „Neuer Charakter“ einen Tank und einen Magier anlegen und hin und her wechseln. Hat jeder seine eigene Welt (Zone, Camps, Gold)?"},
+				{"id": "m10_migration", "src": "M10", "title": "Dein alter Runebreaker", "hint": "Er hat die vier Zauber als Gold zurückbekommen (Hinweis beim ersten Zonenstart). Stimmt der Betrag, fehlt dir etwas?"},
+				{"id": "m10_trainers", "src": "M10", "title": "Zwei Trainer in Runehold", "hint": "Sigrun (Tank, Nordwest) und Maren (Magier, Ostmauer beim Start). Findest du Maren? Schickt dich der falsche Trainer weiter?"},
+				{"id": "m10_loadout", "src": "M10", "title": "Loadout mit K", "hint": "Vier freie Slots (RMB, 1, 2, 3), Tausch nur außerhalb des Kampfs. Ist das Tauschen klar? Stört die Kampfsperre?"},
+				{"id": "m10_threat", "src": "M10", "title": "Der Tank hält die Gegner", "hint": "Im Camp mit Bots (run_godot coop): bleiben die Gegner bei dir, wenn du triffst und spottest? Wechseln sie zu oft zum Magier?"},
+				{"id": "m10_rune_wall", "src": "M10", "title": "Runenwall und Parade", "hint": "RMB halten blockt vorn 75 %, in den ersten 0,3 s pariert es mit Konter. Ist das Parade-Fenster fair, fühlt sich der Konter gut an?"},
+				{"id": "m10_tank_tools", "src": "M10", "title": "Herausforderung, Sprung, Kette, Schutzrune", "hint": "Welche nimmst du wirklich ins Loadout? Passen Reichweiten (Sprung 10 m, Kette 16 m) und Abklingzeiten?"},
+				{"id": "m10_tank_tough", "src": "M10", "title": "Wie zäh ist der Tank?", "hint": "120 Leben, Block und Talente (bis 70 % weniger Schaden): zu zäh, zu weich?"},
+				{"id": "m10_rune_bolt", "src": "M10", "title": "Runenbolzen als Dauerfeuer", "hint": "LMB halten: 10 Schaden alle 0,3 s, +3 Äther je Treffer. Zu schwach, zu hektisch?"},
+				{"id": "m10_aether", "src": "M10", "title": "Äther aufbauen und ausgeben", "hint": "Frostnova kostet 25, Glutsturz 40. Kommt der Äther schnell genug, fühlt sich der Rhythmus gut an?"},
+				{"id": "m10_new_spells", "src": "M10", "title": "Die vier neuen Zauber", "hint": "Frostnova, Flammenwand, Kugelblitz, Glutsturz: gut lesbar, stark genug, sauber zu zielen?"},
+				{"id": "m10_frost", "src": "M10", "title": "Frost-Talente", "hint": "Deep Freeze (1 s festgefroren) und Absolute Zero (2 s): stark, zu stark? Festgefrorene Gegner schlagen noch zu, wenn du nah stehst."},
+				{"id": "m10_mage_solo", "src": "M10", "title": "Der Magier allein", "hint": "85 Leben: schaffst du Camps und den Colossus als Magier allein?"},
+				{"id": "m10_healing", "src": "M10", "title": "Keine Heilung zwischen Kämpfen", "hint": "Leben kommt nur durch Tod oder Zonenwechsel zurück. Als Tank bist du nach zwei, drei Camps unten: fehlt dir eine Regeneration außerhalb des Kampfs?"},
+				{"id": "m10_colossus", "src": "M10", "title": "Colossus-Schwierigkeit", "hint": "Ein Bot legt ihn auf Stufe 4 bis 6 in 13 bis 19 s. Zu leicht für einen Boss?"},
+				{"id": "m10_mage_look", "src": "M10", "title": "Der Magier in Bewegung", "hint": "Mantel, Stab mit Äther-Kristall, Zauber-Gesten: passt der Look im Spiel? Beim Zaubern im Laufen schaut der Held kurz zum Ziel, rückwärts nutzt er den Vorwärts-Clip: fällt das auf?"},
+				{"id": "m10_aggro_mark", "src": "M10", "title": "Aggro-Zeichen im Koop", "hint": "Ein rotes „!“ über Gegnern, die dich jagen (ab zwei Helden). Hilft das, stört es?"}
+			]
+		},
+		{
 			"id": "combat",
 			"title": "Kampf",
 			"items": [

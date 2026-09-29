@@ -6,7 +6,9 @@ extends InputSource
 ## distance, fires Rune Bolts and Ember Lances, drops Fracture Runes and
 ## escapes with Storm Step when an enemy gets close. Both dodge now and then.
 ## With no enemy in range it follows `leader` (when set). Bots have no camera:
-## they aim with PlayerIntent.aim_dir, straight at their target.
+## they aim with PlayerIntent.aim_dir, straight at their target. A caster
+## whose shots would hit a wall walks in until it has a clear line (M10 solo
+## check: two casters on either side of a ruin wall stood there forever).
 
 const RETARGET_EVERY := 0.5   # seconds between nearest-enemy scans
 const ENGAGE_RADIUS := 35.0   # enemies farther than this are ignored
@@ -22,6 +24,9 @@ var target: EnemyBase = null
 
 var _rng := RandomNumberGenerator.new()
 var _retarget_left: float = 0.0
+## Whether a wall stands between the muzzle and the target (checked with the
+## retarget scan, not every frame).
+var _blocked: bool = false
 ## Action id -> seconds until the bot presses it again (its own pacing on top
 ## of the real cooldowns, so presses spread out like a person's).
 var _wait: Dictionary = {}
@@ -49,6 +54,7 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 	if _retarget_left <= 0.0 or not _alive(target):
 		_retarget_left = RETARGET_EVERY
 		target = _nearest_enemy(player.global_position)
+		_blocked = _alive(target) and _wall_between(player, target)
 	if leader != null and is_instance_valid(leader) and leader != player \
 			and leader.global_position.distance_to(player.global_position) > LEADER_LEASH:
 		target = null  # too far from the leader: catch up first
@@ -102,7 +108,7 @@ func _enemies_within(from: Vector3, radius: float) -> int:
 
 ## A caster's fight: hold the preferred range, back off when an enemy closes in.
 func _ranged(intent: PlayerIntent, player: Player, dir: Vector3, dist: float, preferred: float) -> void:
-	if dist > preferred:
+	if dist > preferred or (_blocked and dist > 3.0):
 		intent.move_dir = dir
 	elif dist < preferred * 0.5:
 		intent.move_dir = -dir
@@ -138,6 +144,15 @@ func _press(intent: PlayerIntent, player: Player, id: StringName, every: float) 
 		return
 	intent.pressed.append(id)
 	_wait[id] = every * _rng.randf_range(0.8, 1.25)
+
+
+## A world wall (layer 1) between the hero's muzzle and the target's chest.
+func _wall_between(player: Player, e: EnemyBase) -> bool:
+	if not player.is_inside_tree():
+		return false
+	var q := PhysicsRayQueryParameters3D.create(player.muzzle_position(), e.global_position + Vector3(0, 1.0, 0), 1)
+	q.exclude = [player.get_rid()]
+	return not player.get_world_3d().direct_space_state.intersect_ray(q).is_empty()
 
 
 func _nearest_enemy(from: Vector3) -> EnemyBase:

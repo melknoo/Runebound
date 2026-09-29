@@ -206,7 +206,18 @@
 - The laptop server shows single tick spikes up to ~60 ms under full load
   (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
-## M10 open items (phases 1-3 built, needs the user's playtest)
+## M10 open items (phases 1-4 built, needs the user's playtest)
+- **No healing between fights (design question):** a hero's health comes
+  back only by dying (shrine respawn) or changing zones. In the solo check
+  (bots, level 4-6, rolled gear) the tank takes about 2.4 health bars over
+  every Highlands camp plus the Colossus, the Elementalist about 0.7 (a
+  kiting bot is rarely reached). Alone, a tank would die about twice on the
+  way. M11's druid heals a party; a solo hero has nothing. Suggestion:
+  regeneration out of combat (after the sprint's 3 s rule).
+- **The Colossus may be too easy now:** one bot beats it in 13-19 s at
+  level 4-6 (696 health at L3; enemy damage does not scale with level yet).
+- The solo-check bots never read telegraphs (they dodge at random): their
+  numbers are a floor and a class comparison, not a player's result.
 - The Elementalist's rig (phase 3) has been reviewed on contact sheets only;
   the user's look preview is pending.
 - Casting on the move keeps the hero facing its aim for 0.45 s; a backwards

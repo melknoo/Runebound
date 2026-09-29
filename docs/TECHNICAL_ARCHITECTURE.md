@@ -300,7 +300,9 @@ three roles, a hero takes 4 of about 12 class abilities into the field.
   gives an Elementalist staves, robes and hoods.
 - **Bots:** `BotInputSource` plays its class: `ClassData.preferred_range`
   (melee 1.4 m, caster 10 m) picks melee or kiting; bots aim with
-  `PlayerIntent.aim_dir` (a source without a camera). `run_godot coop` mixes
+  `PlayerIntent.aim_dir` (a source without a camera). A caster whose shot
+  line to the target hits a world wall (a ray on layer 1 with each retarget
+  scan) walks in until the line is clear. `run_godot coop` mixes
   the companions (Sigmund tank, Brynja Elementalist, ...); `net_client`
   takes `--class=`.
 - **Threat and taunts (phase 2, the authority's):** `EnemyBase.threat`
@@ -685,6 +687,18 @@ resonance cost/gain, crit. Behavior lives in Player; numbers live in data.
   `-- --save=user://<file>.json` (no wipe, no fixed seed).
 - `tools\run_godot.ps1 shots <list>` — data-driven screenshots from
   `tests/shots/<list>.json` (zone, camera, spawns, actions, LookDev variants).
+  M10: a shot's `"class"` swaps the hero before it is placed,
+  `{"cast": "<id>", "full": true}` starts any ability, `{"slot": [i, "<id>"]}`
+  fills a loadout slot (then `{"hold": "secondary_ability"}` holds Rune
+  Wall); a clearing shot also frees the hero's lasting effects of the shot
+  before (walls, orbs, meteors, runes). `m10_classes` shows both classes.
+- `tools\run_godot.ps1 solocheck [class] [level]` (M10) — headless: one bot
+  hero of the class (default Elementalist, level 6) with the trainer kit of
+  its level and rolled gear, no talents, fights every stationary Highlands
+  camp, then the Colossus; prints per fight the result, time, damage taken
+  and health left, and a total (`-- --trace` logs positions and enemy
+  states every 5 s). Every fight starts at full health. Bots never read
+  telegraphs, so it is a floor for a player and a class comparison.
 - `tools\run_godot.ps1 perf <scenario> [label]`: scripted fight from
   `tests/perf/<scenario>.json` (M08: `highlands_open`, `highlands_vista`;
   `highlands_south` now at camp 1).
@@ -694,6 +708,9 @@ resonance cost/gain, crit. Behavior lives in Player; numbers live in data.
     their GPU / render-CPU / script time and new pipeline compiles.
   - `-- --prefire=a,b` runs abilities or effects once before recording, to
     bisect first-use hitches.
+  - M10: the rotation also casts the Elementalist's lasting spells (Flame
+    Wall, Ball Lightning, Ember Fall, Frost Nova), paced so at most one of
+    each is alive.
 - Windowed test modes run with `--quit-after 30000`, so a run whose runner
   never attaches (for example after a script compile error) can't hang.
 - Automated runs (`--capture/--worldcapture/--shots/--perf/--stress`) use the

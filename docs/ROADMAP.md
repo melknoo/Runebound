@@ -208,7 +208,7 @@ sie erst, wenn ihre Fähigkeit eine ID hat. Für den Druiden kommt in M11 eine F
 liegt als `PIXELLAB_API_KEY` in der git-ignorierten `.env`, nie in einem `.mcp.json` im Repo). Für
 Icons wird er nicht gebraucht.
 
-### M10 — Drei Rollen I: Tank + Elementar-Magier + Loadout (in Arbeit)
+### M10 — Drei Rollen I: Tank + Elementar-Magier + Loadout (gebaut, dein Playtest offen)
 Ersetzt die alte „Zweite Klasse“. Details: CLASS_DESIGN „Three roles“.
 **Entscheidungen des Spielers (2026-09-29):** 8 Pool-Fähigkeiten je Klasse jetzt, die übrigen
 ~4 kommen ab M12–M14 aus Bossen, Quests und Folianten; Block = halten (vorn −75 %) + Parade in
@@ -221,7 +221,11 @@ Runenwall mit Parade, Runen-Herausforderung, Wächtersprung, Runenkette, Schutzr
 Tank-Talente, Legendary „Warden's Oath“; Smoke 485 grün, Netz-Szenario `threat`). Phase 3
 gebaut (eigenes Magier-Rig mit 13 Clips, Frostnova, Flammenwand, Kugelblitz, Glutsturz, der
 Frost-Ast mit Wurzeln/Einfrieren, Cinderfall; Smoke 500 grün, Netz-Suite grün; die
-Look-Vorschau des Rigs geht an dich). Als Nächstes Phase 4 (Abschluss, dein Playtest).
+Look-Vorschau des Rigs geht an dich). Phase 4 gebaut (Shot-Liste `m10_classes`, Solo-Check
+beider Klassen per Bot: beide schaffen alle Camps und den Colossus auf Stufe 4 und 6 ohne Tod,
+Perf-Vergleich mit dem Stand vor M10, Playtest-Gruppe „M10: Klassen“, Gate-Walk in
+PROJECT_STATE). Offen für dich: der Playtest, der Look des Magiers und zwei Fragen aus dem
+Solo-Check (keine Heilung zwischen Kämpfen, Colossus womöglich zu leicht).
 **Werkzeug:** Posen, Silhouetten und das Magier-Rig entstehen im Live-Blender-Loop
 (`tools/modelgen/live.py` über den Blender-MCP: bauen, posieren, Screenshot); jedes Ergebnis
 wandert zurück ins Skript, das Skript bleibt die einzige Quelle.

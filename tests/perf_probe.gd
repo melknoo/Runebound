@@ -264,6 +264,14 @@ func _fight(duration: float) -> void:
 				_step = "fracture_rune"
 				player.try_ability(&"fracture_rune")
 				elapsed += 0.25
+		# M10: the Elementalist's lasting spells, paced so at most one of each
+		# is alive at a time (a busy fight, not a stack of walls)
+		for spell: Array in [[&"flame_wall", 6], [&"ball_lightning", 5], [&"ember_fall", 7], [&"frost_nova", 8]]:
+			if cycle % int(spell[1]) == int(spell[1]) - 1 and player.knows(spell[0]):
+				_step = String(spell[0])
+				player.try_ability(spell[0])
+				await _wait(0.1)
+				elapsed += 0.1
 		_step = "dodge"
 		player.try_dodge()
 		await _wait(0.15)

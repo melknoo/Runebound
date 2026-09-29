@@ -16,7 +16,10 @@ with its own rig, four new spells and the Frost branch.
 | Root druid (working name) | healer | mid range | M11 |
 
 - **Soft when alone:** every class finishes the story and the open world
-  solo. A role is a strength, not a ticket.
+  solo. A role is a strength, not a ticket. (M10 solo check: a bot of
+  either class beats every Highlands camp and the Colossus alone at level
+  4-6; the tank takes about four times the damage, and nothing heals it
+  between fights yet - PROJECT_STATE M10 phase 4.)
 - **Demanding in co-op dungeons** (3–5 players, locked solo, WORLD_DESIGN
   "Planned: dungeons"): without a tank or a healer they get clearly harder.
 - **Threat + taunt:** enemies remember who threatens them most (damage dealt,

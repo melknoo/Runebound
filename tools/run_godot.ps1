@@ -10,6 +10,7 @@
 #   .\tools\run_godot.ps1 perf <scenario> [label] # scripted fight: tests/perf/<scenario>.json
 #   .\tools\run_godot.ps1 stress                 # lab stress test (exit 1 below budget)
 #   .\tools\run_godot.ps1 serverperf [heroes]    # M09: headless Highlands tick cost with bot heroes
+#   .\tools\run_godot.ps1 solocheck [class] [level] # M10: one bot hero alone through the Highlands camps + Colossus
 #   .\tools\run_godot.ps1 net [scenario]        # M09: multi-process co-op tests (server + headless clients)
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 #   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
@@ -75,7 +76,7 @@ function Update-Import {
 }
 if ($Mode -notin @("import", "reset", "deploy", "release")) { Update-Import }
 
-if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "wsspike", "deploy", "release")) { Show-OtherGodot }  # headless modes share no GPU
+if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "solocheck", "wsspike", "deploy", "release")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would
@@ -234,6 +235,13 @@ switch ($Mode) {
 		# (default 5). --fixed-fps 60 makes every frame exactly one tick.
 		$heroes = if ($Name) { $Name } else { "5" }
 		& $godot --headless --fixed-fps 60 --path $proj --quit-after 20000 res://tests/server_perf.tscn -- "--heroes=$heroes"
+	}
+	"solocheck" {
+		# M10: can a class clear the Highlands alone? One bot hero (default the
+		# Elementalist, level 6) fights every camp, then the Colossus.
+		$class = if ($Name) { $Name } else { "elementalist" }
+		$level = if ($Label) { $Label } else { "6" }
+		& $godot --headless --fixed-fps 60 --path $proj --quit-after 150000 res://tests/solo_check.tscn -- "--class=$class" "--level=$level"
 	}
 	default   { Write-Error "unknown mode $Mode"; exit 1 }
 }
