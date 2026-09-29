@@ -2,6 +2,9 @@
 # (and on the server by runebound-server.sh after every pull).
 .godot/
 
+# Python bytecode (Blender and the tools/*gen scripts write it on import).
+__pycache__/
+
 # Local secrets (API keys such as PIXELLAB_API_KEY). The repo is public.
 .env
 .env.*
