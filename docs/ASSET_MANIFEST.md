@@ -107,5 +107,64 @@ drives an open Blender window through the add-on "MCP for Blender" (port
 Claude"). It is used to try out forms and poses and to take viewport
 screenshots. The source stays the `tools/modelgen` scripts (ART_BIBLE
 "Construction"). Its asset integrations (Poly Haven, Sketchfab, Poly Pizza,
-Hyper3D, Hunyuan3D) stay off: the style is built from the scripts, and every
-source needs a clear licence.
+Hyper3D, Hunyuan3D, Tripo) stay off: the style is built from the scripts, and
+every source needs a clear licence.
+
+Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
+Blender, exports nothing and leaves `assets/` untouched. Through the MCP's
+`execute_blender_code`:
+
+```python
+import sys; sys.dont_write_bytecode = True
+p = r"D:\fable_test\tools\modelgen"; p in sys.path or sys.path.insert(0, p)
+import importlib, live; importlib.reload(live)
+live.build("runebreaker"); live.pose("cleave_r", 7); live.view("front34")
+live.snap("rb_cleave")  # or the MCP's get_viewport_screenshot
+```
+
+`build(name, bake=True)` takes a character key (`runebreaker`, `marauder`, ...)
+or a prop function (`waypoint_shrine`, `treasure_chest`, ...). Each call
+reloads lib and both generators, so a script edit shows on the next build.
+For that build only it swaps module functions and restores them in
+`finally`. rig.py, atlas.py and the generators stay unchanged, and the
+headless path never imports live.py:
+- `rig.reset_scene` empties the open scene in place.
+- `rig.export_glb` is skipped.
+- `atlas.bake` writes to `%TEMP%\runebound_live` and puts the atlas on the
+  body slots.
+- `bake=False` also skips `atlas.unwrap`, which gives a white body with glow
+  colours.
+
+A size/mtime fingerprint of `assets/` is taken before and after each build,
+and a change raises `RuntimeError`. The other helpers:
+- `pose(clip, frame)`
+- `view(front34|side|front|back|top)`: orthographic, framed on the bounding box
+- `snap(label)`: saves `%TEMP%\runebound_live\shots\<label>.png`, outside the
+  repo
+
+Build times in the GUI (2026-09-29):
+- Runebreaker: 2.5-3.7 s baked, 0.1 s without the bake.
+- Waypoint shrine 16 s and chest 22 s baked, almost all of it UV packing;
+  0.0 s without the bake.
+- 22 s calls did not time out.
+
+Pitfalls:
+- `read_factory_settings`, the original reset, unloads the MCP add-on.
+- Export and bake write to `assets/` unless they are swapped.
+- Without the reload, Python keeps the old modules and the old shapes.
+- `lib/__pycache__/*.pyc` used to be tracked, so Blender imports set
+  `sys.dont_write_bytecode`.
+- Never delete the Scene: the add-on keeps its server state on it.
+- Actions carry a fake user and have to be removed, or the next `idle`
+  becomes `idle.001`.
+- A Blender window behind the editor never redraws. `region_3d.view_matrix`,
+  which the screenshot reads, then stays stale until a region draw
+  (`wm.redraw_timer` type `DRAW`; `DRAW_WIN_SWAP` is skipped). `view()` and
+  `snap()` force that draw.
+
+Registration: the local scope is keyed by the exact project path. VS Code
+opens `d:\fable_test`, while shells write `D:/fable_test`. Register from cmd
+after `cd /d d:\fable_test`:
+`claude mcp add blender -s local -e DISABLE_TELEMETRY=true -e NO_PROXY=* -- uvx mcp-for-blender@2.1.1`
+(`-e` takes values up to the `--`). `NO_PROXY=*` is needed because uv
+otherwise follows the Windows system proxy.
