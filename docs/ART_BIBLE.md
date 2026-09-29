@@ -166,6 +166,13 @@ posterize moves values in bands of about 7 L*, and fog lifts distant ground.
   hex facets, floating pieces.
 
 ### Construction (`tools/modelgen`)
+- **The scripts are the only source** (user decision 2026-09-29: "you stay
+  the source, I model nothing by hand"). Every model comes out of a
+  `tools/modelgen` script run headless. A live Blender session through the
+  Blender MCP (ASSET_MANIFEST "Live Blender") is for trying things and for
+  viewport screenshots only. Whatever survives there is written back into
+  the script before the GLB is exported and committed. No `.blend` files
+  are sources, and no GLB exists without a script that rebuilds it.
 - Forms are lofted cross-section rings per bone, not box primitives.
   Facets are flat-shaded, forms exaggerated about 1.2x.
 - Build mirrored, then add deliberate asymmetry (the Marauder's single

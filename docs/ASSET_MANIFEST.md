@@ -99,3 +99,13 @@ tools/modelgen/lib/atlas.py (UV to exact density, pixel-atlas bake). GLB imports
 60 fps, no LODs, name suffixes off (no accidental -col bodies). Regenerate:
 `blender --background --python tools/modelgen/generate_characters_v2.py` (and
 generate_props.py), `python tools/texgen/biome.py`, then `tools\run_godot.ps1 import`.
+
+**Live Blender (2026-09-29):** the Blender MCP (`mcp-for-blender` 2.1.1 by
+ahujasid, pinned, telemetry off, registered in Claude Code's local scope)
+drives an open Blender window through the add-on "MCP for Blender" (port
+9876 on localhost; the sidebar tab "MCP for Blender" -> "Connect to
+Claude"). It is used to try out forms and poses and to take viewport
+screenshots. The source stays the `tools/modelgen` scripts (ART_BIBLE
+"Construction"). Its asset integrations (Poly Haven, Sketchfab, Poly Pizza,
+Hyper3D, Hunyuan3D) stay off: the style is built from the scripts, and every
+source needs a clear licence.
