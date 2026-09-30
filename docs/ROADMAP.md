@@ -225,7 +225,10 @@ Look-Vorschau des Rigs geht an dich). Phase 4 gebaut (Shot-Liste `m10_classes`, 
 beider Klassen per Bot: beide schaffen alle Camps und den Colossus auf Stufe 4 und 6 ohne Tod,
 Perf-Vergleich mit dem Stand vor M10, Playtest-Gruppe „M10: Klassen“, Gate-Walk in
 PROJECT_STATE). Offen für dich: der Playtest, der Look des Magiers und zwei Fragen aus dem
-Solo-Check (keine Heilung zwischen Kämpfen, Colossus womöglich zu leicht).
+Solo-Check: Heilung zwischen Kämpfen (entschieden 2026-09-30: **keine Regeneration außerhalb
+des Kampfs**, sonst wartet man einfach; stattdessen **Verbrauchsgüter** wie Heiltränke und Essen,
+die einen Teil des Lebens heilen – geplant, Zeitpunkt offen) und der Colossus womöglich zu
+leicht.
 **Werkzeug:** Posen, Silhouetten und das Magier-Rig entstehen im Live-Blender-Loop
 (`tools/modelgen/live.py` über den Blender-MCP: bauen, posieren, Screenshot); jedes Ergebnis
 wandert zurück ins Skript, das Skript bleibt die einzige Quelle.

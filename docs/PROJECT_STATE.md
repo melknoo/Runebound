@@ -102,9 +102,10 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     | Elementalist | 11/11 won, 0 deaths, 89 s, 88 damage taken (0.7 bars) | 11/11, 0 deaths, 106 s, 76 (0.7) |
     | Runebreaker | 11/11 won, 0 deaths, 78 s, 372 damage taken (2.4 bars) | 11/11, 0 deaths, 83 s, 356 (2.4) |
 
-    The Colossus falls in 13-19 s either way. Two open points for the
-    user: there is no healing between fights, and the Colossus may be too
-    easy (KNOWN_ISSUES "M10 open items"). The check found a bot stall
+    The Colossus falls in 13-19 s either way. Two points it raised: there
+    is no healing between fights (the user, 2026-09-30: no regeneration,
+    consumables instead - planned), and the Colossus may be too easy
+    (KNOWN_ISSUES "M10 open items"). The check found a bot stall
     (a caster and an enemy caster on either side of a ruin wall); casters
     now walk in when a wall blocks their line.
   - **Perf** (interleaved A/B against the state before M10, `highlands_open`,

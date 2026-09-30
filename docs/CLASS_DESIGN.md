@@ -20,6 +20,10 @@ with its own rig, four new spells and the Frost branch.
   either class beats every Highlands camp and the Colossus alone at level
   4-6; the tank takes about four times the damage, and nothing heals it
   between fights yet - PROJECT_STATE M10 phase 4.)
+- **No regeneration out of combat** (user, 2026-09-30): otherwise waiting
+  would answer every fight. Between fights a hero heals with consumables
+  (potions, food: part of the health, ROADMAP); in a fight the druid (M11)
+  heals the party.
 - **Demanding in co-op dungeons** (3–5 players, locked solo, WORLD_DESIGN
   "Planned: dungeons"): without a tank or a healer they get clearly harder.
 - **Threat + taunt:** enemies remember who threatens them most (damage dealt,
