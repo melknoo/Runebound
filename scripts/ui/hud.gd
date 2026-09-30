@@ -15,6 +15,7 @@ var _gold_label: Label
 var _draught_label: Label
 var _cost_tick: ColorRect
 var _hurt_flash: ColorRect
+var _last_health: float = -1.0  # M10b: the red flash is for losses only
 ## M10: six fixed slots (SLOT_KEYS); each shows whatever the loadout puts there.
 var _slots: Dictionary = {}  # slot key -> {overlay, slot, icon, key, key_label, id, name, desc, type, data}
 var _toast_box: VBoxContainer
@@ -542,8 +543,9 @@ func _process(_delta: float) -> void:
 func _on_health_changed(current: float, maximum: float) -> void:
 	var frac := clampf(current / maximum, 0.0, 1.0)
 	_health_fill.size.x = (BAR_WIDTH - BAR_INSET * 2.0) * frac
-	if frac < 1.0:
+	if _last_health >= 0.0 and current < _last_health:  # a heal (draught) never flashes red
 		_hurt_flash.color.a = maxf(_hurt_flash.color.a, 0.22)
+	_last_health = current
 
 
 ## M10: each slot shows what the loadout puts there (the basic attack once

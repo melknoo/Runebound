@@ -24,6 +24,8 @@ seconds**; from **drops, chests and a merchant**.
   icon and the motes; sounds `potion_drink`, `potion_pickup` (sfxgen).
 - Tests: smoke 517 green (shop, cap, drinking over time, drops and a full
   bag, the save, the inventory row, the HUD); shots `m10b_draughts`.
+- User note (2026-09-30): the screen flashed red while drinking - the HUD's
+  hurt flash fired on every health change below full; now only on a loss.
 - **Gate walk (user):** Runehold: Ylva ([E] Trade) south-west of the fire,
   buy two draughts. The Highlands: take a few hits in a camp, then I ->
   right-click the draught. Watch for dropped flasks after kills and in

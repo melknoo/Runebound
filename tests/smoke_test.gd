@@ -2274,7 +2274,10 @@ func _run() -> void:
 	_check(hp.use_consumable(draught) and hp.consumable_count(draught) == Consumables.cap(draught) - 1,
 		"drinking uses one draught")
 	_check(hp.consumable_deny_reason(draught) == "Still drinking", "one draught at a time")
+	hp.health.health_changed.emit(hp.health.current_health, hp.health.max_health)  # the HUD knows the start
+	hub.hud._hurt_flash.color.a = 0.0
 	await _wait_frames(60)
+	_check(is_zero_approx(hub.hud._hurt_flash.color.a), "healing never flashes the screen red (only a loss does)")
 	var mid_drink := hp.health.current_health
 	await _wait_frames(200)
 	var healed := hp.health.current_health - before_drink
