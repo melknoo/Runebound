@@ -1267,6 +1267,15 @@ func _run() -> void:
 	player.global_position = Vector3(0, 0.2, 6)
 	player.velocity = Vector3.ZERO
 	player.reset_cooldowns()
+	var d_anim := player.animator
+	var druid_clips_ok := d_anim != null and player.class_data.rig_path.ends_with("druid.glb")
+	if d_anim != null:
+		for clip: StringName in [&"idle", &"run", &"dodge", &"thorn", &"mend", &"bark", &"regrowth", &"root_grasp",
+				&"grove", &"thornfield", &"totem", &"bloom", &"flinch"]:
+			druid_clips_ok = druid_clips_ok and d_anim.anim.has_animation(clip)
+		druid_clips_ok = druid_clips_ok and absf(d_anim.anim.get_animation(&"dodge").length
+			- (Player.DODGE_DURATION + Player.DODGE_RECOVERY)) < 1.5 / 60.0
+	_check(druid_clips_ok, "M11: the druid has its own rig with a clip for every ability (dodge at gameplay timing)")
 	_check(druid != null and player.class_data.role == "Healer" and player.basic_attack() == &"thorn_volley"
 		and player.can_use(&"mending_bloom") and is_equal_approx(player.resonance, player.max_resource()),
 		"M11: the druid starts with Thorn Volley and Mending Bloom; its Sap starts full")

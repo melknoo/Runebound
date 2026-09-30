@@ -122,9 +122,9 @@ func _build_zone() -> void:
 	var druid_trainer := TrainerNpc.new()
 	druid_trainer.name = "TrainerDruid"
 	druid_trainer.teaches_class = &"druid"
-	druid_trainer.rig_path = "res://assets/models/chars/elementalist.glb"
-	druid_trainer.material_id = "elementalist"
-	druid_trainer.body_tint = Color(0.66, 0.74, 0.5)  # moss over the coat until the druid rig exists
+	druid_trainer.rig_path = "res://assets/models/chars/druid.glb"
+	druid_trainer.material_id = "druid"
+	druid_trainer.body_tint = Color(0.86, 0.8, 0.7)  # an older, paler robe than a player's: she is no hero
 	druid_trainer.rune_color = ArtKit.color("color_roles.nature.body", Color("#7ED957"))
 	world.add_child(druid_trainer)
 	druid_trainer.global_position = DRUID_TRAINER_SPOT

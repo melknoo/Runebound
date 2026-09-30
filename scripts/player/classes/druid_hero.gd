@@ -75,14 +75,15 @@ func _register_actions() -> void:
 	})
 
 
-## Until the druid rig exists (M11 phase 3) it borrows the Elementalist's
-## clips: the thorns throw like a Rune Bolt, a heal reaches out like a spark.
+## The druid rig's clips (tools/modelgen: druid_clips). The quick heals and
+## the thorns are upper-body gestures, so the legs keep running; the ground
+## abilities (roots, grove, totem, the bloom) take the whole body.
 func _anim_profile() -> Dictionary:
 	var profile := super()
-	(profile["actions"] as Dictionary).merge({&"root_grasp": &"ember_fall", &"renewal_grove": &"frost_nova",
-		&"growth_totem": &"ember_fall", &"wild_bloom": &"frost_nova"})
-	(profile["upper"] as Dictionary).merge({&"thorn_volley": &"bolt", &"mending_bloom": &"chain_spark",
-		&"barkskin": &"chain_spark", &"regrowth": &"fracture_rune", &"thornfield": &"flame_wall"})
+	(profile["actions"] as Dictionary).merge({&"root_grasp": &"root_grasp", &"renewal_grove": &"grove",
+		&"growth_totem": &"totem", &"wild_bloom": &"bloom"})
+	(profile["upper"] as Dictionary).merge({&"thorn_volley": &"thorn", &"mending_bloom": &"mend",
+		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield"})
 	return profile
 
 

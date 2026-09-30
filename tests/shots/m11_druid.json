@@ -1,0 +1,33 @@
+{
+	"zone": "res://scenes/combat_lab.tscn",
+	"out": "captures_shots/m11_druid",
+	"comment": "M11: the root druid in the training grounds - its own rig from three sides and each of its abilities (the heals land on the druid itself: no ally in the lab). A shot's \"class\" swaps the hero before it is placed.",
+	"shots": [
+		{"name": "druid_front", "class": "druid", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2, "settle": 0.8},
+		{"name": "druid_three_quarter", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.5, "settle": 0.5},
+		{"name": "druid_back", "player": [0, 0.2, 6], "face": 0.0, "yaw": 0.4, "pitch": -0.16, "zoom": 3.8, "settle": 0.5},
+		{"name": "thorn_volley", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.35, "pitch": -0.22, "zoom": 4.2,
+			"spawn": [{"id": "rusher", "at": [0.3, 0.2, 1], "freeze": true, "face": 0.0}],
+			"actions": [{"wait": 0.2}, {"cast": "thorn_volley"}, {"wait": 0.12}], "settle": 0.0},
+		{"name": "mending_bloom", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.9, "pitch": -0.18, "zoom": 4.0,
+			"actions": [{"wait": 0.2}, {"cast": "mending_bloom"}, {"wait": 0.15}], "settle": 0.0},
+		{"name": "barkskin", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.9, "pitch": -0.18, "zoom": 4.0,
+			"actions": [{"wait": 0.2}, {"cast": "barkskin"}, {"wait": 0.2}], "settle": 0.0},
+		{"name": "root_grasp", "player": [0, 0.2, 9], "face": 0.0, "yaw": 0.35, "pitch": -0.3, "zoom": 5.0,
+			"spawn": [{"id": "rusher", "at": [0.4, 0.2, 3.2], "freeze": true, "face": 0.0},
+			          {"id": "rusher", "at": [-1.2, 0.2, 3.6], "freeze": true, "face": 0.3}],
+			"actions": [{"wait": 0.2}, {"cast": "root_grasp"}, {"wait": 0.14}], "settle": 0.0},
+		{"name": "renewal_grove", "player": [0, 0.2, 9], "face": 0.0, "yaw": 0.4, "pitch": -0.42, "zoom": 6.0,
+			"actions": [{"wait": 0.2}, {"cast": "renewal_grove"}, {"wait": 0.6}], "settle": 0.0},
+		{"name": "thornfield", "player": [0, 0.2, 9], "face": 0.0, "yaw": 0.3, "pitch": -0.34, "zoom": 5.5,
+			"spawn": [{"id": "rusher", "at": [-0.8, 0.2, 3.0], "freeze": true, "face": 0.2},
+			          {"id": "rusher", "at": [1.2, 0.2, 2.6], "freeze": true, "face": -0.2}],
+			"actions": [{"wait": 0.2}, {"cast": "thornfield"}, {"wait": 0.45}], "settle": 0.0},
+		{"name": "growth_totem", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.8, "pitch": -0.22, "zoom": 4.8,
+			"actions": [{"wait": 0.2}, {"cast": "growth_totem"}, {"wait": 0.5}], "settle": 0.0},
+		{"name": "wild_bloom", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.5, "pitch": -0.36, "zoom": 5.5,
+			"spawn": [{"id": "rusher", "at": [2.2, 0.2, 6.6], "freeze": true, "face": -0.9},
+			          {"id": "rusher", "at": [-2.4, 0.2, 7.0], "freeze": true, "face": 1.2}],
+			"actions": [{"wait": 0.2}, {"cast": "wild_bloom"}, {"wait": 0.2}], "settle": 0.0}
+	]
+}

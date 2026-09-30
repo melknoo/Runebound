@@ -32,17 +32,17 @@ func _ready() -> void:
 	var hot := ArtKit.color("color_roles.nature.hot", Color("#E4FFC4"))
 	var glyph := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(radius * 1.8, radius * 1.8)
+	plane.size = Vector2(radius * 0.9, radius * 0.9)  # the glyph's pixel scale of the Warding Rune
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	mat.alpha_scissor_threshold = 0.3
 	if ResourceLoader.exists("res://assets/vfx/glyph.png"):
 		mat.albedo_texture = load("res://assets/vfx/glyph.png")
-	mat.albedo_color = hot
+	mat.albedo_color = green
 	mat.emission_enabled = true
-	mat.emission = green
-	mat.emission_energy_multiplier = 1.3
+	mat.emission = ArtKit.color("color_roles.nature.edge", Color("#2E6B34"))
+	mat.emission_energy_multiplier = 1.0
 	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	mat.disable_receive_shadows = true
 	plane.material = mat
