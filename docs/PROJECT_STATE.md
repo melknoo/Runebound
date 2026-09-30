@@ -1,10 +1,33 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-29 · Milestone: **M10 Three roles I (tank + Elementalist +
-loadout)** — all four phases built (below); the user's playtest is the gate. M09 Co-op was played by the user and a
+Updated: 2026-09-30 · Milestone: **M10 Three roles I (tank + Elementalist +
+loadout)** — all four phases built, plus **M10b Healing Draughts** (below);
+the user's playtest is the gate for both. M09 Co-op was played by the user and a
 friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## M10b Healing Draughts (built 2026-09-30, the user's playtest is open)
+The M10 solo check found no healing between fights; the user decided (2026-09-30):
+**no regeneration out of combat**, healing from consumables instead - now,
+as a small M10b; drunk **only from the inventory**; healing **over a few
+seconds**; from **drops, chests and a merchant**.
+- **Healing Draught:** 35 % of the maximum health over 4 s, one at a time,
+  5 in the bag (no inventory slot). Right-click in the inventory (I) drinks;
+  the HUD counts them next to the gold.
+- **Sources:** kills (5 % trash, 15 % brute, 30 % elite, a boss always 2),
+  chests (60 %), and **Ylva Ashbrew**, south-west of the hearth in Runehold,
+  for 30 gold. On the ground: a red flask that glides into the bag like gold
+  while there is room. Co-op: personal loot in GRANT (protocol 11); other
+  players see the drinking (HeroFx "drink").
+- New colour role `health` (#D8404A, the HUD bar's red) for the flask, the
+  icon and the motes; sounds `potion_drink`, `potion_pickup` (sfxgen).
+- Tests: smoke 517 green (shop, cap, drinking over time, drops and a full
+  bag, the save, the inventory row, the HUD); shots `m10b_draughts`.
+- **Gate walk (user):** Runehold: Ylva ([E] Trade) south-west of the fire,
+  buy two draughts. The Highlands: take a few hits in a camp, then I ->
+  right-click the draught. Watch for dropped flasks after kills and in
+  chests. The J list, group "M10: Klassen & Heiltränke" (the draught points).
 
 ## M10 Three roles I (in progress, 2026-09-29)
 Plan with the user's answers (8 abilities per class now, the rest from M12-M14
@@ -115,7 +138,8 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     60.1): no measurable cost. Both builds ran below the M08 value (66.3 FPS)
     on this day and rose from round to round - the machine, not the build;
     the interleaving takes that out.
-  - Playtest log (J): new group "M10: Klassen" (17 points).
+  - Playtest log (J): new group "M10: Klassen & Heiltränke" (17 points in
+    M10, 4 more with M10b).
   - **Gate walk (user):**
     1. Title -> "Neuer Charakter": an Elementalist. Runehold: Maren at the
        east wall by the spawn; Rune Bolt held down, buy Ember Lance (L2).
@@ -130,7 +154,7 @@ sources; block = hold + parry; the Elementalist builds and spends **Aether**;
     3. `tools\run_godot.cmd coop` (a tank and an Elementalist companion):
        a camp as the tank - do the enemies stay on you (the red "!")?
     4. The Colossus as the Elementalist, alone.
-    5. The J list, group "M10: Klassen"; the look of the Elementalist
+    5. The J list, group "M10: Klassen & Heiltränke"; the look of the Elementalist
        (the preview sheet above).
 - **Tooling:** the live Blender loop (`tools/modelgen/live.py` through the
   Blender MCP: build, pose, screenshot) is there for poses and silhouettes;

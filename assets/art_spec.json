@@ -31,6 +31,12 @@
 			"body": "#9FB4FF",
 			"rule": "M07 experience: the thin HUD bar, level badge, XP toasts; periwinkle so it never reads as Resonance gold or the player teal"
 		},
+		"health": {
+			"edge": "#5A1A22",
+			"body": "#D8404A",
+			"hot": "#FF9C9C",
+			"rule": "M10b the hero's own health: the HUD bar, Healing Draughts and their rising motes; never a filled shape on the ground (filled red there is threat)"
+		},
 		"fire": {
 			"edge": "#B8321C",
 			"body": "#FF6A2A",

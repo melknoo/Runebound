@@ -360,6 +360,20 @@ three roles, a hero takes 4 of about 12 class abilities into the field.
   `chill_duration` stat, element 14 of the hit array) so a client's hit
   chills as long on the server. Echo Rune: `FractureRune` detonates a second
   time at half damage.
+- **Consumables (M10b):** `Consumables` (`scripts/items/consumables.gd`)
+  holds the definitions (heal, time, cap, price) and the drop rolls.
+  `Player.consumables` {id: count} is saved per character (`"consumables"`,
+  clamped to the cap on load; save stays v6). `use_consumable` starts a heal
+  over time that the owner's `_physics_process` pays out through
+  `HealthComponent.heal`; the look is `HeroFx` "drink" (`VFX.drink`: rising
+  motes, never a ground shape), so other screens see it while the health
+  itself travels in the hero's net state. Rewards carry `draughts`
+  (`give_reward` / `receive_reward`, GRANT element 7, protocol **11**);
+  `ConsumableDrop` is the pickup (a gold-like magnet while the bag has room).
+  The inventory tab lists consumables above the bag (right-click drinks); the
+  HUD counts them next to the gold. The merchant (`MerchantNpc`) opens the
+  zone's `TrainerUI` in a shop view (`buy_deny_reason`, `try_buy_consumable`),
+  so every window closes it the way it closes a trainer.
 - **Fixed on the way:** the Hollow Warden halved frontal hits twice in co-op
   (on the puppet and again on the server); `Equipment` now takes the class's
   base health.
@@ -692,6 +706,9 @@ resonance cost/gain, crit. Behavior lives in Player; numbers live in data.
   fills a loadout slot (then `{"hold": "secondary_ability"}` holds Rune
   Wall); a clearing shot also frees the hero's lasting effects of the shot
   before (walls, orbs, meteors, runes). `m10_classes` shows both classes.
+  M10b: `{"draughts": n}`, `{"hurt": 0.4}`, `{"do": "drink" | "merchant" |
+  "draught_drops"}`; `m10b_draughts` shows the merchant, the shop, the bag,
+  flasks on the ground and a hero drinking.
 - `tools\run_godot.ps1 solocheck [class] [level]` (M10) — headless: one bot
   hero of the class (default Elementalist, level 6) with the trainer kit of
   its level and rolled gear, no talents, fights every stationary Highlands

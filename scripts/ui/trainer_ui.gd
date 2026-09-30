@@ -3,7 +3,8 @@ extends CanvasLayer
 ## M07b trainer panel: the class's TRAINER abilities with level requirement
 ## and gold price; Learn buys one. Opened by a TrainerNpc, closed with Esc.
 ## Locks combat input and frees the mouse like the other panels. Also nudges
-## the player with a toast when an ability first becomes affordable.
+## the player with a toast when an ability first becomes affordable. M10b: a
+## MerchantNpc opens the same panel as a shop (consumables for gold).
 
 var player: Player
 
@@ -13,7 +14,7 @@ var _flavour: Label
 var _gold_label: Label
 var _rows: VBoxContainer
 var _announced: Array[StringName] = []
-var _npc: TrainerNpc = null
+var _npc: Npc = null  # a TrainerNpc, or a MerchantNpc for the shop view
 
 
 func setup(p: Player) -> void:
@@ -75,7 +76,27 @@ func try_buy(data: AbilityData) -> bool:
 	return true
 
 
-func open(npc: TrainerNpc, p: Player = null) -> void:
+## M10b shop: why one `cid` can't be bought right now; "" when it can.
+static func buy_deny_reason(p: Player, cid: StringName) -> String:
+	if p.consumable_count(cid) >= Consumables.cap(cid):
+		return "Bag full"
+	if p.gold < Consumables.price(cid):
+		return "Need %d more gold" % (Consumables.price(cid) - p.gold)
+	return ""
+
+
+func try_buy_consumable(cid: StringName) -> bool:
+	if buy_deny_reason(player, cid) != "" or not player.spend_gold(Consumables.price(cid)):
+		Sfx.play_ui("ui_denied", -8.0)
+		return false
+	player.add_consumable(cid, 1)
+	Sfx.play_ui("coin_pickup", -4.0)
+	SaveGame.save_now()
+	_refresh()
+	return true
+
+
+func open(npc: Npc, p: Player = null) -> void:
 	if p != null:
 		player = p
 	_npc = npc
@@ -172,12 +193,19 @@ func _refresh() -> void:
 	if player == null:
 		return
 	_title.text = (_npc.npc_name if _npc != null else "Trainer").to_upper()
-	_flavour.text = _npc.flavour_line() if _npc != null else ""
 	_gold_label.text = str(player.gold)
 	for child in _rows.get_children():
 		child.queue_free()
-	if _npc != null and not _npc.teaches(player):  # M10: one trainer per class
-		_flavour.text = _npc.referral_line(player)
+	var merchant := _npc as MerchantNpc
+	if merchant != null:  # M10b: the shop view
+		_flavour.text = merchant.flavour_line()
+		for cid in merchant.sells:
+			_rows.add_child(_shop_row(cid))
+		return
+	var trainer := _npc as TrainerNpc
+	_flavour.text = trainer.flavour_line() if trainer != null else ""
+	if trainer != null and not trainer.teaches(player):  # M10: one trainer per class
+		_flavour.text = trainer.referral_line(player)
 		return
 	for data in offers(player):
 		_rows.add_child(_row(data))
@@ -231,6 +259,51 @@ func _row(data: AbilityData) -> Control:
 	btn.text = "Learn" if reason == "" else reason
 	btn.disabled = reason != ""
 	btn.pressed.connect(func() -> void: try_buy(data))
+	row.add_child(btn)
+	return row
+
+
+## M10b: one shelf row of the shop (icon, name + text, bag count, price, Buy).
+func _shop_row(cid: StringName) -> Control:
+	var reason := buy_deny_reason(player, cid)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var slot := Control.new()
+	slot.custom_minimum_size = Vector2(44, 44)
+	row.add_child(slot)
+	var frame := TextureRect.new()
+	frame.texture = load(UiTheme.UI_DIR + "slot.png")
+	slot.add_child(frame)
+	var icon := TextureRect.new()
+	icon.texture = Hud.icon(cid)
+	icon.position = Vector2(2, 2)
+	slot.add_child(icon)
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_theme_constant_override("separation", 0)
+	row.add_child(text)
+	var name_label := Label.new()
+	name_label.text = "%s   %d/%d in your bag" % [Consumables.display_name(cid), player.consumable_count(cid), Consumables.cap(cid)]
+	name_label.add_theme_color_override("font_color", ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
+	text.add_child(name_label)
+	var desc := Label.new()
+	desc.text = str(Consumables.def(cid).get("text", ""))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.custom_minimum_size = Vector2(520, 0)
+	desc.add_theme_color_override("font_color", UiTheme.TEXT)
+	text.add_child(desc)
+	var price := Label.new()
+	price.custom_minimum_size = Vector2(150, 0)
+	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	price.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	price.text = "%d gold" % Consumables.price(cid)
+	price.add_theme_color_override("font_color", ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
+	row.add_child(price)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(150, 0)
+	btn.text = "Buy" if reason == "" else reason
+	btn.disabled = reason != ""
+	btn.pressed.connect(func() -> void: try_buy_consumable(cid))
 	row.add_child(btn)
 	return row
 

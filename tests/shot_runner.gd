@@ -23,6 +23,9 @@ extends Node
 ## placed); {"cast": "<ability id>", "full": true} starts any ability (full =
 ## a full resource bar first); {"slot": [i, "<id>"]} puts an ability into a
 ## loadout slot (e.g. Rune Wall on RMB, then {"hold": "secondary_ability"}).
+## M10b: {"draughts": n} fills the bag, {"hurt": 0.4} sets health to that
+## fraction, {"do": "drink" | "merchant" | "draught_drops"} drinks one, opens
+## Ylva's shop, lays three flasks 6 m ahead.
 
 var list_path: String = ""
 
@@ -152,6 +155,11 @@ func _do(action: Dictionary) -> void:
 			player.progression.learn(Progression.talent(StringName(id)))
 	elif action.has("gold"):  # M07b
 		player.add_gold(int(action["gold"]))
+	elif action.has("draughts"):  # M10b
+		player.add_consumable(Consumables.HEALING_DRAUGHT, int(action["draughts"]))
+	elif action.has("hurt"):
+		player.health.current_health = player.health.max_health * float(action["hurt"])
+		player.health.health_changed.emit(player.health.current_health, player.health.max_health)
 	elif action.has("cast"):  # M10: any ability by id
 		_cast(StringName(action["cast"]), bool(action.get("full", false)))
 	elif action.has("slot"):  # M10: [slot index, ability id]
@@ -216,6 +224,13 @@ func _do(action: Dictionary) -> void:
 						_zone.trainer_ui.open(child)
 			"gold": _zone.spawn_gold_drop(25 + randi() % 30,
 				player.global_position + player.facing() * 3.5 + Vector3(randf_range(-1.0, 1.0), 0, 0))
+			"drink": player.use_consumable(Consumables.HEALING_DRAUGHT)  # M10b
+			"merchant":
+				for child in _zone.world.get_children():
+					if child is MerchantNpc:
+						_zone.trainer_ui.open(child)
+			"draught_drops": _zone.receive_reward(player, 0, 0, 0, [] as Array[ItemData],
+				player.global_position + player.facing() * 6.0, "", false, 3)
 			"runic_guard": _cast(&"runic_guard", true)
 			"resonance_burst": _cast(&"resonance_burst", true)
 			"bossbar": _zone.hud.show_boss_bar("ASHVEIN COLOSSUS")

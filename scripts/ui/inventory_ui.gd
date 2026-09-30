@@ -2,7 +2,8 @@ class_name InventoryUI
 extends HBoxContainer
 ## Inventory tab of the hero window (`I`): equipped slots | inventory list |
 ## detail + compare pane. M07b: a page inside HeroUI, which owns the frame,
-## the input lock and the mouse; `toggle()` still opens/closes it.
+## the input lock and the mouse; `toggle()` still opens/closes it. M10b: the
+## consumables sit above the bag list (counted, no slot); right-click drinks.
 
 var player: Player
 var hero: HeroUI
@@ -10,14 +11,18 @@ var hero: HeroUI
 var _equip_column: VBoxContainer
 var _list_column: VBoxContainer
 var _list_box: VBoxContainer
+var _bag_box: VBoxContainer
 var _detail: VBoxContainer
 var _selected: ItemData = null
+var _selected_consumable: StringName = &""
 
 
 func setup(p: Player, hero_ui: HeroUI = null) -> void:
 	player = p
 	hero = hero_ui
 	player.equipment.changed.connect(_refresh)
+	player.consumables_changed.connect(_refresh)
+	player.health.health_changed.connect(func(_c: float, _m: float) -> void: _refresh())  # "Health is full"
 	_build()
 	visible = false
 
@@ -28,8 +33,11 @@ func _build() -> void:
 
 	_equip_column = _column(columns, "EQUIPPED", 230)
 	_list_column = _column(columns, "INVENTORY", 320)
+	_bag_box = VBoxContainer.new()  # M10b: consumables, above the gear
+	_bag_box.add_theme_constant_override("separation", 4)
+	_list_column.add_child(_bag_box)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(320, 440)
+	scroll.custom_minimum_size = Vector2(320, 390)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_list_column.add_child(scroll)
 	_list_box = VBoxContainer.new()
@@ -90,6 +98,20 @@ func _refresh() -> void:
 	# Inventory list.
 	var title := _list_column.get_child(0) as Label
 	title.text = "INVENTORY (%d/%d)" % [player.equipment.inventory.size(), Equipment.INVENTORY_CAP]
+	for child in _bag_box.get_children():
+		child.queue_free()
+	for cid: StringName in Consumables.DEFS:
+		var count := player.consumable_count(cid)
+		var bag_btn := Button.new()
+		bag_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		bag_btn.text = "%s  %d/%d" % [Consumables.display_name(cid), count, Consumables.cap(cid)]
+		bag_btn.icon = Hud.icon(cid)
+		bag_btn.add_theme_color_override("font_color", ArtKit.color("color_roles.health.hot", Color("#FF9C9C"))
+			if count > 0 else UiTheme.MUTED)
+		bag_btn.tooltip_text = "Right-click: drink"
+		bag_btn.pressed.connect(_select_consumable.bind(cid))
+		bag_btn.gui_input.connect(_on_right_click.bind(func() -> void: _drink(cid)))
+		_bag_box.add_child(bag_btn)
 	for child in _list_box.get_children():
 		child.queue_free()
 	for item in player.equipment.inventory:
@@ -108,12 +130,34 @@ func _refresh() -> void:
 
 func _select(item: ItemData) -> void:
 	_selected = item
+	_selected_consumable = &""
 	_render_detail()
+
+
+func _select_consumable(cid: StringName) -> void:
+	_selected = null
+	_selected_consumable = cid
+	_render_detail()
+
+
+## M10b: drink one (or say why not).
+func _drink(cid: StringName) -> void:
+	var why := player.consumable_deny_reason(cid)
+	if why != "" or not player.use_consumable(cid):
+		player.ui_denied()
+		var zone := ZoneBase.zone_of(player)
+		if zone != null and zone.hud != null:
+			zone.hud.toast(why if why != "" else "Can't drink now", UiTheme.MUTED)
+		return
+	_selected_consumable = cid
 
 
 func _render_detail() -> void:
 	for child in _detail.get_children().slice(1):
 		child.queue_free()
+	if _selected_consumable != &"":
+		_render_consumable(_selected_consumable)
+		return
 	if _selected == null:
 		return
 	var item := _selected
@@ -159,6 +203,19 @@ func _render_detail() -> void:
 		off_btn.text = "Unequip"
 		off_btn.pressed.connect(func() -> void: _unequip(item.slot))
 		_detail.add_child(off_btn)
+
+
+func _render_consumable(cid: StringName) -> void:
+	var count := player.consumable_count(cid)
+	_add_detail_label(Consumables.display_name(cid), ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
+	_add_detail_label("Consumable · %d/%d in the bag" % [count, Consumables.cap(cid)], Color(0.7, 0.7, 0.75))
+	_add_detail_label(str(Consumables.def(cid).get("text", "")), Color(0.85, 0.85, 0.9), true)
+	var why := player.consumable_deny_reason(cid)
+	var drink_btn := Button.new()
+	drink_btn.text = "Drink" if why == "" else why
+	drink_btn.disabled = why != ""
+	drink_btn.pressed.connect(func() -> void: _drink(cid))
+	_detail.add_child(drink_btn)
 
 
 func _equip(item: ItemData) -> void:

@@ -319,6 +319,25 @@ def icon_coin() -> Image.Image:
     return outlined(img)
 
 
+def icon_healing_draught() -> Image.Image:
+    """M10b consumable: a round flask of health-red draught with a cork and a
+    glint - the colour of the HUD's health bar it refills."""
+    img, d = canvas()
+    health = ROLES["health"]
+    red, hot, edge = rgb(health["body"]), rgb(health["hot"]), rgb(health["edge"])
+    glass = rgb("#B8C4D0")
+    d.ellipse([4, 7, 15, 18], fill=glass)                         # the bulb (glass rim)
+    d.ellipse([5, 9, 14, 17], fill=red)                           # the draught inside
+    d.chord([5, 9, 14, 17], 50, 130, fill=edge)                   # a thin shadow at the bottom
+    d.line([6, 10, 13, 10], fill=hot)                             # its flat, lit surface
+    d.rectangle([8, 3, 11, 7], fill=glass)                        # the neck
+    d.rectangle([8, 1, 11, 3], fill=rgb("#7A5436"))               # the cork
+    d.line([8, 1, 11, 1], fill=rgb("#A8784E"))
+    img.putpixel((7, 10), (255, 255, 255, 235))                   # glint
+    img.putpixel((7, 11), (255, 255, 255, 150))
+    return outlined(img)
+
+
 def icon_rune_bolt() -> Image.Image:
     """M10 Elementalist basic attack: an arcane dart in the player teal, a
     rune-cut head with a stepped wake (the hero's own bolt, never void violet)."""
@@ -651,7 +670,8 @@ def main() -> None:
                      ("rune_chain", icon_rune_chain), ("warden_leap", icon_warden_leap),
                      ("warding_rune", icon_warding_rune), ("frost_nova", icon_frost_nova),
                      ("flame_wall", icon_flame_wall), ("ball_lightning", icon_ball_lightning),
-                     ("ember_fall", icon_ember_fall), ("coin", icon_coin)):
+                     ("ember_fall", icon_ember_fall), ("coin", icon_coin),
+                     ("healing_draught", icon_healing_draught)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

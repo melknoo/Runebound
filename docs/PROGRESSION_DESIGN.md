@@ -142,6 +142,9 @@ Fire, ⚙ Phoenix Burst (capstone).
   the `AbilityData` (`unlock`, `learn_level`, `learn_price`). The M07b list
   (one Runebreaker with all eight, Fracture Rune at L7 / 600) is history; the
   v2 -> v3 migration still refunds those frozen prices.
+- **Ylva Ashbrew** (M10b, south-west of the hearth): Healing Draughts at
+  30 gold (ITEMIZATION "consumables") - gold's second use after the
+  trainers.
 - **Gold drops:** every kill pays `round(xp_reward * 0.5 * rand(0.8..1.25))`,
   so elites (x4) and enemy levels (+15 %) carry over. Bosses scatter theirs
   into 3 (Colossus) / 4 (Vessel) piles; chests add 40–60 x item-level scale.

@@ -1,0 +1,16 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/m10b_draughts",
+	"comment": "M10b: Ylva the merchant in Runehold, her shop, the draughts in the inventory, a hero drinking one, flasks on the ground.",
+	"shots": [
+		{"name": "merchant", "player": [-4.7, 0.2, 3.7], "face": 2.45, "yaw": 2.9, "pitch": -0.16, "zoom": 4.2, "settle": 0.8},
+		{"name": "shop", "player": [-4.7, 0.2, 3.7], "face": 2.45, "yaw": 2.45, "pitch": -0.2, "zoom": 4.2,
+			"actions": [{"gold": 140}, {"draughts": 2}, {"do": "merchant"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "inventory", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"do": "close"}, {"hurt": 0.45}, {"do": "hero_inventory"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "flasks", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.0, "pitch": -0.3, "zoom": 4.0,
+			"actions": [{"do": "close"}, {"do": "draught_drops"}, {"wait": 0.6}], "settle": 0.0},
+		{"name": "drinking", "player": [0, 0.2, 8], "face": 3.1416, "yaw": 0.0, "pitch": -0.12, "zoom": 3.4,
+			"actions": [{"do": "close"}, {"wait": 0.2}, {"do": "drink"}, {"wait": 1.2}], "settle": 0.0}
+	]
+}

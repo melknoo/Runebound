@@ -537,6 +537,27 @@ def ember_fall_impact():
     save(pad(boom, burst, delay(grit, 0.05)), "ember_fall_impact_01")
 
 
+# --- M10b (appended: keep the shared RNG order of everything above) ---
+
+def potion_drink():
+    """Uncork pop, three soft gulps, then a warm rising shimmer: a draught taking hold."""
+    pop = lowpass(noise(0.05), 0.35) * env_exp(0.05, 0.01) * 0.7
+    gulps = []
+    for k, f in enumerate((210.0, 190.0, 175.0)):
+        g = np.sin(2 * np.pi * f * t(0.11) * (1.0 + 0.6 * np.exp(-t(0.11) * 30.0))) * env_exp(0.11, 0.04) * 0.5
+        gulps.append(delay(g, 0.12 + 0.17 * k))
+    shimmer = sum(np.sin(2 * np.pi * f * t(0.7)) * env_exp(0.7, 0.35) * 0.08 for f in (880.0, 1108.7, 1318.5))
+    save(pad(pop, *gulps, delay(shimmer, 0.55)), "potion_drink_01")
+
+
+def potion_pickup():
+    """Glass on glass: two clinks and a short ring."""
+    a = np.sin(2 * np.pi * 3136.0 * t(0.1)) * env_exp(0.1, 0.02) * 0.6
+    b = np.sin(2 * np.pi * 3520.0 * t(0.14)) * env_exp(0.14, 0.03) * 0.5
+    ring = np.sin(2 * np.pi * 6272.0 * t(0.2)) * env_exp(0.2, 0.05) * 0.15
+    save(pad(a, delay(b, 0.06), delay(ring, 0.06)), "potion_pickup_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -563,4 +584,5 @@ if __name__ == "__main__":
         block_clang(i)
     parry_ring(); chain_throw(); chain_pull(); ward_place()
     frost_nova(); flame_wall(); ball_lightning_zap(); ember_fall_call(); ember_fall_impact()
+    potion_drink(); potion_pickup()
     print("done.")

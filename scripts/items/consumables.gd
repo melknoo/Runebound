@@ -1,0 +1,59 @@
+class_name Consumables
+extends RefCounted
+## M10b: things a hero carries in the bag and uses up, counted per id
+## (Player.consumables) instead of taking an inventory slot. User decision
+## 2026-09-30: no regeneration out of combat (waiting would answer every
+## fight) - healing between fights comes from consumables. Today there is one,
+## the Healing Draught; food follows with the animals of M12. Drunk only from
+## the inventory (right-click), by the user's choice: slow on purpose.
+
+const HEALING_DRAUGHT: StringName = &"healing_draught"
+
+## id -> definition. heal_pct of the maximum health over `time` seconds; at
+## most `cap` in the bag; `price` in gold at Ylva's in Runehold.
+const DEFS := {
+	&"healing_draught": {
+		"name": "Healing Draught",
+		"text": "Restores 35 % of your health over 4 s. Right-click to drink.",
+		"heal_pct": 0.35, "time": 4.0, "cap": 5, "price": 30,
+	},
+}
+
+## Chance per kill that a hero's personal loot holds a draught, by enemy kind.
+const KILL_CHANCE := {&"trash": 0.05, &"brute": 0.15, &"elite": 0.3}
+## Bosses always leave this many for every hero near the kill.
+const BOSS_DRAUGHTS := 2
+## Chance that a chest's purse holds a draught (one per hero).
+const CHEST_CHANCE := 0.6
+
+
+static func has(id: StringName) -> bool:
+	return DEFS.has(id)
+
+
+static func def(id: StringName) -> Dictionary:
+	return DEFS.get(id, {})
+
+
+static func display_name(id: StringName) -> String:
+	return str(def(id).get("name", String(id)))
+
+
+static func cap(id: StringName) -> int:
+	return int(def(id).get("cap", 0))
+
+
+static func price(id: StringName) -> int:
+	return int(def(id).get("price", 0))
+
+
+## Draughts a kill leaves for one hero (its personal roll).
+static func roll_kill(enemy: EnemyBase) -> int:
+	if enemy is AshveinColossus or enemy is ShatteredVessel:
+		return BOSS_DRAUGHTS
+	var kind := &"elite" if enemy.is_elite else (&"brute" if enemy is Brute else &"trash")
+	return 1 if randf() < float(KILL_CHANCE[kind]) else 0
+
+
+static func roll_chest() -> int:
+	return 1 if randf() < CHEST_CHANCE else 0

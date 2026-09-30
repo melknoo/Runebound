@@ -80,6 +80,22 @@ Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
 - Items already in a bag keep their affixes; an affix of the other class
   simply does nothing (every ability hook reads its stat by key).
 
+## M10b: consumables (Healing Draughts)
+User decisions of 2026-09-30: no regeneration out of combat (waiting would
+answer every fight); healing between fights comes from consumables, drunk
+**only from the inventory** (right-click; slow on purpose, no hotkey), healing
+**over a few seconds**, from **drops, chests and a merchant**.
+- **Healing Draught** (`Consumables.DEFS`): 35 % of the maximum health over
+  4 s, one at a time (a second one waits until the first is done), not at
+  full health. The bag holds 5; draughts take no inventory slot.
+- **Sources** (per hero, personal loot like gold): a kill 5 % (trash), 15 %
+  (brute), 30 % (elite); a boss always 2; a chest's purse 60 %. Ylva Ashbrew
+  in Runehold sells them for 30 gold.
+- On the ground a draught is a red flask that glides into the bag like gold
+  - while the bag has room; with a full bag it stays where it lies.
+- The HUD counts them next to the gold. Food follows with the animals of M12
+  (the same table, other ids).
+
 ## Legendary powers
 | Item | Class | Slot | Power |
 |---|---|---|---|

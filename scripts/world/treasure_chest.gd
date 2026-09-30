@@ -128,7 +128,7 @@ func open(zone: ZoneBase) -> void:
 			items.append(item)
 		# M07b: a purse of gold, scaled like the items are.
 		var gold := int(round(float(randi_range(CHEST_GOLD.x, CHEST_GOLD.y)) * (1.0 + 0.15 * float(ilvl - 1))))
-		zone.give_reward(hero, CHEST_XP, gold, 1, items, front)
+		zone.give_reward(hero, CHEST_XP, gold, 1, items, front, "", false, Consumables.roll_chest())  # M10b
 	if zone.net_world != null:
 		zone.net_world.chest_opened(self)
 

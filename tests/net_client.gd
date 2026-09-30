@@ -424,7 +424,7 @@ class Driver extends Node:
 					await _seconds(3.0)
 					var drops := 0
 					for child in zone.world.get_children():
-						if child is ItemDrop or child is GoldDrop:
+						if child is ItemDrop or child is GoldDrop or child is ConsumableDrop:
 							drops += 1
 					if world.loot_grants_received != 0 or drops != 0:
 						_finish("fail: the far hero got loot (%d grants, %d drops)" % [world.loot_grants_received, drops])
@@ -461,6 +461,15 @@ class Driver extends Node:
 						mine += 1
 				if mine < 1 and hero.equipment.inventory.is_empty():
 					_finish("fail: the purse spawned no items for us")
+					return
+				# M10b: the server grants us one draught by the chest (GRANT element 7)
+				if not await _until(func() -> bool:
+					if hero.consumable_count(Consumables.HEALING_DRAUGHT) > 0:
+						return true
+					for child in zone.world.get_children():
+						if child is ConsumableDrop and (child as ConsumableDrop).player == hero:
+							return true
+					return false, 20.0, "a Healing Draught from the server's GRANT"):
 					return
 				await _seconds(4.0)  # c2 checks meanwhile
 				_finish("ok")

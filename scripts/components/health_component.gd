@@ -53,3 +53,15 @@ func heal_full() -> void:
 	current_health = max_health
 	is_dead = false
 	health_changed.emit(current_health, max_health)
+
+
+## M10b: restores up to `amount` (never past the maximum, never the dead);
+## returns what it actually healed.
+func heal(amount: float) -> float:
+	if is_dead or amount <= 0.0:
+		return 0.0
+	var before := current_health
+	current_health = minf(current_health + amount, max_health)
+	if current_health > before:
+		health_changed.emit(current_health, max_health)
+	return current_health - before

@@ -2155,7 +2155,9 @@ func _run() -> void:
 	player.add_gold(123 - player.gold)  # M07b: gold and known abilities ride along
 	player._last_combat_msec = -1000000
 	player.set_loadout_slot(2, &"earthbreaker")  # M10: the loadout rides along too
+	player.consumables = {Consumables.HEALING_DRAUGHT: 3}  # M10b: and the bag
 	SaveGame.save_now()
+	player.consumables = {}
 	player.equipment.inventory.clear()
 	player.equipment.equipped.clear()
 	player.equipment._recompute()
@@ -2173,6 +2175,7 @@ func _run() -> void:
 	var equipped_weapon: ItemData = player.equipment.equipped.get(ItemData.Slot.WEAPON)
 	_check(restored_names.has("Persistence Marker"), "save restores inventory")
 	_check(equipped_weapon != null and equipped_weapon.display_name == "Saved Blade", "save restores equipped gear")
+	_check(player.consumable_count(Consumables.HEALING_DRAUGHT) == 3, "M10b: save restores the Healing Draughts in the bag")
 
 	# --- corrupt save handled ---
 	var f := FileAccess.open(SaveGame.save_path, FileAccess.WRITE)
@@ -2239,10 +2242,92 @@ func _run() -> void:
 	_check(hub.player.gold == 123 and hub.player.knows(&"earthbreaker") and hub.player.loadout[2] == &"earthbreaker",
 		"gold, abilities and the loadout persist across zone travel")
 
+	# ===== M10b: Healing Draughts (no regeneration; drunk from the inventory) =====
+	var hp := hub.player
+	var draught := Consumables.HEALING_DRAUGHT
+	_check(hp.consumable_count(draught) == 3, "M10b: the draughts persist across zone travel")
+	var merchant := hub.world.get_node_or_null("Merchant") as MerchantNpc
+	_check(merchant != null and merchant.npc_name.begins_with("Ylva") and merchant.sells.has(draught),
+		"M10b: Ylva stands in Runehold and sells Healing Draughts")
+	if merchant != null:
+		hp.add_gold(100 - hp.gold)
+		hub.trainer_ui.open(merchant, hp)
+		var shelf := 0
+		for row: Node in hub.trainer_ui._rows.get_children():
+			shelf += 0 if row.is_queued_for_deletion() else 1  # the trainer's rows go at the frame's end
+		_check(hub.trainer_ui.visible and shelf == 1, "the merchant opens the panel as a shop with one shelf row (%d)" % shelf)
+		var price := Consumables.price(draught)
+		_check(hub.trainer_ui.try_buy_consumable(draught) and hp.gold == 100 - price and hp.consumable_count(draught) == 4,
+			"buying a draught costs %d gold and fills the bag" % price)
+		hub.trainer_ui.try_buy_consumable(draught)
+		_check(hp.consumable_count(draught) == Consumables.cap(draught)
+			and TrainerUI.buy_deny_reason(hp, draught) == "Bag full" and not hub.trainer_ui.try_buy_consumable(draught),
+			"the bag holds %d; a full bag refuses the next one" % Consumables.cap(draught))
+		hub.trainer_ui.close()
+	_check(hp.add_consumable(draught, 3) == 0, "add_consumable takes nothing past the cap")
+	# drinking: only when hurt, one at a time, 35 % over 4 s
+	hp.health.current_health = hp.health.max_health
+	_check(hp.consumable_deny_reason(draught) == "Health is full" and not hp.use_consumable(draught),
+		"no drinking at full health")
+	hp.health.current_health = hp.health.max_health * 0.4
+	var before_drink := hp.health.current_health
+	_check(hp.use_consumable(draught) and hp.consumable_count(draught) == Consumables.cap(draught) - 1,
+		"drinking uses one draught")
+	_check(hp.consumable_deny_reason(draught) == "Still drinking", "one draught at a time")
+	await _wait_frames(60)
+	var mid_drink := hp.health.current_health
+	await _wait_frames(200)
+	var healed := hp.health.current_health - before_drink
+	_check(mid_drink > before_drink and mid_drink < before_drink + hp.health.max_health * 0.3
+		and absf(healed - hp.health.max_health * 0.35) < 1.0 and is_zero_approx(hp.healing_left()),
+		"a draught heals over its 4 s: %.0f after 1 s, %.0f in all (35 %% of %.0f)" % [mid_drink - before_drink, healed, hp.health.max_health])
+	# drops: a draught on the ground glides into the bag; a full bag leaves it lying
+	var drops_before := 0
+	for child in hub.world.get_children():
+		if child is ConsumableDrop:
+			drops_before += 1
+	hub.receive_reward(hp, 0, 0, 0, [] as Array[ItemData], hp.global_position + Vector3(2.0, 0, 0), "", false, 2)
+	var drops_now: Array[ConsumableDrop] = []
+	for child in hub.world.get_children():
+		if child is ConsumableDrop:
+			drops_now.append(child)
+	_check(drops_now.size() == drops_before + 2, "a reward with 2 draughts lays 2 flasks on the ground")
+	await _wait_frames(90)
+	var lying := 0
+	for d in drops_now:
+		if is_instance_valid(d) and not d.is_queued_for_deletion():
+			lying += 1
+	_check(hp.consumable_count(draught) == Consumables.cap(draught) and lying == 1,
+		"one flask glides into the bag (%d/%d), the other stays: the bag is full" % [hp.consumable_count(draught), Consumables.cap(draught)])
+	for d in drops_now:
+		if is_instance_valid(d):
+			d.queue_free()
+	# the rolls: bosses always leave two for every hero, chests often one
+	var boss_probe := AshveinColossus.new()
+	_check(Consumables.roll_kill(boss_probe) == Consumables.BOSS_DRAUGHTS, "a boss leaves %d draughts per hero" % Consumables.BOSS_DRAUGHTS)
+	boss_probe.free()
+	# the inventory shows the bag above the gear; the HUD counts it next to the gold
+	hub.inventory_ui.toggle()
+	await _wait_frames(2)
+	var bag_row: Button = null
+	if hub.inventory_ui._bag_box.get_child_count() > 0:
+		bag_row = hub.inventory_ui._bag_box.get_child(0) as Button
+	_check(bag_row != null and bag_row.text.begins_with("Healing Draught") and bag_row.text.ends_with("%d/%d" % [
+		Consumables.cap(draught), Consumables.cap(draught)]), "the inventory lists the draughts (%s)" % (bag_row.text if bag_row != null else "-"))
+	hp.health.current_health = hp.health.max_health * 0.5
+	hub.inventory_ui._drink(draught)
+	_check(hp.consumable_count(draught) == Consumables.cap(draught) - 1 and hp.healing_left() > 0.0,
+		"drinking from the inventory (right-click) starts the heal")
+	hub.inventory_ui.toggle()
+	_check(hub.hud._draught_label.text == str(Consumables.cap(draught) - 1), "the HUD counts the draughts next to the gold")
+	await _wait_frames(260)
+	hp.consumables = {}
+	hp.consumables_changed.emit()
+
 	# --- M06 C3: Runehold kit on the unchanged hub layout ---
 	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")
 	var hub_bodies := hub.world.find_children("*", "StaticBody3D", true, false)
-	_check(hub_bodies.size() == 22, "hub dressing adds no collision (%d bodies: layout 19 + two trainers + the M08 shrine)" % hub_bodies.size())
+	_check(hub_bodies.size() == 23, "hub dressing adds no collision (%d bodies: layout 19 + two trainers + the merchant + the M08 shrine)" % hub_bodies.size())
 	var wall_trims := 0
 	var sod_roofs := 0
 	var roofs_fit := true

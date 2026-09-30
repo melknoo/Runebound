@@ -1008,7 +1008,8 @@ func _on_enemy_died(enemy: EnemyBase) -> void:
 		var item := _roll_kill_item(enemy, hero.class_data.id)  # M07b: drops fit the hero's class
 		if item != null:
 			items.append(item)
-		give_reward(hero, enemy.xp_reward(), enemy.gold_reward(), piles, items, enemy.global_position, "", true)
+		give_reward(hero, enemy.xp_reward(), enemy.gold_reward(), piles, items, enemy.global_position, "", true,
+			Consumables.roll_kill(enemy))  # M10b: its own draught roll
 
 
 func _roll_kill_item(enemy: EnemyBase, class_id: StringName) -> ItemData:
@@ -1047,20 +1048,21 @@ func party() -> Array[Player]:
 
 ## Hands `hero` a reward: right here when it is this machine's hero, to its
 ## owner when it is a co-op proxy (GRANT; the client spawns the drops as its
-## own personal loot). `note` becomes a toast for the local hero.
+## own personal loot). `note` becomes a toast for the local hero. M10b:
+## `draughts` Healing Draughts lie among the drops.
 func give_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
-		note: String = "", float_xp: bool = false) -> void:
+		note: String = "", float_xp: bool = false, draughts: int = 0) -> void:
 	if hero == null or not is_instance_valid(hero):
 		return
 	if hero.net_role == Player.NetRole.PROXY:
 		if net_world != null:
-			net_world.send_grant(hero, xp, gold, piles, items, pos, note, float_xp)
+			net_world.send_grant(hero, xp, gold, piles, items, pos, note, float_xp, draughts)
 		return
-	receive_reward(hero, xp, gold, piles, items, pos, note, float_xp)
+	receive_reward(hero, xp, gold, piles, items, pos, note, float_xp, draughts)
 
 
 func receive_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
-		note: String = "", float_xp: bool = false) -> void:
+		note: String = "", float_xp: bool = false, draughts: int = 0) -> void:
 	if xp > 0:
 		hero.progression.add_xp(xp)
 		if float_xp:
@@ -1074,6 +1076,9 @@ func receive_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[I
 			var a := TAU * float(i) / float(items.size()) + randf_range(-0.3, 0.3)
 			offset = Vector3(cos(a), 0.0, sin(a)) * randf_range(0.9, 1.6)
 		spawn_item_drop(items[i], pos + offset, hero)
+	for i in draughts:
+		var a := TAU * (float(i) + 0.5) / float(maxi(draughts, 1)) + randf_range(-0.4, 0.4)
+		spawn_consumable_drop(Consumables.HEALING_DRAUGHT, pos + Vector3(cos(a), 0.0, sin(a)) * randf_range(0.8, 1.3), hero)
 	if note != "" and hud != null and hero.is_local:
 		hud.toast(note, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
 
@@ -1113,6 +1118,18 @@ func spawn_gold_piles(amount: int, pos: Vector3, piles: int = 1, owner: Player =
 func debug_add_gold(amount: int) -> void:
 	player.add_gold(amount)
 	hud.toast("+%d gold (debug)" % amount, ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
+
+
+## M10b: a consumable on the ground; `owner` picks it up (null = the local player).
+func spawn_consumable_drop(id: StringName, pos: Vector3, owner: Player = null, amount: int = 1) -> ConsumableDrop:
+	var drop := ConsumableDrop.new()
+	drop.id = id
+	drop.amount = amount
+	drop.player = owner if owner != null else player
+	drop.position = ground_point(pos)
+	world.add_child(drop)
+	drop.picked_up.connect(func(_id: StringName, _n: int) -> void: SaveGame.request_save())
+	return drop
 
 
 ## `owner` picks it up (null = the local player).

@@ -12,6 +12,7 @@ var _xp_fill: ColorRect
 var _level_label: Label
 var _gold_box: HBoxContainer
 var _gold_label: Label
+var _draught_label: Label
 var _cost_tick: ColorRect
 var _hurt_flash: ColorRect
 ## M10: six fixed slots (SLOT_KEYS); each shows whatever the loadout puts there.
@@ -166,6 +167,22 @@ func _build() -> void:
 	_gold_box.add_child(_gold_label)
 	player.gold_changed.connect(_on_gold_changed)
 	_on_gold_changed(player.gold, 0)
+	# M10b: Healing Draughts in the bag, next to the gold (drunk from the inventory)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(8, 0)
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(gap)
+	var flask := TextureRect.new()
+	flask.texture = Hud.icon(Consumables.HEALING_DRAUGHT)
+	flask.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	flask.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(flask)
+	_draught_label = Label.new()
+	_draught_label.add_theme_color_override("font_color", ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
+	_draught_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(_draught_label)
+	player.consumables_changed.connect(_on_consumables_changed)
+	_on_consumables_changed()
 
 	# Ability row: icon + key only. Names live in the hover tooltip.
 	var slot_row := HBoxContainer.new()
@@ -569,6 +586,10 @@ func _cheapest_slotted_cost() -> float:
 
 func gold_text() -> String:
 	return _gold_label.text if _gold_label != null else ""
+
+
+func _on_consumables_changed() -> void:
+	_draught_label.text = str(player.consumable_count(Consumables.HEALING_DRAUGHT))
 
 
 func _on_gold_changed(total: int, delta: int) -> void:

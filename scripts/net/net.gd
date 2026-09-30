@@ -49,7 +49,8 @@ enum Transport { ENET, WS }
 
 ## 9 (M10): classes with their own kits (rune bolt HERO_FX, the loadout in CHARACTER).
 ## 10 (M10 phase 2): threat, taunt and pulls in the hit array, ENEMY_TARGET.
-const PROTOCOL := 10
+## 11 (M10b): Healing Draughts in GRANT, the "drink" HERO_FX.
+const PROTOCOL := 11
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

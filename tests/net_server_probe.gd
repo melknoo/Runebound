@@ -151,6 +151,8 @@ func _role_of(p: Player) -> String:
 
 
 var _types_spawned := false
+## rewards (M10b): one draught granted to the hero at the chest, once.
+var _draught_granted := false
 var _types_kills := 0
 var _types_credited := 0
 var _fx_count := 0
@@ -311,8 +313,16 @@ func _update() -> void:
 				var chest := zone.chests["chest_south"] as TreasureChest
 				var server_drops := 0
 				for child in zone.world.get_children():
-					if child is ItemDrop or child is GoldDrop:
+					if child is ItemDrop or child is GoldDrop or child is ConsumableDrop:
 						server_drops += 1
+				# M10b: once the chest is open, hand the hero beside it one draught
+				# through a real GRANT (element 7), so c1 can check it arrives.
+				if chest.opened and not _draught_granted and zone.net_world != null:
+					for proxy: Player in zone.net_world.heroes.values():
+						if is_instance_valid(proxy) and proxy.global_position.distance_to(chest.global_position) < 12.0:
+							_draught_granted = true
+							zone.give_reward(proxy, 0, 0, 0, [] as Array[ItemData], chest.global_position + Vector3(0, 0, 2.5),
+								"", false, 1)
 				if camp == null or camp.state != EncounterSpawner.State.CLEARED:
 					verdict = "fail: camp_1 not cleared"
 				elif not chest.opened:

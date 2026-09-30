@@ -732,6 +732,40 @@ static func attach_trail(parent: Node3D, tex_name: String, colors: Array[Color],
 	parent.add_child(p)
 
 
+## M10b: a Healing Draught at work - soft red motes rising around the hero
+## for `duration` (they follow it), a short glow at the chest first. Never a
+## shape on the ground: filled red there belongs to the enemies' telegraphs.
+static func drink(hero: Node3D, duration: float) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
+	var red := ArtKit.color("color_roles.health.body", Color("#D8404A"))
+	var hot := ArtKit.color("color_roles.health.hot", Color("#FF9C9C"))
+	flash(hero.get_tree().current_scene, hero.global_position + Vector3(0, 1.2, 0), hot, 0.9, 0.18)
+	var p := CPUParticles3D.new()
+	p.amount = 18
+	p.lifetime = 0.9
+	p.local_coords = false
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.45
+	p.direction = Vector3.UP
+	p.spread = 20.0
+	p.initial_velocity_min = 0.5
+	p.initial_velocity_max = 1.1
+	p.gravity = Vector3(0, 0.6, 0)
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.3
+	p.color_ramp = _gradient([hot, red, Color(red, 0.0)] as Array[Color]).gradient
+	p.mesh = _quad("ember", 0.12)
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	p.position = Vector3(0, 0.9, 0)
+	hero.add_child(p)
+	var tw := p.create_tween()
+	tw.tween_interval(maxf(duration, 0.1))
+	tw.tween_callback(func() -> void: p.emitting = false)
+	tw.tween_interval(p.lifetime)
+	tw.tween_callback(p.queue_free)
+
+
 static func attach_ember_trail(parent: Node3D) -> void:
 	if not Net.has_view():
 		return  # M09: the dedicated server draws nothing

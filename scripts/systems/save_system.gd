@@ -373,6 +373,14 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 		player.known_abilities = known
 	player.restore_loadout(ch.get("loadout", []) as Array)  # M10: after the known abilities
 	player.gold = maxi(int(ch.get("gold", 0)), 0)
+	player.consumables = {}  # M10b: id -> count, clamped to the bag
+	var bag: Variant = ch.get("consumables", {})
+	if bag is Dictionary:
+		for key: Variant in (bag as Dictionary):
+			var cid := StringName(str(key))
+			if Consumables.has(cid):
+				player.consumables[cid] = clampi(int((bag as Dictionary)[key]), 0, Consumables.cap(cid))
+	player.consumables_changed.emit()
 	player.discovered_waypoints = PackedStringArray(ch.get("waypoints", []))
 	player.discovered_zones = PackedStringArray(ch.get("discovered", []))
 	player.map_discovered = PackedStringArray(ch.get("map_discovered", []))
@@ -391,6 +399,11 @@ static func character_dict(player: Player) -> Dictionary:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:
 		(ch["loadout"] as Array).append(String(id))
+	var bag := {}  # M10b
+	for cid: StringName in player.consumables:
+		if int(player.consumables[cid]) > 0:
+			bag[String(cid)] = int(player.consumables[cid])
+	ch["consumables"] = bag
 	for item in player.equipment.inventory:
 		(ch["inventory"] as Array).append(item.to_dict())
 	for slot: ItemData.Slot in player.equipment.equipped:

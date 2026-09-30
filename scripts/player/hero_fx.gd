@@ -147,3 +147,9 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 							or ally.health.is_dead or ally.global_position.distance_to(a[0] as Vector3) > float(a[3]):
 						continue
 					ally.grant_barrier(float(a[1]), float(a[2]))
+		# --- M10b consumables ---
+		&"drink":  # [pos, total heal] - a Healing Draught (the heal itself runs on the owner)
+			VFX.drink(hero, float(Consumables.def(Consumables.HEALING_DRAUGHT).get("time", 4.0)))
+			GameFeel.float_text(hero.global_position + Vector3(0, 2.1, 0), "+%d" % int(round(float(a[1]))),
+				ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
+			Sfx.play("potion_drink", a[0] as Vector3, -3.0, 0.05)

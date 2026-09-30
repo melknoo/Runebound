@@ -24,6 +24,8 @@ signal gold_changed(total: int, delta: int)
 signal waypoint_discovered(id: String)
 ## M10: the four free slots (RMB, 1, 2, 3) changed.
 signal loadout_changed
+## M10b: a consumable was added, used or restored from the save.
+signal consumables_changed
 
 ## One enum for every class: the network sends the state as an int.
 enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP, BLOCK, LEAP }
@@ -86,6 +88,11 @@ var known_abilities: Array[StringName] = []
 ## and dodge) fire. Saved per character.
 var loadout: Array[StringName] = []
 var gold: int = 0
+## M10b: consumable id -> count in the bag (Consumables.DEFS; saved per character).
+var consumables: Dictionary = {}
+## M10b: health a draught still has to restore, and how fast (owner only).
+var _heal_left: float = 0.0
+var _heal_rate: float = 0.0
 ## M08: attuned waypoint shrines and map points seen (per character, saved).
 var discovered_waypoints: PackedStringArray = PackedStringArray()
 var map_discovered: PackedStringArray = PackedStringArray()
@@ -465,6 +472,62 @@ func spend_gold(amount: int) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# M10b: consumables (Consumables.DEFS) - counted in the bag, used from the
+# inventory. No regeneration out of combat (user, 2026-09-30).
+# ---------------------------------------------------------------------------
+
+func consumable_count(id: StringName) -> int:
+	return int(consumables.get(id, 0))
+
+
+## Adds up to `amount` (the bag holds Consumables.cap(id)); returns how many
+## it took.
+func add_consumable(id: StringName, amount: int = 1) -> int:
+	if not Consumables.has(id) or amount <= 0:
+		return 0
+	var taken := mini(amount, Consumables.cap(id) - consumable_count(id))
+	if taken <= 0:
+		return 0
+	consumables[id] = consumable_count(id) + taken
+	consumables_changed.emit()
+	return taken
+
+
+## Why `id` can't be used right now; "" when it can.
+func consumable_deny_reason(id: StringName) -> String:
+	if consumable_count(id) <= 0:
+		return "None left"
+	if health.is_dead:
+		return "Dead"
+	if _heal_left > 0.0:
+		return "Still drinking"
+	if health.current_health >= health.max_health:
+		return "Health is full"
+	return ""
+
+
+## Drinks one: heal_pct of the maximum health over its time. One at a time.
+func use_consumable(id: StringName) -> bool:
+	if consumable_deny_reason(id) != "":
+		return false
+	var d := Consumables.def(id)
+	consumables[id] = consumable_count(id) - 1
+	var total := health.max_health * float(d.get("heal_pct", 0.0))
+	var time := maxf(float(d.get("time", 1.0)), 0.1)
+	_heal_left = total
+	_heal_rate = total / time
+	hero_fx(&"drink", [global_position, total])
+	consumables_changed.emit()
+	SaveGame.request_save()
+	return true
+
+
+## Health a running draught has still to give (0 when none).
+func healing_left() -> float:
+	return _heal_left
+
+
+# ---------------------------------------------------------------------------
 # Visuals
 # ---------------------------------------------------------------------------
 
@@ -717,6 +780,13 @@ func _physics_process(delta: float) -> void:
 		_barrier_time -= delta
 		if _barrier_time <= 0.0:
 			barrier = 0.0
+	if _heal_left > 0.0:  # M10b: a draught at work
+		if health.is_dead:
+			_heal_left = 0.0
+		else:
+			var step := minf(_heal_rate * delta, _heal_left)
+			_heal_left -= step
+			health.heal(step)
 	if _buffer_timer > 0.0:
 		_buffer_timer -= delta
 		if _buffer_timer <= 0.0:

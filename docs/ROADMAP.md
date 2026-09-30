@@ -223,12 +223,22 @@ gebaut (eigenes Magier-Rig mit 13 Clips, Frostnova, Flammenwand, Kugelblitz, Glu
 Frost-Ast mit Wurzeln/Einfrieren, Cinderfall; Smoke 500 grün, Netz-Suite grün; die
 Look-Vorschau des Rigs geht an dich). Phase 4 gebaut (Shot-Liste `m10_classes`, Solo-Check
 beider Klassen per Bot: beide schaffen alle Camps und den Colossus auf Stufe 4 und 6 ohne Tod,
-Perf-Vergleich mit dem Stand vor M10, Playtest-Gruppe „M10: Klassen“, Gate-Walk in
+Perf-Vergleich mit dem Stand vor M10, Playtest-Gruppe „M10: Klassen & Heiltränke“, Gate-Walk in
 PROJECT_STATE). Offen für dich: der Playtest, der Look des Magiers und zwei Fragen aus dem
 Solo-Check: Heilung zwischen Kämpfen (entschieden 2026-09-30: **keine Regeneration außerhalb
 des Kampfs**, sonst wartet man einfach; stattdessen **Verbrauchsgüter** wie Heiltränke und Essen,
-die einen Teil des Lebens heilen – geplant, Zeitpunkt offen) und der Colossus womöglich zu
+die einen Teil des Lebens heilen – als M10b gebaut, siehe unten) und der Colossus womöglich zu
 leicht.
+
+### M10b — Heiltränke (gebaut 2026-09-30, dein Playtest offen)
+**Entscheidungen des Spielers (2026-09-30):** keine Regeneration außerhalb des Kampfs;
+Verbrauchsgüter jetzt als kleines M10b; trinken **nur aus dem Inventar** (Rechtsklick, keine
+Taste); Heilung **über ein paar Sekunden**; Quellen **Drops, Truhen und ein Händler**.
+**Stand:** Heiltrank (35 % des Lebens über 4 s, einer nach dem anderen, 5 im Gepäck, kein
+Inventarplatz), Drops pro Held (Kleinzeug 5 %, Brute 15 %, Elite 30 %, Boss immer 2, Truhe 60 %),
+**Ylva Ashbrew** in Runehold verkauft sie für 30 Gold, Zähler im HUD neben dem Gold, rote Flasche
+am Boden, im Koop als persönliche Beute (PROTOCOL 11). **Essen** kommt in M12 mit den Tieren
+dazu (dieselbe Tabelle).
 **Werkzeug:** Posen, Silhouetten und das Magier-Rig entstehen im Live-Blender-Loop
 (`tools/modelgen/live.py` über den Blender-MCP: bauen, posieren, Screenshot); jedes Ergebnis
 wandert zurück ins Skript, das Skript bleibt die einzige Quelle.

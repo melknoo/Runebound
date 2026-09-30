@@ -842,11 +842,11 @@ var loot_grants_received: int = 0
 
 ## Server: `hero`'s own reward goes to its owner, who spawns the drops.
 func send_grant(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
-		note: String, float_xp: bool) -> void:
+		note: String, float_xp: bool, draughts: int = 0) -> void:
 	var dicts: Array = []
 	for item in items:
 		dicts.append(item.to_dict())
-	Net.send_to_peer(hero.peer_id, NetMsg.GRANT, [xp, gold, piles, dicts, pos, note, float_xp])
+	Net.send_to_peer(hero.peer_id, NetMsg.GRANT, [xp, gold, piles, dicts, pos, note, float_xp, draughts])
 
 
 func _on_grant_msg(_from: int, payload: Array) -> void:
@@ -856,11 +856,12 @@ func _on_grant_msg(_from: int, payload: Array) -> void:
 	for d in payload[3] as Array:
 		if d is Dictionary:
 			items.append(ItemData.from_dict(d as Dictionary))
+	var draughts := clampi(int(payload[7]), 0, 5) if payload.size() > 7 else 0  # M10b
 	grants_received += 1
-	if int(payload[1]) > 0 or not items.is_empty():
+	if int(payload[1]) > 0 or not items.is_empty() or draughts > 0:
 		loot_grants_received += 1
 	zone.receive_reward(zone.player, int(payload[0]), int(payload[1]), int(payload[2]), items,
-		payload[4] as Vector3, str(payload[5]), bool(payload[6]))
+		payload[4] as Vector3, str(payload[5]), bool(payload[6]), draughts)
 	SaveGame.request_save()
 
 

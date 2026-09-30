@@ -214,8 +214,12 @@
   is rarely reached); alone, a tank would die about twice on the way.
   **Decided (user, 2026-09-30): no regeneration out of combat** (waiting
   for full health would answer every fight). Healing between fights comes
-  from **consumables** (potions, food) that restore part of the health -
-  planned (ROADMAP), not built.
+  from **consumables**: M10b built the Healing Draught (35 % over 4 s, 5 in
+  the bag, drops + chests + Ylva for 30 gold); food follows in M12.
+- M10b numbers to feel: draught drop chances (5 / 15 / 30 %, bosses 2,
+  chests 60 %), the price (30 gold), 35 % over 4 s, the cap of 5. Drinking
+  only from the inventory is slow on purpose (the user's choice) - in a
+  fight the window stays open while enemies keep swinging.
 - **The Colossus may be too easy now:** one bot beats it in 13-19 s at
   level 4-6 (696 health at L3; enemy damage does not scale with level yet).
 - The solo-check bots never read telegraphs (they dodge at random): their

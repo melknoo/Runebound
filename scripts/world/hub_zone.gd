@@ -16,6 +16,9 @@ const TRAINER_SPOT := Vector3(-14.2, 0, -11.6)
 ## M10: Maren, the Elementalist trainer, by the east wall south of the
 ## training-grounds gate, between it and the spawn.
 const MAGE_TRAINER_SPOT := Vector3(12.6, 0, 8.4)
+## M10b: Ylva, who sells Healing Draughts, south-west of the hearth on the
+## way from the spawn to the west hut.
+const MERCHANT_SPOT := Vector3(-6.0, 0, 5.2)
 
 
 ## M06 Phase C: the Runehold kit look (warm dawn, granite, sod roofs).
@@ -107,6 +110,17 @@ func _build_zone() -> void:
 	mage_trainer.global_position = MAGE_TRAINER_SPOT
 	var mage_to_fire := FIRE_POS - MAGE_TRAINER_SPOT
 	mage_trainer.rotation.y = atan2(-mage_to_fire.x, -mage_to_fire.z)
+	# M10b: the merchant (consumables for gold)
+	var merchant := MerchantNpc.new()
+	merchant.name = "Merchant"
+	merchant.rig_path = "res://assets/models/chars/elementalist.glb"
+	merchant.material_id = "elementalist"
+	merchant.body_tint = Color(0.72, 0.62, 0.5)  # an ash-brown apron over the coat: no hero, no trainer
+	merchant.rune_color = ArtKit.color("color_roles.health.body", Color("#D8404A"))
+	world.add_child(merchant)
+	merchant.global_position = MERCHANT_SPOT
+	var merchant_to_fire := FIRE_POS - MERCHANT_SPOT
+	merchant.rotation.y = atan2(-merchant_to_fire.x, -merchant_to_fire.z)
 
 	# Portals.
 	var highlands := Portal.new()
@@ -154,6 +168,7 @@ func _paved_ground() -> Material:
 	paths.append(Vector4(f.x, f.y, 0.0, 12.0))  # spawn
 	paths.append(Vector4(f.x, f.y, TRAINER_SPOT.x + 1.2, TRAINER_SPOT.z + 0.8))  # M07b trainer
 	paths.append(Vector4(f.x, f.y, MAGE_TRAINER_SPOT.x - 1.0, MAGE_TRAINER_SPOT.z - 0.8))  # M10 trainer
+	paths.append(Vector4(f.x, f.y, MERCHANT_SPOT.x + 0.9, MERCHANT_SPOT.z - 0.7))  # M10b merchant
 	for hut in HUTS:
 		var door := _hut_door(hut)
 		paths.append(Vector4(door.x, door.y, lerpf(door.x, f.x, 0.55), lerpf(door.y, f.y, 0.55)))
