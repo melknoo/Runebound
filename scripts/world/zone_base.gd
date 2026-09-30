@@ -95,6 +95,7 @@ func _ready() -> void:
 		style_manager.apply_look(look)
 
 	SaveGame.restore_player(player)
+	SaveGame.restore_vitals(player)  # M11: health (and Sap) carry over from the last zone
 	_zone_ready()
 	_discover()
 	# M10 save migration: a Runebreaker's elemental spells went to the Elementalist.
@@ -641,6 +642,56 @@ func players_within(pos: Vector3, radius: float) -> Array[Player]:
 				and p.global_position.distance_to(pos) <= radius:
 			out.append(p)
 	return out
+
+
+## M11: a hero as a number every machine resolves alike (ally heals travel
+## as HERO_FX): in co-op the peer id, offline the index in `players`.
+func hero_ref(p: Player) -> int:
+	if p == null:
+		return -1
+	if net_world != null:
+		return Net.my_id() if Net.is_client() and p.net_role == Player.NetRole.OWNER else p.peer_id
+	return players.find(p)
+
+
+func hero_by_ref(ref: int) -> Player:
+	if net_world != null:
+		if Net.is_client() and ref == Net.my_id():
+			return player
+		for p in players:
+			if p != null and is_instance_valid(p) and p.net_role != Player.NetRole.OWNER and p.peer_id == ref:
+				return p
+		return null
+	if ref < 0 or ref >= players.size():
+		return null
+	var hero := players[ref]
+	return hero if hero != null and is_instance_valid(hero) else null
+
+
+## M11: how far a heal reaches the enemies' threat lists.
+const HEAL_THREAT_RANGE := 30.0
+const HEAL_THREAT_SHARE := 0.5
+
+
+## M11 (authority): healing threatens (user 2026-09-30, "a little"): half of
+## what was healed, split over the enemies near the healer that are already
+## fighting the party (they hold threat or hunt someone).
+func heal_threat(healer: Player, healed: float) -> void:
+	if not Net.is_authority() or healer == null or healed <= 0.0:
+		return
+	var engaged: Array[EnemyBase] = []
+	for e in EnemyBase.all_enemies:
+		if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD or e.ai_state == EnemyBase.AIState.RETURN:
+			continue
+		if e.threat.is_empty() and (e.target == null or e.ai_state == EnemyBase.AIState.IDLE):
+			continue
+		if e.global_position.distance_to(healer.global_position) <= HEAL_THREAT_RANGE:
+			engaged.append(e)
+	if engaged.is_empty():
+		return
+	var share := healed * HEAL_THREAT_SHARE * healer.threat_mult() / engaged.size()
+	for e in engaged:
+		e.add_threat(healer, share)
 
 
 func _on_player_died(p: Player) -> void:

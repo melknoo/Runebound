@@ -23,6 +23,10 @@ extends Resource
 @export var applies_shock: bool = false
 @export var crit_chance: float = 0.08
 @export var crit_multiplier: float = 1.6
+## M11 support abilities: the health a heal restores (a zone or a heal over
+## time: per second / in total, see its description) or the barrier a shield
+## grants. The healer's `heal_pct` scales it.
+@export var heal: float = 0.0
 
 ## M07b: how a character comes to know this ability (docs/PROGRESSION_DESIGN.md).
 ## START: known from creation. TRAINER: bought at the hub trainer (level +

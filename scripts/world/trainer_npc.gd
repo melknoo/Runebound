@@ -17,6 +17,11 @@ const FLAVOUR := {
 		"Aether is borrowed, not owned. Spend it before it spends you.",
 		"Sigrun teaches walls. I teach what the walls are for.",
 	],
+	&"druid": [
+		"The ash remembers what grew here. I only remind it.",
+		"Sap is patient. It won't rise for you while you idle - only when the fight asks for it.",
+		"Mend the one in front, and the one in front keeps you standing. That's the whole secret.",
+	],
 }
 
 ## The class whose abilities this trainer teaches (set before add_child).

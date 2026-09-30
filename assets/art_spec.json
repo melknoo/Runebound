@@ -22,6 +22,12 @@
 			"hot": "#FFD2F0",
 			"rule": "M10 Elementalist class resource: HUD bar + rig rune glow; magenta so it never reads as Resonance gold, the player teal or enemy void violet; never used on enemies"
 		},
+		"nature": {
+			"edge": "#2E6B34",
+			"body": "#7ED957",
+			"hot": "#E4FFC4",
+			"rule": "M11 root druid: the Sap bar, rig glow, heals, shields and the ally marker; hue ~100 deg, yellower than the player teal, never used on enemies"
+		},
 		"player_accent": {
 			"body": "#3CBEB4",
 			"hot": "#9FF2E6",
@@ -185,6 +191,17 @@
 			"rod": ["#2A1C18", "#3E2A22", "#54392C", "#6C4A38"],
 			"rune_glow": "aether",
 			"comment": "M10: the ranged caster. Steel-blue coat, the player teal on trim and mantle, a gold circlet; the glow is the Aether magenta - never the Duskweaver violet, so a hero caster never reads as the enemy one."
+		},
+		"druid": {
+			"robe": ["#1C2416", "#26311C", "#324024", "#41522D", "#536838"],
+			"bark": ["#2A1C18", "#3E2A22", "#54392C", "#6C4A38", "#86604A"],
+			"leaf": ["#1F4A26", "#2E6B34", "#3F8A3E", "#56A84A", "#7ED957"],
+			"skin": ["#5E4034", "#7A5344", "#966B55", "#B0856A"],
+			"hair": ["#2A2622", "#3C3630", "#4E4740", "#625A50"],
+			"bone": ["#5A5244", "#7A705C", "#9C9076", "#C2B596", "#E2D6B4"],
+			"staff": ["#2A1C14", "#3C2A1E", "#523A28", "#6A4C34"],
+			"rune_glow": "nature",
+			"comment": "M11: the root druid, the healer. A moss-dark robe under a mantle of leaves, bark plates on the shoulders and left forearm, a deep hood crowned with antlers, a gnarled staff with a glowing seed. The glow is the nature green - never the player teal, never an enemy colour."
 		},
 		"cinder_marauder": {
 			"hide": [

@@ -224,7 +224,7 @@ func _on_hero_state(from: int, payload: Array) -> void:
 		return  # an older state overtaken by a newer one
 	_last_seq[from] = seq
 	proxy.apply_net_state(payload[1] as Vector3, float(payload[2]), payload[3] as Vector3, int(payload[4]),
-		float(payload[5]), float(payload[6]))
+		float(payload[5]), float(payload[6]), float(payload[8]) if payload.size() > 8 else 0.0)
 	proxy.teleports = int(payload[7])
 
 
@@ -277,7 +277,7 @@ func _send_snapshots() -> void:
 			if h == null or not is_instance_valid(h):
 				continue
 			entries.append([other, h.global_position, h.facing_yaw(), h.velocity, int(h.state),
-				h.health.current_health, h.health.max_health, h.teleports])
+				h.health.current_health, h.health.max_health, h.teleports, h.barrier])
 		var me := heroes.get(peer) as Player
 		var rows: Array[Dictionary] = []
 		for e in awake:
@@ -315,7 +315,7 @@ func _send_hero_state() -> void:
 	_last_sent_pos = hero.global_position
 	_seq += 1
 	Net.send_to_server(NetMsg.HERO_STATE, [_seq, hero.global_position, hero.facing_yaw(), hero.velocity,
-		int(hero.state), hero.health.current_health, hero.health.max_health, hero.teleports], Net.CH_HERO)
+		int(hero.state), hero.health.current_health, hero.health.max_health, hero.teleports, hero.barrier], Net.CH_HERO)
 
 
 func _send_character() -> void:
@@ -393,7 +393,8 @@ func _on_snapshot(_from: int, payload: Array) -> void:
 			continue  # not spawned yet (the spawn is reliable and follows)
 		var buffer: Array = _samples[peer]
 		buffer.append({"t": server_ms, "pos": e[1] as Vector3, "yaw": float(e[2]), "vel": e[3] as Vector3,
-			"state": int(e[4]), "hp": float(e[5]), "hp_max": float(e[6]), "tp": int(e[7])})
+			"state": int(e[4]), "hp": float(e[5]), "hp_max": float(e[6]), "tp": int(e[7]),
+			"barrier": float(e[8]) if e.size() > 8 else 0.0})
 		while buffer.size() > 2 and server_ms - float((buffer[0] as Dictionary)["t"]) > BUFFER_MS:
 			buffer.pop_front()
 
@@ -411,7 +412,11 @@ func _pose_puppets() -> void:
 		if s.is_empty():
 			continue
 		p.apply_net_state(s["pos"] as Vector3, float(s["yaw"]), s["vel"] as Vector3, int(s["state"]),
-			float(s["hp"]), float(s["hp_max"]))
+			float(s["hp"]), float(s["hp_max"]), float(s.get("barrier", 0.0)))
+		var bar := p.get_node_or_null(^"NameplateBar") as MeshInstance3D
+		if bar != null:
+			((bar.mesh as QuadMesh).material as ShaderMaterial).set_shader_parameter(&"fill",
+				clampf(float(s["hp"]) / maxf(float(s["hp_max"]), 1.0), 0.0, 1.0))
 	for id: int in enemies:
 		var e := enemies[id] as EnemyBase
 		if e == null or not is_instance_valid(e):
@@ -463,6 +468,20 @@ func _add_nameplate(p: Player, peer: int) -> void:
 	label.modulate = ArtKit.color("color_roles.player_accent.hot", Color(0.62, 0.95, 0.9))
 	label.position = Vector3(0, NAMEPLATE_HEIGHT, 0)
 	p.add_child(label)
+	# M11: a slim health bar under the name (a healer reads it at a glance).
+	var bar := MeshInstance3D.new()
+	bar.name = "NameplateBar"
+	var quad := QuadMesh.new()
+	quad.size = Vector2(0.8, 0.09)
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/hp_bar.gdshader")
+	var red := ArtKit.color("color_roles.health.body", Color("#D8404A"))
+	mat.set_shader_parameter(&"fill_color", Vector3(red.r, red.g, red.b))
+	quad.material = mat
+	bar.mesh = quad
+	bar.position = Vector3(0, NAMEPLATE_HEIGHT - 0.16, 0)
+	bar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	p.add_child(bar)
 	var refresh := func() -> void:
 		var entry: Dictionary = Net.roster.get(peer, {})
 		label.text = "%s  Lv%d" % [str(entry.get("name", "Hero")), int(entry.get("level", 1))]
@@ -1044,6 +1063,8 @@ func _on_hero_fx_msg(from: int, payload: Array) -> void:
 	if Net.is_dedicated():
 		if payload.size() >= 2 and heroes.has(from):
 			Net.broadcast_zone(NetMsg.HERO_FX, [from, payload[0], payload[1]], Net.CH_EVENTS, from)
+			if payload[1] is Array:
+				_heal_threat_from_fx(heroes[from] as Player, StringName(str(payload[0])), payload[1] as Array)
 		return
 	if not Net.is_client() or payload.size() < 3 or payload[2] is not Array:
 		return
@@ -1051,3 +1072,23 @@ func _on_hero_fx_msg(from: int, payload: Array) -> void:
 	if puppet != null and is_instance_valid(puppet):
 		hero_fx_seen += 1
 		HeroFx.play(puppet, StringName(str(payload[1])), payload[2] as Array)
+
+
+## M11 server: a client's heal on an ally threatens like it would offline
+## (ZoneBase.heal_threat) - capped at what the target was missing, as far as
+## the server knows its health.
+func _heal_threat_from_fx(healer: Player, kind: StringName, a: Array) -> void:
+	if healer == null or not is_instance_valid(healer) or a.is_empty():
+		return
+	var amount := 0.0
+	match kind:
+		&"ally_heal":
+			amount = float(a[1]) if a.size() > 1 else 0.0
+		&"ally_hot":
+			amount = float(a[2]) if a.size() > 2 else 0.0
+		_:
+			return
+	var target := zone.hero_by_ref(int(a[0]))
+	if target == null or target.health.is_dead:
+		return
+	zone.heal_threat(healer, minf(amount, target.health.max_health - target.health.current_health))

@@ -255,11 +255,22 @@ wandert zurück ins Skript, das Skript bleibt die einzige Quelle.
 - Charakterwahl-/Erstell-Screen, mehrere Charaktere pro Save (je eine Klasse), klassen-eigene
   Talentäste, Affixe und Legendaries, Save-Migration für bestehende Runebreaker.
 
-### M11 — Drei Rollen II: Wurzel-Druide (Heiler)
+### M11 — Drei Rollen II: Wurzel-Druide (Heiler) (in Arbeit)
 Pflanzen aus verbrannter Erde, Totems, Dornen. Heilt **gezielt** (Verbündeter unter dem
 Fadenkreuz, sonst der mit dem wenigsten Leben in Reichweite, allein man selbst), mit **Zonen am
 Boden** und **Schilden + Buffs**. Genug eigener Schaden, um die Story solo zu schaffen. Eigenes
 Kit (etwa 12), Rig, Talentbaum, Trainer.
+**Entscheidungen des Spielers (2026-09-30):** 8 Pool-Fähigkeiten + LMB jetzt, der Rest ab
+M12–M14; die Ressource **Saft** ist ein Vorrat, der **nur im Kampf** nachläuft; LMB
+**Dornensalve**; **Leben und Saft reisen mit** (Reisen heilt nicht mehr, voll wird man nur
+durch Tod, Tränke, Heilung und das Herdfeuer in Runehold); **Heilen droht ein wenig** (die
+Hälfte des Geheilten, verteilt auf die Gegner, die schon kämpfen).
+**Stand:** Phase 1 gebaut (Heil-Pipeline für Verbündete, freundliches Ziel mit Markierung,
+Heil-Aggro, Vorrat-Ressource, Leben/Saft im Save und über Reisen, Herdfeuer, Barriere im
+Party-Panel, Klasse mit Dornensalve und Knospe der Heilung, Trainerin Hild Ashroot, alle Icons
+und Sounds; Smoke 542 grün, Netz-Szenario `heal`, PROTOCOL 12). Als Nächstes: Look-Vorschau
+des Rigs, die übrigen 7 Fähigkeiten, Talente, Legendaries; dann das Rig, zuletzt Solo-Check,
+Shots und Docs.
 
 ### M12 — Highlands mit Substanz
 Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands

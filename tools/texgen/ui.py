@@ -476,9 +476,9 @@ def icon_ember_fall() -> Image.Image:
 # the healing zone with M11).
 # ---------------------------------------------------------------------------
 
-# Provisional root-druid ramp (hue ~100 deg, yellower than the player teal).
-# M11 moves it into art_spec.json as color_roles.nature.
-NATURE = {"edge": "#2E6B34", "body": "#7ED957", "core": "#E4FFC4"}
+# The root druid's ramp (hue ~100 deg, yellower than the player teal): since
+# M11 color_roles.nature in art_spec.json (its "hot" is the icons' core).
+NATURE = {"edge": ROLES["nature"]["edge"], "body": ROLES["nature"]["body"], "core": ROLES["nature"]["hot"]}
 
 
 def icon_taunt() -> Image.Image:
@@ -550,6 +550,161 @@ def icon_healing_zone() -> Image.Image:
     d.rectangle([11, 3, 16, 4], fill=core)
     for x, y in ((4, 5), (3, 6), (4, 6), (5, 6), (4, 7)):
         img.putpixel((x, y), body)                               # small rising cross
+    return outlined(img)
+
+
+# ---------------------------------------------------------------------------
+# M11 root druid: nature green on bark brown (thorns, roots, totems, blooms).
+# ---------------------------------------------------------------------------
+
+BARK = {"edge": "#2A1C18", "body": "#54392C", "core": "#7A5640"}
+
+
+def _nat() -> tuple:
+    return rgb(NATURE["edge"]), rgb(NATURE["body"]), rgb(NATURE["core"])
+
+
+def _bark() -> tuple:
+    return rgb(BARK["edge"]), rgb(BARK["body"]), rgb(BARK["core"])
+
+
+def icon_thorn_volley() -> Image.Image:
+    """Basic attack: three thorns fanning out to the upper right, green-tipped."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    b_edge, b_body, b_core = _bark()
+    for (x0, y0, x1, y1) in ((2, 17, 11, 4), (3, 18, 16, 8), (1, 13, 7, 1)):
+        d.line([x0, y0, x1, y1], fill=b_body, width=2)            # thorn shaft
+        d.line([x0, y0, x1, y1], fill=b_core)
+        d.polygon([(x1, y1), (x1 - 3, y1 + 1), (x1 - 1, y1 + 3)], fill=n_body)   # green tip
+        img.putpixel((x1, y1), n_core)
+    img.putpixel((5, 12), n_edge)                                   # little barbs
+    img.putpixel((9, 13), n_edge)
+    img.putpixel((4, 8), n_edge)
+    return outlined(img)
+
+
+def icon_mending_bloom() -> Image.Image:
+    """Start heal: a bud bursting open, a healing cross in its heart."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    d.line([9, 18, 9, 11], fill=n_edge, width=2)                    # stem
+    d.polygon([(9, 15), (4, 13), (6, 16)], fill=n_body)             # leaves
+    d.polygon([(10, 16), (15, 13), (14, 17)], fill=n_edge)
+    for k in range(5):                                              # petals
+        a = k * math.tau / 5 - math.pi / 2
+        cx, cy = 9.5 + math.cos(a) * 4.2, 7.5 + math.sin(a) * 4.2
+        d.ellipse([cx - 2.4, cy - 2.4, cx + 2.4, cy + 2.4], fill=n_body if k % 2 == 0 else n_edge)
+    d.ellipse([6, 4, 13, 11], fill=n_body)
+    d.rectangle([9, 5, 10, 10], fill=n_core)                        # healing cross
+    d.rectangle([7, 7, 12, 8], fill=n_core)
+    return outlined(img)
+
+
+def icon_barkskin() -> Image.Image:
+    """Shield: a bark-plated kite shield, a green leaf vein down its middle."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    b_edge, b_body, b_core = _bark()
+    d.polygon([(3, 2), (16, 2), (16, 9), (9.5, 18), (3, 9)], fill=b_edge)
+    d.polygon([(4, 3), (9, 3), (9, 16), (4, 9)], fill=b_core)       # lit half
+    d.polygon([(10, 3), (15, 3), (15, 9), (10, 16)], fill=b_body)
+    for y in (5, 8, 11):                                            # bark grain
+        d.line([5, y, 8, y + 1], fill=b_body)
+        d.line([11, y + 1, 14, y], fill=b_edge)
+    d.line([9, 3, 9, 16], fill=n_body)                              # leaf vein
+    d.line([10, 3, 10, 15], fill=n_edge)
+    img.putpixel((9, 4), n_core)
+    return outlined(img)
+
+
+def icon_regrowth() -> Image.Image:
+    """Heal over time: a sprout curling round in a circle, leaves along it."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    d.arc([2, 2, 17, 17], 110, 400, fill=n_body, width=2)           # the curl
+    d.arc([3, 3, 16, 16], 120, 390, fill=n_edge)
+    d.polygon([(3, 12), (0, 16), (5, 15)], fill=n_body)             # arrow tip: it comes round again
+    for (x, y) in ((15, 5), (16, 12), (6, 2)):
+        d.ellipse([x - 2, y - 1, x + 1, y + 1], fill=n_body)        # leaves on the curl
+        img.putpixel((x - 1, y), n_core)
+    d.line([9, 13, 9, 8], fill=n_edge)                              # seedling in the middle
+    d.polygon([(9, 9), (6, 7), (8, 10)], fill=n_body)
+    d.polygon([(10, 8), (13, 6), (11, 10)], fill=n_body)
+    img.putpixel((9, 8), n_core)
+    return outlined(img)
+
+
+def icon_root_grasp() -> Image.Image:
+    """Roots clawing up out of the ground like a grasping hand."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    b_edge, b_body, b_core = _bark()
+    d.rectangle([0, 16, 19, 19], fill=b_edge)                       # ground
+    d.line([0, 16, 19, 16], fill=b_body)
+    for (x0, x1, top, bend) in ((3, 1, 6, -2), (7, 6, 3, -1), (11, 12, 2, 1), (15, 17, 5, 2)):
+        d.line([x0, 16, x0 + bend, 10], fill=b_body, width=2)       # root fingers
+        d.line([x0 + bend, 10, x1, top], fill=b_body, width=2)
+        d.line([x0, 16, x0 + bend, 10], fill=b_core)
+        img.putpixel((x1, top), n_core)                              # green tips
+        img.putpixel((x1, top + 1), n_body)
+    d.line([4, 12, 16, 12], fill=n_edge)                             # the root's bind
+    return outlined(img)
+
+
+def icon_thornfield() -> Image.Image:
+    """A patch of thorn spikes on the ground, a green haze over it."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    b_edge, b_body, b_core = _bark()
+    d.ellipse([0, 12, 19, 19], fill=b_edge)                         # the patch
+    d.ellipse([2, 13, 17, 18], outline=n_edge)
+    for (x, h) in ((3, 6), (6, 9), (9, 11), (12, 8), (15, 10), (17, 5)):
+        d.polygon([(x - 1, 16), (x + 1, 16), (x, 16 - h)], fill=b_core)   # spikes
+        img.putpixel((x, 16 - h), n_core)
+        img.putpixel((x, 17 - h), n_body)
+    for (x, y) in ((5, 4), (11, 2), (14, 5)):
+        img.putpixel((x, y), n_body)                                # haze motes
+    return outlined(img)
+
+
+def icon_growth_totem() -> Image.Image:
+    """A carved wooden totem with glowing eyes and a leaf crown, a buff ring at its foot."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    b_edge, b_body, b_core = _bark()
+    d.ellipse([2, 15, 17, 19], outline=n_body)                      # aura ring
+    d.rectangle([6, 5, 13, 17], fill=b_body)                        # the post
+    d.rectangle([6, 5, 8, 17], fill=b_core)
+    d.line([6, 10, 13, 10], fill=b_edge)                             # carved bands
+    d.line([6, 14, 13, 14], fill=b_edge)
+    img.putpixel((8, 7), n_core)                                     # eyes
+    img.putpixel((11, 7), n_core)
+    d.line([8, 12, 11, 12], fill=n_body)                             # mouth rune
+    d.polygon([(9, 5), (4, 1), (7, 5)], fill=n_body)                 # leaf crown
+    d.polygon([(10, 5), (15, 1), (12, 5)], fill=n_body)
+    d.polygon([(9, 5), (10, 0), (11, 5)], fill=n_edge)
+    img.putpixel((3, 12), n_core)                                    # rising motes
+    img.putpixel((16, 10), n_core)
+    return outlined(img)
+
+
+def icon_wild_bloom() -> Image.Image:
+    """The great heal: a flower blowing wide open, petals and light flying out."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    for k in range(8):
+        a = k * math.tau / 8
+        x1, y1 = 9.5 + math.cos(a) * 9.0, 9.5 + math.sin(a) * 9.0
+        d.line([9.5, 9.5, x1, y1], fill=n_edge)                      # light rays
+    for k in range(6):
+        a = k * math.tau / 6 + 0.3
+        cx, cy = 9.5 + math.cos(a) * 5.0, 9.5 + math.sin(a) * 5.0
+        d.ellipse([cx - 2.6, cy - 2.6, cx + 2.6, cy + 2.6], fill=n_body)   # petals
+    d.ellipse([6, 6, 13, 13], fill=n_core)                           # bright heart
+    d.ellipse([8, 8, 11, 11], fill=n_body)
+    for (x, y) in ((1, 2), (18, 3), (2, 17), (17, 17)):
+        img.putpixel((x, y), n_core)                                 # flying petals
     return outlined(img)
 
 
@@ -671,7 +826,11 @@ def main() -> None:
                      ("warding_rune", icon_warding_rune), ("frost_nova", icon_frost_nova),
                      ("flame_wall", icon_flame_wall), ("ball_lightning", icon_ball_lightning),
                      ("ember_fall", icon_ember_fall), ("coin", icon_coin),
-                     ("healing_draught", icon_healing_draught)):
+                     ("healing_draught", icon_healing_draught),
+                     ("thorn_volley", icon_thorn_volley), ("mending_bloom", icon_mending_bloom),
+                     ("barkskin", icon_barkskin), ("regrowth", icon_regrowth), ("root_grasp", icon_root_grasp),
+                     ("renewal_grove", icon_healing_zone), ("thornfield", icon_thornfield),
+                     ("growth_totem", icon_growth_totem), ("wild_bloom", icon_wild_bloom)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

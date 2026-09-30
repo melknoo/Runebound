@@ -3,6 +3,7 @@ atlas-baked, animated characters for the gold target.
 
   assets/models/chars/runebreaker.glb     + assets/textures/char/runebreaker_atlas.png
   assets/models/chars/elementalist.glb    + assets/textures/char/elementalist_atlas.png (M10)
+  assets/models/chars/druid.glb           + assets/textures/char/druid_atlas.png (M11)
   assets/models/chars/cinder_marauder.glb + assets/textures/char/cinder_marauder_atlas.png
   assets/models/chars/duskweaver.glb      + assets/textures/char/duskweaver_atlas.png
 
@@ -23,7 +24,7 @@ the character's stance, so crossfades between clips never pop limbs to rest.
 
 Run:
   & "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe" --background
-      --python tools/modelgen/generate_characters_v2.py -- [runebreaker] [elementalist] [marauder] [duskweaver]
+      --python tools/modelgen/generate_characters_v2.py -- [runebreaker] [elementalist] [druid] [marauder] [duskweaver]
       [stonehulk] [veilstalker] [warden] [colossus] [vessel] [--sheets]
 --sheets also renders per-clip contact sheets to captures_contact/ (review).
 """
@@ -762,6 +763,297 @@ def elementalist_clips(arm):
         (call + 6, {**down, "chest": (0.26, 0, 0)}),
         (call + 20, k()),
     ], {0: QUART_OUT, max(call - 4, 2): EXPO_IN, call: BACK_OUT})
+
+    # --- Hit flinch: ADDITIVE (offsets from rest, zero at both ends) ------------
+    zero = {b: (0.0, 0.0, 0.0) for b in ("spine", "chest", "head", "upper_arm.L", "upper_arm.R")}
+    action(arm, "flinch", [
+        (0, zero),
+        (3, {"spine": (-0.12, 0, 0), "chest": (-0.22, 0.08, 0), "head": (-0.25, 0, 0),
+             "upper_arm.L": (0.25, 0, -0.15), "upper_arm.R": (0.15, 0, 0.1)}),
+        (16, zero),
+    ], {0: EXPO_OUT, 3: QUART_OUT})
+
+
+# ---------------------------------------------------------------------------
+# ROOT DRUID (M11) - the healer: a moss-dark robe under a mantle of leaves,
+# bark plates on the shoulders and the left forearm, a deep hood crowned with
+# antlers, a gnarled staff with a glowing seed in the right hand. The hood is
+# open at the front (the face stays visible) and the glow is the nature
+# green, so the druid never reads as a hooded enemy caster.
+# ---------------------------------------------------------------------------
+
+DR_LEG = 0.9 - 0.1  # hip height minus ankle
+
+
+def build_druid(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("druid", humanoid_bones(
+        hip=0.9, chest_top=1.46, shoulder_x=0.28, arm_len=0.6, leg_x=0.12, head_base=1.49, head_top=1.79))
+    dr = PAL["druid"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    robe = pm.paint(dr["robe"], 3, "cloth")
+    robe_dark = pm.paint(dr["robe"], 1, "cloth")
+    bark = pm.paint(dr["bark"], 2, "hide")
+    bark_hi = pm.paint(dr["bark"], 4, "hide")
+    leaf = pm.paint(dr["leaf"], 2, "cloth")
+    leaf_hi = pm.paint(dr["leaf"], 3, "cloth")
+    skin = pm.paint(dr["skin"], 2)
+    hair = pm.paint(dr["hair"], 2)
+    bone = pm.paint(dr["bone"], 3)
+    staff = pm.paint(dr["staff"], 2, "hide")
+
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.12 * x
+        # bark-brown foot wraps, wrapped leggings
+        pm.loft("foot." + side, [(0.0, 0.09, 0.15, lx, -0.04), (0.07, 0.095, 0.14, lx, -0.03),
+                                 (0.14, 0.08, 0.1, lx, 0.0)], paint=bark)
+        pm.loft("shin." + side, [(0.13, 0.078, 0.082, lx, 0.0), (0.3, 0.084, 0.088, lx, 0.0),
+                                 (0.5, 0.08, 0.086, lx, 0.0)], paint=robe_dark)
+        for z in (0.2, 0.34):
+            pm.loft("shin." + side, [(z, 0.088, 0.092, lx, 0.0), (z + 0.03, 0.088, 0.092, lx, 0.0)], paint=bark)
+        pm.loft("thigh." + side, [(0.5, 0.08, 0.086, lx, 0.0), (0.72, 0.094, 0.1, lx, 0.0),
+                                  (0.9, 0.1, 0.105, lx, 0.0)], paint=robe_dark)
+        # wide sleeves, bare hands; the left forearm wears a bark bracer
+        sx = 0.28 * x
+        pm.loft("upper_arm." + side, [(1.41, 0.078, 0.082, sx, 0.0), (1.14, 0.074, 0.078, sx * 1.08, 0.0)], paint=robe)
+        pm.loft("forearm." + side, [(1.15, 0.074, 0.078, sx * 1.1, 0.0), (1.0, 0.088, 0.092, sx * 1.12, 0.0),
+                                    (0.93, 0.095, 0.1, sx * 1.13, 0.0)], paint=robe if side == "R" else bark)
+        pm.box("hand." + side, (0.1, 0.12, 0.12), (sx * 1.14, -0.01, 0.85), paint=skin)
+    for z in (1.02, 1.08):  # leaves growing out of the bracer
+        pm.box("forearm.L", (0.03, 0.12, 0.05), (0.33, -0.05, z), rot=(0.4, 0.0, 0.3), paint=leaf_hi)
+
+    # rope belt, a pouch; the robe's long split skirt (two front panels, a longer back)
+    pm.loft("hips", [(0.86, 0.19, 0.13, 0, 0), (0.93, 0.2, 0.14, 0, 0)], paint=bark_hi)
+    pm.box("hips", (0.1, 0.07, 0.1), (0.17, -0.06, 0.84), rot=(0.0, 0.0, 0.3), paint=bark)
+    for x in (1.0, -1.0):
+        pm.box("hips", (0.16, 0.03, 0.54), (0.085 * x, -0.13, 0.6), rot=(0.08, 0.0, 0.05 * x), paint=robe)
+        pm.box("hips", (0.16, 0.034, 0.05), (0.085 * x, -0.15, 0.35), rot=(0.08, 0.0, 0.05 * x), paint=leaf)
+    pm.box("hips", (0.36, 0.03, 0.6), (0, 0.12, 0.57), rot=(-0.07, 0.0, 0.0), paint=robe)
+    pm.box("hips", (0.36, 0.034, 0.05), (0, 0.14, 0.29), rot=(-0.07, 0.0, 0.0), paint=leaf)
+    # the robe's torso, the seed pendant (the nature glow)
+    pm.loft("spine", [(0.93, 0.18, 0.13, 0, 0), (1.1, 0.2, 0.14, 0, 0), (1.22, 0.225, 0.155, 0, 0)], paint=robe)
+    pm.loft("chest", [(1.21, 0.23, 0.16, 0, 0), (1.34, 0.26, 0.172, 0, -0.005), (1.43, 0.25, 0.168, 0, 0),
+                      (1.48, 0.17, 0.12, 0, 0)], paint=robe)
+    pm.box("chest", (0.012, 0.01, 0.16), (0, -0.172, 1.36), paint=bark_hi)                  # the cord
+    pm.loft("chest", [(1.25, 0.035, 0.02, 0, -0.18), (1.31, 0.035, 0.02, 0, -0.18)], sides=6, mat_index=1)  # seed
+    # the mantle of leaves over the shoulders, bark plates on top
+    pm.loft("chest", [(1.51, 0.2, 0.15, 0, 0.01), (1.44, 0.33, 0.22, 0, 0.02), (1.31, 0.34, 0.23, 0, 0.03)],
+            paint=leaf, sides=10)
+    for k, th in enumerate((0.95, 1.55, 2.2, 2.8, -0.95, -1.55, -2.2, -2.8)):  # leaf tips round the mantle's
+        # edge (theta 0 = the front, which stays open), hanging and tilted out
+        pm.box("chest", (0.08, 0.03, 0.11), (math.sin(th) * 0.33, -math.cos(th) * 0.225, 1.27),
+               rot=(0.0, 0.0, -th), paint=leaf_hi if k % 2 else leaf)
+    for x in (1.0, -1.0):
+        pm.box("chest", (0.15, 0.17, 0.06), (0.25 * x, 0.0, 1.47), rot=(0.0, -0.35 * x, 0.0), paint=bark)
+    # neck, face, ash-grey beard, the deep hood (set back: the face stays in the open)
+    pm.loft("head", [(1.46, 0.055, 0.055, 0, 0), (1.52, 0.055, 0.055, 0, 0)], paint=skin)
+    pm.loft("head", [(1.51, 0.095, 0.105, 0, 0), (1.59, 0.108, 0.118, 0, -0.005), (1.68, 0.104, 0.114, 0, 0),
+                     (1.76, 0.075, 0.085, 0, 0.01)], paint=skin)
+    pm.box("head", (0.12, 0.05, 0.1), (0, -0.095, 1.5), rot=(0.2, 0, 0), taper=0.7, paint=hair)  # short beard
+    pm.loft("head", [(1.5, 0.15, 0.13, 0, 0.06), (1.64, 0.145, 0.14, 0, 0.045), (1.76, 0.13, 0.13, 0, 0.04),
+                     (1.84, 0.09, 0.1, 0, 0.05), (1.87, 0.04, 0.05, 0, 0.07)], paint=robe, sides=10)
+    # antlers: a beam each side out of the hood, a tine up and a tine back
+    for x in (1.0, -1.0):
+        pm.box("head", (0.04, 0.04, 0.2), (0.13 * x, 0.05, 1.86), rot=(-0.2, 0.8 * x, 0.0), paint=bone)   # beam out
+        pm.box("head", (0.035, 0.035, 0.16), (0.24 * x, 0.08, 1.95), rot=(-0.3, 0.25 * x, 0.0), paint=bone)  # beam up
+        pm.box("head", (0.03, 0.03, 0.1), (0.19 * x, 0.02, 1.95), rot=(0.3, -0.2 * x, 0.0), paint=bone)  # brow tine
+        pm.box("head", (0.028, 0.028, 0.09), (0.31 * x, 0.1, 1.97), rot=(-0.2, 1.1 * x, 0.0), paint=bone)  # outer tine
+    # the staff in the right fist (rest: pointing forward like the tank's blade,
+    # a third of it behind the grip), a curled head holding the glowing seed.
+    # Slot 2 = the staff (a legendary weapon swaps its look).
+    hx = -0.28 * 1.14
+    pm.loft("hand.R", [(0.0, 0.026, 0.026, 0, 0), (0.4, 0.031, 0.029, 0.008, 0), (0.8, 0.029, 0.031, -0.008, 0.006),
+                       (1.2, 0.033, 0.033, 0.0, -0.006), (1.45, 0.04, 0.04, 0.008, 0), (1.58, 0.032, 0.032, 0.02, 0)],
+            sides=6, center=(hx, 0.55, 0.85), rot=(1.5708, 0, 0), paint=staff, mat_index=2)
+    pm.box("hand.R", (0.035, 0.12, 0.035), (hx + 0.05, -1.08, 0.88), rot=(0.0, 0.0, 0.5), paint=staff, mat_index=2)
+    pm.box("hand.R", (0.035, 0.1, 0.035), (hx - 0.04, -1.1, 0.83), rot=(0.0, 0.0, -0.6), paint=staff, mat_index=2)
+    pm.box("hand.R", (0.07, 0.08, 0.07), (hx, -1.12, 0.86), rot=(0.0, 0.0, 0.785), mat_index=1)  # the seed
+    for k, (dx, dz) in enumerate(((0.06, 0.05), (-0.05, 0.06), (0.0, -0.06))):
+        pm.box("hand.R", (0.03, 0.1, 0.05), (hx + dx, -1.02, 0.85 + dz), rot=(0.3 * (k - 1), 0.0, 0.4 * (k - 1)),
+               paint=leaf_hi, mat_index=2)
+
+    mat_body = rig.make_material("dr_body", "#FFFFFF")
+    mat_glow = rig.make_material("dr_glow", ROLES["nature"]["body"], emission_hex=ROLES["nature"]["body"], strength=3.0)
+    mat_staff = rig.make_material("dr_staff", "#FFFFFF")
+    body = pm.to_object("druid", [mat_body, mat_glow, mat_staff], arm)
+
+    druid_clips(arm)
+    finish(body, arm, "druid", "druid", (1,), sheets)
+
+
+def druid_clips(arm):
+    # Ready stance: upright, the staff held upright at the right side (seed
+    # above the head), the open left hand a little out - the healing hand.
+    staff_up = way(fwd=0.12, up=1.0)
+    ready = {
+        **crouch(0.015, DR_LEG),
+        "spine": (0.02, 0, 0), "chest": (0.03, 0, 0), "head": (0.02, 0, 0),
+        "upper_arm.R": (-0.15, 0, 0.14), "forearm.R": (-0.6, 0, 0), "hand.R": (0.0, 0, 0),
+        "upper_arm.L": (-0.12, 0, -0.26), "forearm.L": (-0.45, 0, 0), "hand.L": (0.0, 0, 0),
+        "_blade.R": staff_up,
+    }
+    k = keyed(ready)
+
+    action(arm, "idle", [
+        (0, k()),
+        (50, k({"chest": (0.01, 0, 0), "upper_arm.L": (-0.16, 0, -0.3), "head": (-0.02, 0, 0),
+                "hips": {"rot": (0, 0, 0), "loc": (0, -0.01, 0)}, "_blade.R": way(fwd=0.16, up=1.0)})),
+        (100, k()),
+    ], sheet=[0, 50])
+
+    run_keys = []
+    for frame, sgn in ((0, 1.0), (18, -1.0), (36, 1.0)):
+        run_keys.append((frame, k({
+            "thigh.L": (-0.72 * sgn, 0, 0), "thigh.R": (0.72 * sgn, 0, 0),
+            "shin.L": (0.25 + 0.55 * max(-sgn, 0), 0, 0), "shin.R": (0.25 + 0.55 * max(sgn, 0), 0, 0),
+            "foot.L": (0.0, 0, 0), "foot.R": (0.0, 0, 0),
+            "upper_arm.L": (0.45 * sgn, 0, -0.2), "forearm.L": (-0.6, 0, 0),
+            "spine": (0.12, 0.1 * sgn, 0), "chest": (0.03, -0.07 * sgn, 0),
+            "hips": {"rot": (0, 0, 0), "loc": (0, -0.01, 0)},
+            "_blade.R": way(fwd=0.35, up=0.95),
+        })))
+    for frame in (9, 27):
+        run_keys.append((frame, {"hips": {"rot": (0, 0, 0), "loc": (0, 0.035, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 9, 18, 27])
+
+    # --- Dodge: the low dash, the staff swept back along the forearm ---------
+    dash_t = f(const_from("player/player.gd", "DODGE_DURATION"))
+    dodge_end = f(const_from("player/player.gd", "DODGE_DURATION") + const_from("player/player.gd", "DODGE_RECOVERY"))
+    dash = k({"hips": {"rot": (0, 0, 0), "loc": (0, -0.12, 0)},
+              "spine": (0.38, 0, 0), "chest": (0.2, 0, 0), "head": (-0.4, 0, 0),
+              "thigh.L": (-0.95, 0, 0), "shin.L": (1.15, 0, 0), "foot.L": (-0.2, 0, 0),
+              "thigh.R": (0.5, 0, 0), "shin.R": (0.35, 0, 0), "foot.R": (0.3, 0, 0),
+              "upper_arm.R": (0.55, 0, 0.3), "forearm.R": (-0.35, 0, 0), "_blade.R": way(fwd=-1.0, up=0.35),
+              "upper_arm.L": (0.6, 0, -0.35), "forearm.L": (-0.45, 0, 0)})
+    land = k({**crouch(0.08, DR_LEG), "spine": (0.2, 0, 0), "chest": (0.1, 0, 0), "head": (-0.15, 0, 0),
+              "upper_arm.L": (0.1, 0, -0.35)})
+    action(arm, "dodge", [
+        (0, k()),
+        (3, dash),
+        (dash_t - 3, {**dash, "thigh.L": (-0.8, 0, 0), "shin.L": (0.95, 0, 0), "thigh.R": (0.35, 0, 0)}),
+        (dash_t + 1, land),
+        (dodge_end, k()),
+    ], {0: EXPO_OUT, dash_t - 3: QUART_OUT, dash_t + 1: QUART_OUT})
+
+    # --- Thorn Volley (upper, held for auto-fire): the left hand flings thorns
+    fling = k({"chest": (0.06, 0.18, 0),
+               "_reach.L": (pos(fwd=0.5, left=0.12, up=1.34), way(left=1.0, up=-0.5))})
+    action(arm, "thorn", [
+        (0, k()),
+        (3, fling),
+        (7, {**fling, "chest": (0.05, 0.14, 0)}),
+        (18, k()),
+    ], {0: EXPO_OUT, 3: QUART_OUT, 7: QUART_OUT})
+
+    # --- Mending Bloom (upper): the staff tips toward the one being healed, the
+    # left palm opens after it
+    tip = k({"chest": (0.06, -0.1, 0),
+             "_reach.R": (pos(fwd=0.42, left=-0.24, up=1.3), way(left=-1.0, up=-0.5)),
+             "_blade.R": way(fwd=0.75, up=0.65),
+             "_reach.L": (pos(fwd=0.42, left=0.16, up=1.28), way(left=1.0, up=-0.6))})
+    action(arm, "mend", [
+        (0, k()),
+        (5, tip),
+        (12, {**tip, "chest": (0.08, -0.12, 0)}),
+        (26, k()),
+    ], {0: EXPO_OUT, 5: QUART_OUT, 12: QUART_OUT})
+
+    # --- Barkskin (upper): the left palm pushed out, fingers spread ----------
+    ward = k({"chest": (0.02, 0.2, 0),
+              "_reach.L": (pos(fwd=0.55, left=0.08, up=1.42), way(left=1.0, up=-0.3)),
+              "_blade.R": way(fwd=0.3, up=1.0)})
+    action(arm, "bark", [
+        (0, k()),
+        (4, ward),
+        (11, {**ward, "chest": (0.04, 0.22, 0)}),
+        (24, k()),
+    ], {0: EXPO_OUT, 4: BACK_OUT, 11: QUART_OUT})
+
+    # --- Regrowth (upper): the left hand draws a slow circle -------------------
+    circ_a = k({"chest": (0.03, 0.12, 0), "_reach.L": (pos(fwd=0.45, left=0.3, up=1.45), way(left=1.0, up=-0.4))})
+    circ_b = k({"chest": (0.05, 0.05, 0), "_reach.L": (pos(fwd=0.5, left=0.05, up=1.2), way(left=1.0, up=-0.6))})
+    action(arm, "regrowth", [
+        (0, k()),
+        (5, circ_a),
+        (12, circ_b),
+        (18, {**circ_a, "chest": (0.04, 0.1, 0)}),
+        (30, k()),
+    ], {0: QUART_OUT, 5: QUART_OUT, 12: QUART_OUT, 18: QUART_OUT})
+
+    # --- Root Grasp (full body): the staff raised, then its foot driven into
+    # the ground ahead - the roots answer
+    lift = k({"chest": (-0.1, 0, 0), "spine": (-0.04, 0, 0),
+              "_reach.R": (pos(fwd=0.25, left=-0.2, up=1.75), way(left=-1.0, up=-0.2)),
+              "_blade.R": way(fwd=0.2, up=1.0),
+              "upper_arm.L": (-0.5, 0, -0.45), "forearm.L": (-0.7, 0, 0)})
+    drive = k({**crouch(0.12, DR_LEG), "chest": (0.35, 0, 0), "spine": (0.15, 0, 0), "head": (-0.2, 0, 0),
+               "_reach.R": (pos(fwd=0.45, left=-0.18, up=1.0), way(left=-1.0, up=-0.3)),
+               "_blade.R": way(fwd=0.25, up=1.0),
+               "upper_arm.L": (-0.2, 0, -0.5), "forearm.L": (-0.4, 0, 0)})
+    action(arm, "root_grasp", [
+        (0, k()),
+        (4, lift),
+        (8, drive),
+        (16, {**drive, "chest": (0.3, 0, 0)}),
+        (32, k()),
+    ], {0: QUART_OUT, 4: EXPO_IN, 8: BACK_OUT, 16: QUART_OUT})
+
+    # --- Renewal Grove (full body): a knee bent, the left palm laid on the
+    # ground, the staff held high over it
+    kneel = k({**crouch(0.2, DR_LEG), "chest": (0.4, 0.1, 0), "spine": (0.2, 0, 0), "head": (-0.25, 0, 0),
+               "_reach.L": (pos(fwd=0.45, left=0.18, up=0.45), way(left=1.0, up=0.2)),
+               "_reach.R": (pos(fwd=0.15, left=-0.28, up=1.45), way(left=-1.0, up=-0.4)),
+               "_blade.R": way(fwd=0.2, up=1.0)})
+    action(arm, "grove", [
+        (0, k()),
+        (6, kneel),
+        (20, {**kneel, "chest": (0.36, 0.1, 0)}),
+        (36, k()),
+    ], {0: QUART_OUT, 6: QUART_OUT, 20: QUART_OUT})
+
+    # --- Thornfield (upper): the left hand sows thorns in a low sweep --------
+    sow_a = k({"chest": (0.1, 0.4, 0), "_reach.L": (pos(fwd=0.3, left=0.4, up=1.15), way(left=1.0, up=-0.6))})
+    sow_b = k({"chest": (0.14, -0.3, 0), "_reach.L": (pos(fwd=0.5, left=-0.15, up=1.05), way(left=1.0, up=-0.8))})
+    action(arm, "thornfield", [
+        (0, k()),
+        (4, sow_a),
+        (11, sow_b),
+        (26, k()),
+    ], {0: QUART_OUT, 4: EXPO_IN, 11: QUART_OUT})
+
+    # --- Totem of Growth (full body): both hands drive the staff into the
+    # ground at the feet (the totem rises where it struck)
+    raise_ = k({"chest": (-0.15, 0, 0), "spine": (-0.05, 0, 0), "head": (-0.2, 0, 0),
+                "_reach.R": (pos(fwd=0.2, left=-0.12, up=1.85), way(left=-1.0, up=-0.1)),
+                "_reach.L": (pos(fwd=0.2, left=0.02, up=1.7), way(left=1.0, up=-0.1)),
+                "_blade.R": way(fwd=0.15, up=1.0)})
+    plant = k({**crouch(0.16, DR_LEG), "chest": (0.3, 0, 0), "spine": (0.12, 0, 0), "head": (-0.15, 0, 0),
+               "_reach.R": (pos(fwd=0.3, left=-0.12, up=1.1), way(left=-1.0, up=-0.2)),
+               "_reach.L": (pos(fwd=0.3, left=0.02, up=0.98), way(left=1.0, up=-0.2)),
+               "_blade.R": way(fwd=0.1, up=1.0)})
+    action(arm, "totem", [
+        (0, k()),
+        (6, raise_),
+        (10, plant),
+        (22, {**plant, "chest": (0.26, 0, 0)}),
+        (38, k()),
+    ], {0: QUART_OUT, 6: EXPO_IN, 10: BACK_OUT, 22: QUART_OUT})
+
+    # --- Wild Bloom (full body): gather low, then open wide to the sky -------
+    gather = k({**crouch(0.12, DR_LEG), "chest": (0.35, 0, 0), "spine": (0.12, 0, 0), "head": (-0.15, 0, 0),
+                "upper_arm.R": (-0.5, 0, -0.3), "forearm.R": (-0.9, 0, 0),
+                "upper_arm.L": (-0.5, 0, 0.35), "forearm.L": (-0.9, 0, 0), "_blade.R": way(fwd=0.3, left=0.6, up=0.7)})
+    bloom = k({"chest": (-0.3, 0, 0), "spine": (-0.1, 0, 0), "head": (-0.35, 0, 0),
+               "upper_arm.R": (-0.6, 0, 1.4), "forearm.R": (-0.1, 0, 0), "_blade.R": way(left=-0.6, up=1.0),
+               "upper_arm.L": (-0.6, 0, -1.4), "forearm.L": (-0.1, 0, 0)})
+    action(arm, "bloom", [
+        (0, k()),
+        (5, gather),
+        (9, bloom),
+        (22, {**bloom, "chest": (-0.26, 0, 0)}),
+        (38, k()),
+    ], {0: QUART_OUT, 5: EXPO_IN, 9: BACK_OUT, 22: QUART_OUT})
 
     # --- Hit flinch: ADDITIVE (offsets from rest, zero at both ends) ------------
     zero = {b: (0.0, 0.0, 0.0) for b in ("spine", "chest", "head", "upper_arm.L", "upper_arm.R")}
@@ -1647,7 +1939,7 @@ def vessel_clips(arm):
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
-    builders = {"runebreaker": build_runebreaker, "elementalist": build_elementalist,
+    builders = {"runebreaker": build_runebreaker, "elementalist": build_elementalist, "druid": build_druid,
                 "marauder": build_marauder, "duskweaver": build_duskweaver,
                 "stonehulk": build_stonehulk, "veilstalker": build_veilstalker, "warden": build_warden,
                 "colossus": build_colossus, "vessel": build_vessel}

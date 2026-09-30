@@ -1,11 +1,55 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-30 · Milestone: **M10 Three roles I (tank + Elementalist +
-loadout)** — all four phases built, plus **M10b Healing Draughts** (below);
-the user's playtest is the gate for both. M09 Co-op was played by the user and a
+Updated: 2026-09-30 · Milestone: **M11 Three roles II (the root druid,
+healer)** in progress (phase 1 built, below). **M10 Three roles I (tank +
+Elementalist + loadout)** — all four phases built, plus **M10b Healing
+Draughts**; the user's playtest is the gate for both (still open, M11 started
+alongside at the user's wish). M09 Co-op was played by the user and a
 friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## M11 Three roles II: the root druid (in progress, 2026-09-30)
+Plan with the user's answers (8 pool abilities + LMB now, the rest from
+M12-M14; **Sap** is a pool that refills **only in a fight**; LMB **Thorn
+Volley**; **health and Sap travel with the hero** - only death, draughts,
+heals and the Runehold hearth refill them; **heals threaten a little**):
+ROADMAP M11, CLASS_DESIGN "Root druid".
+- **Phase 1 (built): the healing groundwork and the class skeleton.**
+  - Heals on allies: `Player.receive_heal`, heals over time (`add_hot`),
+    timed buffs (`add_buff`, added to `stat()`), `heal_pct`. They travel as
+    HERO_FX `ally_heal / ally_hot / ally_shield / ally_buff` with a hero ref
+    (`ZoneBase.hero_ref / hero_by_ref`: the peer id in co-op, the index
+    offline); only the target's owner applies them (the M10 rule).
+  - The heal target (`Player.pick_heal_target`): the ally under the
+    crosshair (`TargetingSystem.ally_under_aim`, geometry - remote heroes have
+    no collision), else the lowest health share within 30 m, else the healer.
+    A green chevron marks it; the party frames colour its name.
+  - Heal threat (`ZoneBase.heal_threat`, authority): half of what was healed,
+    split over the enemies within 30 m that already fight the party; overheal
+    counts nothing. Offline the HeroFx entry books it, in co-op the server
+    when it relays the heal.
+  - `ClassData.resource_mode` BUILD | POOL + `resource_regen`: a pool starts
+    full and refills only while the hero is in combat or an enemy within 30 m
+    hunts someone (a healer who only heals is neither hitting nor hit).
+  - Vitals: the character dict keeps `vitals {hp, resource}`; the zone
+    restores them after the spawn (travel no longer heals). Runehold's hearth
+    heals 10 %/s (and refills Sap) out of combat within 6 m.
+  - Co-op: the barrier rides in HERO_STATE and the snapshot hero rows (party
+    frames show it as a light segment); remote heroes' nameplates got a slim
+    health bar. **Protocol 12.**
+  - The class: `resources/classes/druid.tres` (95 health, Sap 100, 5/s in a
+    fight), `DruidHero` with Thorn Volley (3 thorns, held auto-fire) and
+    Mending Bloom (30, 14 Sap) as the start kit, on the Elementalist's rig
+    tinted moss green until its own rig exists. Hild Ashroot, the druid
+    trainer, stands by the south wall west of the spawn. Colour role
+    `nature` moved into art_spec.json; all nine druid icons (ui.py) and
+    sounds (sfxgen, appended) exist already. Bots heal the most wounded first.
+  - Tests: smoke 542 green (Sap, the three target rules, heals / HoT / shield
+    / buff on an offline ally, heal threat and overheal, thorns, vitals in
+    the save and across travel, the hearth, Hild); net scenario `heal` (a
+    druid client heals and shields a tank client across the server, the
+    server sees the heal's threat).
 
 ## M10b Healing Draughts (built 2026-09-30, the user's playtest is open)
 The M10 solo check found no healing between fights; the user decided (2026-09-30):

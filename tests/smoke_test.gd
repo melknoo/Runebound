@@ -14,6 +14,7 @@ var lab: CombatLab
 var player: Player
 var rb: RunebreakerHero
 var mage: ElementalistHero
+var druid: DruidHero
 
 
 ## M07b: a scripted input source (what a network peer will be) for the seam test.
@@ -60,6 +61,7 @@ func _play_as(class_id: StringName, learn_all: bool = true) -> void:
 	player = lab.player
 	rb = player as RunebreakerHero
 	mage = player as ElementalistHero
+	druid = player as DruidHero
 	if learn_all:
 		player.debug_learn_all()
 	await _wait_frames(2)
@@ -421,8 +423,8 @@ func _run() -> void:
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
 		and (mage_cls.hero_script as Script).get_global_name() == &"ElementalistHero" and mage_cls.resource_label == "Aether",
 		"ClassData: the Elementalist casts Rune Bolt on LMB, builds Aether and trains the four spells the Runebreaker gave away")
-	_check(ClassData.all().size() == 2 and player.class_data == cls and player.ability(&"earthbreaker") == rb.earthbreaker,
-		"two playable classes; the lab hero carries its ClassData and typed ability fields")
+	_check(ClassData.all().size() == 3 and player.class_data == cls and player.ability(&"earthbreaker") == rb.earthbreaker,
+		"three playable classes (M11: the druid); the lab hero carries its ClassData and typed ability fields")
 	var fresh_names := lab.hud.ability_names()
 	_check(fresh_names.size() == 2 and fresh_names[0] == "Rune Cleave" and fresh_names[1] == "Dodge"
 		and player.loadout.size() == Player.LOADOUT_SIZE and player.loadout.count(&"") == 4,
@@ -1251,6 +1253,145 @@ func _run() -> void:
 	_check(after_first < echo_hp and echo_t.health.current_health < after_first, "Echo Rune: the rune bursts twice")
 	player.progression.ranks.clear()
 	player.progression._changed()
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
+
+	# ===== M11: the druid - Sap, the heal target, heals on allies, heal threat =====
+	await _play_as(&"druid")
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	player.global_position = Vector3(0, 0.2, 6)
+	player.velocity = Vector3.ZERO
+	player.reset_cooldowns()
+	_check(druid != null and player.class_data.role == "Healer" and player.basic_attack() == &"thorn_volley"
+		and player.can_use(&"mending_bloom") and is_equal_approx(player.resonance, player.max_resource()),
+		"M11: the druid starts with Thorn Volley and Mending Bloom; its Sap starts full")
+	# Sap: a pool that refills only in a fight (no regeneration out of combat)
+	player.resonance = 50.0
+	player._last_combat_msec = -1000000
+	await _wait_frames(30)
+	_check(is_equal_approx(player.resonance, 50.0), "Sap does not refill out of combat")
+	player.mark_combat()
+	await _wait_frames(30)
+	_check(player.resonance > 51.0 and player.resonance < 54.0, "Sap refills in a fight (%.1f after 0.5 s)" % player.resonance)
+	# alone: the heal goes to the druid itself
+	player.resonance = 100.0
+	player.health.current_health = player.health.max_health * 0.5
+	var self_hp := player.health.current_health
+	_check(druid.try_mending_bloom() and absf(player.health.current_health - self_hp - druid.mending_bloom.heal) < 0.01
+		and absf(player.resonance - 86.0) < 0.5,
+		"alone, Mending Bloom heals the druid itself (+%.0f) for 14 Sap" % (player.health.current_health - self_hp))
+	player.reset_cooldowns()
+	player.resonance = 5.0
+	_check(not druid.try_mending_bloom(), "without the Sap for it the heal is refused")
+	# with allies: the most wounded in reach, the crosshair first
+	var d_ally := Player.create(ClassData.load_by_id(&"runebreaker"))
+	d_ally.is_local = false
+	d_ally.input_source = InputSource.new()
+	lab.add_player(d_ally)
+	d_ally.global_position = player.global_position + Vector3(4, 0, 0)
+	var d_ally2 := Player.create(ClassData.load_by_id(&"elementalist"))
+	d_ally2.is_local = false
+	d_ally2.input_source = InputSource.new()
+	lab.add_player(d_ally2)
+	d_ally2.global_position = player.global_position + Vector3(-4, 0, 2)
+	await _wait_frames(3)
+	player.health.heal_full()
+	d_ally.health.current_health = d_ally.health.max_health * 0.4
+	d_ally2.health.current_health = d_ally2.health.max_health * 0.7
+	_check(player.pick_heal_target() == d_ally, "no ally under the crosshair: the heal goes to the most wounded in reach")
+	d_ally.global_position = player.global_position + Vector3(40, 0, 0)
+	_check(player.pick_heal_target() == d_ally2, "an ally out of reach (30 m) is skipped")
+	await _wait_frames(30)  # the camera settles behind the hero
+	var cam := lab.camera_rig.camera
+	var cam_fwd := -cam.global_transform.basis.z
+	d_ally2.global_position = cam.global_position + cam_fwd * 9.0 - Vector3(0, 1.1, 0)
+	d_ally.global_position = player.global_position + Vector3(4, 0, 0)
+	d_ally2.set_physics_process(false)
+	_check(lab.targeting.ally_under_aim(Player.ALLY_RANGE) == d_ally2 and player.pick_heal_target() == d_ally2,
+		"the ally under the crosshair wins over the most wounded")
+	lab.targeting._update_heal_target()  # (what its _process does every frame; the camera keeps easing in)
+	_check(lab.targeting.heal_target == d_ally2 and lab.targeting._ally_marker.visible,
+		"the heal target wears the green marker")
+	d_ally2.set_physics_process(true)
+	d_ally2.global_position = player.global_position + Vector3(-4, 0, 2)
+	await _wait_frames(2)
+	# a heal on an ally, and the threat it makes (half, split over the fighting enemies)
+	var d_foe := lab.spawn_by_id("rusher", player.global_position + Vector3(0, 0.2, -6))
+	await _wait_frames(3)
+	d_foe.set_physics_process(false)
+	d_foe.add_threat(d_ally, 10.0)
+	player.reset_cooldowns()
+	player.resonance = 100.0
+	var ally_hp := d_ally.health.current_health
+	_check(druid.try_mending_bloom() and absf(d_ally.health.current_health - ally_hp - druid.mending_bloom.heal) < 0.01,
+		"Mending Bloom heals the ally (+%.0f)" % (d_ally.health.current_health - ally_hp))
+	_check(absf(d_foe.threat_of(player) - druid.mending_bloom.heal * 0.5) < 0.01,
+		"healing threatens: half of it on the enemy already fighting (%.1f)" % d_foe.threat_of(player))
+	var threat_before := d_foe.threat_of(player)
+	d_ally.health.current_health = d_ally.health.max_health - 10.0
+	player.reset_cooldowns()
+	druid.heal_ally(d_ally, 30.0)
+	_check(absf(d_foe.threat_of(player) - threat_before - 5.0) < 0.01, "overhealing makes no threat (10 healed of 30: +5)")
+	# heal over time, a shield and a buff reach allies through the same path
+	d_ally.health.current_health = d_ally.health.max_health * 0.5
+	var hot_hp := d_ally.health.current_health
+	player.hero_fx(&"ally_hot", [lab.hero_ref(d_ally), &"regrowth", 40.0, 1.0])
+	_check(d_ally.hot_left(&"regrowth") > 39.0, "a heal over time lands on the ally")
+	await _wait_frames(75)
+	_check(absf(d_ally.health.current_health - hot_hp - 40.0) < 0.5 and d_ally.hot_left(&"regrowth") == 0.0,
+		"the heal over time gives its 40 over its second")
+	d_ally.barrier = 0.0
+	player.hero_fx(&"ally_shield", [lab.hero_ref(d_ally), 35.0, 6.0])
+	_check(is_equal_approx(d_ally.barrier, 35.0), "a shield on the ally is its barrier")
+	var dmg_before := d_ally.stat(&"damage_pct")
+	player.hero_fx(&"ally_buff", [d_ally.global_position, 3.0, &"damage_pct", 15.0, 0.5])
+	_check(is_equal_approx(d_ally.stat(&"damage_pct"), dmg_before + 15.0) and is_equal_approx(d_ally2.stat(&"damage_pct"), 0.0),
+		"a buff reaches the allies in its radius only")
+	await _wait_frames(40)
+	_check(is_equal_approx(d_ally.stat(&"damage_pct"), dmg_before), "the buff runs out")
+	# the barrier travels to the party frames
+	d_ally.apply_net_state(d_ally.global_position, 0.0, Vector3.ZERO, 0, 50.0, 120.0, 22.0)
+	_check(is_equal_approx(d_ally.barrier, 22.0), "M11: a remote hero's barrier comes with its state (party frames)")
+	d_ally.barrier = 0.0
+	# Thorn Volley (the druid's LMB, auto-fire while held)
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	var thorn_target := MeleeRusher.new()
+	lab.enemies_root.add_child(thorn_target)
+	thorn_target.player = player
+	var thorn_aim := player.aim_direction()
+	thorn_target.global_position = player.global_position + thorn_aim * 6.0 - Vector3(0, thorn_aim.y * 6.0, 0)
+	await _wait_frames(2)
+	thorn_target.set_physics_process(false)
+	var thorn_hp := thorn_target.health.current_health
+	var thorn_probe := ScriptedInput.new()
+	var thorn_local := player.input_source
+	player.input_source = thorn_probe
+	thorn_probe.held.append(&"thorn_volley")
+	await _wait_frames(45)
+	thorn_probe.held.clear()
+	player.input_source = thorn_local
+	_check(thorn_target.health.current_health < thorn_hp - druid.thorn_volley.damage * 3.0,
+		"holding LMB keeps throwing Thorn Volleys (%.0f damage)" % (thorn_hp - thorn_target.health.current_health))
+	thorn_target.queue_free()
+	# vitals: health and Sap are what the save keeps
+	player.health.current_health = 41.0
+	player.resonance = 33.0
+	var vit := SaveGame.character_dict(player).get("vitals", {}) as Dictionary
+	player.health.heal_full()
+	player.resonance = 100.0
+	player.restore_vitals(vit)
+	_check(is_equal_approx(player.health.current_health, 41.0) and is_equal_approx(player.resonance, 33.0),
+		"M11: the save keeps health and Sap (%s)" % str(vit))
+	player.health.heal_full()
+	lab.remove_player(d_ally)
+	d_ally.queue_free()
+	lab.remove_player(d_ally2)
+	d_ally2.queue_free()
+	lab.targeting.current = null
 	lab.kill_all_enemies()
 	await _wait_frames(20)
 	player.global_position = Vector3(0, 0.2, 6)
@@ -2187,6 +2328,8 @@ func _run() -> void:
 
 	# --- travel: lab -> hub, gear survives via save ---
 	player.equipment.add_item(marker)
+	player.health.current_health = player.health.max_health * 0.55  # M11: travelling no longer heals
+	var carried_hp := player.health.current_health
 	lab.travel_to("res://scenes/hub.tscn")
 	for i in 60:
 		await get_tree().process_frame
@@ -2241,6 +2384,25 @@ func _run() -> void:
 	_check(carried, "gear persists across zone travel")
 	_check(hub.player.gold == 123 and hub.player.knows(&"earthbreaker") and hub.player.loadout[2] == &"earthbreaker",
 		"gold, abilities and the loadout persist across zone travel")
+	_check(absf(hub.player.health.current_health - carried_hp) < 1.0,
+		"M11: health carries across zone travel (%.0f of %.0f)" % [hub.player.health.current_health, hub.player.health.max_health])
+	# M11: resting by the hearth heals out of combat, never in a fight
+	var rest_from := hub.player.global_position
+	hub.player.global_position = HubZone.FIRE_POS + Vector3(2.5, 0.2, 0)
+	hub.player._last_combat_msec = -1000000
+	var rest_hp := hub.player.health.current_health
+	await _wait_frames(30)
+	_check(hub.player.health.current_health > rest_hp + 1.0, "resting by the hearth heals out of combat")
+	hub.player.mark_combat()
+	rest_hp = hub.player.health.current_health
+	await _wait_frames(20)
+	_check(is_equal_approx(hub.player.health.current_health, rest_hp), "the hearth does not heal in a fight")
+	hub.player.global_position = rest_from
+	hub.player._last_combat_msec = -1000000
+	hub.player.health.heal_full()
+	var druid_trainer := hub.world.get_node_or_null("TrainerDruid") as TrainerNpc
+	_check(druid_trainer != null and druid_trainer.npc_name.begins_with("Hild") and druid_trainer.teaches_class == &"druid",
+		"M11: Hild, the druid's trainer, stands in Runehold")
 
 	# ===== M10b: Healing Draughts (no regeneration; drunk from the inventory) =====
 	var hp := hub.player
@@ -2330,7 +2492,7 @@ func _run() -> void:
 	# --- M06 C3: Runehold kit on the unchanged hub layout ---
 	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")
 	var hub_bodies := hub.world.find_children("*", "StaticBody3D", true, false)
-	_check(hub_bodies.size() == 23, "hub dressing adds no collision (%d bodies: layout 19 + two trainers + the merchant + the M08 shrine)" % hub_bodies.size())
+	_check(hub_bodies.size() == 24, "hub dressing adds no collision (%d bodies: layout 19 + three trainers + the merchant + the M08 shrine)" % hub_bodies.size())
 	var wall_trims := 0
 	var sod_roofs := 0
 	var roofs_fit := true

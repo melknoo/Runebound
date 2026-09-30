@@ -766,6 +766,39 @@ static func drink(hero: Node3D, duration: float) -> void:
 	tw.tween_callback(p.queue_free)
 
 
+## M11: a heal landing on a hero - a green flash and leaf-light motes rising
+## off it for `duration` s (a heal over time keeps them going).
+static func heal_motes(hero: Node3D, duration: float) -> void:
+	if not Net.has_view():
+		return  # M09: the dedicated server draws nothing
+	var body := ArtKit.color("color_roles.nature.body", Color("#7ED957"))
+	var hot := ArtKit.color("color_roles.nature.hot", Color("#E4FFC4"))
+	flash(hero.get_tree().current_scene, hero.global_position + Vector3(0, 1.1, 0), hot, 0.8, 0.16)
+	var p := CPUParticles3D.new()
+	p.amount = 14
+	p.lifetime = 0.8
+	p.local_coords = false
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.45
+	p.direction = Vector3.UP
+	p.spread = 25.0
+	p.initial_velocity_min = 0.6
+	p.initial_velocity_max = 1.3
+	p.gravity = Vector3(0, 0.5, 0)
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.2
+	p.color_ramp = _gradient([hot, body, Color(body, 0.0)] as Array[Color]).gradient
+	p.mesh = _quad("spark", 0.12)
+	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	p.position = Vector3(0, 0.9, 0)
+	hero.add_child(p)
+	var tw := p.create_tween()
+	tw.tween_interval(maxf(duration, 0.1))
+	tw.tween_callback(func() -> void: p.emitting = false)
+	tw.tween_interval(p.lifetime)
+	tw.tween_callback(p.queue_free)
+
+
 static func attach_ember_trail(parent: Node3D) -> void:
 	if not Net.has_view():
 		return  # M09: the dedicated server draws nothing

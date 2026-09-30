@@ -558,6 +558,72 @@ def potion_pickup():
     save(pad(a, delay(b, 0.06), delay(ring, 0.06)), "potion_pickup_01")
 
 
+
+# --- M11 druid (appended: keep the shared RNG order of everything above) ---
+
+def thorn_volley(i: int):
+    """Three quick woody flicks: thorns snapped off a bent branch."""
+    parts = []
+    for k in range(3):
+        crack = highpass(noise(0.05), 0.5) * env_exp(0.05, 0.008) * 0.55
+        wood = np.sin(2 * np.pi * (620.0 + 90.0 * k + 40.0 * i) * t(0.06)) * env_exp(0.06, 0.015) * 0.35
+        parts.append(delay(pad(crack, wood), 0.035 * k))
+    save(pad(*parts), f"thorn_volley_{i:02d}")
+
+
+def mend():
+    """A soft rising chime over a leafy rustle: life flowing back."""
+    rustle = lowpass(highpass(noise(0.45), 0.2), 0.5) * env_exp(0.45, 0.18, 0.05) * 0.18
+    chime = sum(np.sin(2 * np.pi * f * t(0.6)) * env_exp(0.6, 0.28, 0.02) * a
+                for f, a in ((659.3, 0.25), (987.8, 0.18), (1318.5, 0.1)))
+    rise = sine_sweep(0.35, 440.0, 880.0) * env_exp(0.35, 0.2, 0.03) * 0.15
+    save(pad(rustle, delay(chime, 0.04), rise), "mend_01")
+
+
+def barkskin():
+    """Wood creaking shut around someone: a low knock and a dry creak."""
+    knock = np.sin(2 * np.pi * 150.0 * t(0.18)) * env_exp(0.18, 0.05) * 0.6
+    creak = lowpass(noise(0.4), 0.12) * (0.6 + 0.4 * np.sin(2 * np.pi * 38.0 * t(0.4))) * env_exp(0.4, 0.2, 0.05) * 0.35
+    save(pad(knock, delay(creak, 0.05)), "barkskin_01")
+
+
+def root_grasp():
+    """Earth splitting and roots whipping up: a thud, then a tearing rush."""
+    thud = lowpass(noise(0.3), 0.05) * env_exp(0.3, 0.1) * 0.9
+    tear = highpass(noise(0.35), 0.3) * env_exp(0.35, 0.12, 0.03) * 0.3
+    save(pad(thud, delay(tear, 0.04)), "root_grasp_01")
+
+
+def grove():
+    """A grove taking root: a warm swell with birdlike glints."""
+    swell = sum(np.sin(2 * np.pi * f * t(1.0)) * env_exp(1.0, 0.5, 0.25) * 0.12 for f in (261.6, 329.6, 392.0))
+    glints = [delay(np.sin(2 * np.pi * f * t(0.08)) * env_exp(0.08, 0.02) * 0.18, d)
+              for f, d in ((2093.0, 0.3), (2637.0, 0.45), (2349.3, 0.62))]
+    save(pad(swell, *glints), "grove_01")
+
+
+def thornfield():
+    """A carpet of thorns bristling up: many tiny scrapes."""
+    scrapes = [delay(highpass(noise(0.04), 0.6) * env_exp(0.04, 0.01) * 0.4, 0.02 * k) for k in range(10)]
+    body = lowpass(noise(0.3), 0.08) * env_exp(0.3, 0.12) * 0.3
+    save(pad(body, *scrapes), "thornfield_01")
+
+
+def totem():
+    """A post driven into the ground and a hum rising off it."""
+    drive = lowpass(noise(0.2), 0.08) * env_exp(0.2, 0.05) * 0.8
+    hum = (np.sin(2 * np.pi * 110.0 * t(0.9)) + 0.5 * np.sin(2 * np.pi * 165.0 * t(0.9))) * env_exp(0.9, 0.45, 0.2) * 0.2
+    save(pad(drive, delay(hum, 0.08)), "totem_01")
+
+
+def wild_bloom():
+    """The great heal: a bright bloom of chords over a whoosh."""
+    whoosh = lowpass(noise(0.8), 0.2) * env_exp(0.8, 0.3, 0.15) * 0.3
+    chord = sum(np.sin(2 * np.pi * f * t(1.2)) * env_exp(1.2, 0.55, 0.04) * 0.14
+                for f in (523.3, 659.3, 784.0, 1046.5))
+    save(pad(whoosh, delay(chord, 0.06)), "wild_bloom_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -585,4 +651,7 @@ if __name__ == "__main__":
     parry_ring(); chain_throw(); chain_pull(); ward_place()
     frost_nova(); flame_wall(); ball_lightning_zap(); ember_fall_call(); ember_fall_impact()
     potion_drink(); potion_pickup()
+    for i in range(1, 3):
+        thorn_volley(i)
+    mend(); barkskin(); root_grasp(); grove(); thornfield(); totem(); wild_bloom()
     print("done.")

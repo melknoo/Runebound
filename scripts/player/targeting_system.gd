@@ -19,6 +19,14 @@ var _bar_mat: ShaderMaterial
 var _name_label: Label3D
 var _pips: Array[MeshInstance3D] = []
 var _pip_mats: Array[StandardMaterial3D] = []
+## M11: the ally a heal would go to right now (a healer only; null otherwise
+## or when it is the hero itself), marked by a green chevron over its head.
+var heal_target: Player = null
+var _ally_marker: MeshInstance3D
+
+## M11: an ally counts as under the crosshair this close to the camera ray
+## (metres, widening a little with distance).
+const ALLY_AIM_RADIUS := 1.2
 
 const PIP_COLORS: Array[Color] = [
 	Color(1.0, 0.55, 0.15),  # burn
@@ -84,6 +92,22 @@ func _ready() -> void:
 
 	_set_marker_visible(false)
 
+	# M11: the heal target's chevron (nature green, drawn over everything).
+	_ally_marker = MeshInstance3D.new()
+	var chevron := PrismMesh.new()
+	chevron.size = Vector3(0.34, 0.26, 0.06)
+	var cmat := StandardMaterial3D.new()
+	cmat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	cmat.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	cmat.no_depth_test = true
+	cmat.albedo_color = ArtKit.color("color_roles.nature.body", Color("#7ED957"))
+	chevron.material = cmat
+	_ally_marker.mesh = chevron
+	_ally_marker.rotation_degrees = Vector3(0, 0, 180)  # point down at the ally
+	_ally_marker.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_ally_marker.visible = false
+	add_child(_ally_marker)
+
 
 func _set_marker_visible(vis: bool) -> void:
 	_ring.visible = vis
@@ -102,6 +126,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if player == null or camera_rig == null:
 		return
+	_update_heal_target()
 	_validate_current()
 	if current == null:
 		_set_marker_visible(false)
@@ -200,3 +225,48 @@ func cycle_target() -> void:
 			idx = i
 			break
 	current = candidates[(idx + 1) % candidates.size()] if idx >= 0 else candidates[0]
+
+
+# ---------------------------------------------------------------------------
+# M11: friendly targets (the druid's heals)
+# ---------------------------------------------------------------------------
+
+## The ally (never the hero itself) nearest the camera's aim ray within
+## `max_range` of the hero and in sight of the camera; null when none is.
+## Remote heroes have no collision layer, so this is geometry, not a raycast.
+func ally_under_aim(max_range: float) -> Player:
+	var zone := ZoneBase.zone_of(player)
+	if zone == null or camera_rig == null:
+		return null
+	var cam_pos := camera_rig.camera.global_position
+	var cam_fwd := -camera_rig.camera.global_transform.basis.z
+	var best: Player = null
+	var best_off := INF
+	for ally in zone.players_within(player.global_position, max_range):
+		if ally == player:
+			continue
+		var chest := ally.global_position + Vector3(0, 1.1, 0)
+		var rel := chest - cam_pos
+		var along := rel.dot(cam_fwd)
+		if along <= 0.5:
+			continue
+		var off := (rel - cam_fwd * along).length()
+		if off > ALLY_AIM_RADIUS + along * 0.02 or off >= best_off:
+			continue
+		var q := PhysicsRayQueryParameters3D.create(cam_pos, chest, 1)  # world only
+		if not player.get_world_3d().direct_space_state.intersect_ray(q).is_empty():
+			continue
+		best = ally
+		best_off = off
+	return best
+
+
+func _update_heal_target() -> void:
+	heal_target = null
+	if player.shows_heal_target():
+		var t := player.pick_heal_target()
+		if t != player:
+			heal_target = t
+	_ally_marker.visible = heal_target != null
+	if heal_target != null:
+		_ally_marker.global_position = heal_target.global_position + Vector3(0, 2.45, 0)

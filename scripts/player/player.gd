@@ -93,6 +93,15 @@ var consumables: Dictionary = {}
 ## M10b: health a draught still has to restore, and how fast (owner only).
 var _heal_left: float = 0.0
 var _heal_rate: float = 0.0
+## M11: heals over time from allies (the druid's Regrowth): id -> [left, rate].
+## The same id refreshes; separate from the draught.
+var _hots: Dictionary = {}
+## M11: timed stat bonuses (a Growth Totem): key -> [value, seconds left].
+## stat() adds them.
+var _buffs: Dictionary = {}
+## M11: a POOL resource (Sap) refills only while a fight is on near the hero.
+var _fight_near: bool = false
+var _fight_check_left: float = 0.0
 ## M08: attuned waypoint shrines and map points seen (per character, saved).
 var discovered_waypoints: PackedStringArray = PackedStringArray()
 var map_discovered: PackedStringArray = PackedStringArray()
@@ -214,6 +223,8 @@ func _ready() -> void:
 		known_abilities = class_data.starting_abilities.duplicate()
 	if loadout.size() != LOADOUT_SIZE:
 		restore_loadout([])
+	if class_data.resource_mode == ClassData.ResourceMode.POOL:
+		resonance = max_resource()  # M11: a pool starts full (the save may lower it)
 	_build_visual()
 	floor_snap_length = 0.4
 
@@ -528,6 +539,146 @@ func healing_left() -> float:
 
 
 # ---------------------------------------------------------------------------
+# M11: support from allies (heals, heals over time, timed buffs) and the POOL
+# resource. Everything here runs on the hero's owner (ally effects arrive
+# through HeroFx, which applies them only to heroes this machine simulates).
+# ---------------------------------------------------------------------------
+
+## How far a healer reaches its allies (targeted heals, the lowest-health pick).
+const ALLY_RANGE := 30.0
+## Enemies this close that are after someone keep a POOL refilling.
+const FIGHT_NEAR_RANGE := 30.0
+
+
+## Heals this hero (owner only) and returns what it actually healed.
+func receive_heal(amount: float) -> float:
+	if net_role != NetRole.OWNER or amount <= 0.0:
+		return 0.0
+	return health.heal(amount)
+
+
+## A heal over time (the same id refreshes it): `total` over `duration` s.
+func add_hot(id: StringName, total: float, duration: float) -> void:
+	if net_role != NetRole.OWNER or total <= 0.0 or health.is_dead:
+		return
+	_hots[id] = [total, total / maxf(duration, 0.1)]
+
+
+## Health a heal over time `id` has still to give (0 when none runs).
+func hot_left(id: StringName) -> float:
+	var h: Variant = _hots.get(id)
+	return float((h as Array)[0]) if h is Array else 0.0
+
+
+## A timed stat bonus (added to stat(key)); the same key keeps the larger
+## value and the longer time.
+func add_buff(key: StringName, value: float, duration: float) -> void:
+	if net_role != NetRole.OWNER or duration <= 0.0:
+		return
+	var old: Variant = _buffs.get(key)
+	if old is Array:
+		value = maxf(value, float((old as Array)[0]))
+		duration = maxf(duration, float((old as Array)[1]))
+	_buffs[key] = [value, duration]
+
+
+func buff_stat(key: StringName) -> float:
+	var b: Variant = _buffs.get(key)
+	return float((b as Array)[0]) if b is Array else 0.0
+
+
+func buff_time(key: StringName) -> float:
+	var b: Variant = _buffs.get(key)
+	return float((b as Array)[1]) if b is Array else 0.0
+
+
+func _tick_support(delta: float) -> void:
+	for id: StringName in _hots.keys():
+		var h: Array = _hots[id]
+		if health.is_dead:
+			_hots.erase(id)
+			continue
+		var step := minf(float(h[1]) * delta, float(h[0]))
+		h[0] = float(h[0]) - step
+		health.heal(step)
+		if float(h[0]) <= 0.001:
+			_hots.erase(id)
+	for key: StringName in _buffs.keys():
+		var b: Array = _buffs[key]
+		b[1] = float(b[1]) - delta
+		if float(b[1]) <= 0.0:
+			_buffs.erase(key)
+	if class_data.resource_mode == ClassData.ResourceMode.POOL and resonance < max_resource():
+		_fight_check_left -= delta
+		if _fight_check_left <= 0.0:
+			_fight_check_left = 0.5
+			_fight_near = fight_near()
+		if in_combat() or _fight_near:
+			var rate := class_data.resource_regen * (1.0 + stat(&"sap_regen_pct") / 100.0)
+			resonance = minf(resonance + rate * delta, max_resource())
+			resonance_changed.emit(resonance, max_resource())
+
+
+## M11: is a fight going on around this hero - an enemy within
+## FIGHT_NEAR_RANGE hunting someone? A healer who only heals is never hit
+## nor hitting, yet its party is fighting.
+func fight_near() -> bool:
+	for e in EnemyBase.all_enemies:
+		if not is_instance_valid(e) or e.ai_state in [EnemyBase.AIState.DEAD, EnemyBase.AIState.IDLE, EnemyBase.AIState.RETURN]:
+			continue
+		if (e.target == null or not is_instance_valid(e.target)) and e.target_peer == 0:
+			continue
+		if e.global_position.distance_to(global_position) <= FIGHT_NEAR_RANGE:
+			return true
+	return false
+
+
+## M11: the ally a targeted heal goes to - the one under the crosshair, else
+## the one with the lowest health share (that misses some) within ALLY_RANGE,
+## else this hero. Bots and heroes without a camera skip the crosshair.
+func pick_heal_target() -> Player:
+	if targeting != null and camera_rig != null:
+		var aimed := targeting.ally_under_aim(ALLY_RANGE)
+		if aimed != null:
+			return aimed
+	var zone := ZoneBase.zone_of(self)
+	var best: Player = self
+	var best_frac := health.current_health / maxf(health.max_health, 1.0)
+	if zone == null:
+		return best
+	for ally in zone.players_within(global_position, ALLY_RANGE):
+		var frac := ally.health.current_health / maxf(ally.health.max_health, 1.0)
+		if frac < best_frac - 0.001:
+			best_frac = frac
+			best = ally
+	return best
+
+
+## M11: does this hero show where its heal would go (a healer with a heal slotted)?
+func shows_heal_target() -> bool:
+	return false
+
+
+## M11: current and saved vitals: health, and a POOL resource (a BUILD one
+## starts empty in every zone). Kept across travel and in the save (user
+## 2026-09-30: travelling no longer heals).
+func vitals() -> Dictionary:
+	var v := {"hp": health.current_health}
+	if class_data.resource_mode == ClassData.ResourceMode.POOL:
+		v["resource"] = resonance
+	return v
+
+
+func restore_vitals(v: Dictionary) -> void:
+	if v.has("hp"):
+		health.current_health = clampf(float(v["hp"]), 1.0, health.max_health)
+		health.health_changed.emit(health.current_health, health.max_health)
+	if class_data.resource_mode == ClassData.ResourceMode.POOL and v.has("resource"):
+		resonance = clampf(float(v["resource"]), 0.0, max_resource())
+		resonance_changed.emit(resonance, max_resource())
+
+
+# ---------------------------------------------------------------------------
 # Visuals
 # ---------------------------------------------------------------------------
 
@@ -787,6 +938,7 @@ func _physics_process(delta: float) -> void:
 			var step := minf(_heal_rate * delta, _heal_left)
 			_heal_left -= step
 			health.heal(step)
+	_tick_support(delta)
 	if _buffer_timer > 0.0:
 		_buffer_timer -= delta
 		if _buffer_timer <= 0.0:
@@ -827,7 +979,7 @@ func _process_class_state(_delta: float) -> void:
 ## Summed value of a stat key from equipment and progression (level bonuses,
 ## talents). Every ability hook reads stats through here.
 func stat(key: StringName) -> float:
-	return equipment.stat(key) + (progression.stat(key) if progression != null else 0.0)
+	return equipment.stat(key) + (progression.stat(key) if progression != null else 0.0) + buff_stat(key)
 
 
 ## Legendary power (equipment) or behavior talent (progression).
@@ -1240,7 +1392,8 @@ func _on_died() -> void:
 
 ## M09: pose and vitals of a remote hero from the network (NetWorld). Never
 ## emits `player_died`: the owner handles its own death and respawn.
-func apply_net_state(pos: Vector3, yaw: float, vel: Vector3, net_state: int, hp: float, hp_max: float) -> void:
+func apply_net_state(pos: Vector3, yaw: float, vel: Vector3, net_state: int, hp: float, hp_max: float,
+		net_barrier: float = 0.0) -> void:
 	global_position = pos
 	_visual.rotation.y = yaw
 	velocity = vel
@@ -1248,6 +1401,7 @@ func apply_net_state(pos: Vector3, yaw: float, vel: Vector3, net_state: int, hp:
 	health.max_health = maxf(hp_max, 1.0)
 	health.current_health = clampf(hp, 0.0, health.max_health)
 	health.is_dead = hp <= 0.0
+	barrier = maxf(net_barrier, 0.0)  # M11: shown in the party frames (the owner absorbs)
 
 
 ## Facing yaw (the network sends it; `_visual` holds the gameplay facing).

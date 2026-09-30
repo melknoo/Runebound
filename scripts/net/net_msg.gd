@@ -13,10 +13,10 @@ const NOTICE := 3
 ## client -> server -> the same client, unreliable: [seq, sent_usec, padding]
 ## (connection test: round-trip time and loss, tests/net_client.gd "echo")
 const ECHO := 4
-## client -> server, unreliable 30 Hz: [seq, pos, yaw, vel, state, hp, hp_max, teleports]
+## client -> server, unreliable 30 Hz: [seq, pos, yaw, vel, state, hp, hp_max, teleports, barrier]
 const HERO_STATE := 5
 ## server -> client, unreliable 20 Hz: [server_msec, heroes, enemy_bytes] where
-## heroes is [[peer, pos, yaw, vel, state, hp, hp_max, teleports], ...] (all
+## heroes is [[peer, pos, yaw, vel, state, hp, hp_max, teleports, barrier], ...] (all
 ## but the receiver) and enemy_bytes NetCodec.encode_enemies (several packets
 ## when many enemies are awake; heroes only in the first)
 const SNAPSHOT := 6

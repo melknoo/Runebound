@@ -66,6 +66,14 @@ const SCENARIOS := {
 			{"role": "c2", "delay": 0.5, "args": ["--class=runebreaker", "--netsim=80,20,1"]}],
 		"timeout": 120.0,
 	},
+	# M11: c2 (Runebreaker, hurt) fights the server's dummy; c1 (Druid) heals
+	# and shields it across the server; the server books the heal's threat.
+	"heal": {
+		"server": ["--zone=res://scenes/combat_lab.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--class=druid"]},
+			{"role": "c2", "delay": 0.5, "args": ["--class=runebreaker", "--netsim=80,20,1"]}],
+		"timeout": 120.0,
+	},
 	"enemy_types": {
 		"server": ["--zone=res://scenes/combat_lab.tscn"],
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],

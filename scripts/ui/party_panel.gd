@@ -2,6 +2,8 @@ class_name PartyPanel
 extends Control
 ## M09 party frames (HUD, left edge): every other hero in the zone with name,
 ## level and a health bar, plus the ping to the server. Only shown in co-op.
+## M11: a barrier shows as a light segment after the health, and the ally the
+## local healer's heal would go to has its name in the nature green.
 
 const WIDTH := 240.0
 const BAR_H := 8.0
@@ -10,7 +12,7 @@ const ROW_H := 44.0
 var zone: ZoneBase
 var _title: Label
 var _rows: VBoxContainer
-var _row_of: Dictionary = {}  # peer -> {box, label, fill}
+var _row_of: Dictionary = {}  # peer -> {box, label, fill, shield}
 var _refresh_left: float = 0.0
 
 
@@ -62,7 +64,16 @@ func _process(delta: float) -> void:
 		(row["label"] as Label).text = "%s  Lv%d%s" % [str(entry.get("name", "Hero")), int(entry.get("level", 1)), role]
 		var frac := clampf(p.health.current_health / maxf(p.health.max_health, 1.0), 0.0, 1.0)
 		(row["fill"] as ColorRect).size.x = (WIDTH - 4.0) * frac
-		(row["label"] as Label).modulate = Color(1, 1, 1, 0.5) if p.health.is_dead else Color.WHITE
+		var shield := row["shield"] as ColorRect
+		var shield_frac := clampf(p.barrier / maxf(p.health.max_health, 1.0), 0.0, 1.0 - frac)
+		shield.visible = shield_frac > 0.005
+		shield.position.x = 2.0 + (WIDTH - 4.0) * frac
+		shield.size.x = (WIDTH - 4.0) * shield_frac
+		var label := row["label"] as Label
+		label.modulate = Color(1, 1, 1, 0.5) if p.health.is_dead else Color.WHITE
+		var healing_here := zone.targeting != null and zone.targeting.heal_target == p
+		label.add_theme_color_override("font_color",
+			ArtKit.color("color_roles.nature.body", Color("#7ED957")) if healing_here else UiTheme.TEXT)
 	for peer: int in _row_of.keys():
 		if not seen.has(peer):
 			((_row_of[peer] as Dictionary)["box"] as Control).queue_free()
@@ -87,4 +98,10 @@ func _make_row() -> Dictionary:
 	fill.size = Vector2(WIDTH - 4.0, BAR_H)
 	fill.color = ArtKit.color("color_roles.health.body", Color("#D9423A"))
 	back.add_child(fill)
-	return {"box": box, "label": label, "fill": fill}
+	var shield := ColorRect.new()  # M11: the barrier after the health
+	shield.position = Vector2(2, 2)
+	shield.size = Vector2(0, BAR_H)
+	shield.color = ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6"))
+	shield.visible = false
+	back.add_child(shield)
+	return {"box": box, "label": label, "fill": fill, "shield": shield}

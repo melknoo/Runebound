@@ -31,11 +31,17 @@ const DEFAULT_ID: StringName = &"runebreaker"
 @export var body_tint: Color = Color.WHITE
 ## Health at level 1 before gear (M10: the tank is sturdier, the caster frailer).
 @export var base_max_hp: float = 100.0
-## The class resource (Runebreaker: Resonance, Elementalist: Aether) and the
+## The class resource (Runebreaker: Resonance, Elementalist: Aether, Druid: Sap) and the
 ## art_spec colour role of its HUD bar and rig glow.
 @export var resource_label: String = "Resonance"
 @export var resource_color_role: String = "resonance"
 @export var max_resource: float = 100.0
+## M11: BUILD fills from hits and starts empty (Resonance, Aether); POOL
+## starts full, is spent and refills by `resource_regen` a second, but only in
+## a fight (the druid's Sap: no regeneration out of combat, user 2026-09-30).
+enum ResourceMode { BUILD, POOL }
+@export var resource_mode: ResourceMode = ResourceMode.BUILD
+@export var resource_regen: float = 0.0
 ## M10 bots: how far from its target this class likes to fight.
 @export var preferred_range: float = 1.4
 ## M10 threat: enemies take this class's damage x this as threat (tank 2).

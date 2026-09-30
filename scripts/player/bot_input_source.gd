@@ -9,6 +9,9 @@ extends InputSource
 ## they aim with PlayerIntent.aim_dir, straight at their target. A caster
 ## whose shots would hit a wall walks in until it has a clear line (M10 solo
 ## check: two casters on either side of a ruin wall stood there forever).
+## M11: a healer (ClassData.role "Healer") first looks after the party - the
+## heals go where Player.pick_heal_target says (the most wounded) - then
+## fights like a caster with its own thorns and roots.
 
 const RETARGET_EVERY := 0.5   # seconds between nearest-enemy scans
 const ENGAGE_RADIUS := 35.0   # enemies farther than this are ignored
@@ -58,6 +61,8 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 	if leader != null and is_instance_valid(leader) and leader != player \
 			and leader.global_position.distance_to(player.global_position) > LEADER_LEASH:
 		target = null  # too far from the leader: catch up first
+	if player.class_data.role == "Healer":
+		_heal_party(intent, player)
 	if target == null:
 		_follow(intent, player)
 		return
@@ -68,6 +73,8 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 	intent.aim_dir = (target.global_position + Vector3(0, 1.0, 0) - player.muzzle_position()).normalized()
 	if player.class_data.preferred_range > MELEE_REACH:
 		_ranged(intent, player, dir, dist, player.class_data.preferred_range)
+		if player.class_data.role == "Healer":
+			_druid_fight(intent, player, dist)
 		return
 	if dist > STAND_OFF:
 		intent.move_dir = dir
@@ -128,6 +135,47 @@ func _ranged(intent: PlayerIntent, player: Player, dir: Vector3, dist: float, pr
 			_press(intent, player, &"ball_lightning", 9.0)
 		if dist < 16.0 and player.resonance >= 60.0:
 			_press(intent, player, &"ember_fall", 14.0)
+
+
+## M11: a healer's first job - the wounded (Player.pick_heal_target picks
+## whom; without a camera it is the lowest health share in reach).
+func _heal_party(intent: PlayerIntent, player: Player) -> void:
+	var zone := ZoneBase.zone_of(player)
+	if zone == null:
+		return
+	var wounded := 0
+	var badly := 0
+	for ally in zone.players_within(player.global_position, Player.ALLY_RANGE):
+		var frac := ally.health.current_health / maxf(ally.health.max_health, 1.0)
+		if frac < 0.8:
+			wounded += 1
+		if frac < 0.4:
+			badly += 1
+	var mine := player.health.current_health / maxf(player.health.max_health, 1.0)
+	if badly >= 2 or mine < 0.3:
+		_press(intent, player, &"wild_bloom", 2.0)
+	var t := player.pick_heal_target()
+	var frac_t := t.health.current_health / maxf(t.health.max_health, 1.0)
+	if frac_t < 0.6:
+		_press(intent, player, &"mending_bloom", 0.9)
+	if frac_t < 0.75 and t.in_combat():
+		_press(intent, player, &"barkskin", 3.0)
+	if frac_t < 0.85:
+		_press(intent, player, &"regrowth", 3.0)
+	if wounded >= 2:
+		_press(intent, player, &"renewal_grove", 4.0)
+
+
+## M11: the druid's own damage and control on top of its thorns.
+func _druid_fight(intent: PlayerIntent, player: Player, dist: float) -> void:
+	if dist < 24.0:
+		_press(intent, player, &"thorn_volley", 0.3)
+	if player.in_combat():
+		_press(intent, player, &"growth_totem", 8.0)
+	if dist < 16.0:
+		_press(intent, player, &"root_grasp", 6.0)
+	if dist > 3.0 and dist < 14.0:
+		_press(intent, player, &"thornfield", 8.0)
 
 
 func _follow(intent: PlayerIntent, player: Player) -> void:

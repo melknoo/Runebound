@@ -6,7 +6,7 @@ extends Node
 ## reads it after the clients are done and then stops the server.
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
-const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "enemy_types", "look_boss", "rewards",
+const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -144,6 +144,26 @@ func _threat_verdict() -> String:
 	if _saw_on_caster and _saw_taunt:
 		return "ok"
 	return "fail: hunted the caster %s, taunted by the tank %s" % [_saw_on_caster, _saw_taunt]
+
+
+## M11: the same dummy as `threat`; the druid's heal on the tank must show up
+## as the druid's threat on it (the server books it when it relays the heal).
+func _heal_verdict() -> String:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone == null or zone.net_world == null:
+		return "fail: no zone replication on the server"
+	if not _threat_spawned:
+		return _threat_verdict()  # spawns the dummy once both heroes are in
+	if not is_instance_valid(_threat_dummy):
+		return "fail: the dummy is gone"
+	for peer: int in zone.net_world.heroes:
+		var h := zone.net_world.heroes[peer] as Player
+		if h != null and is_instance_valid(h) and _role_of(h) == "c1" and _threat_dummy.threat_of(h) > 0.0:
+			_saw_heal_threat = true
+	return "ok" if _saw_heal_threat else "fail: no heal threat from the druid yet"
+
+
+var _saw_heal_threat := false
 
 
 func _role_of(p: Player) -> String:
@@ -295,6 +315,8 @@ func _update() -> void:
 			verdict = _enemies_verdict()
 		"threat":
 			verdict = _threat_verdict()
+		"heal":
+			verdict = _heal_verdict()
 		"enemy_types":
 			verdict = _types_verdict()
 		"look_boss":

@@ -166,8 +166,8 @@ switch ($Mode) {
 			"res://scenes/dedicated_server.tscn", "--", "--port=$port", "--save=user://local_server.json"
 		Start-Sleep -Seconds 4
 		$names = @("Sigmund", "Brynja", "Halvard", "Yrsa")
-		# M10: the companions play both classes (Sigmund tanks, Brynja casts, ...)
-		$classes = @("runebreaker", "elementalist", "runebreaker", "elementalist")
+		# M10/M11: the companions play every class (Sigmund tanks, Brynja heals, Halvard casts, ...)
+		$classes = @("runebreaker", "druid", "elementalist", "runebreaker")
 		$procs = @($srv)
 		for ($i = 0; $i -lt [Math]::Min($bots, 4); $i++) {
 			$procs += Start-Process -FilePath $godot -PassThru -WindowStyle Hidden -ArgumentList "--headless", "--path", "`"$proj`"",

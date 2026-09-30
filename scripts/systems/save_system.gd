@@ -8,6 +8,7 @@ signal flag_set(flag: StringName)
 ## v6 (M10) layout, see docs/PROGRESSION_DESIGN.md:
 ##   {version, characters: [{name, class_id, known_abilities, loadout, gold, inventory,
 ##                           equipped, progression, waypoints, map_discovered, discovered,
+##                           consumables, vitals: {hp, resource} (M11, optional),
 ##                           world: {zone, flags, camps: {id: {cleared_at}}}, notes}],
 ##    active}
 ## Every character has its own world (user, 2026-09-29): bosses, gates and
@@ -340,6 +341,15 @@ func restore_player(player: Player) -> void:
 	restore_character(player, active_character())
 
 
+## M11: the active character's health (and Sap) onto the freshly spawned
+## hero, after its max health is known. Travelling no longer heals (user
+## 2026-09-30); a character without saved vitals starts full.
+func restore_vitals(player: Player) -> void:
+	var v: Variant = active_character().get("vitals", {})
+	if v is Dictionary and player.class_data.id == active_class_id():
+		player.restore_vitals(v as Dictionary)
+
+
 ## M09: a character dict (character_dict() format) onto a hero that may
 ## already hold one: the co-op server re-applies a client's character to its
 ## proxy whenever it changes (stat and talent math of that client's hits).
@@ -404,6 +414,7 @@ static func character_dict(player: Player) -> Dictionary:
 		if int(player.consumables[cid]) > 0:
 			bag[String(cid)] = int(player.consumables[cid])
 	ch["consumables"] = bag
+	ch["vitals"] = player.vitals()  # M11: health (and a pool resource) travel with the hero
 	for item in player.equipment.inventory:
 		(ch["inventory"] as Array).append(item.to_dict())
 	for slot: ItemData.Slot in player.equipment.equipped:

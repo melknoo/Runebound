@@ -359,6 +359,58 @@ class Driver extends Node:
 						return
 					await _seconds(3.0)  # stay while the server and the caster see the taunt
 					_finish("ok")
+			"heal":
+				# M11: c2 (a hurt Runebreaker) keeps the server's dummy busy; c1 (a
+				# Druid) heals it with Mending Bloom and wraps it in a shield - both
+				# cross the server as HERO_FX and land on c2's own hero.
+				if not await _in_zone():
+					return
+				var hz := get_tree().current_scene as ZoneBase
+				var hworld := hz.net_world
+				if not await _until(func() -> bool: return _threat_dummy(hworld) != null, 40.0, "the server's dummy"):
+					return
+				var hdummy := _threat_dummy(hworld)
+				if role == "c2":
+					var hero := hz.player
+					hero.god_mode = true  # nothing but the druid changes its health
+					hero.health.current_health = hero.health.max_health * 0.4
+					for i in 4:
+						hdummy.take_hit(hero.roll_ability_hit(hero.ability(&"rune_cleave")))
+						await _seconds(0.25)
+					if not await _until(func() -> bool: return hero.health.current_health >= hero.health.max_health * 0.6,
+							40.0, "the druid's heal arriving (%.0f)" % hero.health.current_health):
+						return
+					if not await _until(func() -> bool: return hero.barrier > 0.0, 20.0, "the druid's shield arriving"):
+						return
+					await _seconds(3.0)  # stay while the druid sees the shield in the party frames
+					_finish("ok")
+				else:
+					var druid := hz.player as DruidHero
+					if druid == null:
+						_finish("fail: c1 is no druid")
+						return
+					var hurt := func() -> Player:
+						for peer: int in hworld.heroes:
+							var h := hworld.heroes[peer] as Player
+							if h != null and is_instance_valid(h) and h.health.current_health < h.health.max_health * 0.5:
+								return h
+						return null
+					if not await _until(func() -> bool: return hurt.call() != null, 40.0, "the tank hurt in the snapshots"):
+						return
+					var tank := hurt.call() as Player
+					if not await _until(func() -> bool: return hdummy.target_peer != 0, 30.0, "the dummy fighting the tank"):
+						return
+					if druid.pick_heal_target() != tank:
+						_finish("fail: the heal would not go to the hurt tank")
+						return
+					if not druid.try_mending_bloom():
+						_finish("fail: Mending Bloom refused")
+						return
+					druid.hero_fx(&"ally_shield", [hz.hero_ref(tank), 30.0, 8.0])
+					if not await _until(func() -> bool: return tank.barrier > 0.0, 20.0, "the tank's shield in its state"):
+						return
+					await _seconds(1.0)
+					_finish("ok")
 			"enemy_types":
 				# The server spawns every enemy type (low health) once both heroes are in.
 				if not await _in_zone():

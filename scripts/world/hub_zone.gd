@@ -19,6 +19,14 @@ const MAGE_TRAINER_SPOT := Vector3(12.6, 0, 8.4)
 ## M10b: Ylva, who sells Healing Draughts, south-west of the hearth on the
 ## way from the spawn to the west hut.
 const MERCHANT_SPOT := Vector3(-6.0, 0, 5.2)
+## M11: Hild, the druid trainer, by the south wall west of the spawn.
+const DRUID_TRAINER_SPOT := Vector3(-5.2, 0, 12.4)
+## M11: resting by the hearth (out of combat) is the one place that heals
+## without a draught or a healer (user 2026-09-30: travelling no longer does).
+const HEARTH_REST_RADIUS := 6.0
+const HEARTH_REST_RATE := 0.1  # of the maximum health (and a pool resource) per second
+
+var _rest_note_shown: bool = false
 
 
 ## M06 Phase C: the Runehold kit look (warm dawn, granite, sod roofs).
@@ -110,6 +118,18 @@ func _build_zone() -> void:
 	mage_trainer.global_position = MAGE_TRAINER_SPOT
 	var mage_to_fire := FIRE_POS - MAGE_TRAINER_SPOT
 	mage_trainer.rotation.y = atan2(-mage_to_fire.x, -mage_to_fire.z)
+	# M11: the druid trainer
+	var druid_trainer := TrainerNpc.new()
+	druid_trainer.name = "TrainerDruid"
+	druid_trainer.teaches_class = &"druid"
+	druid_trainer.rig_path = "res://assets/models/chars/elementalist.glb"
+	druid_trainer.material_id = "elementalist"
+	druid_trainer.body_tint = Color(0.66, 0.74, 0.5)  # moss over the coat until the druid rig exists
+	druid_trainer.rune_color = ArtKit.color("color_roles.nature.body", Color("#7ED957"))
+	world.add_child(druid_trainer)
+	druid_trainer.global_position = DRUID_TRAINER_SPOT
+	var druid_to_fire := FIRE_POS - DRUID_TRAINER_SPOT
+	druid_trainer.rotation.y = atan2(-druid_to_fire.x, -druid_to_fire.z)
 	# M10b: the merchant (consumables for gold)
 	var merchant := MerchantNpc.new()
 	merchant.name = "Merchant"
@@ -158,6 +178,29 @@ func _build_zone() -> void:
 		spire.global_position = PORTAL_SPOTS["spire"]
 
 
+## M11: heroes this machine plays rest by the hearth out of combat: health
+## (and a pool resource like Sap) fill up; a short note says why.
+func _physics_process(delta: float) -> void:
+	for p in players:
+		if p == null or not is_instance_valid(p) or p.net_role != Player.NetRole.OWNER or p.health.is_dead:
+			continue
+		var near := p.global_position.distance_to(FIRE_POS) <= HEARTH_REST_RADIUS
+		if p.is_local and not near:
+			_rest_note_shown = false
+		if not near or p.in_combat():
+			continue
+		var hurt := p.health.current_health < p.health.max_health
+		var pool := p.class_data.resource_mode == ClassData.ResourceMode.POOL and p.resonance < p.max_resource()
+		if hurt:
+			p.health.heal(p.health.max_health * HEARTH_REST_RATE * delta)
+		if pool:
+			p.resonance = minf(p.resonance + p.max_resource() * HEARTH_REST_RATE * delta, p.max_resource())
+			p.resonance_changed.emit(p.resonance, p.max_resource())
+		if (hurt or pool) and p.is_local and not _rest_note_shown and hud != null:
+			_rest_note_shown = true
+			hud.toast("Resting by the hearth", ArtKit.color("color_roles.hearth.body", Color("#FFB866")))
+
+
 ## Flagstone plaza around the hearth, paths out to the portals, the spawn and
 ## the hut doors (shader-side paving, see ArtKit.paved).
 func _paved_ground() -> Material:
@@ -169,6 +212,7 @@ func _paved_ground() -> Material:
 	paths.append(Vector4(f.x, f.y, TRAINER_SPOT.x + 1.2, TRAINER_SPOT.z + 0.8))  # M07b trainer
 	paths.append(Vector4(f.x, f.y, MAGE_TRAINER_SPOT.x - 1.0, MAGE_TRAINER_SPOT.z - 0.8))  # M10 trainer
 	paths.append(Vector4(f.x, f.y, MERCHANT_SPOT.x + 0.9, MERCHANT_SPOT.z - 0.7))  # M10b merchant
+	paths.append(Vector4(f.x, f.y, DRUID_TRAINER_SPOT.x + 0.6, DRUID_TRAINER_SPOT.z - 0.9))  # M11 trainer
 	for hut in HUTS:
 		var door := _hut_door(hut)
 		paths.append(Vector4(door.x, door.y, lerpf(door.x, f.x, 0.55), lerpf(door.y, f.y, 0.55)))
@@ -212,7 +256,8 @@ func _dress_runehold(walls: Array[StaticBody3D], huts: Array[StaticBody3D], roof
 		SetPieces.prop(dressing(), "rh_weapon_rack" if z < -8.0 else "rh_training_post",
 			Vector3(-inner, 0, z) + Vector3.RIGHT * 0.14, PI * 0.5)
 	var keep_clear: Array[Vector3] = [Vector3(0, 10, 3.0), Vector3(FIRE_POS.x, FIRE_POS.z, 6.0),
-		Vector3(TRAINER_SPOT.x, TRAINER_SPOT.z, 2.2), Vector3(MAGE_TRAINER_SPOT.x, MAGE_TRAINER_SPOT.z, 2.2)]
+		Vector3(TRAINER_SPOT.x, TRAINER_SPOT.z, 2.2), Vector3(MAGE_TRAINER_SPOT.x, MAGE_TRAINER_SPOT.z, 2.2),
+		Vector3(DRUID_TRAINER_SPOT.x, DRUID_TRAINER_SPOT.z, 2.2)]
 	for spot: Vector3 in PORTAL_SPOTS.values():
 		keep_clear.append(Vector3(spot.x, spot.z, 2.6))
 	for hut in HUTS:

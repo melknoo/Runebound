@@ -9,6 +9,9 @@ extends Object
 ## built on every machine, and each machine applies them to the heroes it
 ## simulates itself (its own hero; offline every hero) - an owner takes its
 ## own hits, so it must also own its own protection.
+## M11 targeted ally effects (the druid) name their target with a hero ref
+## (ZoneBase.hero_ref): every machine shows the look, only the target's owner
+## applies it; offline the authority books the heal's threat right there.
 
 
 static func play(hero: Player, kind: StringName, a: Array) -> void:
@@ -147,9 +150,69 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 							or ally.health.is_dead or ally.global_position.distance_to(a[0] as Vector3) > float(a[3]):
 						continue
 					ally.grant_barrier(float(a[1]), float(a[2]))
+		# --- M11 druid: ally effects with a target ref (see the header) ---
+		&"ally_heal":  # [ref, amount]
+			var target := _ally(hero, a[0])
+			if target == null:
+				return
+			VFX.heal_motes(target, 0.35)
+			var shown := minf(float(a[1]), target.health.max_health - target.health.current_health)
+			if shown >= 0.5:
+				GameFeel.float_text(target.global_position + Vector3(0, 2.1, 0), "+%d" % int(round(shown)),
+					ArtKit.color("color_roles.nature.hot", Color("#E4FFC4")))
+			Sfx.play("mend", target.global_position, -3.0, 0.08)
+			if target.net_role == Player.NetRole.OWNER:
+				var healed := target.receive_heal(float(a[1]))
+				_book_heal_threat(hero, healed)
+		&"ally_hot":  # [ref, id, total, duration]
+			var target := _ally(hero, a[0])
+			if target == null:
+				return
+			VFX.heal_motes(target, float(a[3]))
+			Sfx.play("mend", target.global_position, -6.0, 0.08, 1.2)
+			if target.net_role == Player.NetRole.OWNER:
+				_book_heal_threat(hero, minf(float(a[2]), target.health.max_health - target.health.current_health))
+				target.add_hot(StringName(str(a[1])), float(a[2]), float(a[3]))
+		&"ally_shield":  # [ref, amount, duration] - the target's own grant_barrier shows the ring
+			var target := _ally(hero, a[0])
+			if target != null and target.net_role == Player.NetRole.OWNER:
+				target.grant_barrier(float(a[1]), float(a[2]))
+		&"ally_buff":  # [pos, radius, key, value, duration]
+			var zone := ZoneBase.zone_of(hero)
+			if zone != null:
+				for ally in zone.players_within(a[0] as Vector3, float(a[1])):
+					if ally.net_role == Player.NetRole.OWNER:
+						ally.add_buff(StringName(str(a[2])), float(a[3]), float(a[4]))
+		&"thorn_volley":  # [muzzle, dirs] - puppets fly visual copies
+			Sfx.play("thorn_volley", a[0] as Vector3, -9.0, 0.12)
+			var thorn_data := hero.ability(&"thorn_volley")
+			if hero.net_role == Player.NetRole.PUPPET and thorn_data != null:
+				for dir: Vector3 in a[1] as Array:
+					var thorn := SpellBolt.new()
+					thorn.visual_only = true
+					thorn.color_role = "nature"
+					thorn.lifetime = DruidHero.THORN_LIFETIME
+					thorn.setup(thorn_data, dir, hero)
+					thorn.position = a[0] as Vector3
+					scene.add_child(thorn)
 		# --- M10b consumables ---
 		&"drink":  # [pos, total heal] - a Healing Draught (the heal itself runs on the owner)
 			VFX.drink(hero, float(Consumables.def(Consumables.HEALING_DRAUGHT).get("time", 4.0)))
 			GameFeel.float_text(hero.global_position + Vector3(0, 2.1, 0), "+%d" % int(round(float(a[1]))),
 				ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
 			Sfx.play("potion_drink", a[0] as Vector3, -3.0, 0.05)
+
+
+## M11: the hero a ref names in the caster's zone (null when gone).
+static func _ally(hero: Player, ref: Variant) -> Player:
+	var zone := ZoneBase.zone_of(hero)
+	return zone.hero_by_ref(int(ref)) if zone != null else null
+
+
+## M11 offline: the healer's threat (a co-op server books it when it relays).
+static func _book_heal_threat(healer: Player, healed: float) -> void:
+	if Net.is_online() or healed <= 0.0:
+		return
+	var zone := ZoneBase.zone_of(healer)
+	if zone != null:
+		zone.heal_threat(healer, healed)

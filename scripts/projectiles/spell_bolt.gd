@@ -14,6 +14,10 @@ var _age: float = 0.0
 var _dead: bool = false
 ## M09: another player's bolt on a co-op client flies for show only.
 var visual_only: bool = false
+## M11: the art_spec colour role of the dart (the druid's thorns: "nature").
+var color_role: String = "player_accent"
+## Seconds before it fizzles (M11: the druid's thorns reach ~20 m).
+var lifetime: float = LIFETIME
 
 
 func setup(data: AbilityData, dir: Vector3, source: Node3D) -> void:
@@ -34,20 +38,20 @@ func _ready() -> void:
 	if Net.has_view():
 		var core := MeshInstance3D.new()
 		var mesh := PrismMesh.new()
-		mesh.size = Vector3(0.16, 0.16, 0.55)
+		mesh.size = Vector3(0.16, 0.16, 0.55) if color_role == "player_accent" else Vector3(0.08, 0.08, 0.6)
 		var mat := StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		mat.albedo_color = ArtKit.color("color_roles.player_accent.hot", Color(0.62, 0.95, 0.9))
+		mat.albedo_color = ArtKit.color("color_roles.%s.hot" % color_role, Color(0.62, 0.95, 0.9))
 		mat.emission_enabled = true
-		mat.emission = ArtKit.color("color_roles.player_accent.body", Color(0.24, 0.75, 0.7))
+		mat.emission = ArtKit.color("color_roles.%s.body" % color_role, Color(0.24, 0.75, 0.7))
 		mat.emission_energy_multiplier = 3.2
 		mesh.material = mat
 		core.mesh = mesh
 		core.rotation_degrees = Vector3(-90, 0, 0)
 		core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(core)
-		VFX.attach_trail(self, "spark", [ArtKit.color("color_roles.player_accent.hot"),
-			Color(ArtKit.color("color_roles.player_accent.body"), 0.0)] as Array[Color], 20, 0.12)
+		VFX.attach_trail(self, "spark", [ArtKit.color("color_roles.%s.hot" % color_role),
+			Color(ArtKit.color("color_roles.%s.body" % color_role), 0.0)] as Array[Color], 20, 0.12)
 	if _dir.length() > 0.01 and absf(_dir.dot(Vector3.UP)) < 0.99:
 		look_at(global_position + _dir, Vector3.UP)
 	body_entered.connect(func(_b: Node3D) -> void: _pop(null))
@@ -58,7 +62,7 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_age += delta
-	if _age > LIFETIME:
+	if _age > lifetime:
 		queue_free()
 		return
 	global_position += _dir * _data.projectile_speed * delta
@@ -78,7 +82,7 @@ func _pop(victim: Node) -> void:
 		return
 	_dead = true
 	var scene := get_tree().current_scene
-	VFX.flash(scene, global_position, ArtKit.color("color_roles.player_accent.hot"), 0.45, 0.08)
+	VFX.flash(scene, global_position, ArtKit.color("color_roles.%s.hot" % color_role), 0.45, 0.08)
 	if not visual_only and victim != null and victim.has_method(&"take_hit"):
 		var hit: HitInfo
 		var hero := _source as Player
