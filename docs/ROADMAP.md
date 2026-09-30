@@ -255,7 +255,7 @@ wandert zurück ins Skript, das Skript bleibt die einzige Quelle.
 - Charakterwahl-/Erstell-Screen, mehrere Charaktere pro Save (je eine Klasse), klassen-eigene
   Talentäste, Affixe und Legendaries, Save-Migration für bestehende Runebreaker.
 
-### M11 — Drei Rollen II: Wurzel-Druide (Heiler) (in Arbeit)
+### M11 — Drei Rollen II: Wurzel-Druide (Heiler) (gebaut, dein Playtest offen)
 Pflanzen aus verbrannter Erde, Totems, Dornen. Heilt **gezielt** (Verbündeter unter dem
 Fadenkreuz, sonst der mit dem wenigsten Leben in Reichweite, allein man selbst), mit **Zonen am
 Boden** und **Schilden + Buffs**. Genug eigener Schaden, um die Story solo zu schaffen. Eigenes
@@ -268,9 +268,11 @@ Hälfte des Geheilten, verteilt auf die Gegner, die schon kämpfen).
 **Stand:** Phase 1 gebaut (Heil-Pipeline für Verbündete, freundliches Ziel mit Markierung,
 Heil-Aggro, Vorrat-Ressource, Leben/Saft im Save und über Reisen, Herdfeuer, Barriere im
 Party-Panel, Klasse mit Dornensalve und Knospe der Heilung, Trainerin Hild Ashroot, alle Icons
-und Sounds; Smoke 542 grün, Netz-Szenario `heal`, PROTOCOL 12). Als Nächstes: Look-Vorschau
-des Rigs, die übrigen 7 Fähigkeiten, Talente, Legendaries; dann das Rig, zuletzt Solo-Check,
-Shots und Docs.
+und Sounds; Netz-Szenario `heal`, PROTOCOL 12). Phase 2 gebaut (die übrigen 7 Fähigkeiten,
+24 Talente, 3 Legendaries, Affixe, Bot-Heiler). Phase 3 gebaut (eigenes Rig mit 13 Clips, der
+Look ist von dir abgenommen). Phase 4 gebaut (Solo-Check: der Druide schafft alles allein auf
+Stufe 4 und 6 ohne Tod; Shots `m11_druid`, Docs, Playtest-Gruppe „M11: Druide & Heilen“,
+Gate-Walk in PROJECT_STATE). Smoke 555 grün, Netz-Suite grün.
 
 ### M12 — Highlands mit Substanz
 Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands

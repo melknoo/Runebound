@@ -3,6 +3,21 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m11",
+			"title": "M11: Druide & Heilen",
+			"items": [
+				{"id": "m11_druid_new", "src": "M11", "title": "Einen Druiden anlegen", "hint": "Im Titel unter „Neuer Charakter“ einen Druiden anlegen. Passt der Look im Spiel (Kapuze, Geweih, Stab mit Samen)?"},
+				{"id": "m11_hild", "src": "M11", "title": "Hild Ashroot finden", "hint": "Die Druiden-Trainerin steht an der Südmauer, westlich vom Start. Findest du sie? Schicken dich Sigrun und Maren zu ihr?"},
+				{"id": "m11_thorns", "src": "M11", "title": "Dornensalve (LMB)", "hint": "Drei Dornen im Fächer, gedrückt halten schießt weiter. Genug Schaden, um allein durch die Camps zu kommen?"},
+				{"id": "m11_sap", "src": "M11", "title": "Saft läuft nur im Kampf nach", "hint": "Der grüne Vorrat startet voll und füllt sich nur, solange gekämpft wird. Nach dem Kampf reicht er für einen Rest, nicht für volles Leben. Fühlt sich das richtig an?"},
+				{"id": "m11_target", "src": "M11", "title": "Wen die Heilung trifft", "hint": "Fadenkreuz auf einen Verbündeten: er wird geheilt, sonst der mit dem wenigsten Leben, allein du selbst. Die grüne Markierung zeigt es. Trifft sie im Gedränge den Richtigen?"},
+				{"id": "m11_kit", "src": "M11", "title": "Die sieben Fähigkeiten", "hint": "Rindenhaut, Nachwuchs, Wurzelgriff, Hain der Erneuerung, Dornenfeld, Totem des Wachstums, Wilde Blüte: Liest sich jede im Kampf? Welche fühlt sich schwach oder zu stark an?"},
+				{"id": "m11_travel", "src": "M11", "title": "Reisen heilt nicht mehr", "hint": "Verletzt nach Runehold reisen: das Leben bleibt. Am Herdfeuer (außerhalb des Kampfs) füllt es sich. Passt das, findest du das Feuer?"},
+				{"id": "m11_coop_heal", "src": "M11", "title": "Heilen im Koop", "hint": "Mit einem Mitspieler (oder run_godot coop, der zweite Bot ist ein Druide): Heilung, Schild und Hain kommen beim anderen an, das Party-Panel zeigt den Schild. Klappt das?"},
+				{"id": "m11_heal_aggro", "src": "M11", "title": "Heilen zieht Gegner", "hint": "Heilen zählt halb als Bedrohung. Springen Gegner zu oft auf den Heiler, oder kaum?"}
+			]
+		},
+		{
 			"id": "m10",
 			"title": "M10: Klassen & Heiltränke",
 			"items": [

@@ -89,6 +89,9 @@ comparison and perf A/B.
 | Settlement light (hearth) | warm #FFB866 | small lit window/lantern rectangles, environment cap, never on the ground |
 | Ancient runes (monoliths, lintels, Spire inlays, portals) | teal/cyan | straight channels, glyphs, upright gate ovals — never ground rings |
 | Loot rarity | white / blue / gold / orange | vertical beam + label; the shape carries it |
+| Aether (M10 Elementalist resource) | magenta #F06AC8 | rig glow, HUD bar; never on enemies |
+| Health (M10b) | red #D8404A | the HUD bar, draughts; never a filled shape on the ground |
+| Nature (M11 druid) | leaf green #7ED957 | Sap bar, rig glow, heals, the ally chevron, broken ground rings of groves / totems / thorns; yellower than the player teal, never on enemies |
 
 Red is reserved for danger. M05 used one orange for rune glow, Resonance,
 fire and Legendary. Now Resonance is rune gold, fire stays orange-red, and
@@ -157,6 +160,17 @@ posterize moves values in bands of about 7 L*, and fog lifts distant ground.
   - Broad V-torso, short legs, big rune sword (blade about 1.1 m).
   - Shapes: **squares and rune circles**, plated and grounded, reads as
     "the solid one".
+- **Elementalist (player, M10):** slimmer, a long steel-blue coat, the
+  player teal on mantle and trim, a gold circlet, a rune rod with the Aether
+  crystal. Shapes: tall, open face, never hooded (the hooded caster is the
+  enemy Duskweaver).
+- **Root druid (player, M11):** a moss-dark robe under a mantle of leaves,
+  bark plates on the shoulders and the left forearm, a deep hood **set back
+  so the face stays open**, antlers out of the hood, a gnarled staff with a
+  glowing seed. Shapes: **branches and leaves**, upright staff, reads as
+  "the one who tends". The antlers and the green glow keep it apart from the
+  hooded Duskweaver. Approved by the user 2026-09-30 (live preview
+  `captures_shots/m11_druid/_look_preview.png`).
 - **Ash raiders (Cinder Marauder, Ashvein Colossus):** jagged wedges, horns,
   forward lean, heavy forearms. The silhouette says "charges at you".
 - **Duskweavers (casters):** tall cones and drapes, hoods, vertical lines,

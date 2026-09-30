@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-09-30 · Milestone: **M11 Three roles II (the root druid,
-healer)** in progress (phase 1 built, below). **M10 Three roles I (tank +
+healer)** - all four phases built (below); the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
 Draughts**; the user's playtest is the gate for both (still open, M11 started
 alongside at the user's wish). M09 Co-op was played by the user and a
@@ -9,7 +9,7 @@ friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
-## M11 Three roles II: the root druid (in progress, 2026-09-30)
+## M11 Three roles II: the root druid (built 2026-09-30, the user's playtest is open)
 Plan with the user's answers (8 pool abilities + LMB now, the rest from
 M12-M14; **Sap** is a pool that refills **only in a fight**; LMB **Thorn
 Volley**; **health and Sap travel with the hero** - only death, draughts,
@@ -69,11 +69,30 @@ ROADMAP M11, CLASS_DESIGN "Root druid".
     itself). Smoke 554 green; `net heal` green. The server probe now writes
     its result aside and renames it (one run read the file while a rewrite
     had emptied it).
-  - **The rig's look is the user's call** (live preview
-    `captures_shots/m11_druid/_look_preview.png`: hooded robe, leaf mantle,
-    antlers, bark plates, a staff with a glowing seed). Until then the druid
-    plays on the Elementalist's rig, tinted moss green; `build_druid` +
-    `druid_clips` (13 clips) are in the generator, not exported yet.
+- **Phase 3 (built): the rig.** The user approved the look (2026-09-30,
+  live preview `captures_shots/m11_druid/_look_preview.png`). `druid.glb` +
+  its atlas from `build_druid` / `druid_clips` (13 clips: thorn, mend, bark,
+  regrowth upper-body; root_grasp, grove, totem, bloom full-body; idle, run,
+  dodge, flinch); the class and Hild wear it. Shot list `m11_druid` (11).
+- **Phase 4 (built): wrap-up.**
+  - Solo check L6: druid 11/11 (0 deaths, 156 damage, healed itself),
+    Elementalist 11/11, Runebreaker 10/11 or 11/11 (the Colossus kills the
+    bot tank about one run in three - the same on the build before M11,
+    KNOWN_ISSUES "M11 open items").
+  - Docs: CLASS_DESIGN "Root druid", PROGRESSION_DESIGN (talents, Hild),
+    ITEMIZATION, TECHNICAL_ARCHITECTURE "Healing and allies (M11)",
+    ART_BIBLE (roles, druid shape language), KNOWN_ISSUES; the J list got a
+    group "M11: Druide & Heilen".
+  - **Gate walk (user):**
+    1. Title -> "New character" -> Druid. In Runehold find Hild Ashroot
+       (south wall, west of the spawn), learn Barkskin, set the loadout (K).
+    2. Highlands camps alone: Thorn Volley on LMB, heal yourself, watch the
+       Sap refill only while fighting.
+    3. Travel hurt to Runehold: the health stays; rest by the hearth.
+    4. Co-op (a friend or `tools\run_godot.cmd coop`: the second bot is a
+       druid): aim at a hurt ally and heal - the green chevron shows whom;
+       the party frames show the shield.
+    5. The J list, group "M11: Druide & Heilen".
 
 ## M10b Healing Draughts (built 2026-09-30, the user's playtest is open)
 The M10 solo check found no healing between fights; the user decided (2026-09-30):

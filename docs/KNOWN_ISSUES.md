@@ -206,6 +206,33 @@
 - The laptop server shows single tick spikes up to ~60 ms under full load
   (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
+## M11 open items (built, needs the user's playtest)
+- **Travel no longer heals** (every class): health carries across zones and
+  in the save; only death, draughts, heals and the Runehold hearth refill
+  it. Watch whether a hurt return to Runehold feels right, and whether the
+  hearth (10 %/s within 6 m, out of combat) is easy to find.
+- Druid numbers to feel: Sap 100, 5 a second in a fight; Mending Bloom 30
+  for 14 Sap; Barkskin 35 + 2 per level; Regrowth 40 over 8 s; Thorn Volley
+  3 x 5 damage every 0.45 s; Renewal Grove 4 a second; Totem +15 %; Wild
+  Bloom 30 % for 50 Sap. The druid bot beats every Highlands camp and the
+  Colossus alone at level 4 and 6 (0 deaths, it heals itself).
+- The heal target prefers the crosshair: an ally counts within 1.2 m of the
+  aim ray. Check it picks the one you mean in a crowded fight, and that the
+  green chevron is enough (no "heal on me" key yet).
+- Thornfield slows with Chill (-45 %), the frost status; a thorn-own slow
+  would need a new status in the net codec.
+- Heals from zones (grove, totem pulses) make no threat; the targeted heals
+  do (half the healed amount).
+- Barkskin shows the barrier's teal ring (the barrier is shared with Runic
+  Guard); a bark look of its own may come later.
+- The solo-check tank now dies at the Colossus about one run in three (6-19 %
+  left, 420-550 damage over the Highlands at L6). The same check on the
+  build before M11 did the same (430 / 547): it is the bots' variance with
+  rolled gear, not a change of M11. Still a hint that the tank alone is
+  thin at the Colossus without draughts (the solo check drinks none).
+- Not measured: a perf A/B for M11 (the new effects are small meshes and
+  CPU particles; the lab run was not repeated).
+
 ## M10 open items (phases 1-4 built, needs the user's playtest)
 - **No healing between fights yet:** a hero's health comes back only by
   dying (shrine respawn) or changing zones. In the solo check (bots, level

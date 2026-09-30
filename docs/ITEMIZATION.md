@@ -80,6 +80,14 @@ Dodge CD −30% · Earthbreaker −15 cost · Fracture Rune arms 0.4s faster.
 - Items already in a bag keep their affixes; an affix of the other class
   simply does nothing (every ability hook reads its stat by key).
 
+## M11: the druid
+- **Affixes:** `heal_pct` ("+N % healing": heals and shields, weapon /
+  amulet / chest), `sap_regen_pct` ("Sap refills N % faster in a fight"),
+  `hot_dur_pct` ("Regrowth lasts 25 % longer", gloves / ring).
+- **Legendaries:** Heartwood Idol, Ashbloom Seed, Thornmother's Crown (below).
+- **Names:** rootstaves, branches, crooks, boughs; barkmail and leafweave;
+  hoods, antler crowns, wreaths; barkguards; footwraps.
+
 ## M10b: consumables (Healing Draughts)
 User decisions of 2026-09-30: no regeneration out of combat (waiting would
 answer every fight); healing between fights comes from consumables, drunk
@@ -106,6 +114,9 @@ answer every fight); healing between fights comes from consumables, drunk
 | Glacier Heart | Runebreaker | Chest | Earthbreaker leaves a frost field (r4, 4s) that Chills |
 | Emberheart Plate | Runebreaker | Chest | Molten Core |
 | Warden's Oath | Runebreaker | Helm | a parry with Rune Wall grants a 20-health barrier for 3 s |
+| Heartwood Idol | Druid | Amulet | Renewal Grove roots every enemy stepping in, once, for 1 s |
+| Ashbloom Seed | Druid | Ring | Mending Bloom heals twice as much on an ally below 35 % |
+| Thornmother's Crown | Druid | Helm | Thorn Volley throws two more thorns |
 
 ## Implementation notes
 - Items are runtime `ItemData` resources from `ItemGenerator`; base ability

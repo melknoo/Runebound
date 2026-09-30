@@ -384,6 +384,54 @@ three roles, a hero takes 4 of about 12 class abilities into the field.
   stress fight as the Elementalist by default (`"class"` in a perf scenario):
   full-combat numbers from before M10 are not comparable.
 
+## Healing and allies (M11)
+The druid is the first class that changes other heroes' health. The M09
+rule stays: **a hero's owner owns its health** - nothing but the owner ever
+writes it.
+- **Chassis** (`Player`): `receive_heal(amount)` (owner only, returns what
+  it healed), heals over time `add_hot(id, total, duration)` (the same id
+  refreshes; separate from a draught), timed stat bonuses `add_buff(key,
+  value, duration)` that `stat()` adds, `heal_pct` (the healer's), and
+  `pick_heal_target()`: the ally under the crosshair
+  (`TargetingSystem.ally_under_aim`: the chest nearest the camera ray within
+  1.2 m, in sight - remote heroes have no collision layer, so it is
+  geometry), else the lowest health share within `ALLY_RANGE` 30 m, else the
+  hero itself. `shows_heal_target()` switches the green chevron on
+  (`TargetingSystem.heal_target`, also coloured in the party frames).
+- **Ally effects travel as HERO_FX** (`hero_fx.gd`): `ally_heal [ref,
+  amount]`, `ally_hot [ref, id, total, duration]`, `ally_shield [ref, amount,
+  duration]`, `ally_buff [pos, radius, key, value, duration]`. A ref is
+  `ZoneBase.hero_ref(p)` / `hero_by_ref(ref)`: the peer id in co-op (the
+  local hero is `Net.my_id()`), the index in `players` offline. Every machine
+  shows the look; only the one that simulates the target as OWNER applies it
+  (offline that is every hero, bots included). Zones (`RenewalGrove`,
+  `GrowthTotem`) are built on every machine like the Warding Rune; each ticks
+  its own heroes. `ThornField` deals damage, so it follows the Flame Wall
+  pattern (the owner's is real, puppets get a `visual_only` copy).
+- **Heal threat** (`ZoneBase.heal_threat(healer, healed)`, authority only):
+  half of what was healed x the healer's threat factor, split over the
+  enemies within 30 m that already hold threat or hunt someone. Offline
+  HeroFx books it with the real amount; in co-op the server books it when it
+  relays an `ally_heal` / `ally_hot` (`NetWorld._heal_threat_from_fx`),
+  capped at what the target was missing as far as the server knows. Zones
+  make no threat.
+- **Resources:** `ClassData.resource_mode` BUILD (Resonance, Aether: start
+  empty, fill from hits) or POOL (Sap: starts full, `resource_regen` a second
+  while `in_combat()` or `fight_near()` - an enemy within 30 m hunting
+  someone - so a healer who only heals still refills, and nobody refills by
+  waiting).
+- **Vitals:** the character dict keeps `vitals {hp, resource}` (a POOL
+  resource only); `ZoneBase._ready` restores them after `restore_player`, so
+  travelling no longer heals. `HubZone._physics_process` heals the heroes it
+  owns by the hearth out of combat (10 %/s within 6 m).
+- **Net, protocol 12:** HERO_STATE and the SNAPSHOT hero rows carry the
+  barrier (party frames show it); remote nameplates have a slim health bar.
+- **Tests:** smoke (Sap, target rules, heals / HoT / shield / buff / zones on
+  an offline ally, heal threat, vitals, the hearth, every ability); net
+  scenario `heal` (a druid client heals and shields a tank client, the
+  server sees the heal's threat). The server probe writes its verdict aside
+  and renames it over the result file.
+
 ## Open world (M08)
 The Ashen Highlands are a 384 m heightmap zone built from data; later zones
 (M15) copy the pattern.

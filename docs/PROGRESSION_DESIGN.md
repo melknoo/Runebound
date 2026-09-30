@@ -124,6 +124,26 @@ Fire, ⚙ Phoenix Burst (capstone).
 | 3 | Cold Snap | 2 | Chill lasts 0.5 s longer per rank |
 | Cap | ⚙ Absolute Zero | 1 | an enemy Chilled three times within 6 s freezes for 2 s |
 
+### Druid (healer, M11)
+**Growth** (the heals): Verdant Touch (+6 % healing and shields), Deep Roots
+(+12 health), Lingering Growth (Regrowth +15 % longer), Thick Bark (Barkskin
++10), Frugal Bloom (Mending Bloom -2 Sap), ⚙ Overgrowth (Mending Bloom below
+35 % also starts Regrowth), Nurture (+10 % healing on allies below half),
+⚙ Lifebloom (capstone: Wild Bloom also shields for a fifth of the heal).
+
+**Thorns** (its own damage): Sharp Thorns (Thorn Volley +8 %), Wild Heart
+(+3 % damage), Strangle (roots +0.5 s), Bramble (Thornfield +0.5 m),
+⚙ Splinter (a fourth thorn), Grasping Briars (+10 % vs rooted), Keen Thorns
+(+3 % crit), ⚙ Briar Burst (capstone: Root Grasp bursts again at half
+damage).
+
+**Grove** (zones, totem, Sap): Sap Well (Sap +15 % faster in a fight), Grove
+Keeper (grove +15 % healing), Wide Grove (+0.75 m), Totem Ward (totem +5 %
+damage), ⚙ Green Tide (standing in the grove refills 2 Sap a second),
+⚙ Rooted Totem (the totem roots enemies within 3 m for 1.5 s), Thrift
+(cooldowns -4 %), ⚙ Heart of the Grove (capstone: grove and totem last
+50 % longer).
+
 ## Gold and the trainers (M07b, M10: one per class)
 - **Start kit:** the class's basic attack and Dodge. The rest is bought from
   the class's trainer in Runehold (`[E]`; a hero of another class is sent to
@@ -137,6 +157,12 @@ Fire, ⚙ Phoenix Burst (capstone).
     Rune L5 / 400, Frost Nova L6 / 525, Flame Wall L7 / 650, Ball Lightning
     L8 / 800, Ember Fall L9 / 1,000 (cumulative 50 / 200 / 475 / 875 / 1,400
     / 2,050 / 2,850 / 3,850).
+  - **Hild Ashroot** (druid, M11, by the south wall west of the spawn):
+    Barkskin L2 / 50, Regrowth L3 / 150, Root Grasp L4 / 275, Renewal Grove
+    L5 / 400, Thornfield L6 / 525, Totem of Growth L7 / 650, Wild Bloom
+    L8 / 800 (cumulative 50 / 200 / 475 / 875 / 1,400 / 2,050 / 2,850). The
+    druid starts with Thorn Volley and Mending Bloom (it heals itself from
+    the first minute).
 
   Runic Guard and Resonance Burst stay talent unlocks. All of it is data on
   the `AbilityData` (`unlock`, `learn_level`, `learn_price`). The M07b list
