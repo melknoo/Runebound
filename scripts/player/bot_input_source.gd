@@ -174,6 +174,8 @@ func _druid_fight(intent: PlayerIntent, player: Player, dist: float) -> void:
 		_press(intent, player, &"growth_totem", 8.0)
 	if dist < 16.0:
 		_press(intent, player, &"root_grasp", 6.0)
+	if dist < 5.0:
+		_press(intent, player, &"wild_bloom", 20.0)  # too close: throw them back
 	if dist > 3.0 and dist < 14.0:
 		_press(intent, player, &"thornfield", 8.0)
 

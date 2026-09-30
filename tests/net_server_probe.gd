@@ -416,7 +416,11 @@ func _update() -> void:
 				verdict = "ok"
 			else:
 				verdict = "fail: nobody joined"
-	var f := FileAccess.open(result_path, FileAccess.WRITE)
+	# Written aside and renamed over the result (M11): the orchestrator once read
+	# the file in the moment a rewrite had emptied it ("no result").
+	var tmp := result_path + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
 	if f != null:
 		f.store_string(verdict + "\n")
 		f.close()
+		DirAccess.rename_absolute(ProjectSettings.globalize_path(tmp), ProjectSettings.globalize_path(result_path))

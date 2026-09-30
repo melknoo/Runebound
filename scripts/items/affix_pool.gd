@@ -42,6 +42,13 @@ const DEFS: Array[Dictionary] = [
 		"min": 20.0, "max": 35.0, "slots": [ItemData.Slot.WEAPON, ItemData.Slot.AMULET, ItemData.Slot.RING], "weight": 6},
 	{"id": &"storm_cd_pct", "class": &"elementalist", "template": "Storm Step cooldown -%d%%", "stat": &"storm_cd_pct",
 		"min": 10.0, "max": 18.0, "slots": [ItemData.Slot.BOOTS], "weight": 5},
+	# --- M11: the druid's ---
+	{"id": &"heal_pct", "class": &"druid", "template": "+%d%% healing", "stat": &"heal_pct",
+		"min": 10.0, "max": 18.0, "slots": [ItemData.Slot.WEAPON, ItemData.Slot.AMULET, ItemData.Slot.CHEST], "weight": 9},
+	{"id": &"sap_regen_pct", "class": &"druid", "template": "Sap refills %d%% faster in a fight", "stat": &"sap_regen_pct",
+		"min": 15.0, "max": 25.0, "slots": [ItemData.Slot.WEAPON, ItemData.Slot.AMULET, ItemData.Slot.HELM, ItemData.Slot.RING], "weight": 8},
+	{"id": &"hot_dur_pct", "class": &"druid", "template": "Regrowth lasts %d%% longer", "stat": &"hot_dur_pct",
+		"min": 25.0, "max": 25.0, "slots": [ItemData.Slot.GLOVES, ItemData.Slot.RING], "weight": 5},
 ]
 
 ## M07 adds three legendaries that grant a talent's behavior (the powers are
@@ -63,6 +70,13 @@ const LEGENDARIES: Array[Dictionary] = [
 	# M10: the tank's own
 	{"id": &"wardens_oath", "name": "Warden's Oath", "class": &"runebreaker", "slot": ItemData.Slot.HELM,
 		"text": "A parry with Rune Wall grants a 20-health barrier for 3 s."},
+	# M11: the druid's own
+	{"id": &"heartwood_idol", "name": "Heartwood Idol", "class": &"druid", "slot": ItemData.Slot.AMULET,
+		"text": "Renewal Grove roots every enemy that steps into it, once, for 1 s."},
+	{"id": &"ashbloom_seed", "name": "Ashbloom Seed", "class": &"druid", "slot": ItemData.Slot.RING,
+		"text": "Mending Bloom heals twice as much on an ally below 35% health."},
+	{"id": &"thornmothers_crown", "name": "Thornmother's Crown", "class": &"druid", "slot": ItemData.Slot.HELM,
+		"text": "Thorn Volley throws two more thorns."},
 ]
 
 

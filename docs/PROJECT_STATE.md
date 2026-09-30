@@ -50,6 +50,30 @@ ROADMAP M11, CLASS_DESIGN "Root druid".
     the save and across travel, the hearth, Hild); net scenario `heal` (a
     druid client heals and shields a tank client across the server, the
     server sees the heal's threat).
+- **Phase 2 (built): the kit, talents, legendaries.**
+  - The seven trainer abilities (CLASS_DESIGN "Root druid"): Barkskin,
+    Regrowth, Root Grasp, Renewal Grove, Thornfield, Totem of Growth, Wild
+    Bloom. `RenewalGrove` and `GrowthTotem` exist on every machine and heal /
+    buff the heroes it simulates (like the Warding Rune); `ThornField` has a
+    visual-only copy for puppets (like the Flame Wall). Zone heals make no
+    threat; the targeted ones do.
+  - Talents Growth / Thorns / Grove (24 nodes, 72 in all); legendaries
+    Heartwood Idol, Ashbloom Seed, Thornmother's Crown; affixes `heal_pct`,
+    `sap_regen_pct`, `hot_dur_pct`; druid item names (Rootstaff, Barkmail,
+    Antler Crown ...); the character sheet reads heals as heals.
+  - Bots: the healer heals first, then Thorn Volley, Root Grasp, Thornfield,
+    the totem and (close up) Wild Bloom. Without a camera a zone lands on the
+    enemy nearest the aim line (it always landed at full reach before, and a
+    druid bot stood stuck at a ruin wall for 90 s).
+  - Solo check: druid L4 11/11 fights, 0 deaths (144 damage taken, healed
+    itself). Smoke 554 green; `net heal` green. The server probe now writes
+    its result aside and renames it (one run read the file while a rewrite
+    had emptied it).
+  - **The rig's look is the user's call** (live preview
+    `captures_shots/m11_druid/_look_preview.png`: hooded robe, leaf mantle,
+    antlers, bark plates, a staff with a glowing seed). Until then the druid
+    plays on the Elementalist's rig, tinted moss green; `build_druid` +
+    `druid_clips` (13 clips) are in the generator, not exported yet.
 
 ## M10b Healing Draughts (built 2026-09-30, the user's playtest is open)
 The M10 solo check found no healing between fights; the user decided (2026-09-30):

@@ -175,7 +175,10 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 				target.add_hot(StringName(str(a[1])), float(a[2]), float(a[3]))
 		&"ally_shield":  # [ref, amount, duration] - the target's own grant_barrier shows the ring
 			var target := _ally(hero, a[0])
-			if target != null and target.net_role == Player.NetRole.OWNER:
+			if target == null:
+				return
+			Sfx.play("barkskin", target.global_position, -3.0, 0.08)
+			if target.net_role == Player.NetRole.OWNER:
 				target.grant_barrier(float(a[1]), float(a[2]))
 		&"ally_buff":  # [pos, radius, key, value, duration]
 			var zone := ZoneBase.zone_of(hero)
@@ -195,6 +198,51 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 					thorn.setup(thorn_data, dir, hero)
 					thorn.position = a[0] as Vector3
 					scene.add_child(thorn)
+		&"root_grasp":  # [pos, radius] roots bursting out of the ground
+			var bark := ArtKit.color("palettes.druid.bark.3", Color("#6C4A38"))
+			VFX.ground_ring(scene, a[0] as Vector3, ArtKit.color("color_roles.nature.body"), float(a[1]), 0.3)
+			VFX.burst(scene, a[0] as Vector3 + Vector3(0, 0.2, 0), {"tex": "shard", "amount": 16, "lifetime": 0.5,
+				"size": 0.16, "spread": 35.0, "vel_min": 3.0, "vel_max": 6.0,
+				"colors": [bark, Color(bark, 0.0)] as Array[Color]})
+			VFX.decal(scene, a[0] as Vector3, "cracks", float(a[1]) * 1.6, Color(bark, 0.8), 3.0)
+			Sfx.play("root_grasp", a[0] as Vector3, 0.0, 0.06)
+		&"renewal_grove":  # [pos, radius, duration, rate, idol roots, green tide] - an ally effect
+			var grove := RenewalGrove.new()
+			grove.radius = float(a[1])
+			grove.duration = float(a[2])
+			grove.rate = float(a[3])
+			grove.roots_enemies = bool(a[4])
+			grove.green_tide = bool(a[5])
+			grove.source = hero
+			grove.position = a[0] as Vector3
+			scene.add_child(grove)
+		&"growth_totem":  # [pos, radius, duration, damage %, heal per pulse] - an ally effect
+			var totem := GrowthTotem.new()
+			totem.radius = float(a[1])
+			totem.duration = float(a[2])
+			totem.damage_pct = float(a[3])
+			totem.heal = float(a[4])
+			totem.position = a[0] as Vector3
+			scene.add_child(totem)
+		&"thornfield":  # [pos, radius, duration] - a visual copy on puppets
+			var field_data := hero.ability(&"thornfield")
+			if hero.net_role == Player.NetRole.PUPPET and field_data != null:
+				var field := ThornField.new()
+				field.visual_only = true
+				field.setup(field_data, hero)
+				field.radius = float(a[1])
+				field.duration = float(a[2])
+				field.position = a[0] as Vector3
+				scene.add_child(field)
+		&"wild_bloom":  # [pos, radius] the great heal opening
+			var green := ArtKit.color("color_roles.nature.body")
+			var hot := ArtKit.color("color_roles.nature.hot")
+			VFX.flash(scene, a[0] as Vector3 + Vector3(0, 1.2, 0), hot, 3.0, 0.25)
+			VFX.ground_ring(scene, a[0] as Vector3, green, float(a[1]), 0.5)
+			VFX.burst(scene, a[0] as Vector3 + Vector3(0, 1.0, 0), {"tex": "spark", "amount": 24, "lifetime": 0.9,
+				"size": 0.14, "spread": 180.0, "vel_min": 2.5, "vel_max": 6.0,
+				"colors": [hot, Color(green, 0.0)] as Array[Color]})
+			Sfx.play("wild_bloom", a[0] as Vector3, 0.0, 0.03)
 		# --- M10b consumables ---
 		&"drink":  # [pos, total heal] - a Healing Draught (the heal itself runs on the owner)
 			VFX.drink(hero, float(Consumables.def(Consumables.HEALING_DRAUGHT).get("time", 4.0)))

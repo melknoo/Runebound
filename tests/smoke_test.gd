@@ -682,7 +682,7 @@ func _run() -> void:
 
 	# --- M07b class filters: talents and class-specific loot ---
 	_check(Progression.tree_for(&"runebreaker").size() == 24 and Progression.tree_for(&"elementalist").size() == 24
-		and Progression.tree_for(&"nope").is_empty() and player.progression.class_id == &"runebreaker"
+		and Progression.tree_for(&"druid").size() == 24 and Progression.tree_for(&"nope").is_empty() and player.progression.class_id == &"runebreaker"
 		and Progression.talent(&"molten_core").class_id == &"runebreaker" and Progression.talent(&"split_lance").class_id == &"elementalist",
 		"M10: one talent tree per class (24 nodes each); Molten Core stays with the tank, the spells' talents moved")
 	var foreign_tagged := 0
@@ -708,8 +708,10 @@ func _run() -> void:
 				tank_rolls_spell_affix = true
 	_check(own_legendary and not tank_rolls_spell_affix and AffixPool.legendaries_for(&"runebreaker").size() == 3
 		and AffixPool.legendaries_for(&"elementalist").size() == 4
-		and AffixPool.legendaries_for(&"runebreaker").size() + AffixPool.legendaries_for(&"elementalist").size() == AffixPool.LEGENDARIES.size(),
-		"M10: legendaries and spell affixes follow their ability to its class (tank 3 with Warden's Oath, Elementalist 4)")
+		and AffixPool.legendaries_for(&"druid").size() == 3
+		and AffixPool.legendaries_for(&"runebreaker").size() + AffixPool.legendaries_for(&"elementalist").size()
+			+ AffixPool.legendaries_for(&"druid").size() == AffixPool.LEGENDARIES.size(),
+		"M10/M11: legendaries and spell affixes follow their ability to its class (tank 3, Elementalist 4, druid 3)")
 	var staff_named := false
 	for i in 60:
 		var mage_item := ItemGenerator.generate(0, &"elementalist")
@@ -1377,6 +1379,89 @@ func _run() -> void:
 	_check(thorn_target.health.current_health < thorn_hp - druid.thorn_volley.damage * 3.0,
 		"holding LMB keeps throwing Thorn Volleys (%.0f damage)" % (thorn_hp - thorn_target.health.current_health))
 	thorn_target.queue_free()
+	await _wait_frames(2)
+	# --- M11 phase 2: the rest of the kit ---
+	_check(druid.class_data.trainer_abilities().size() == 7 and druid.class_data.trainer_abilities()[0].id == &"barkskin",
+		"the druid's trainer teaches 7 abilities, Barkskin first")
+	player.debug_learn_all()
+	player.resonance = 100.0
+	player.reset_cooldowns()
+	player.health.heal_full()
+	d_ally2.health.heal_full()
+	d_ally.health.current_health = d_ally.health.max_health * 0.5
+	d_ally.barrier = 0.0
+	_check(druid.try_barkskin() and absf(d_ally.barrier - druid.bark_amount()) < 0.01 and druid.bark_amount() > druid.barkskin.heal,
+		"Barkskin wraps the most wounded ally in a barrier (%.0f, grows with the level)" % d_ally.barrier)
+	_check(druid.try_regrowth() and d_ally.hot_left(&"regrowth") > druid.regrowth.heal - 1.0,
+		"Regrowth starts a heal over time on the ally")
+	# Root Grasp at the aim
+	player.resonance = 100.0
+	var grasp_at := druid._ground_aim(druid.root_grasp.projectile_speed)
+	var grasp_foe := lab.spawn_by_id("rusher", grasp_at + Vector3(0, 0.2, 0))
+	await _wait_frames(3)
+	grasp_foe.health.max_health = 1.0e5
+	grasp_foe.health.heal_full()
+	_check(druid.try_root_grasp() and grasp_foe.status.is_rooted()
+		and grasp_foe.health.current_health < grasp_foe.health.max_health,
+		"Root Grasp strikes and roots the enemy at the aim")
+	# Thornfield bites and Chills what stands in it
+	player.resonance = 100.0
+	var field_hp := grasp_foe.health.current_health
+	grasp_foe.status.clear_all()
+	_check(druid.try_thornfield(), "Thornfield takes root at the aim")
+	await _wait_frames(40)
+	_check(grasp_foe.health.current_health < field_hp and grasp_foe.status.has_chill(),
+		"Thornfield bites and Chills the enemy in it (%.0f)" % (field_hp - grasp_foe.health.current_health))
+	lab.kill_all_enemies()
+	await _wait_frames(20)
+	# Renewal Grove heals the allies standing in it
+	player.resonance = 100.0
+	var grove_at := druid._ground_aim(druid.renewal_grove.projectile_speed)
+	d_ally.global_position = grove_at + Vector3(1.0, 0.2, 0)
+	await _wait_frames(3)
+	d_ally.health.current_health = d_ally.health.max_health * 0.3
+	d_ally._hots.clear()
+	var grove_hp := d_ally.health.current_health
+	_check(druid.try_renewal_grove(), "Renewal Grove grows at the aim")
+	await _wait_frames(65)
+	_check(d_ally.health.current_health > grove_hp + druid.grove_rate() * 0.8,
+		"Renewal Grove heals the ally in it (%.1f in 1 s)" % (d_ally.health.current_health - grove_hp))
+	# Totem of Growth: +damage for the allies near, small heals
+	player.resonance = 100.0
+	d_ally.global_position = player.global_position + Vector3(3, 0, 0)
+	var totem_dmg := d_ally.stat(&"damage_pct")
+	_check(druid.try_growth_totem(), "the Totem of Growth is planted")
+	await _wait_frames(3)
+	_check(is_equal_approx(d_ally.stat(&"damage_pct"), totem_dmg + druid.totem_damage_pct())
+		and player.buff_time(&"damage_pct") > GrowthTotem.PULSE,
+		"the totem's pulse gives the allies near +%d%% damage" % roundi(druid.totem_damage_pct()))
+	# Wild Bloom: every ally near heals 30 %, enemies close are thrown back and rooted
+	for child in lab.get_children():
+		if child is GrowthTotem or child is RenewalGrove or child is ThornField:
+			child.queue_free()
+	await _wait_frames(2)
+	player.resonance = 100.0
+	player.reset_cooldowns()
+	d_ally.global_position = player.global_position + Vector3(3, 0, 0)
+	d_ally._hots.clear()
+	d_ally.health.current_health = d_ally.health.max_health * 0.4
+	var bloom_hp := d_ally.health.current_health
+	var bloom_foe := lab.spawn_by_id("rusher", player.global_position + Vector3(0, 0.2, -2.5))
+	await _wait_frames(3)
+	bloom_foe.health.max_health = 1.0e5
+	bloom_foe.health.heal_full()
+	_check(druid.try_wild_bloom() and absf(d_ally.health.current_health - bloom_hp - d_ally.health.max_health * 0.3) < 0.5
+		and bloom_foe.status.is_rooted() and player.resonance < 51.0,
+		"Wild Bloom heals the allies near by 30 % and roots the enemies close (50 Sap)")
+	# talents and a legendary change the kit
+	player.progression.ranks[&"splinter"] = 1
+	player.equipment._recompute()
+	player.progression._changed()
+	_check(druid.thorn_count() == 4, "Splinter: Thorn Volley throws a fourth thorn")
+	player.progression.ranks.clear()
+	player.progression._changed()
+	lab.kill_all_enemies()
+	await _wait_frames(20)
 	# vitals: health and Sap are what the save keeps
 	player.health.current_health = 41.0
 	player.resonance = 33.0
@@ -1677,8 +1762,8 @@ func _run() -> void:
 	var tree := Progression.tree()
 	var t_static := Progression.talent(&"static_charge")
 	var t_arc := Progression.talent(&"arc_conduit")
-	_check(tree.size() == 48 and t_static != null and t_arc != null and t_arc.tier == 1,
-		"talent trees load 48 data nodes (2 classes x 3 branches)")
+	_check(tree.size() == 72 and t_static != null and t_arc != null and t_arc.tier == 1,
+		"talent trees load 72 data nodes (3 classes x 3 branches)")
 	var prog := Progression.new()
 	prog.class_id = &"elementalist"  # M10: Static Charge and Arc Conduit are the Elementalist's
 	add_child(prog)

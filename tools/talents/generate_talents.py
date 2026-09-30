@@ -9,6 +9,7 @@ M10: one tree per class (TalentData.class_id). Each tree has three branches
 (TalentData.TIER_POINTS).
   Runebreaker (tank):       0 Bulwark, 1 Earthshaker, 2 Runic Warden
   Elementalist (damage):    0 Storm, 1 Ember, 2 Frost
+  Druid (healer, M11):      0 Growth, 1 Thorns, 2 Grove
 Talents whose ability or stat arrives later in M10 are listed already; their
 power / stat is read by the code that comes with the ability.
 """
@@ -90,6 +91,41 @@ TREES = {
         ("cold_snap", "Cold Snap", 2, 2, 2, "chill_duration", 0.5, "", "Chill lasts {value} s longer."),
         ("absolute_zero", "Absolute Zero", 2, 3, 1, "", 0.0, "absolute_zero",
          "An enemy Chilled three times within 6 s freezes solid for 2 s."),
+    ],
+    "druid": [
+        # --- Growth: the heals ----------------------------------------------------------
+        ("verdant_touch", "Verdant Touch", 0, 0, 3, "heal_pct", 6.0, "", "Your heals and shields are {value}% stronger."),
+        ("deep_roots", "Deep Roots", 0, 0, 3, "max_hp", 12.0, "", "+{value} maximum health."),
+        ("lingering_growth", "Lingering Growth", 0, 1, 2, "hot_dur_pct", 15.0, "", "Regrowth lasts {value}% longer."),
+        ("thick_bark", "Thick Bark", 0, 1, 2, "bark_amount", 10.0, "", "Barkskin absorbs {value} more damage."),
+        ("frugal_bloom", "Frugal Bloom", 0, 1, 2, "mend_cost_reduce", 2.0, "", "Mending Bloom costs {value} less Sap."),
+        ("overgrowth", "Overgrowth", 0, 2, 1, "", 0.0, "overgrowth",
+         "Mending Bloom on an ally below 35% health also starts Regrowth on them."),
+        ("nurture", "Nurture", 0, 2, 2, "low_heal_pct", 10.0, "", "Your heals restore {value}% more to allies below half health."),
+        ("lifebloom", "Lifebloom", 0, 3, 1, "", 0.0, "lifebloom",
+         "Wild Bloom also wraps every ally it heals in a barrier of a fifth of the heal."),
+        # --- Thorns: the druid's own damage and roots -----------------------------------
+        ("sharp_thorns", "Sharp Thorns", 1, 0, 3, "thorn_dmg_pct", 8.0, "", "Thorn Volley deals +{value}% damage."),
+        ("wild_heart", "Wild Heart", 1, 0, 3, "damage_pct", 3.0, "", "+{value}% damage."),
+        ("strangle", "Strangle", 1, 1, 2, "root_duration", 0.5, "", "Your roots hold {value} s longer."),
+        ("bramble", "Bramble", 1, 1, 2, "thornfield_radius", 0.5, "", "Thornfield's area grows by {value} m."),
+        ("splinter", "Splinter", 1, 1, 1, "", 0.0, "splinter", "Thorn Volley throws a fourth thorn."),
+        ("grasping_briars", "Grasping Briars", 1, 2, 2, "rooted_dmg_pct", 10.0, "", "+{value}% damage to rooted enemies."),
+        ("keen_thorns", "Keen Thorns", 1, 2, 3, "crit_pct", 3.0, "", "+{value}% critical chance."),
+        ("briar_burst", "Briar Burst", 1, 3, 1, "", 0.0, "briar_burst",
+         "Root Grasp bursts a second time a moment later, at half damage."),
+        # --- Grove: zones, the totem, Sap ------------------------------------------------
+        ("sap_well", "Sap Well", 2, 0, 3, "sap_regen_pct", 15.0, "", "Sap refills {value}% faster in a fight."),
+        ("grove_keeper", "Grove Keeper", 2, 0, 2, "grove_heal_pct", 15.0, "", "Renewal Grove heals {value}% more."),
+        ("wide_grove", "Wide Grove", 2, 1, 2, "grove_radius", 0.75, "", "Renewal Grove's area grows by {value} m."),
+        ("totem_ward", "Totem Ward", 2, 1, 2, "totem_dmg_pct", 5.0, "", "Totem of Growth grants {value}% more damage."),
+        ("green_tide", "Green Tide", 2, 1, 1, "", 0.0, "green_tide",
+         "Standing in your Renewal Grove refills 2 Sap a second."),
+        ("rooted_totem", "Rooted Totem", 2, 2, 1, "", 0.0, "rooted_totem",
+         "Totem of Growth roots the enemies within 3 m when it is planted (1.5 s)."),
+        ("thrift", "Thrift", 2, 2, 2, "cooldown_pct", 4.0, "", "Cooldowns -{value}%."),
+        ("heart_of_the_grove", "Heart of the Grove", 2, 3, 1, "", 0.0, "heart_of_the_grove",
+         "Renewal Grove and Totem of Growth last 50% longer."),
     ],
 }
 

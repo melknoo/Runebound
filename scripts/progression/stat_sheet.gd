@@ -24,6 +24,14 @@ const STAT_NAMES := {
 	&"block_pct": ["%", " Rune Wall block"], &"taunt_duration": [" s", " taunt duration"],
 	&"aegis_pct": ["%", " Warding Rune reduction"], &"block_res": ["", " Resonance per blocked hit"],
 	&"chill_duration": [" s", " Chill duration"],
+	# M11 druid stats
+	&"heal_pct": ["%", " healing"], &"sap_regen_pct": ["%", " Sap refill in a fight"],
+	&"hot_dur_pct": ["%", " Regrowth duration"], &"bark_amount": ["", " Barkskin barrier"],
+	&"mend_cost_reduce": ["", " Mending Bloom cost reduction"], &"low_heal_pct": ["%", " healing on allies below half health"],
+	&"thorn_dmg_pct": ["%", " Thorn Volley damage"], &"root_duration": [" s", " root duration"],
+	&"thornfield_radius": [" m", " Thornfield area"], &"rooted_dmg_pct": ["%", " damage to rooted enemies"],
+	&"grove_heal_pct": ["%", " Renewal Grove healing"], &"grove_radius": [" m", " Renewal Grove area"],
+	&"totem_dmg_pct": ["%", " Totem of Growth damage bonus"],
 }
 
 ## Stat keys whose name is the class resource (Resonance, Aether).
@@ -79,6 +87,24 @@ static func damage_text(p: Player, d: AbilityData) -> String:
 			return "Parry counter %d" % roundi(effective_damage(p, d))
 		&"rune_challenge":
 			return "Taunts for %.0f s" % (d.active + p.stat(&"taunt_duration"))
+		# M11 druid: heals and shields read as what they restore
+		&"mending_bloom":
+			return "Heals %d" % roundi(d.heal * (1.0 + p.stat(&"heal_pct") / 100.0))
+		&"barkskin":
+			var druid := p as DruidHero
+			return "Barrier %d" % roundi(druid.bark_amount() if druid != null else d.heal)
+		&"regrowth":
+			return "Heals %d over %.0f s" % [roundi(d.heal * (1.0 + p.stat(&"heal_pct") / 100.0)),
+				d.active * (1.0 + p.stat(&"hot_dur_pct") / 100.0)]
+		&"renewal_grove":
+			var grove := p as DruidHero
+			return "Heals %.1f a second" % (grove.grove_rate() if grove != null else d.heal)
+		&"growth_totem":
+			var totem := p as DruidHero
+			return "+%d%% damage, heals %d every 2 s" % [roundi(totem.totem_damage_pct() if totem != null else 15.0),
+				roundi(d.heal * (1.0 + p.stat(&"heal_pct") / 100.0))]
+		&"wild_bloom":
+			return "Heals %d%% of health" % roundi(d.heal * (1.0 + p.stat(&"heal_pct") / 100.0))
 	if d.damage <= 0.0:
 		return ""
 	return "Damage %d (avg %d)" % [roundi(effective_damage(p, d)), roundi(expected_damage(p, d))]
@@ -93,6 +119,23 @@ static func notes(p: Player, d: AbilityData) -> Array[String]:
 			out.append("Reach %.1f m" % (1.5 * (1.0 + p.stat(&"cleave_radius_pct") / 100.0)))
 		&"rune_bolt":
 			out.append("Hold to keep casting")
+		&"thorn_volley":  # M11
+			var d_hero := p as DruidHero
+			out.append("%d thorns, hold to keep casting" % (d_hero.thorn_count() if d_hero != null else 3))
+		&"mending_bloom", &"barkskin", &"regrowth":
+			out.append("Aimed ally, else the most wounded")
+			if d.id == &"mending_bloom" and p.has_power(&"ashbloom_seed"):
+				out.append("Ashbloom Seed")
+		&"root_grasp":
+			out.append("Roots %.1f s" % (d.active + p.stat(&"root_duration")))
+			if p.has_power(&"briar_burst"):
+				out.append("Briar Burst")
+		&"renewal_grove":
+			out.append("Area %.1f m" % (d.aoe_radius + p.stat(&"grove_radius")))
+			if p.has_power(&"heartwood_idol"):
+				out.append("Heartwood Idol")
+		&"thornfield":
+			out.append("Area %.1f m" % (d.aoe_radius + p.stat(&"thornfield_radius")))
 		&"ember_lance":
 			var pierce := int(p.stat(&"ember_pierce"))
 			if pierce > 0:

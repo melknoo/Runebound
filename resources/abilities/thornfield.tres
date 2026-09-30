@@ -6,7 +6,7 @@
 script = ExtResource("1")
 id = &"thornfield"
 display_name = "Thornfield"
-description = "Thorns cover 4 m at the aim for 6 s: damage every half second and 30 % slower enemies. Costs 20 Sap."
+description = "Thorns cover 4 m at the aim for 6 s: damage every half second, and they Chill (slow) what stands in them. Costs 20 Sap."
 cooldown = 12.0
 resonance_cost = 20.0
 resonance_gain_per_hit = 0.0

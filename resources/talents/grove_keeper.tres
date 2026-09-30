@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"grove_keeper"
+display_name = "Grove Keeper"
+class_id = &"druid"
+branch = 2
+tier = 0
+max_rank = 2
+stat = &"grove_heal_pct"
+per_rank = 15.0
+power = &""
+description = "Renewal Grove heals {value}% more."

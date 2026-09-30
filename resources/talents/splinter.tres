@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"splinter"
+display_name = "Splinter"
+class_id = &"druid"
+branch = 1
+tier = 1
+max_rank = 1
+stat = &""
+per_rank = 0.0
+power = &"splinter"
+description = "Thorn Volley throws a fourth thorn."

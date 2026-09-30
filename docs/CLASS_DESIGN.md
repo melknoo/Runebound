@@ -115,12 +115,40 @@ tank). Burn, Shock and Chill and their interactions moved with the spells.
   look). A clip for every spell; Rune Bolt and the aimed spells play on the
   upper body, so casting never roots the legs.
 
-### Root druid, the healer
-- Plants breaking out of burnt earth, totems, thorns.
-- **Heals targeted:** the ally under the crosshair; aiming at no one heals
-  the ally with the least health in range; alone, the druid heals itself.
-- **Healing zones** on the ground, **shields and buffs** for the group.
-- Enough damage of its own (thorns, roots) to finish the story solo.
+### Root druid, the healer (M11)
+Plants breaking out of burnt earth, totems, thorns. User decisions of
+2026-09-30: 8 pool abilities + LMB now (the rest from M12-M14 sources); the
+resource **Sap** is a pool - it starts full, heals spend it, and it refills
+(5 a second) **only in a fight** (the hero hits or is hit, or an enemy within
+30 m hunts someone), so the druid never out-heals the no-regeneration rule;
+**heals threaten a little** (half of what was healed, split over the enemies
+already fighting; overheal counts nothing; zones make none). 95 health at
+level 1.
+- **Heals targeted:** the ally under the crosshair (a green chevron marks
+  whom the heal would reach); aiming at no one heals the ally with the least
+  health share within 30 m; alone, the druid heals itself.
+- **LMB (fixed):** Thorn Volley - three thorns in a small fan (about 20 m),
+  held down it keeps throwing.
+- **Pool (8):**
+
+  | Ability | Role | Source | Built |
+  |---|---|---|---|
+  | Mending Bloom | targeted heal 30, 14 Sap, 1 s | start kit | yes |
+  | Barkskin | targeted barrier 35 + 2 per level for 6 s, 20 Sap, 8 s | trainer L2, 50 g | yes |
+  | Regrowth | targeted heal over time, 40 over 8 s (refreshes), 18 Sap, 4 s | trainer L3, 150 g | yes |
+  | Root Grasp | roots at the aim (16 m): 16 damage + Root 2 s in 3 m, 12 Sap, 10 s | trainer L4, 275 g | yes |
+  | Renewal Grove | zone at the aim (14 m): 4 health a second in 5 m for 8 s, 35 Sap, 20 s | trainer L5, 400 g | yes |
+  | Thornfield | thorns at the aim: 6 damage every 0.5 s + Chill in 4 m for 6 s, 20 Sap, 12 s | trainer L6, 525 g | yes |
+  | Totem of Growth | totem at the feet for 12 s: allies in 8 m +15 % damage, heal 3 every 2 s, 30 Sap, 24 s | trainer L7, 650 g | yes |
+  | Wild Bloom | every ally in 10 m heals 30 % of their health; enemies in 5 m thrown back and rooted 1 s, 50 Sap, 40 s | trainer L8, 800 g | yes |
+
+- **Talents** (`Growth`, `Thorns`, `Grove`, 24 nodes, PROGRESSION_DESIGN).
+- **Legendaries:** Heartwood Idol (the grove roots enemies stepping in),
+  Ashbloom Seed (Mending Bloom doubles below 35 %), Thornmother's Crown
+  (two more thorns).
+- **Travel no longer heals** (user 2026-09-30, for every class): health (and
+  Sap) are kept across zones and in the save; the Runehold hearth heals out
+  of combat.
 
 ### Consequences for the M10 plan
 - The talent branches Storm and Ember go with the spells to the

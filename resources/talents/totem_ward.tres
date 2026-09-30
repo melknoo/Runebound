@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"totem_ward"
+display_name = "Totem Ward"
+class_id = &"druid"
+branch = 2
+tier = 1
+max_rank = 2
+stat = &"totem_dmg_pct"
+per_rank = 5.0
+power = &""
+description = "Totem of Growth grants {value}% more damage."

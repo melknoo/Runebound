@@ -15,6 +15,13 @@ const CLASS_NOUNS := {
 		ItemData.Slot.GLOVES: ["Wraps", "Handwraps", "Gloves", "Bracers"],
 		ItemData.Slot.BOOTS: ["Slippers", "Treads", "Striders", "Boots"],
 	},
+	&"druid": {  # M11
+		ItemData.Slot.WEAPON: ["Rootstaff", "Branch", "Crook", "Thornstaff", "Bough"],
+		ItemData.Slot.CHEST: ["Barkmail", "Mantle", "Robe", "Leafweave"],
+		ItemData.Slot.HELM: ["Hood", "Antler Crown", "Cowl", "Wreath"],
+		ItemData.Slot.GLOVES: ["Wraps", "Barkguards", "Bracers", "Gloves"],
+		ItemData.Slot.BOOTS: ["Footwraps", "Treads", "Striders", "Boots"],
+	},
 }
 const RELIC_NOUNS := ["Sigil", "Idol", "Talisman", "Focus", "Runestone"]
 const HELM_NOUNS := ["Helm", "Visor", "Crown", "Greathelm", "Cowl"]

@@ -60,7 +60,8 @@ const AIM_HOLD_MSEC := 450
 
 ## Per-ability stat keys the generic hooks read (items and talents add them).
 const ABILITY_CD_STATS := {&"dodge": &"dodge_cd_pct", &"storm_step": &"storm_cd_pct", &"rune_chain": &"tether_cd_pct"}
-const ABILITY_DAMAGE_STATS := {&"ember_lance": &"ember_dmg_pct", &"rune_cleave": &"cleave_dmg_pct"}
+const ABILITY_DAMAGE_STATS := {&"ember_lance": &"ember_dmg_pct", &"rune_cleave": &"cleave_dmg_pct",
+	&"thorn_volley": &"thorn_dmg_pct"}
 ## The most damage reduction all sources together may give (M10).
 const MAX_DAMAGE_REDUCTION := 0.7
 
@@ -1012,6 +1013,8 @@ func talent_damage_mult(hit: HitInfo, enemy: EnemyBase) -> float:
 		pct += stat(&"chilled_dmg_pct")  # M10 Shatter
 	if enemy.target == self:
 		pct += stat(&"aggro_dmg_pct")  # M10 Hold the Line: the tank hits what it holds
+	if enemy.status.is_rooted():
+		pct += stat(&"rooted_dmg_pct")  # M11 Grasping Briars
 	if ABILITY_DAMAGE_STATS.has(hit.ability):
 		pct += stat(ABILITY_DAMAGE_STATS[hit.ability])
 	return 1.0 + pct / 100.0

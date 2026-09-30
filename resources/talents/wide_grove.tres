@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/progression/talent_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"wide_grove"
+display_name = "Wide Grove"
+class_id = &"druid"
+branch = 2
+tier = 1
+max_rank = 2
+stat = &"grove_radius"
+per_rank = 0.75
+power = &""
+description = "Renewal Grove's area grows by {value} m."
