@@ -2,6 +2,10 @@
 
 Godot 4.6.3 stable, typed GDScript, Forward+. Physics 60 Hz.
 
+If my request is ambiguous, ask one clarifying question before doing anything.
+
+When reporting information to me, be extremely concise and sacrifice grammar for sake of concision.
+
 ## Decisions
 - **Code-built scenes for M01.** Player, enemies, VFX and UI construct their
   node trees in `_ready()`. Rationale: the combat lab iterates on behavior and
@@ -535,7 +539,9 @@ never `DisplayServer` (headless bot clients are clients).
   ZONE_READY for the current zone epoch; stale-epoch messages are dropped.
   Channels: 0 reliable events, 1 unreliable hero state, 2 unreliable
   snapshots. Bump `Net.PROTOCOL` with any message change: the auth handshake
-  refuses other versions before any RPC runs. Godot versions must share
+  refuses other versions before any RPC runs, and `Net.version_reason` says
+  which side is behind (a newer game: the host ships `release`; an older one:
+  `git pull`). Godot versions must share
   major.minor (`Net.godot_minor`: 4.6.1 joins a 4.6.3 server; patch
   releases are network compatible); `--godot=` / `--protocol=` fake them in
   tests. `Net.broken_scripts()` (REQUIRED_SCRIPTS that fail to compile) stops
@@ -592,6 +598,16 @@ never `DisplayServer` (headless bot clients are clients).
   (systemd sandbox, `IPAddressAllow=localhost`), and turns on
   `tailscale funnel --bg 7780`. `tests/ws_spike.gd` measures a WebSocket
   through Funnel (`run_godot wsspike <host>`).
+- **Server list (2026-10-01):** the Join page picks the server from a
+  dropdown of names (`ServerList`, data in `resources/net/servers.json`:
+  `[{id, name, address}]`, entries NetAddress refuses are skipped) plus
+  "Other address ..." for a typed one (LAN, a local test server). The address
+  of a listed server never shows: `Net.join(..., invite, label)` names the
+  server by `label` in its messages. `user://settings.cfg` [coop] keeps
+  `server_pick` (a list id or "other"), `last_server` (the typed address),
+  `invites` (code per address) and `name`; settings from before the list
+  pick the entry whose address was typed last. `ClientSettings.path` points
+  tests at a file of their own.
 - **Auto-deploy (M09b):** the server runs the `release` branch
   (`RUNEBOUND_BRANCH`, server.env; `runebound-server.sh update` switches the
   clone before pulling); `tools\run_godot.cmd release` fast-forwards

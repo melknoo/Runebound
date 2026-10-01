@@ -1,6 +1,6 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-09-30 · Milestone: **M11 Three roles II (the root druid,
+Updated: 2026-10-01 · Milestone: **M11 Three roles II (the root druid,
 healer)** - all four phases built (below); the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
 Draughts**; the user's playtest is the gate for both (still open, M11 started
@@ -8,6 +8,17 @@ alongside at the user's wish). M09 Co-op was played by the user and a
 friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## Co-op: server dropdown and the version refusal (2026-10-01)
+- **Why the join failed on 2026-09-30:** the laptop server runs the
+  `release` branch, which was still at the M09b state (protocol 8) while
+  `main` was at 12 (M10, M10b, M11). The refusal told the (newer) game to
+  `git pull`. Now `Net.version_reason` names the side that is behind, and
+  `release` was shipped (`toolsun_godot.cmd release`).
+- **Server dropdown** (user: pick the Acer by an alias, room for more
+  servers): `resources/net/servers.json` + `ServerList`, the Join page shows
+  names only, "Other address ..." for LAN / local servers
+  (TECHNICAL_ARCHITECTURE "Server list"). Playtest point `c_server_pick`.
 
 ## M11 Three roles II: the root druid (built 2026-09-30, the user's playtest is open)
 Plan with the user's answers (8 pool abilities + LMB now, the rest from

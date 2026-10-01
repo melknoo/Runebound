@@ -324,9 +324,11 @@ func host(port: int, players: int = MAX_PLAYERS, invites: String = "", over_ws: 
 
 ## Client: join the server at `address` (NetAddress: a bare name or wss://
 ## goes over WebSocket, "host:port" / "[v6]:port" / an IP over ENet) with the
-## invite code the host gave us ("" for an open server). The answer comes as
-## session_started or session_failed.
-func join(address: String, player_name: String, class_id: StringName, level: int, invite: String = "") -> void:
+## invite code the host gave us ("" for an open server). `label` names the
+## server in messages instead of its address (the title screen's server list).
+## The answer comes as session_started or session_failed.
+func join(address: String, player_name: String, class_id: StringName, level: int, invite: String = "",
+		label: String = "") -> void:
 	_close()
 	last_reason = ""
 	_code = invite
@@ -340,7 +342,7 @@ func join(address: String, player_name: String, class_id: StringName, level: int
 		"godot": godot_version() if godot_override == "" else godot_override,
 		"name": clean_name(player_name), "class_id": String(class_id), "level": level}
 	var url := String(parsed.get("url", ""))
-	_join = {"host": host_name, "port": port, "url": url, "resolve": -1, "stage": "resolve"}
+	_join = {"host": host_name, "port": port, "url": url, "label": label, "resolve": -1, "stage": "resolve"}
 	mode = Mode.CLIENT
 	_connect_left = CONNECT_TIMEOUT
 	if url != "":
@@ -393,7 +395,7 @@ func _open_ws_client(url: String) -> void:
 	var tls: TLSOptions = TLSOptions.client() if url.begins_with("wss://") else null
 	var err := ws.create_client(url, tls)
 	if err != OK:
-		_fail("Could not open a connection to %s (%s)." % [url, error_string(err)])
+		_fail("Could not open a connection to %s (%s)." % [_join_target(), error_string(err)])
 		return
 	_ws = ws
 	transport = Transport.WS
@@ -412,8 +414,17 @@ func _new_ws_peer() -> WebSocketMultiplayerPeer:
 	return ws
 
 
-## What the player typed, for messages ("host:port" or the WebSocket URL).
+## The server's name for messages: from the server list, else its host.
+func _join_name() -> String:
+	var label := String(_join.get("label", ""))
+	return label if label != "" else String(_join.get("host", "?"))
+
+
+## The server for messages: its name from the server list, else what the
+## player typed ("host:port" or the WebSocket URL).
 func _join_target() -> String:
+	if String(_join.get("label", "")) != "":
+		return String(_join["label"])
 	if String(_join.get("url", "")) != "":
 		return String(_join["url"])
 	return NetAddress.format(String(_join.get("host", "?")), int(_join.get("port", DEFAULT_PORT)))
@@ -454,13 +465,13 @@ func _poll_join(delta: float) -> void:
 				var ip := IP.get_resolve_item_address(id)
 				IP.erase_resolve_item(id)
 				if ip == "":
-					_fail("Could not find the server \"%s\"." % String(_join["host"]))
+					_fail("Could not find the server \"%s\"." % _join_name())
 				else:
 					_open_client(ip, int(_join["port"]))
 				return
 			IP.RESOLVER_STATUS_ERROR, IP.RESOLVER_STATUS_NONE:
 				IP.erase_resolve_item(id)
-				_fail("Could not find the server \"%s\"." % String(_join["host"]))
+				_fail("Could not find the server \"%s\"." % _join_name())
 				return
 	if _connect_left <= 0.0:
 		_fail("No answer from %s. Is the server running, and is the address right?" % target)
@@ -555,8 +566,7 @@ func _server_check_hello(id: int, hello: Dictionary, invite: String) -> void:
 	var reason := ""
 	var their_protocol := int(hello.get("protocol", -1))
 	if their_protocol != PROTOCOL:
-		reason = "Version mismatch: the server speaks protocol %d, your game %d. Update your game (git pull)." % [
-			PROTOCOL, their_protocol]
+		reason = version_reason(PROTOCOL, their_protocol)
 	elif godot_minor(str(hello.get("godot", "?"))) != godot_minor(godot_version()):
 		reason = "Version mismatch: the server runs Godot %s, you run %s. Use Godot %s.x." % [
 			godot_version(), str(hello.get("godot", "?")), godot_minor(godot_version())]
@@ -582,6 +592,18 @@ func _server_check_hello(id: int, hello: Dictionary, invite: String) -> void:
 	sm.send_auth(id, var_to_bytes({"ok": true, "peer_id": id, "zone": zone_scene, "epoch": zone_epoch,
 		"flags": SaveGame.flags.duplicate(true), "name": hello["name"], "spawn_at": spawn_at}))
 	sm.complete_auth(id)
+
+
+## The refusal for a protocol mismatch, telling which side is behind
+## (2026-09-30: a protocol-8 server told a newer game to update itself; the
+## server runs the release branch, development moves on main).
+static func version_reason(server_protocol: int, game_protocol: int) -> String:
+	if game_protocol > server_protocol:
+		return ("Version mismatch: this server runs an older RUNEBOUND (protocol %d) than your game (%d). " +
+			"The host has to update the server (tools\\run_godot.cmd release) - or play the release branch.") % [
+			server_protocol, game_protocol]
+	return "Version mismatch: your game is older (protocol %d) than this server (%d). Update your game (git pull)." % [
+		game_protocol, server_protocol]
 
 
 ## Server: say no (the reason is what the player reads) and drop the peer.

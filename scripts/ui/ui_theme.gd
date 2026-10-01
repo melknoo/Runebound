@@ -53,7 +53,7 @@ static func theme() -> Theme:
 	if body != null:
 		t.default_font = body
 	t.default_font_size = BODY
-	for type: String in ["Label", "Button", "RichTextLabel", "LineEdit", "ItemList"]:
+	for type: String in ["Label", "Button", "RichTextLabel", "LineEdit", "ItemList", "PopupMenu"]:
 		t.set_color("font_color", type, TEXT)
 		t.set_color("font_outline_color", type, INK)
 		t.set_constant("outline_size", type, OUTLINE)
@@ -69,6 +69,17 @@ static func theme() -> Theme:
 	t.set_stylebox("disabled", "Button", nine("button_pressed.png", 16, 8))
 	t.set_stylebox("focus", "Button", StyleBoxEmpty.new())
 	t.set_stylebox("panel", "ItemList", nine("slot.png", 12, 8))
+	# The open list of a dropdown (OptionButton itself wears the Button styles):
+	# opaque, it lies over other controls; no radio circles (the button shows
+	# the pick).
+	t.set_stylebox("panel", "PopupMenu", _opaque(nine("frame.png", 16, 12)))
+	var none := ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGBA8))
+	for icon: String in ["radio_checked", "radio_unchecked", "radio_checked_disabled", "radio_unchecked_disabled"]:
+		t.set_icon(icon, "PopupMenu", none)
+	t.set_stylebox("hover", "PopupMenu", nine("button_hover.png", 16, 8))
+	t.set_color("font_hover_color", "PopupMenu", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
+	t.set_color("font_disabled_color", "PopupMenu", MUTED)
+	t.set_constant("v_separation", "PopupMenu", 12)
 	_theme = t
 	return t
 
@@ -87,6 +98,27 @@ static func nine(file: String, margin: int, content: int) -> StyleBoxTexture:
 	sb.content_margin_top = content
 	sb.content_margin_right = content
 	sb.content_margin_bottom = content
+	return sb
+
+
+## The same 9-slice with every visible pixel fully opaque (the UI kit's fills
+## are ~94 % alpha, which lets controls under a popup show through).
+static func _opaque(sb: StyleBoxTexture) -> StyleBoxTexture:
+	if sb.texture == null:
+		return sb
+	var img := sb.texture.get_image()
+	if img == null or img.is_empty():
+		return sb
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a > 0.0:
+				c.a = 1.0
+				img.set_pixel(x, y, c)
+	sb.texture = ImageTexture.create_from_image(img)
 	return sb
 
 

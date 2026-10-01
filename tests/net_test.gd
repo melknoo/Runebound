@@ -30,7 +30,8 @@ const SCENARIOS := {
 	},
 	"reject_version": {
 		"server": [],
-		"clients": [{"role": "c1", "delay": 0.0, "args": ["--protocol=999"]}],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--protocol=999"]},
+			{"role": "c2", "delay": 0.0, "args": ["--protocol=1"]}],
 		"timeout": 60.0,
 	},
 	"full": {

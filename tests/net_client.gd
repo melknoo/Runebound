@@ -92,8 +92,10 @@ class Driver extends Node:
 					return
 				_finish("ok")
 			"reject_version":
+				# c1 is newer than the server (protocol 999), c2 older (protocol 1):
+				# the reason says which side has to update.
 				if await _until(func() -> bool: return _failed_reason != "", 30.0, "a refusal"):
-					_expect_reason("Version mismatch")
+					_expect_reason("older RUNEBOUND" if role == "c1" else "Update your game")
 			"full":
 				if role == "c1":
 					if not await _in_zone():

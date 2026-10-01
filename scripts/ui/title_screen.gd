@@ -1,15 +1,20 @@
 extends Control
 ## M09 title screen (the main scene): Continue (singleplayer, straight into
-## the save), Join co-op (name + server address + invite code, remembered in
-## user://settings.cfg, never a fixed server) and Quit. After a co-op session
-## ends it shows why. `-- --connect=host:port [--name=N] [--invite=CODE]` joins
-## right away (tools/run_godot coop). M10: Characters (pick, create - class +
-## name - or delete one; several per save, each with its own world); Continue
-## and Join co-op play the active character.
+## the save), Join co-op (name + server + invite code, remembered in
+## user://settings.cfg) and Quit. The server comes from a dropdown of
+## ServerList names (2026-10-01: the address never shows) or "Other address"
+## for one typed in (LAN, a local test server). After a co-op session ends it
+## shows why. `-- --connect=host:port [--name=N] [--invite=CODE]` joins right
+## away (tools/run_godot coop). M10: Characters (pick, create - class + name -
+## or delete one; several per save, each with its own world); Continue and
+## Join co-op play the active character.
 
 const ACCENT_FALLBACK := Color(0.37, 0.88, 0.91)
 const WARN := Color("#E08A7A")
 const DEFAULT_SERVER := ""
+const OTHER_SERVER := "Other address ..."
+## ClientSettings "server_pick" for a typed address (else a ServerList id).
+const OTHER_ID := "other"
 
 var _main_page: VBoxContainer
 var _join_page: VBoxContainer
@@ -25,6 +30,10 @@ var _join_as: Label
 var _delete_armed: int = -1
 var _continue_btn: Button
 var _name_edit: LineEdit
+var _server_pick: OptionButton
+## The ServerList entry behind each dropdown item ({} = "Other address").
+var _server_items: Array[Dictionary] = []
+var _address_caption: Label
 var _address_edit: LineEdit
 var _invite_edit: LineEdit
 var _invite_show: Button
@@ -65,6 +74,7 @@ func _ready() -> void:
 	if auto_connect != "" and Net.last_reason == "":
 		_auto = true
 		_show_join()
+		_select_server(_server_items.size() - 1)  # "Other address"
 		_address_edit.text = auto_connect
 		_invite_edit.text = auto_invite
 		if auto_name != "":
@@ -81,7 +91,7 @@ func _process(_delta: float) -> void:
 	if not Net.is_joining():
 		return
 	var stage := Net.join_stage()
-	var target := _address_edit.text.strip_edges()
+	var target := _join_label()
 	match stage:
 		"resolve":
 			_say(_status, "Looking up %s ..." % target)
@@ -160,7 +170,20 @@ func _build() -> void:
 	_name_edit = _line_edit(ClientSettings.get_value("name", ""), "Hero")
 	_name_edit.max_length = Net.NAME_MAX
 	_join_page.add_child(_name_edit)
-	_join_page.add_child(_caption("Server  (the host's address, or host:port for a LAN server)"))
+	_join_page.add_child(_caption("Server"))
+	_server_pick = OptionButton.new()
+	_server_pick.custom_minimum_size = Vector2(0, 44)
+	_server_pick.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_server_items.clear()
+	for server: Dictionary in ServerList.all():
+		_server_pick.add_item(str(server["name"]))
+		_server_items.append(server)
+	_server_pick.add_item(OTHER_SERVER)
+	_server_items.append({})
+	_server_pick.item_selected.connect(_on_server_picked)
+	_join_page.add_child(_server_pick)
+	_address_caption = _caption("Address  (or host:port for a LAN server)")
+	_join_page.add_child(_address_caption)
 	_address_edit = _line_edit(ClientSettings.get_value("last_server", DEFAULT_SERVER), "server-name:7777")
 	_address_edit.text_submitted.connect(func(_t: String) -> void: _connect())
 	_join_page.add_child(_address_edit)
@@ -170,7 +193,7 @@ func _build() -> void:
 	var code_row := HBoxContainer.new()
 	code_row.add_theme_constant_override("separation", 12)
 	_join_page.add_child(code_row)
-	_invite_edit = _line_edit(ClientSettings.get_invite(_address_edit.text), "XXXX-XXXX-XXXX-XXXX")
+	_invite_edit = _line_edit("", "XXXX-XXXX-XXXX-XXXX")
 	_invite_edit.secret = true
 	_invite_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_invite_edit.text_submitted.connect(func(_t: String) -> void: _connect())
@@ -194,6 +217,54 @@ func _build() -> void:
 	row.add_child(_back_btn)
 	_status = _status_label()
 	_join_page.add_child(_status)
+	_select_server(_initial_server())
+
+
+## The dropdown item to start on: the remembered pick, else the listed server
+## whose address was typed last (settings from before the list), else the
+## typed address, else the first server.
+func _initial_server() -> int:
+	var other := _server_items.size() - 1
+	var pick := ClientSettings.get_value("server_pick", "")
+	if pick == OTHER_ID:
+		return other
+	var last := ClientSettings.get_value("last_server", DEFAULT_SERVER)
+	var by_address := str(ServerList.by_address(last).get("id", "")) if last.strip_edges() != "" else ""
+	for i in other:
+		var id := str(_server_items[i]["id"])
+		if id == pick or (pick == "" and id == by_address):
+			return i
+	return other if last.strip_edges() != "" else 0
+
+
+func _select_server(index: int) -> void:
+	_server_pick.select(index)
+	_on_server_picked(index)
+
+
+func _on_server_picked(_index: int) -> void:
+	var typed := _picked_server().is_empty()
+	_address_caption.visible = typed
+	_address_edit.visible = typed
+	_invite_edit.text = ClientSettings.get_invite(_join_address())
+
+
+## The picked ServerList entry ({} = "Other address").
+func _picked_server() -> Dictionary:
+	var i := _server_pick.selected
+	return _server_items[i] if i >= 0 and i < _server_items.size() else {}
+
+
+## Where Connect goes: the picked server's address, or the one typed.
+func _join_address() -> String:
+	var server := _picked_server()
+	return str(server["address"]) if not server.is_empty() else _address_edit.text.strip_edges()
+
+
+## The server as the messages name it (its name from the list, else the address).
+func _join_label() -> String:
+	var server := _picked_server()
+	return str(server["name"]) if not server.is_empty() else _address_edit.text.strip_edges()
 
 
 func _button(text: String, on_press: Callable) -> Button:
@@ -267,7 +338,10 @@ func _show_join() -> void:
 	var ch := SaveGame.active_character()
 	_join_as.text = "Playing as %s" % (_character_line(ch) if not ch.is_empty() else "a new Runebreaker (make one under Characters)")
 	_say(_status, "")
-	(_address_edit if _name_edit.text != "" else _name_edit).grab_focus()
+	var focus: Control = _name_edit
+	if _name_edit.text != "":
+		focus = _address_edit if _picked_server().is_empty() else _server_pick
+	focus.grab_focus()
 
 
 func _show_main() -> void:
@@ -429,7 +503,8 @@ func _toggle_invite() -> void:
 func _connect() -> void:
 	if Net.is_joining():
 		return
-	var address := _address_edit.text.strip_edges()
+	var address := _join_address()
+	var server := _picked_server()
 	var parsed := NetAddress.parse(address, Net.DEFAULT_PORT)
 	if String(parsed["error"]) != "":
 		_say(_status, String(parsed["error"]), WARN)
@@ -441,12 +516,15 @@ func _connect() -> void:
 	var player_name := Net.clean_name(_name_edit.text)
 	if not _auto:
 		ClientSettings.set_value("name", player_name)
-		ClientSettings.set_value("last_server", address)
+		ClientSettings.set_value("server_pick", str(server["id"]) if not server.is_empty() else OTHER_ID)
+		if server.is_empty():
+			ClientSettings.set_value("last_server", address)
 		ClientSettings.set_invite(address, NetAuth.pretty_code(code) if code != "" else "")
 	var ch := SaveGame.active_character()
 	var level := int((ch.get("progression", {}) as Dictionary).get("level", 1))
 	_set_busy(true)
-	Net.join(address, player_name, SaveGame.active_class_id(), level, code)
+	Net.join(address, player_name, SaveGame.active_class_id(), level, code,
+		str(server["name"]) if not server.is_empty() else "")
 
 
 func _on_failed(reason: String) -> void:
@@ -466,5 +544,6 @@ func _set_busy(busy: bool) -> void:
 	_connect_btn.disabled = busy
 	_back_btn.disabled = busy
 	_name_edit.editable = not busy
+	_server_pick.disabled = busy
 	_address_edit.editable = not busy
 	_invite_edit.editable = not busy

@@ -1,0 +1,6 @@
+{
+	"_comment": "Co-op servers in the title screen's Join dropdown (ServerList). The game shows `name`, never `address`. A new server is one more entry; `id` stays stable (it remembers the pick).",
+	"servers": [
+		{"id": "acer", "name": "Acer", "address": "melvin-aspire-e5-573g.tail94658b.ts.net"}
+	]
+}

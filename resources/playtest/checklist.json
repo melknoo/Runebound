@@ -127,7 +127,8 @@
 			"id": "coop",
 			"title": "Koop",
 			"items": [
-				{"id": "c_friend_join", "src": "M09b", "title": "Freund tritt ohne Tailscale bei", "hint": "Nur mit Spiel, Adresse und seinem Code. Klappt das auf Anhieb?"},
+				{"id": "c_friend_join", "src": "M09b", "title": "Freund tritt ohne Tailscale bei", "hint": "Nur mit Spiel (Branch release), „Acer“ im Dropdown und seinem Code. Klappt das auf Anhieb?"},
+				{"id": "c_server_pick", "src": "neu", "title": "Server im Dropdown", "hint": "Join co-op: „Acer“ wählen, Code eintragen, verbinden. Steht nirgends die Adresse? „Other address …“ für LAN oder run_godot server (127.0.0.1)?"},
 				{"id": "c_deploy", "src": "neu", "title": "Server-Update per Push", "hint": "Während ihr spielt: kommen die Hinweise (5 min, 1 min, 10 s), und klappt der Wiedereinstieg?"},
 				{"id": "c_countdown", "src": "M09", "title": "Gruppenreise", "hint": "5 s Countdown, X bricht ab: angenehm?"},
 				{"id": "c_rewards", "src": "M09", "title": "Beute in der Gruppe", "hint": "Jeder in 60 m bekommt volle XP und eigene Drops, Truhen einen Beutel bis 12 m: passt das?"},

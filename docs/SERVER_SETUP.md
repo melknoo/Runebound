@@ -1,7 +1,7 @@
 # RUNEBOUND — Server-Laptop
 
 Stand: 2026-09-25 (M09b). Der Laptop zuhause ist der dedizierte Koop-Server.
-Er baut nichts, sondern zieht per `git pull` von `main`. Freunde erreichen ihn
+Er baut nichts, sondern zieht per `git pull` vom Branch `release`. Freunde erreichen ihn
 **ohne Tailscale** über Tailscale Funnel und kommen nur mit einem persönlichen
 Einladungscode herein. Du selbst verwaltest den Laptop weiter über Tailscale
 (SSH).
@@ -15,7 +15,8 @@ Du (im Tailnet) ──────── dieselbe Adresse, direkt übers Tailnet
 - **Warum Funnel:** Starlink lässt von außen nichts rein. IPv4 läuft über CGNAT, und der Router blockt eingehendes IPv6 ohne Einstellmöglichkeit. Funnel gibt dem Laptop unter seinem `.ts.net`-Namen eine öffentliche HTTPS-Adresse. Die Verbindung dorthin baut der Laptop selbst nach außen auf. Funnel ist im Gratis-Plan von Tailscale enthalten.
 - **Funnel kann nur TCP**, deshalb spricht der Server WebSocket (`RUNEBOUND_TRANSPORT=ws`) auf `127.0.0.1:7780`. tailscaled beendet TLS auf dem Laptop und reicht die Verbindung dorthin weiter.
 - **Einladungscodes:** Wer keinen gültigen Code hat, wird im Handshake abgewiesen, bevor der Server irgendetwas von ihm liest. Details stehen in TECHNICAL_ARCHITECTURE „Access (M09b)“.
-- **Die Adresse** ist dieselbe für alle: der MagicDNS-Name des Laptops. `tailscale funnel status` zeigt ihn an. Im Spiel trägt man sie ohne Port ein; ein Name ohne Port bedeutet dort WebSocket über HTTPS. Aus deinem Tailnet geht die Verbindung direkt, ohne Relais.
+- **Die Adresse** ist dieselbe für alle: der MagicDNS-Name des Laptops. `tailscale funnel status` zeigt ihn an. Aus deinem Tailnet geht die Verbindung direkt, ohne Relais.
+- **Im Spiel** steht sie nicht, man wählt im Dropdown unter „Join co-op“ den Alias **„Acer“** (seit 2026-10-01). Die Liste ist `resources/net/servers.json` im Repo (`id`, `name`, `address`). Ein weiterer Server ist ein weiterer Eintrag, die `id` bleibt fest (das Spiel merkt sich damit die Wahl). „Other address …“ nimmt eine eigene Adresse: ein Name ohne Port bedeutet WebSocket über HTTPS, `host:port` ENet (LAN, `toolsun_godot.cmd server` → `127.0.0.1`).
 
 ## Einrichtung (einmalig)
 1. **Tailscale-Admin-Konsole:**
@@ -47,7 +48,8 @@ Ein neuer Commit auf **`release`** geht von selbst live. Niemand muss dafür auf
 - Entwickelt wird auf `main`. Der Server ignoriert `main`.
 - Der Server läuft auf `release` (`RUNEBOUND_BRANCH` in `server.env`). Ändert sich der Eintrag, wechselt der Update-Schritt den Server-Klon beim nächsten Start von selbst.
 - **Ausrollen:** `tools\run_godot.cmd release` schiebt `main` nach `release` (nur Fast-Forward), dann deployt es sofort. Voraussetzung: `main` ist sauber und gepusht. Claude rollt nur auf deinen Wunsch aus.
-- **Koop braucht denselben Stand wie der Server:** Freunde spielen von `release` (siehe „Für Freunde“). Weicht das Protokoll ab, lehnt der Server mit einer lesbaren Meldung ab.
+- **Koop braucht denselben Stand wie der Server:** Freunde spielen von `release` (siehe „Für Freunde“). Weicht das Protokoll ab, lehnt der Server mit einer lesbaren Meldung ab. Seit 2026-10-01 sagt sie, welche Seite älter ist: „this server runs an older RUNEBOUND …“ heißt, der Server muss nach (`toolsun_godot.cmd release`); „your game is older …“ heißt, das Spiel muss `git pull`.
+- **Wer von `main` spielt** (du), kommt nach einem `Net.PROTOCOL`-Bump erst wieder auf den Server, wenn `release` nachgezogen ist. 2026-09-30 lief der Server noch auf Protokoll 8, `main` war bei 12: die Ablehnung kam, obwohl das Spiel aktuell war.
 
 - **Ablauf:** `runebound-deploy.timer` schaut alle 5 Minuten nach (und 5 Minuten nach dem Boot). Gibt es einen neuen Commit auf dem Server-Branch, startet `runebound-deploy` den Server neu. Dabei holen `runebound-update` und der Import den neuen Stand.
 - **Es spielt jemand:** Der Server zählt 5 Minuten herunter, mit Hinweisen bei 5 min, 1 min und 10 s. Kurz vor dem Neustart fliegen alle mit „The server is restarting for an update“ in den Titel. Ihre Charaktere sind gespeichert, sie können gleich wieder beitreten. Gehen vorher alle, startet der Server sofort neu.
@@ -78,10 +80,10 @@ tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
 > **RUNEBOUND mitspielen:**
 > 1. Godot **4.6.x** installieren (godotengine.org, „Standard“, nicht .NET).
 > 2. Das Spiel holen: `git clone -b release https://github.com/melknoo/Runebound.git`. Ohne git: auf GitHub den Branch **release** wählen, dann „Code → Download ZIP“. Danach in Godot den Ordner importieren und starten (F5). Updates: `git pull` im Ordner (oder die ZIP neu laden), wenn ich Bescheid sage.
-> 3. Im Titel „Join co-op“ wählen und diese drei Dinge eintragen:
->    - deinen Namen
->    - als Server die Adresse, die ich dir schicke (ohne Port)
->    - deinen Einladungscode
+> 3. Im Titel „Join co-op“ wählen und:
+>    - deinen Namen eintragen
+>    - als Server **„Acer“** im Dropdown wählen
+>    - deinen Einladungscode eintragen
 >
 >    Das Spiel merkt sich alles.
 > 4. Den Code nicht weitergeben, er gehört nur dir.

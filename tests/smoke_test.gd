@@ -3486,6 +3486,20 @@ func _run() -> void:
 	# --- M10: several characters per save, each with its own world (title screen) ---
 	SaveGame.flags = {"colossus_defeated": true}
 	SaveGame.save_now()
+	# 2026-10-01: the Join page's server list. The title reads its own settings
+	# file; settings from before the list (last address + its code) pick the
+	# listed server.
+	var real_settings := ClientSettings.path
+	ClientSettings.path = "user://settings_smoke.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ClientSettings.path))
+	var known_servers: Array[Dictionary] = ServerList.all()
+	var acer := ServerList.by_id("acer")
+	var smoke_code := "K7QM-2XRP-VB4T-5NHL"
+	if not acer.is_empty():
+		var old_cfg := ConfigFile.new()
+		old_cfg.set_value("coop", "last_server", " %s " % str(acer["address"]).to_upper())
+		old_cfg.set_value("coop", "invites", {str(acer["address"]).to_lower(): smoke_code})
+		old_cfg.save(ClientSettings.path)
 	get_tree().change_scene_to_file("res://scenes/title.tscn")
 	for i in 30:
 		await get_tree().process_frame
@@ -3517,6 +3531,56 @@ func _run() -> void:
 	SaveGame.reload_from_disk()
 	_check(SaveGame.characters().size() == first_count and SaveGame.active_class_id() == &"runebreaker",
 		"the characters survive a reload from disk")
+
+	# The server dropdown: names only, the address stays out of sight.
+	var all_valid := not known_servers.is_empty()
+	for server: Dictionary in known_servers:
+		all_valid = all_valid and String(NetAddress.parse(str(server["address"]), Net.DEFAULT_PORT)["error"]) == ""
+	_check(all_valid and not acer.is_empty() and str(acer["name"]) == "Acer"
+		and str(NetAddress.parse(str(acer["address"]), Net.DEFAULT_PORT)["url"]).begins_with("wss://"),
+		"the server list (resources/net/servers.json) loads; the Acer is a Funnel name (WebSocket)")
+	var pick := title.get(&"_server_pick") as OptionButton
+	var address_edit := title.get(&"_address_edit") as LineEdit
+	var invite_edit := title.get(&"_invite_edit") as LineEdit
+	title.call(&"_show_join")
+	await get_tree().process_frame
+	_check(pick != null and pick.item_count == known_servers.size() + 1 and pick.get_item_text(0) == "Acer"
+		and pick.get_item_text(pick.item_count - 1) == "Other address ...",
+		"the Join page offers the listed servers by name, then \"Other address\"")
+	_check(pick != null and pick.selected == 0 and not address_edit.is_visible_in_tree() and invite_edit.text == smoke_code
+		and str(title.call(&"_join_label")) == "Acer" and str(title.call(&"_join_address")) == str(acer.get("address", "")),
+		"settings from before the list pick the Acer and keep its invite code (picked %d, code \"%s\")" % [
+			pick.selected if pick != null else -1, invite_edit.text])
+	var shown: Array[String] = []
+	var visit: Array[Node] = [title.get(&"_join_page") as Node]
+	while not visit.is_empty():
+		var n: Node = visit.pop_back()
+		visit.append_array(n.get_children())
+		if n is Control and not (n as Control).is_visible_in_tree():
+			continue
+		if n is Label:
+			shown.append((n as Label).text)
+		elif n is LineEdit and not (n as LineEdit).secret:
+			shown.append((n as LineEdit).text)
+		elif n is Button:
+			shown.append((n as Button).text)
+	if pick != null:
+		for i in pick.item_count:
+			shown.append(pick.get_item_text(i))
+	var leaks := shown.filter(func(t: String) -> bool: return t.contains(".ts.net") or t.contains(str(acer.get("address", "?"))))
+	_check(leaks.is_empty(), "no visible text on the Join page names the server's address (%s)" % [leaks])
+	if pick != null:
+		title.call(&"_select_server", pick.item_count - 1)
+		address_edit.text = "127.0.0.1:7777"
+		var typed_ok := address_edit.is_visible_in_tree() and str(title.call(&"_join_label")) == "127.0.0.1:7777"
+		title.call(&"_select_server", 0)
+		_check(typed_ok and not address_edit.is_visible_in_tree() and invite_edit.text == smoke_code,
+			"\"Other address\" shows the address field, picking the Acer again hides it and brings its code back")
+	_check(Net.version_reason(8, 12).contains("older RUNEBOUND") and Net.version_reason(8, 12).contains("release")
+		and Net.version_reason(12, 8).contains("Update your game") and not Net.version_reason(12, 8).contains("older RUNEBOUND"),
+		"a protocol refusal says which side is behind (a newer game: the host updates the server)")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(ClientSettings.path))
+	ClientSettings.path = real_settings
 
 	SaveGame.wipe()
 	print("== %d failures ==" % _failures.size())
