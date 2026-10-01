@@ -52,7 +52,9 @@ enum Transport { ENET, WS }
 ## 11 (M10b): Healing Draughts in GRANT, the "drink" HERO_FX.
 ## 12 (M11): the druid - ally heals/shields/buffs as HERO_FX with a target
 ## ref, the barrier in HERO_STATE and SNAPSHOT hero rows.
-const PROTOCOL := 12
+## 13 (M12): a new Highlands layout (terrain, pads, POIs) - both sides must
+## stand on the same ground; later M12 messages ride on it until a release.
+const PROTOCOL := 13
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3
