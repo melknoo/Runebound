@@ -4,6 +4,18 @@
 		"en": "[%s] / [Esc] Close",
 		"de": "[%s] / [Esc] Schließen"
 	},
+	"area.ashwick": {
+		"en": "Ashwick",
+		"de": "Aschwick"
+	},
+	"area.charwood": {
+		"en": "The Charwood",
+		"de": "Der Kohlwald"
+	},
+	"area.ribs": {
+		"en": "The Ribs of Emberfall",
+		"de": "Die Rippen von Emberfall"
+	},
 	"ui.settings.language_hint": {
 		"en": "German covers the new world texts so far (graves, notes, places). Menus follow later.",
 		"de": "Deutsch gibt es bisher für die neuen Texte der Welt (Gräber, Notizen, Orte). Die Menüs folgen später."

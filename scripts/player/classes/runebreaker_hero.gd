@@ -542,7 +542,7 @@ func try_warden_leap() -> bool:
 	_set_cooldown(&"warden_leap", warden_leap.cooldown)
 	state = State.LEAP
 	_state_timer = 0.0
-	collision_mask = 0b001  # over the enemies, not into them
+	collision_mask = 0b1000001  # over the enemies, not into them (world + foliage)
 	if offset.length() > 0.2:
 		_visual.rotation.y = atan2(-offset.x, -offset.z)
 	hero_fx(&"sfx", ["earthbreaker_windup", global_position, -4.0])
@@ -559,7 +559,7 @@ func _process_leap(delta: float) -> void:
 	velocity.y += GRAVITY * delta  # the chassis adds gravity after this
 	if k >= 1.0:
 		velocity = Vector3.ZERO
-		collision_mask = 0b101
+		collision_mask = 0b1000101
 		_land_leap()
 		state = State.MOVE
 		_consume_buffer()

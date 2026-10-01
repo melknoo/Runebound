@@ -1,0 +1,17 @@
+{
+ "zone": "res://scenes/ashen_highlands.tscn",
+ "out": "captures_shots/m12_highlands",
+ "comment": "M12 Highlands with substance: the three sub-biomes (Ashwick village, the Charwood burnt forest, the Ribs of Emberfall bone field) next to the ash, near and far.",
+ "shots": [
+  {"name": "ash_baseline", "player": {"poi": "camp_1", "offset": [3, 0.2, 22]}, "yaw": 0.15, "pitch": -0.2, "zoom": 6.0, "settle": 0.6},
+  {"name": "village_from_crossroads", "player": {"poi": "wp_crossroads", "offset": [-12, 0.2, -2]}, "yaw": 1.25, "pitch": -0.12, "zoom": 6.5, "settle": 0.6},
+  {"name": "village_square", "player": {"poi": "village_w", "offset": [2, 0.2, 14]}, "yaw": 0.1, "pitch": -0.22, "zoom": 6.0, "settle": 0.6},
+  {"name": "village_camp3", "player": {"poi": "camp_3", "offset": [-6, 0.2, -12]}, "yaw": 1.9, "pitch": -0.18, "zoom": 6.0, "settle": 0.6},
+  {"name": "forest_edge", "player": {"poi": "wp_northreach", "offset": [-18, 0.2, 2]}, "yaw": 1.45, "pitch": -0.12, "zoom": 6.5, "settle": 0.6},
+  {"name": "forest_inside", "player": {"poi": "trial_f", "offset": [6, 0.2, 14]}, "yaw": 0.5, "pitch": -0.18, "zoom": 6.0, "settle": 0.6},
+  {"name": "forest_camp8", "player": {"poi": "camp_8", "offset": [14, 0.2, 10]}, "yaw": 1.0, "pitch": -0.2, "zoom": 6.0, "settle": 0.6},
+  {"name": "bones_from_gate", "player": {"poi": "wp_gate", "offset": [14, 0.2, 2]}, "yaw": -1.2, "pitch": -0.12, "zoom": 6.5, "settle": 0.6},
+  {"name": "bones_trial", "player": {"poi": "trial_b", "offset": [-2, 0.2, 12]}, "yaw": -0.6, "pitch": -0.2, "zoom": 6.0, "settle": 0.6},
+  {"name": "bones_camp7", "player": {"poi": "camp_7", "offset": [10, 0.2, 12]}, "yaw": 0.6, "pitch": -0.2, "zoom": 6.0, "settle": 0.6}
+ ]
+}

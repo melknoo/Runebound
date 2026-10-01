@@ -126,8 +126,16 @@ func poi_position(id: String) -> Vector3:
 
 func _build_zone() -> void:
 	layout = ZoneLayout.load_from(LAYOUT_DIR + "/layout.json")
-	var ground_mat: Material = ArtKit.masked(&"highlands_ground",
+	var ground_mat: ShaderMaterial = ArtKit.masked(&"highlands_ground",
 		load(LAYOUT_DIR + "/path_mask.png") as Texture2D, layout.bounds())
+	# M12: the sub-biomes' looks - one terrain material, the mask picks the
+	# village, burnt forest or bone field look; rocks and ruins built in this
+	# zone follow the same mask (role overrides until the zone closes)
+	var biome_mask := layout.biome_texture()
+	if biome_mask != null:
+		ground_mat = ArtKit.biomed(&"highlands_ground", biome_mask, layout.bounds(), ground_mat)
+		for role: StringName in [&"highlands_rock", &"highlands_ruin"]:
+			ArtKit.override_role(role, ArtKit.biomed(role, biome_mask, layout.bounds()))
 	terrain = Terrain.load_from(LAYOUT_DIR, ground_mat)
 	world.add_child(terrain)
 	_map_texture = load(LAYOUT_DIR + "/map.png") as Texture2D
@@ -159,7 +167,42 @@ func _build_zone() -> void:
 	_dress_ridges()
 	_dress_rim()
 	_scatter()
+	_plant_forest()
 	_add_ambience("wind_loop", Vector3.INF, -14.0)
+
+
+func _exit_tree() -> void:
+	ArtKit.clear_overrides()  # M12: the biome-aware rock / ruin materials are this zone's
+
+
+## M12: a sub-biome's mask weight as a scatter / grove weight.
+func biome_weight_fn(id: String) -> Callable:
+	return func(x: float, z: float) -> float: return layout.biome_weight(id, x, z)
+
+
+## M12 burnt forest: charred trunks, dense, on their own foliage colliders;
+## camps, shrines and the other combat pads keep a wide clearing (enemies
+## have no navmesh), routes and their spurs stay open.
+func _plant_forest() -> void:
+	if look == null or not look.art_pass or layout.biome_ids.is_empty():
+		return
+	var clearings: Array[Vector3] = []
+	for poi in layout.pois:
+		var pad := float(poi.get("pad", 0.0))
+		if pad <= 0.0:
+			continue
+		var p := ZoneLayout.pos_of(poi)
+		var combat := String(poi.get("type", "")) in ["camp", "ruin", "ambush", "trial", "nest", "cursed", "arena"]
+		clearings.append(Vector3(p.x, p.z, pad + (14.0 if combat else 4.0)))
+	var corridors := _route_segments()
+	Grove.plant(self, {
+		"prop": "charred_tree", "area": layout.biome_rect("burnt_forest"),
+		"weight": biome_weight_fn("burnt_forest"), "density": 0.62, "spacing": 5.0,
+		"scale": Vector2(1.0, 1.7), "lean": 0.14, "exclude": clearings,
+		"avoid": func(p: Vector2) -> bool: return _near_route(p, corridors, 2.5),
+		"height_at": terrain.height_at, "collider": Vector2(0.22, 3.2), "range": 150.0,
+		"seed": SCATTER_SEED + 12,
+	})
 
 
 ## Rock hulls along the baked ridge lines: silhouettes on the crests and
@@ -224,17 +267,38 @@ func _scatter() -> void:
 		"normal_at": terrain.normal_at,
 		"tilt": 0.6,
 		"seed": SCATTER_SEED,
-		"items": [
-			{"prop": "ash_tuft", "per_m": 0.7, "band": Vector2(0.3, 1.4), "scale": Vector2(0.75, 1.3),
-				"cluster": Vector2i(2, 5), "spread": 0.35},
-			{"prop": "stone_cluster", "per_m": 0.25, "band": Vector2(0.25, 0.9), "scale": Vector2(0.8, 1.6),
-				"cluster": Vector2i(1, 2), "spread": 0.3},
-			{"prop": "ash_tuft", "field": true, "per_100m2": 0.55, "slope_max": 0.55, "scale": Vector2(0.7, 1.2),
-				"cluster": Vector2i(2, 4), "spread": 0.6},
-			{"prop": "stone_cluster", "field": true, "per_100m2": 0.22, "slope_max": 0.7, "scale": Vector2(0.7, 1.5),
-				"cluster": Vector2i(1, 2), "spread": 0.4},
-		],
+		"items": _scatter_items(),
 	})
+
+
+## Scatter per look: the ash keeps its tufts and stones; M12 the village
+## grows dead grass, the forest soot-grey tufts, the bone field bones.
+func _scatter_items() -> Array:
+	var ash := biome_weight_fn("ash")
+	var items: Array = [
+		{"prop": "ash_tuft", "per_m": 0.7, "band": Vector2(0.3, 1.4), "scale": Vector2(0.75, 1.3),
+			"cluster": Vector2i(2, 5), "spread": 0.35},
+		{"prop": "stone_cluster", "per_m": 0.25, "band": Vector2(0.25, 0.9), "scale": Vector2(0.8, 1.6),
+			"cluster": Vector2i(1, 2), "spread": 0.3},
+		{"prop": "ash_tuft", "field": true, "per_100m2": 0.55, "slope_max": 0.55, "scale": Vector2(0.7, 1.2),
+			"cluster": Vector2i(2, 4), "spread": 0.6, "weight": ash},
+		{"prop": "stone_cluster", "field": true, "per_100m2": 0.22, "slope_max": 0.7, "scale": Vector2(0.7, 1.5),
+			"cluster": Vector2i(1, 2), "spread": 0.4},
+	]
+	if layout.biome_ids.is_empty():
+		return items
+	items.append_array([
+		{"prop": "ash_tuft", "field": true, "per_100m2": 2.4, "slope_max": 0.6, "scale": Vector2(0.9, 1.5),
+			"cluster": Vector2i(3, 6), "spread": 0.8, "weight": biome_weight_fn("village"),
+			"area": layout.biome_rect("village")},
+		{"prop": "stone_cluster", "field": true, "per_100m2": 0.25, "slope_max": 0.6, "scale": Vector2(0.6, 1.2),
+			"cluster": Vector2i(1, 2), "spread": 0.4, "weight": biome_weight_fn("burnt_forest"),
+			"area": layout.biome_rect("burnt_forest")},
+		{"prop": "bone_pile", "field": true, "per_100m2": 0.9, "slope_max": 0.6, "scale": Vector2(0.8, 1.5),
+			"cluster": Vector2i(1, 2), "spread": 0.9, "weight": biome_weight_fn("bone_field"),
+			"area": layout.biome_rect("bone_field")},
+	])
+	return items
 
 
 ## Keep-clear circles (x, z, radius) of every flat pad in the layout.
@@ -409,6 +473,9 @@ func _discover_tick() -> void:
 				hud.toast("A sealed gate: %s" % String(poi.get("label", "")), Color(0.7, 0.55, 1.0))
 	if player == null or not is_instance_valid(player):
 		return
+	# M12: areas overlap now (Ashwick lies in Westreach): of the ones entered
+	# at once only the smallest (most specific) shows its name
+	var entered: Dictionary = {}
 	for area in layout.areas:
 		var id := String(area.get("id", ""))
 		if _area_seen.has(id):
@@ -416,8 +483,10 @@ func _discover_tick() -> void:
 		var centre := ZoneLayout.pos_of(area)
 		if Vector2(player.global_position.x - centre.x, player.global_position.z - centre.z).length() <= float(area.get("radius", 50.0)):
 			_area_seen[id] = true
-			if hud != null:
-				hud.area_name(String(area.get("name", id)))
+			if entered.is_empty() or float(area.get("radius", 50.0)) < float(entered.get("radius", 50.0)):
+				entered = area
+	if not entered.is_empty() and hud != null:  # M12: new places have a DE/EN name in the text table
+		hud.area_name(Texts.t(String(entered["name_key"])) if entered.has("name_key") else String(entered.get("name", "")))
 
 
 func _start_boss_fight() -> void:

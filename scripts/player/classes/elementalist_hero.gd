@@ -195,7 +195,7 @@ func try_storm_step() -> bool:
 	state = State.STORM_STEP
 	_state_timer = 0.0
 	_set_cooldown(&"storm_step", storm_step.cooldown)
-	collision_mask = 0b001  # phase through enemies during the dash
+	collision_mask = 0b1000001  # phase through enemies during the dash (world + foliage)
 	_visual.rotation.y = atan2(-dir.x, -dir.z)
 	hero_fx(&"storm_step", [global_position])
 	cooldowns_changed.emit()
@@ -231,7 +231,7 @@ func _finish_storm_step() -> void:
 ## Shared by the normal finish and a dodge cancel (which must not consume the
 ## input buffer mid-dodge).
 func _resolve_storm_step() -> void:
-	collision_mask = 0b101
+	collision_mask = 0b1000101
 	hero_fx(&"storm_trail", [_dash_start, global_position])
 	# Everything the dash passed through gets zapped and shocked.
 	var path := global_position - _dash_start

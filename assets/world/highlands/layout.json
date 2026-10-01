@@ -143,6 +143,15 @@
    "radius": 30.0,
    "height": 5.0,
    "blend": 18.0
+  },
+  {
+   "pos": [
+    -142,
+    -118
+   ],
+   "radius": 9.0,
+   "height": 7.0,
+   "blend": 10.0
   }
  ],
  "rim": {
@@ -449,6 +458,163 @@
    ]
   },
   {
+   "id": "village_street",
+   "width": 2.6,
+   "grade_max": 0.45,
+   "points": [
+    [
+     -97,
+     22
+    ],
+    [
+     -112,
+     26
+    ],
+    [
+     -128,
+     28
+    ],
+    [
+     -156,
+     34
+    ]
+   ]
+  },
+  {
+   "id": "village_lane",
+   "width": 2.2,
+   "grade_max": 0.5,
+   "points": [
+    [
+     -128,
+     28
+    ],
+    [
+     -134,
+     44
+    ],
+    [
+     -140,
+     58
+    ],
+    [
+     -128,
+     66
+    ],
+    [
+     -114,
+     70
+    ]
+   ]
+  },
+  {
+   "id": "spur_trial_f",
+   "width": 2.2,
+   "grade_max": 0.5,
+   "points": [
+    [
+     -64,
+     -58
+    ],
+    [
+     -86,
+     -78
+    ]
+   ]
+  },
+  {
+   "id": "spur_nest_f",
+   "width": 2.0,
+   "grade_max": 0.5,
+   "points": [
+    [
+     -110,
+     -116
+    ],
+    [
+     -120,
+     -140
+    ]
+   ]
+  },
+  {
+   "id": "climb_tome",
+   "width": 2.4,
+   "grade_max": 0.5,
+   "secret": true,
+   "points": [
+    [
+     -128,
+     -90
+    ],
+    [
+     -146,
+     -96
+    ],
+    [
+     -150,
+     -110
+    ],
+    [
+     -142,
+     -118
+    ]
+   ]
+  },
+  {
+   "id": "spur_dodge",
+   "width": 2.6,
+   "grade_max": 0.45,
+   "points": [
+    [
+     126,
+     -56
+    ],
+    [
+     146,
+     -84
+    ]
+   ]
+  },
+  {
+   "id": "spur_trial_b",
+   "width": 2.2,
+   "grade_max": 0.5,
+   "points": [
+    [
+     110,
+     -91
+    ],
+    [
+     96,
+     -86
+    ],
+    [
+     80,
+     -78
+    ]
+   ]
+  },
+  {
+   "id": "spur_den",
+   "width": 2.2,
+   "grade_max": 0.5,
+   "points": [
+    [
+     108,
+     -96
+    ],
+    [
+     130,
+     -112
+    ],
+    [
+     150,
+     -128
+    ]
+   ]
+  },
+  {
    "id": "test_slope",
    "width": 4.0,
    "grade_max": 0.47,
@@ -499,8 +665,8 @@
     3
    ],
    [
-    2,
-    2,
+    3,
+    3,
     2,
     2,
     2,
@@ -559,7 +725,8 @@
     140
    ],
    "radius": 70,
-   "y": 7.807
+   "y": 7.807,
+   "biome": "ash"
   },
   {
    "id": "crossroads",
@@ -569,7 +736,8 @@
     50
    ],
    "radius": 60,
-   "y": 11.525
+   "y": 11.525,
+   "biome": "ash"
   },
   {
    "id": "cinder_flats",
@@ -579,7 +747,8 @@
     40
    ],
    "radius": 70,
-   "y": 13.404
+   "y": 13.404,
+   "biome": "ash"
   },
   {
    "id": "westreach",
@@ -589,7 +758,8 @@
     10
    ],
    "radius": 70,
-   "y": 14.04
+   "y": 14.04,
+   "biome": "village"
   },
   {
    "id": "emberfall",
@@ -599,7 +769,8 @@
     -80
    ],
    "radius": 80,
-   "y": 24.35
+   "y": 20.375,
+   "biome": "bone_field"
   },
   {
    "id": "northreach",
@@ -609,7 +780,8 @@
     -110
    ],
    "radius": 80,
-   "y": 26.272
+   "y": 26.272,
+   "biome": "ash"
   },
   {
    "id": "colossus_gate",
@@ -619,7 +791,155 @@
     -130
    ],
    "radius": 50,
-   "y": 27.485
+   "y": 27.485,
+   "biome": "ash"
+  },
+  {
+   "id": "ashwick",
+   "name": "Ashwick",
+   "name_key": "area.ashwick",
+   "pos": [
+    -124,
+    36
+   ],
+   "radius": 30,
+   "y": 10.993,
+   "biome": "village"
+  },
+  {
+   "id": "charwood",
+   "name": "The Charwood",
+   "name_key": "area.charwood",
+   "pos": [
+    -118,
+    -112
+   ],
+   "radius": 42,
+   "y": 26.801,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "ribs",
+   "name": "The Ribs of Emberfall",
+   "name_key": "area.ribs",
+   "pos": [
+    118,
+    -92
+   ],
+   "radius": 40,
+   "y": 21.117,
+   "biome": "bone_field"
+  }
+ ],
+ "biomes": [
+  {
+   "id": "village",
+   "channel": 0,
+   "blend_m": 14.0,
+   "shapes": [
+    {
+     "circle": [
+      -104,
+      16,
+      44
+     ]
+    },
+    {
+     "circle": [
+      -134,
+      40,
+      30
+     ]
+    },
+    {
+     "circle": [
+      -130,
+      66,
+      28
+     ]
+    }
+   ]
+  },
+  {
+   "id": "burnt_forest",
+   "channel": 1,
+   "blend_m": 16.0,
+   "shapes": [
+    {
+     "capsule": [
+      [
+       -150,
+       -45
+      ],
+      [
+       -120,
+       -125
+      ],
+      34
+     ]
+    },
+    {
+     "capsule": [
+      [
+       -120,
+       -125
+      ],
+      [
+       -62,
+       -140
+      ],
+      26
+     ]
+    },
+    {
+     "circle": [
+      -82,
+      -80,
+      30
+     ]
+    }
+   ]
+  },
+  {
+   "id": "bone_field",
+   "channel": 2,
+   "blend_m": 16.0,
+   "shapes": [
+    {
+     "capsule": [
+      [
+       132,
+       -46
+      ],
+      [
+       108,
+       -104
+      ],
+      34
+     ]
+    },
+    {
+     "circle": [
+      72,
+      -122,
+      24
+     ]
+    },
+    {
+     "circle": [
+      148,
+      -122,
+      30
+     ]
+    },
+    {
+     "circle": [
+      88,
+      -84,
+      18
+     ]
+    }
+   ]
   }
  ],
  "pois": [
@@ -632,7 +952,8 @@
    ],
    "yaw": 3.1416,
    "pad": 8,
-   "y": 8.174
+   "y": 8.174,
+   "biome": "ash"
   },
   {
    "id": "gate_south",
@@ -646,7 +967,8 @@
    "dest": "hub",
    "label": "RUNEHOLD",
    "arrival": "gate_highlands",
-   "y": 8.074
+   "y": 8.074,
+   "biome": "ash"
   },
   {
    "id": "wp_ashford",
@@ -658,7 +980,8 @@
    "yaw": 0.0,
    "pad": 5,
    "name": "Ashford Shrine",
-   "y": 8.157
+   "y": 8.157,
+   "biome": "ash"
   },
   {
    "id": "camp_1",
@@ -675,7 +998,8 @@
     "rusher"
    ],
    "banners": 2,
-   "y": 9.675
+   "y": 9.675,
+   "biome": "ash"
   },
   {
    "id": "chest_south",
@@ -687,7 +1011,8 @@
    "yaw": 0.4,
    "pad": 3,
    "rarity_bias": 0,
-   "y": 13.55
+   "y": 13.55,
+   "biome": "ash"
   },
   {
    "id": "camp_2",
@@ -705,7 +1030,8 @@
     "rusher"
    ],
    "banners": 2,
-   "y": 9.564
+   "y": 9.564,
+   "biome": "ash"
   },
   {
    "id": "grove",
@@ -717,7 +1043,8 @@
    "yaw": 0.0,
    "pad": 0,
    "prop": "charred_grove",
-   "y": 16.087
+   "y": 16.087,
+   "biome": "ash"
   },
   {
    "id": "ruin_1",
@@ -735,7 +1062,8 @@
     "assassin",
     "assassin"
    ],
-   "y": 9.567
+   "y": 9.567,
+   "biome": "ash"
   },
   {
    "id": "monolith_w",
@@ -747,7 +1075,8 @@
    "yaw": 0.26,
    "pad": 3,
    "prop": "rune_monolith",
-   "y": 9.079
+   "y": 9.079,
+   "biome": "ash"
   },
   {
    "id": "wp_crossroads",
@@ -759,7 +1088,8 @@
    "yaw": 0.0,
    "pad": 5,
    "name": "Crossroads Cairn",
-   "y": 8.872
+   "y": 8.872,
+   "biome": "ash"
   },
   {
    "id": "ambush_1",
@@ -776,7 +1106,8 @@
     "rusher",
     "assassin"
    ],
-   "y": 15.553
+   "y": 15.553,
+   "biome": "ash"
   },
   {
    "id": "camp_3",
@@ -794,7 +1125,8 @@
     "caster"
    ],
    "banners": 2,
-   "y": 10.799
+   "y": 10.799,
+   "biome": "village"
   },
   {
    "id": "ruin_2",
@@ -809,7 +1141,8 @@
    "chest": true,
    "rarity_bias": 1,
    "ambush": [],
-   "y": 14.04
+   "y": 14.04,
+   "biome": "village"
   },
   {
    "id": "camp_4",
@@ -827,7 +1160,8 @@
     "caster"
    ],
    "banners": 3,
-   "y": 14.036
+   "y": 14.036,
+   "biome": "ash"
   },
   {
    "id": "camp_5",
@@ -845,7 +1179,8 @@
     "caster"
    ],
    "banners": 2,
-   "y": 11.709
+   "y": 11.709,
+   "biome": "ash"
   },
   {
    "id": "chest_se",
@@ -857,7 +1192,8 @@
    "yaw": 2.4,
    "pad": 3,
    "rarity_bias": 1,
-   "y": 12.053
+   "y": 12.053,
+   "biome": "ash"
   },
   {
    "id": "grove_se",
@@ -869,7 +1205,8 @@
    "yaw": 0.0,
    "pad": 0,
    "prop": "charred_grove",
-   "y": 10.59
+   "y": 10.59,
+   "biome": "ash"
   },
   {
    "id": "wp_eastwatch",
@@ -881,7 +1218,8 @@
    "yaw": 0.0,
    "pad": 5,
    "name": "Eastwatch Shrine",
-   "y": 13.352
+   "y": 13.352,
+   "biome": "ash"
   },
   {
    "id": "camp_6",
@@ -899,7 +1237,8 @@
     "rusher"
    ],
    "banners": 3,
-   "y": 15.172
+   "y": 15.172,
+   "biome": "ash"
   },
   {
    "id": "monolith_e",
@@ -911,7 +1250,8 @@
    "yaw": -0.35,
    "pad": 3,
    "prop": "rune_monolith",
-   "y": 17.327
+   "y": 17.327,
+   "biome": "ash"
   },
   {
    "id": "dungeon_e",
@@ -927,7 +1267,8 @@
     126,
     -56
    ],
-   "y": 19.784
+   "y": 19.784,
+   "biome": "bone_field"
   },
   {
    "id": "patrol_east",
@@ -963,6 +1304,7 @@
    ],
    "wake_radius": 55.0,
    "y": 24.987,
+   "biome": "ash",
    "patrol_y": [
     24.987,
     19.784,
@@ -980,7 +1322,8 @@
    "yaw": 0.0,
    "pad": 0,
    "prop": "bone_field",
-   "y": 27.738
+   "y": 27.738,
+   "biome": "bone_field"
   },
   {
    "id": "camp_7",
@@ -999,7 +1342,8 @@
     "rusher"
    ],
    "banners": 3,
-   "y": 22.089
+   "y": 22.089,
+   "biome": "bone_field"
   },
   {
    "id": "ambush_2",
@@ -1015,7 +1359,8 @@
     "assassin",
     "assassin"
    ],
-   "y": 33.414
+   "y": 33.414,
+   "biome": "ash"
   },
   {
    "id": "wp_northreach",
@@ -1027,7 +1372,8 @@
    "yaw": 0.0,
    "pad": 5,
    "name": "Northreach Shrine",
-   "y": 25.599
+   "y": 25.599,
+   "biome": "ash"
   },
   {
    "id": "chest_hidden",
@@ -1039,7 +1385,8 @@
    "yaw": 1.0,
    "pad": 3,
    "rarity_bias": 1,
-   "y": 27.624
+   "y": 27.624,
+   "biome": "ash"
   },
   {
    "id": "ruin_3",
@@ -1058,7 +1405,8 @@
     "assassin",
     "caster"
    ],
-   "y": 21.078
+   "y": 21.078,
+   "biome": "burnt_forest"
   },
   {
    "id": "dungeon_w",
@@ -1074,7 +1422,8 @@
     -132,
     -30
    ],
-   "y": 19.107
+   "y": 19.107,
+   "biome": "burnt_forest"
   },
   {
    "id": "camp_8",
@@ -1093,7 +1442,8 @@
     "caster"
    ],
    "banners": 3,
-   "y": 24.898
+   "y": 24.898,
+   "biome": "burnt_forest"
   },
   {
    "id": "wp_gate",
@@ -1105,7 +1455,165 @@
    "yaw": 0.0,
    "pad": 5,
    "name": "Colossus Gate Shrine",
-   "y": 29.975
+   "y": 29.975,
+   "biome": "ash"
+  },
+  {
+   "id": "village_w",
+   "type": "village",
+   "pos": [
+    -128,
+    28
+   ],
+   "yaw": 0.0,
+   "pad": 12,
+   "y": 10.993,
+   "biome": "village"
+  },
+  {
+   "id": "braziers_v",
+   "type": "puzzle_braziers",
+   "pos": [
+    -156,
+    34
+   ],
+   "yaw": 1.5708,
+   "pad": 7,
+   "y": 12.09,
+   "biome": "village"
+  },
+  {
+   "id": "graveyard_v",
+   "type": "cursed",
+   "pos": [
+    -140,
+    58
+   ],
+   "yaw": 0.0,
+   "pad": 10,
+   "y": 12.536,
+   "biome": "village"
+  },
+  {
+   "id": "trial_v",
+   "type": "trial",
+   "pos": [
+    -114,
+    70
+   ],
+   "yaw": 0.0,
+   "pad": 9,
+   "y": 9.656,
+   "biome": "village"
+  },
+  {
+   "id": "monoliths_x",
+   "type": "puzzle_monolith",
+   "pos": [
+    -56,
+    96
+   ],
+   "yaw": 0.0,
+   "pad": 7,
+   "y": 6.987,
+   "biome": "ash"
+  },
+  {
+   "id": "cave_flats",
+   "type": "cave",
+   "pos": [
+    30,
+    52
+   ],
+   "yaw": 2.6,
+   "pad": 8,
+   "y": 12.779,
+   "biome": "ash"
+  },
+  {
+   "id": "trial_f",
+   "type": "trial",
+   "pos": [
+    -86,
+    -78
+   ],
+   "yaw": 0.0,
+   "pad": 9,
+   "y": 27.319,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "nest_f",
+   "type": "nest",
+   "pos": [
+    -120,
+    -140
+   ],
+   "yaw": 0.0,
+   "pad": 9,
+   "y": 28.315,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "cave_tome",
+   "type": "cave",
+   "pos": [
+    -142,
+    -118
+   ],
+   "yaw": -0.6,
+   "pad": 9,
+   "lock": "boulder",
+   "secret": true,
+   "tome": true,
+   "y": 37.079,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "trial_b",
+   "type": "trial",
+   "pos": [
+    80,
+    -78
+   ],
+   "yaw": 0.0,
+   "pad": 9,
+   "y": 17.37,
+   "biome": "bone_field"
+  },
+  {
+   "id": "dodge_b",
+   "type": "puzzle_dodge",
+   "pos": [
+    146,
+    -84
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "lane": [
+    [
+     130,
+     -62
+    ],
+    [
+     143,
+     -80
+    ]
+   ],
+   "y": 17.847,
+   "biome": "bone_field"
+  },
+  {
+   "id": "nest_b",
+   "type": "nest",
+   "pos": [
+    150,
+    -128
+   ],
+   "yaw": 0.0,
+   "pad": 9,
+   "y": 19.718,
+   "biome": "bone_field"
   },
   {
    "id": "arena",
@@ -1150,7 +1658,8 @@
      "y": 27.485
     }
    ],
-   "y": 27.485
+   "y": 27.485,
+   "biome": "ash"
   }
  ],
  "baked": {
@@ -1163,6 +1672,13 @@
    -192,
    384,
    384
+  ],
+  "biome_file": "biome_mask.png",
+  "biome_px_per_m": 1,
+  "biome_ids": [
+   "village",
+   "burnt_forest",
+   "bone_field"
   ]
  }
 }

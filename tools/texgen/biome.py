@@ -335,6 +335,117 @@ def turf(name: str, ramp: list[str]) -> None:
     save(name, paint(np.clip(idx, 0, len(ramp) - 1), ramp))
 
 
+# ---------------------------------------------------------------------------
+# M12 sub-biomes of the Highlands (village, burnt forest, bone field). Every
+# texture is 64 px: the terrain shader keeps each slot of the four looks in
+# one texture array (same size per layer).
+# ---------------------------------------------------------------------------
+
+def grass_patches(name: str, earth: list[str], grass: list[str]) -> None:
+    """Village ground: grey earth with clumps of dead grass blades (2-3 px
+    strokes leaning with a shared wind) and a few embossed pebbles."""
+    size = 64
+    rng = rng_for(name)
+    height = fbm(size, rng, ((4, 0.7), (8, 0.3)))
+    rgba = paint(np.where(height + dither((size, size), 0.18) > 0.6, 3, 2), earth)
+    clump = fbm(size, rng, ((4, 0.6), (8, 0.4))) > 0.58
+    for _ in range(140):
+        x, y = int(rng.integers(0, size)), int(rng.integers(0, size))
+        if not clump[y, x]:
+            continue
+        length = int(rng.integers(2, 4))
+        shade = 2 if rng.random() < 0.3 else (0 if rng.random() < 0.4 else 1)
+        for k in range(length):
+            rgba[(y - k) % size, (x + (k // 2)) % size] = paint(np.array([shade]), grass)[0]
+    f1, _, _ = voronoi(size, 7, rng)
+    pebble = f1 < 1.5
+    rgba[pebble] = paint(np.full(pebble.sum(), 4), earth)
+    shadow = np.roll(np.roll(pebble, 1, axis=0), 1, axis=1) & ~pebble
+    rgba[shadow] = paint(np.full(shadow.sum(), 1), earth)
+    save(name, rgba)
+
+
+def cobbles(name: str, ramp: list[str], earth: list[str]) -> None:
+    """Small worn cobbles for the village street (64 px): Voronoi stones one
+    or two steps apart, earth in the joints, a lit top-left lip, some stones
+    missing (earth patches)."""
+    size = 64
+    rng = rng_for(name)
+    f1, f2, cell = voronoi(size, 34, rng)
+    rough = fbm(size, rng, ((4, 0.6), (8, 0.4)))
+    idx = 1 + (cell % 3 == 0).astype(int) + (rough > 0.72).astype(int)
+    lit = emboss(-f1 / 6.0, 0.05) > 0
+    idx = np.where(lit, idx + 1, idx)
+    rgba = paint(np.clip(idx, 0, len(ramp) - 1), ramp)
+    joint = (f2 - f1) < 1.1
+    missing = (cell % 7 == 3) & (rough < 0.45)
+    hole = joint | missing
+    rgba[hole] = paint(np.full(hole.sum(), 2), earth)
+    save(name, rgba)
+
+
+def bone_dust(name: str, dust: list[str], chips: list[str]) -> None:
+    """Bone field ground: dark bone dust with sparse pale chips (1-2 px, the
+    darkest bone steps), so the ground stays in its value band."""
+    size = 64
+    rng = rng_for(name)
+    height = fbm(size, rng, ((4, 0.7), (8, 0.3)))
+    rgba = paint(np.where(height + dither((size, size), 0.18) > 0.62, 3, 2), dust)
+    for _ in range(54):
+        x, y = int(rng.integers(0, size)), int(rng.integers(0, size))
+        shade = 0 if rng.random() < 0.6 else 1
+        rgba[y, x] = paint(np.array([shade]), chips)[0]
+        if rng.random() < 0.4:
+            rgba[y, (x + 1) % size] = paint(np.array([0]), chips)[0]
+        rgba[(y + 1) % size, (x + 1) % size] = paint(np.array([1]), dust)[0]  # chip shadow
+    save(name, rgba)
+
+
+def soot_ground(name: str, char: list[str], soot: list[str]) -> None:
+    """Burnt forest floor: charcoal with cracks, drifts of grey soot and a
+    few charred twigs (dark 3-4 px strokes)."""
+    size = 64
+    rng = rng_for(name)
+    height = fbm(size, rng, ((4, 0.7), (8, 0.3)))
+    rgba = paint(np.where(height + dither((size, size), 0.18) > 0.6, 3, 2), char)
+    drift = fbm(size, rng, ((4, 0.6), (8, 0.4))) + dither((size, size), 0.2) > 0.66
+    rgba[drift] = paint(np.full(drift.sum(), 0), soot)
+    f1, f2, _ = voronoi(size, 9, rng)
+    crack = ((f2 - f1) < 0.5) & ~drift & (height > 0.45)
+    rgba[crack] = paint(np.full(crack.sum(), 0), char)
+    for _ in range(10):
+        x, y = int(rng.integers(0, size)), int(rng.integers(0, size))
+        dx = 1 if rng.random() < 0.5 else -1
+        for k in range(int(rng.integers(3, 5))):
+            rgba[(y + k // 2) % size, (x + k * dx) % size] = paint(np.array([0]), char)[0]
+    save(name, rgba)
+
+
+def generate_subbiomes() -> None:
+    spec = load_spec()
+    pals = spec["palettes"]
+    vl, bf, bn = pals["village"], pals["burnt_forest"], pals["bone_field"]
+    print("Biome textures (M12 Highlands sub-biomes):")
+    grass_patches("vl_ground_a", vl["earth"], vl["dead_grass"])
+    turf("vl_ground_b", vl["dead_grass"])
+    ash_surface("vl_top", vl["earth"], 3, pebbles=8, cracks=False)
+    cobbles("vl_trail", vl["cobble"], vl["earth"])
+    strata_rock("vl_rock", vl["cobble"])
+    masonry("vl_masonry", vl["cobble"])
+    soot_ground("bf_ground_a", bf["char"], bf["soot"])
+    ash_surface("bf_ground_b", bf["char"], 2, pebbles=5, cracks=True)
+    ash_surface("bf_top", [bf["char"][2], bf["char"][3], bf["soot"][0], bf["soot"][1]], 2, pebbles=8, cracks=False)
+    ash_surface("bf_trail", bf["char"], 4, pebbles=14, cracks=False)
+    basalt_columns("bf_rock", bf["rock"])
+    masonry("bf_masonry", bf["rock"])
+    bone_dust("bn_ground_a", bn["dust"], bn["bone_dark"])
+    ash_surface("bn_ground_b", bn["dust"], 1, pebbles=6, cracks=True)
+    ash_surface("bn_top", bn["dust"], 3, pebbles=8, cracks=False)
+    ash_surface("bn_trail", bn["dust"], 3, pebbles=16, cracks=False)
+    strata_rock("bn_rock", bn["rock"])
+    masonry("bn_masonry", bn["rock"])
+
+
 def generate_runehold() -> None:
     spec = load_spec()
     pal = spec["palettes"]["runehold"]
@@ -374,6 +485,7 @@ def generate_highlands() -> None:
 
 if __name__ == "__main__":
     generate_highlands()
+    generate_subbiomes()
     generate_runehold()
     generate_spire()
     print("done.")

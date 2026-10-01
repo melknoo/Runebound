@@ -10,6 +10,36 @@ const BIOME_DIR := "res://assets/textures/biome/"
 
 static var _spec: Dictionary = {}
 static var _materials: Dictionary = {}
+## M12: role -> material a zone puts in place of the shared one while it
+## runs (the Highlands' biome-aware rocks and ruins); cleared on zone exit.
+static var _overrides: Dictionary = {}
+## M12: texture arrays by their layer names (one per look slot).
+static var _arrays: Dictionary = {}
+
+## M12 sub-biome looks per role: four layers each (ash, village, burnt
+## forest, bone field = the biome mask's 0 / R / G / B) for the top layers,
+## the side and the trail, and per layer (layer B amount, ember density).
+const BIOME_LOOKS := {
+	&"highlands_ground": {
+		"tops_a": ["hl_ash_a", "vl_ground_a", "bf_ground_a", "bn_ground_a"],
+		"tops_b": ["hl_ash_b", "vl_ground_b", "bf_ground_b", "bn_ground_b"],
+		"sides": ["hl_basalt", "vl_rock", "bf_rock", "bn_rock"],
+		"trails": ["hl_trail", "vl_trail", "bf_trail", "bn_trail"],
+		"params": [Vector4(0.38, 0.004, 0, 0), Vector4(0.34, 0.0, 0, 0), Vector4(0.45, 0.014, 0, 0), Vector4(0.32, 0.0, 0, 0)],
+	},
+	&"highlands_rock": {
+		"tops_a": ["hl_ash_top", "vl_top", "bf_top", "bn_top"],
+		"tops_b": ["hl_ash_a", "vl_ground_a", "bf_ground_a", "bn_ground_a"],
+		"sides": ["hl_strata", "vl_rock", "bf_rock", "bn_rock"],
+		"params": [Vector4(0.25, 0, 0, 0), Vector4(0.25, 0, 0, 0), Vector4(0.3, 0.006, 0, 0), Vector4(0.25, 0, 0, 0)],
+	},
+	&"highlands_ruin": {
+		"tops_a": ["hl_ash_top", "vl_top", "bf_top", "bn_top"],
+		"tops_b": ["hl_ash_a", "vl_ground_a", "bf_ground_a", "bn_ground_a"],
+		"sides": ["hl_masonry", "vl_masonry", "bf_masonry", "bn_masonry"],
+		"params": [Vector4(0.3, 0, 0, 0), Vector4(0.3, 0, 0, 0), Vector4(0.3, 0, 0, 0), Vector4(0.3, 0, 0, 0)],
+	},
+}
 
 
 static func spec() -> Dictionary:
@@ -46,6 +76,8 @@ static func number(path: String, fallback: float) -> float:
 ## Environment material by role. Cached: every surface of a role shares one
 ## material (the terrain shader needs no per-instance state).
 static func material(role: StringName) -> Material:
+	if _overrides.has(role):
+		return _overrides[role]
 	if _materials.has(role):
 		return _materials[role]
 	var mat: Material
@@ -115,6 +147,8 @@ static var _lookdev_ready: bool = false
 ## past the servers' teardown crash the process on exit.
 static func clear_caches() -> void:
 	_materials.clear()
+	_overrides.clear()
+	_arrays.clear()
 	_char_materials.clear()
 	_rig_scenes.clear()
 	_spec = {}
@@ -307,3 +341,62 @@ static func terrain_material(top_a: String, top_b: String, side: String, params:
 	for key: String in params:
 		mat.set_shader_parameter(StringName(key), params[key])
 	return mat
+
+
+# ---------------------------------------------------------------------------
+# M12 sub-biomes: one terrain material, four looks picked by a baked mask.
+# ---------------------------------------------------------------------------
+
+## A copy of `base` (else the role's material) that shows the role's four
+## BIOME_LOOKS by the weight mask `mask` (bounds = x, z, width, depth in
+## world metres, like the trail mask). Headless runs (no renderer to sample
+## it) get the copy without the arrays and with use_biomes off.
+static func biomed(role: StringName, mask: Texture2D, bounds: Rect2, base: ShaderMaterial = null) -> ShaderMaterial:
+	var src := base if base != null else material(role) as ShaderMaterial
+	var mat := src.duplicate() as ShaderMaterial
+	if not BIOME_LOOKS.has(role) or mask == null or DisplayServer.get_name() == "headless":
+		return mat
+	var look: Dictionary = BIOME_LOOKS[role]
+	for slot: String in ["tops_a", "tops_b", "sides", "trails"]:
+		if look.has(slot):
+			mat.set_shader_parameter(StringName(slot), texture_array(look[slot]))
+	mat.set_shader_parameter(&"biome_mask", mask)
+	mat.set_shader_parameter(&"mask_bounds", Vector4(bounds.position.x, bounds.position.y, bounds.size.x, bounds.size.y))
+	mat.set_shader_parameter(&"biome_params", PackedVector4Array(look["params"]))
+	mat.set_shader_parameter(&"use_biomes", 1)
+	return mat
+
+
+## A Texture2DArray of biome textures (same size each), mipmapped like the
+## imported ones; read from the PNG bytes, cached by the names.
+static func texture_array(names: Array) -> Texture2DArray:
+	var key := ",".join(names)
+	if _arrays.has(key):
+		return _arrays[key]
+	var images: Array[Image] = []
+	for n: String in names:
+		var img := Image.new()
+		if img.load_png_from_buffer(FileAccess.get_file_as_bytes(BIOME_DIR + n + ".png")) != OK:
+			push_warning("ArtKit: missing biome texture " + n)
+			img = Image.create(64, 64, false, Image.FORMAT_RGBA8)
+		img.convert(Image.FORMAT_RGBA8)
+		img.generate_mipmaps()
+		images.append(img)
+	var arr := Texture2DArray.new()
+	arr.create_from_images(images)
+	_arrays[key] = arr
+	return arr
+
+
+## While a zone runs: `role` hands out `mat` instead of the shared material.
+static func override_role(role: StringName, mat: Material) -> void:
+	_overrides[role] = mat
+
+
+static func clear_overrides() -> void:
+	_overrides.clear()
+
+
+## The look layer names of a role's slot (tests; [] when the role has none).
+static func biome_layers(role: StringName, slot: String) -> Array:
+	return BIOME_LOOKS.get(role, {}).get(slot, [])

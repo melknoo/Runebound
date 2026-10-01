@@ -45,6 +45,7 @@ LAYOUT = {
     "plateaus": [
         {"pos": [0, -140], "radius": 56.0, "height": 10.0, "blend": 26.0},  # Colossus plateau
         {"pos": [-96, -100], "radius": 30.0, "height": 5.0, "blend": 18.0},  # Northreach shelf
+        {"pos": [-142, -118], "radius": 9.0, "height": 7.0, "blend": 10.0},   # M12 tome shelf (burnt forest)
     ],
     "rim": {"start_m": 176.0, "height": 36.0},
     # Test feature for the smoke test: an asymmetric bump in the south-east,
@@ -73,6 +74,25 @@ LAYOUT = {
          "points": [[-132, -30], [-152, -28]]},
         {"id": "spur_hidden", "width": 1.8, "grade_max": 0.5,
          "points": [[-30, -78], [-52, -100]]},
+        # M12: the village street and lane (Ashwick), spurs to the new POIs,
+        # and a secret climb (no trail on the ground or the map) up to the
+        # tome shelf in the burnt forest.
+        {"id": "village_street", "width": 2.6, "grade_max": 0.45,
+         "points": [[-97, 22], [-112, 26], [-128, 28], [-156, 34]]},
+        {"id": "village_lane", "width": 2.2, "grade_max": 0.5,
+         "points": [[-128, 28], [-134, 44], [-140, 58], [-128, 66], [-114, 70]]},
+        {"id": "spur_trial_f", "width": 2.2, "grade_max": 0.5,
+         "points": [[-64, -58], [-86, -78]]},
+        {"id": "spur_nest_f", "width": 2.0, "grade_max": 0.5,
+         "points": [[-110, -116], [-120, -140]]},
+        {"id": "climb_tome", "width": 2.4, "grade_max": 0.5, "secret": True,
+         "points": [[-128, -90], [-146, -96], [-150, -110], [-142, -118]]},
+        {"id": "spur_dodge", "width": 2.6, "grade_max": 0.45,
+         "points": [[126, -56], [146, -84]]},
+        {"id": "spur_trial_b", "width": 2.2, "grade_max": 0.5,
+         "points": [[110, -91], [96, -86], [80, -78]]},
+        {"id": "spur_den", "width": 2.2, "grade_max": 0.5,
+         "points": [[108, -96], [130, -112], [150, -128]]},
         # A straight 25-degree test ramp for the smoke test (east of the spawn).
         {"id": "test_slope", "width": 4.0, "grade_max": 0.47, "test_grade": 0.466,
          "points": [[40, 176], [40, 146]]},
@@ -84,7 +104,7 @@ LAYOUT = {
             [3, 3, 3, 3, 3, 3, 3, 3],
             [3, 3, 3, 3, 3, 3, 3, 3],
             [3, 3, 3, 3, 3, 3, 3, 3],
-            [2, 2, 2, 2, 2, 2, 3, 3],
+            [3, 3, 2, 2, 2, 2, 3, 3],  # M12: the burnt forest's south edge is 3
             [2, 2, 2, 2, 2, 2, 3, 3],
             [1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 1, 1, 1, 1, 1],
@@ -100,6 +120,25 @@ LAYOUT = {
         {"id": "emberfall", "name": "Emberfall Ridge", "pos": [95, -80], "radius": 80},
         {"id": "northreach", "name": "Northreach", "pos": [-80, -110], "radius": 80},
         {"id": "colossus_gate", "name": "Colossus Gate", "pos": [0, -130], "radius": 50},
+        # M12: the sub-biomes' own places; `name_key` is a text-table key (DE/EN).
+        {"id": "ashwick", "name": "Ashwick", "name_key": "area.ashwick", "pos": [-124, 36], "radius": 30},
+        {"id": "charwood", "name": "The Charwood", "name_key": "area.charwood", "pos": [-118, -112], "radius": 42},
+        {"id": "ribs", "name": "The Ribs of Emberfall", "name_key": "area.ribs", "pos": [118, -92], "radius": 40},
+    ],
+    # M12 sub-biomes: each a set of shapes (circles [x, z, r], capsules
+    # [[x0, z0], [x1, z1], r]); the bake writes their weights into
+    # biome_mask.png (R village, G burnt forest, B bone field; ash where all
+    # are 0) with a ragged `blend_m` edge. Shapes, not the area circles: the
+    # Westreach circle holds the forest's dungeon gate, Emberfall's the
+    # raiders' elite camp.
+    "biomes": [
+        {"id": "village", "channel": 0, "blend_m": 14.0,
+         "shapes": [{"circle": [-104, 16, 44]}, {"circle": [-134, 40, 30]}, {"circle": [-130, 66, 28]}]},
+        {"id": "burnt_forest", "channel": 1, "blend_m": 16.0,
+         "shapes": [{"capsule": [[-150, -45], [-120, -125], 34]}, {"capsule": [[-120, -125], [-62, -140], 26]},
+                    {"circle": [-82, -80, 30]}]},
+        {"id": "bone_field", "channel": 2, "blend_m": 16.0,
+         "shapes": [{"capsule": [[132, -46], [108, -104], 34]}, {"circle": [72, -122, 24]}, {"circle": [148, -122, 30]}, {"circle": [88, -84, 18]}]},
     ],
     # Points of interest. `pad` = flat radius baked into the terrain.
     "pois": [
@@ -157,6 +196,22 @@ LAYOUT = {
          "composition": ["brute", "rusher", "rusher", "caster"], "banners": 3},
         {"id": "wp_gate", "type": "waypoint", "pos": [22, -110], "yaw": 0.0, "pad": 5,
          "name": "Colossus Gate Shrine"},
+        # --- M12: new POI types (each built from its phase on; until then
+        # PoiBuilder leaves them empty, the pads and spurs are already here) ---
+        {"id": "village_w", "type": "village", "pos": [-128, 28], "yaw": 0.0, "pad": 12},
+        {"id": "braziers_v", "type": "puzzle_braziers", "pos": [-156, 34], "yaw": 1.5708, "pad": 7},
+        {"id": "graveyard_v", "type": "cursed", "pos": [-140, 58], "yaw": 0.0, "pad": 10},
+        {"id": "trial_v", "type": "trial", "pos": [-114, 70], "yaw": 0.0, "pad": 9},
+        {"id": "monoliths_x", "type": "puzzle_monolith", "pos": [-56, 96], "yaw": 0.0, "pad": 7},
+        {"id": "cave_flats", "type": "cave", "pos": [30, 52], "yaw": 2.6, "pad": 8},
+        {"id": "trial_f", "type": "trial", "pos": [-86, -78], "yaw": 0.0, "pad": 9},
+        {"id": "nest_f", "type": "nest", "pos": [-120, -140], "yaw": 0.0, "pad": 9},
+        {"id": "cave_tome", "type": "cave", "pos": [-142, -118], "yaw": -0.6, "pad": 9,
+         "lock": "boulder", "secret": True, "tome": True},
+        {"id": "trial_b", "type": "trial", "pos": [80, -78], "yaw": 0.0, "pad": 9},
+        {"id": "dodge_b", "type": "puzzle_dodge", "pos": [146, -84], "yaw": 0.0, "pad": 5,
+         "lane": [[130, -62], [143, -80]]},
+        {"id": "nest_b", "type": "nest", "pos": [150, -128], "yaw": 0.0, "pad": 9},
         {"id": "arena", "type": "arena", "pos": [0, -142], "yaw": 0.0, "pad": 18, "radius": 16.0,
          "boss_offset": [0, -8], "trigger_offset": [0, 4], "trigger_radius": 12.0,
          "portals": [

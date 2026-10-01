@@ -138,6 +138,101 @@
 			"fog": "#5E4044",
 			"ambient": "#4A3A52"
 		},
+		"village": {
+			"_rule": "M12 abandoned village (Westreach): cool grey-olive earth, dead grass, grey cobble and fieldstone, rotten timber; ground steps 2-3 stay in the 25-40 band",
+			"earth": [
+				"#262420",
+				"#322F2A",
+				"#3F3B34",
+				"#4D4840",
+				"#5C564C"
+			],
+			"dead_grass": [
+				"#38342A",
+				"#484336",
+				"#595242",
+				"#6A614D"
+			],
+			"cobble": [
+				"#2A292B",
+				"#373538",
+				"#454246",
+				"#545055",
+				"#635E64"
+			],
+			"timber": [
+				"#251C16",
+				"#33261D",
+				"#423226",
+				"#523F30"
+			],
+			"thatch": [
+				"#3B3221",
+				"#4C412B",
+				"#5E5036",
+				"#6F5F41"
+			]
+		},
+		"burnt_forest": {
+			"_rule": "M12 burnt forest (north-west): charcoal ground (base step 3), grey soot patches, near-black charred bark with dim ember cracks (environment emissive, never threat red)",
+			"char": [
+				"#1D1B1C",
+				"#272526",
+				"#322F2F",
+				"#3E3A39",
+				"#4C4744"
+			],
+			"soot": [
+				"#4A4542",
+				"#5A544F",
+				"#6B645D"
+			],
+			"bark": [
+				"#161212",
+				"#201A19",
+				"#2B2321",
+				"#382D2A"
+			],
+			"rock": [
+				"#1C1819",
+				"#272223",
+				"#332D2E",
+				"#413939",
+				"#514747"
+			],
+			"ember": [
+				"#7A2E12",
+				"#A8441C",
+				"#D86A2C"
+			]
+		},
+		"bone_field": {
+			"_rule": "M12 bone field (Emberfall Ridge): dark bone-dust ground in the 25-40 band; pale bone only on props and scatter, so enemies keep +15 L* over the ground",
+			"dust": [
+				"#2F2B25",
+				"#3C3730",
+				"#4A443B",
+				"#595247",
+				"#696054"
+			],
+			"rock": [
+				"#26231F",
+				"#322E29",
+				"#3F3A34",
+				"#4D4740",
+				"#5D564D"
+			],
+			"bone_dark": [
+				"#5E574B",
+				"#756C5D",
+				"#8C8272"
+			],
+			"ochre": [
+				"#4A3A26",
+				"#5E4A30",
+				"#735B3B"
+			]
+		},
 		"runebreaker": {
 			"iron": [
 				"#2B303B",

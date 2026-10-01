@@ -1022,7 +1022,7 @@ func _run() -> void:
 	_check(player.state == Player.State.MOVE, "storm step recovers to MOVE")
 	_check(player.global_position.z > dash_from.z + 3.0, "held movement input steers the dash")
 	_check(not mage.try_storm_step(), "storm step respects cooldown")
-	_check(player.collision_mask == 0b101, "storm step restores collision mask")
+	_check(player.collision_mask == 0b1000101, "storm step restores collision mask")
 
 	# Priority 3: no input, no target -> camera-directed dash zaps the path.
 	player.reset_cooldowns()
@@ -1070,7 +1070,7 @@ func _run() -> void:
 	await _wait_frames(2)
 	_check(player.state == Player.State.STORM_STEP, "cancel test: still mid-dash")
 	_check(player.try_dodge(), "dodge cancels a running storm step")
-	_check(player.collision_mask == 0b101, "dodge-cancelled storm step restores collision mask")
+	_check(player.collision_mask == 0b1000101, "dodge-cancelled storm step restores collision mask")
 	_check(cancel_victim.status.has_shock(), "dodge-cancelled storm step still zaps its path")
 	await _wait_frames(25)
 	_check(player.state == Player.State.MOVE, "dodge after storm step returns to MOVE")
@@ -1639,7 +1639,7 @@ func _run() -> void:
 	await _wait_frames(45)
 	_check(player.state == Player.State.MOVE and player.global_position.distance_to(leap_start) > 2.0
 		and lander.taunted_by() == player and lander.health.current_health < lander.health.max_health
-		and player.collision_mask == 0b101,
+		and player.collision_mask == 0b1000101,
 		"the tank lands at the aim, strikes and taunts what stands there (%.1f m)" % player.global_position.distance_to(leap_start))
 	# Warding Rune: every hero inside takes 25 % less damage.
 	player.reset_cooldowns()
@@ -2769,6 +2769,77 @@ func _run() -> void:
 			trees += 1
 	_check(trees >= 40 and blockers >= trees, "tall props (trees, banners) each stand on a collider (%d trees, %d blockers)" % [trees, blockers])
 
+	# --- M12 phase 1: the sub-biomes (mask, looks, the forest, scatter per look) ---
+	var at_poi := func(id: String) -> Vector3:
+		return hl_layout.biome_weights(hl_layout.poi_pos(id).x, hl_layout.poi_pos(id).z)
+	_check(",".join(hl_layout.biome_ids) == "village,burnt_forest,bone_field" and hl_layout.biome_image() != null,
+		"the Highlands have three sub-biomes and their mask reads headless")
+	var w_c3: Vector3 = at_poi.call("camp_3")
+	var w_c8: Vector3 = at_poi.call("camp_8")
+	var w_c7: Vector3 = at_poi.call("camp_7")
+	var w_c6: Vector3 = at_poi.call("camp_6")
+	var w_c1: Vector3 = at_poi.call("camp_1")
+	_check(w_c3.x > 0.9 and w_c8.y > 0.9 and w_c7.z > 0.9 and w_c6.length() < 0.05 and w_c1.length() < 0.05,
+		"mask weights: camp 3 village, camp 8 forest, camp 7 bones, camps 6 and 1 ash (%s %s %s %s %s)" % [w_c3, w_c8, w_c7, w_c6, w_c1])
+	var stamps_ok := true
+	for pair: Array in [["camp_3", "village"], ["village_w", "village"], ["camp_8", "burnt_forest"], ["dungeon_w", "burnt_forest"],
+			["cave_tome", "burnt_forest"], ["camp_7", "bone_field"], ["trial_b", "bone_field"], ["camp_1", "ash"], ["camp_6", "ash"], ["dungeon_e", "bone_field"]]:
+		var poi_b := hl_layout.find(String(pair[0]))
+		var px := hl_layout.poi_pos(String(pair[0]))
+		stamps_ok = stamps_ok and String(poi_b.get("biome", "")) == String(pair[1]) and hl_layout.biome_at(px.x, px.z) == String(pair[1])
+	_check(stamps_ok, "the bake stamps each POI with its biome and biome_at agrees")
+	var looks_ok := true
+	for role: StringName in [&"highlands_ground", &"highlands_rock", &"highlands_ruin"]:
+		for slot in ["tops_a", "tops_b", "sides"]:
+			var layers := ArtKit.biome_layers(role, slot)
+			looks_ok = looks_ok and layers.size() == 4
+			for n: String in layers:
+				looks_ok = looks_ok and FileAccess.file_exists(ArtKit.BIOME_DIR + n + ".png")
+	_check(looks_ok and ArtKit.biome_layers(&"highlands_ground", "trails").size() == 4,
+		"every terrain role has four looks per slot and every texture exists")
+	var grove_trees := 0
+	var grove_bad := {"route": 0, "clearing": 0, "layer": 0}
+	var hl_corridors := highlands._route_segments()
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("Grove_"):
+			for p: Vector3 in (child as Node).get_meta(Grove.POINTS_META, PackedVector3Array()):
+				grove_trees += 1
+				if highlands._near_route(Vector2(p.x, p.z), hl_corridors, 2.4):
+					grove_bad["route"] += 1
+				for cid in ["camp_8", "trial_f", "nest_f", "ruin_3"]:
+					var cp := hl_layout.poi_pos(cid)
+					if Vector2(p.x - cp.x, p.z - cp.z).length() < float(hl_layout.find(cid).get("pad", 0.0)) + 13.0:
+						grove_bad["clearing"] += 1
+	for child in highlands.world.get_children():
+		if child.name.begins_with("GroveBody_") and (child as StaticBody3D).collision_layer != Grove.FOLIAGE_LAYER:
+			grove_bad["layer"] += 1
+	_check(grove_trees >= 120 and grove_bad.values().all(func(n: int) -> bool: return n == 0),
+		"the burnt forest: %d trunks, off the routes, clear of camps and shrines, on the foliage layer %s" % [grove_trees, str(grove_bad)])
+	_check(highlands.camera_rig.spring.collision_mask & Grove.FOLIAGE_LAYER == 0
+		and highlands.player.collision_mask & Grove.FOLIAGE_LAYER != 0,
+		"heroes bump into trunks, the camera does not")
+	var bones_total := 0
+	var bones_inside := 0
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("Scatter_bone_pile"):
+			for p: Vector3 in (child as Node).get_meta(Scatter.POINTS_META, PackedVector3Array()):
+				bones_total += 1
+				if hl_layout.biome_weight("bone_field", p.x, p.z) > 0.0:
+					bones_inside += 1
+	_check(bones_total > 40 and bones_inside == bones_total,
+		"bones lie only in the bone field (%d of %d)" % [bones_inside, bones_total])
+	var area_parent := highlands.hud.get_child(0)
+	var area_labels0 := area_parent.get_child_count()
+	var hero_home := highlands.player.global_position
+	highlands.player.global_position = hl_layout.poi_pos("village_w") + Vector3(0, 1, 0)
+	highlands._area_seen = {}
+	highlands._discover_tick()
+	var area_new := area_parent.get_child_count() - area_labels0
+	var area_text := str((area_parent.get_child(area_parent.get_child_count() - 1) as Label).text) if area_new > 0 else ""
+	_check(area_new == 1 and area_text == "Ashwick",
+		"entering two areas at once shows one name, the smaller place (%d, %s)" % [area_new, area_text])
+	highlands.player.global_position = hero_home
+
 	# --- M06 audio: mix buses, music layers, looping ambience ---
 	var music_bus := AudioServer.get_bus_index("Music")
 	var buses_ok := music_bus != -1
@@ -2802,6 +2873,10 @@ func _run() -> void:
 		var ep := (e as Node3D).global_position
 		enemies_grounded = enemies_grounded and absf(ep.y - highlands.ground_y(ep)) < 0.8
 	_check(enemies_grounded, "camp enemies stand on the terrain pad")
+	var foliage_enemies := true
+	for e in highlands.enemies_root.get_children():
+		foliage_enemies = foliage_enemies and (e as EnemyBase).collision_mask & Grove.FOLIAGE_LAYER != 0
+	_check(foliage_enemies, "M12: enemies bump into the forest's trunks too (foliage in their mask)")
 	await _wait_frames(60)
 	_check(director != null and director.combat_mix > 0.3, "combat layer swells in once the camp engages (%.2f)"
 		% (director.combat_mix if director != null else 0.0))

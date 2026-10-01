@@ -182,7 +182,7 @@ var _weapon_pivot: Node3D
 
 func _ready() -> void:
 	collision_layer = 0b10 if net_role == NetRole.OWNER else 0  # M09: remote heroes never block anyone
-	collision_mask = 0b101
+	collision_mask = 0b1000101  # world, enemies, M12 foliage (forest trunks)
 	var col := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.42

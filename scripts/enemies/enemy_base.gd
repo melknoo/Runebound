@@ -136,7 +136,7 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	collision_layer = 0b100
-	collision_mask = 0b011  # world + player; NOT other enemies
+	collision_mask = 0b1000011  # world + player + M12 foliage; NOT other enemies
 	var col := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.45
