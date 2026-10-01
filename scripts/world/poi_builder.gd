@@ -48,6 +48,16 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 			return {"ghost": Ghost.build(zone, poi)}
 		"shard":
 			return {"shard": RuneShard.build(zone, poi)}
+		"puzzle_braziers":  # M12 phase 3: the outdoor puzzles and the grottos
+			return {"puzzle": BrazierPuzzle.build(zone, poi)}
+		"puzzle_monolith":
+			return {"puzzle": MonolithPuzzle.build(zone, poi)}
+		"puzzle_dodge":
+			return DodgeRun.build(zone, poi)
+		"cave":
+			return Grotto.build(zone, poi)
+		"lurker":  # M12: a lone enemy standing in wait (a cinderbark among the trunks)
+			return {"spawner": lurker(zone, poi)}
 		_:
 			pass  # spawn (no geometry); M12 types not built yet stay empty
 	return {}
@@ -209,6 +219,22 @@ static func camp(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 	# M12 food: the camp's cooking pot by the fire (personal, refills, works
 	# on every machine - a client never learns a camp's state)
 	GatherNode.create(zone, "pot_" + String(poi.get("id", "")), pos + Vector3(1.9, 0.0, -0.9), 0.4, "pot", 2)
+	return spawner
+
+
+## M12: one enemy standing in wait at its spot (no camp dressing): spawned
+## when a hero comes within the trigger, persistent like a camp.
+static func lurker(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
+	var spawner := EncounterSpawner.new()
+	spawner.name = "Lurker_" + String(poi.get("id", ""))
+	spawner.composition = composition_of(poi)
+	spawner.trigger_radius = float(poi.get("radius", 22.0))
+	spawner.camp_id = String(poi.get("id", ""))
+	spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
+	spawner.leash = float(poi.get("leash", 22.0))
+	spawner.set_meta(&"poi_id", String(poi.get("id", "")))
+	zone.world.add_child(spawner)
+	spawner.global_position = pos_of(poi)
 	return spawner
 
 

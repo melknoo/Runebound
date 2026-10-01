@@ -327,3 +327,13 @@
   smoke test when convenient (debug_ember went with M10).
 - Capture run asserts nothing automatically — it relies on eyeball review of
   captures/.
+
+## M12 open items
+- **Forest balance:** the Runebreaker solo-check bot (no healing between
+  fights, no draughts) dies at ruin 3 after clearing everything before it;
+  Elementalist and Druid bots clear all 13 fights. Tune the cinderbark slam
+  (24) or the wisps after the user's playtest.
+- **Cinderbark readability:** standing as a tree it is meant to be missed;
+  whether its ember tell is enough to spot it is a playtest question.
+- **No navmesh:** the cinderbark walks straight; the forest keeps 14 m
+  clearings around combat pads.

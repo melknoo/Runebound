@@ -233,6 +233,72 @@
 				"#735B3B"
 			]
 		},
+		"grave_shambler": {
+			"_rule": "M12 the Restless (village): grey-green rot skin (base step 2 clears the village ground by >= 15 L*), villager rags, bone claws, sickly gold eyes",
+			"skin": [
+				"#3C4138",
+				"#4E5448",
+				"#68705F",
+				"#7E8674"
+			],
+			"rags": [
+				"#3A3026",
+				"#4A3E31",
+				"#5E5040"
+			],
+			"bone": [
+				"#8C8272",
+				"#A89D8A",
+				"#C4B9A4"
+			],
+			"eyes": "#D8D060"
+		},
+		"mourner": {
+			"_rule": "M12 the Restless (village): a pale grey shroud (bright against every ground), a dark veil and hair, cold eyes; not the friendly ghosts' see-through pale (those have no outline)",
+			"shroud": [
+				"#4E525A",
+				"#60656E",
+				"#767B84",
+				"#8E949C",
+				"#A8AEB5"
+			],
+			"veil": [
+				"#1E1F24",
+				"#2A2C33",
+				"#383B44"
+			],
+			"eyes": "#A8D0F0"
+		},
+		"cinderbark": {
+			"_rule": "M12 burnt forest: ash-grey charred bark a step lighter than the forest's trunks, an ash cap, ember cracks and eyes (glow) - the tell that this tree walks",
+			"bark": [
+				"#34302D",
+				"#47413D",
+				"#5C554F",
+				"#706861"
+			],
+			"ash": [
+				"#5A544F",
+				"#6B645D",
+				"#7E766E"
+			],
+			"eyes": "#F08A3C"
+		},
+		"smoulder_wisp": {
+			"_rule": "M12 burnt forest: a sooty husk around a burning heart, flame tongues in the forest's ember orange (env embers), hot pale eyes",
+			"flame": [
+				"#7A2E12",
+				"#A8441C",
+				"#D86A2C",
+				"#F09848"
+			],
+			"soot": [
+				"#2A2524",
+				"#3A3432",
+				"#4C4542"
+			],
+			"eyes": "#FFE2A8"
+		},
 		"runebreaker": {
 			"iron": [
 				"#2B303B",

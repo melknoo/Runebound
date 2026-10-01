@@ -128,6 +128,13 @@ func _fight_camp(id: String, sp: EncounterSpawner) -> void:
 	if sp.state != EncounterSpawner.State.ACTIVE:
 		sp.reset()
 		sp.trigger(zone, hero)
+	if id.begins_with("lurker"):
+		await get_tree().create_timer(1.0).timeout
+		var tree_at := home
+		for e in sp.pack():
+			if is_instance_valid(e):
+				tree_at = e.global_position
+		_place_hero(tree_at + Vector3(3.0, 0.0, 0.0))  # M12: walk past the "tree" like a player would
 	var t := await _fight(func() -> bool: return cleared[0], CAMP_TIMEOUT)
 	sp.cleared.disconnect(on_clear)
 	_record("camp %s (L%d, %s)" % [id, _band(sp), "+".join(sp.composition)], t, cleared[0])

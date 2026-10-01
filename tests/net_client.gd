@@ -453,7 +453,8 @@ class Driver extends Node:
 				zone.player.targeting = null
 				zone.player.debug_learn_all()
 				zone.player.god_mode = true  # the bosses' hits must not end the run
-				var wanted: Array[String] = ["rusher", "caster", "brute", "assassin", "warden", "colossus", "vessel"]
+				var wanted: Array[String] = ["rusher", "caster", "brute", "assassin", "warden", "colossus", "vessel",
+					"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]
 				var all_seen := func() -> bool:
 					watch.call()
 					for t in wanted:
@@ -469,6 +470,47 @@ class Driver extends Node:
 				if not boss_bar[0]:
 					_finish("fail: no boss bar while a boss was up")
 					return
+				await _seconds(2.0)
+				_finish("ok")
+			"puzzles":
+				# M12: c1 lights two of Ashwick's braziers, c2 the third (each a
+				# POI_ACT); both see it solved. c3 joins late and gets the solved
+				# state (POI_STATE replay) and the crypt chest.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as AshenHighlands
+				var world := zone.net_world
+				var braz := zone.puzzles["braziers_v"] as BrazierPuzzle
+				var hero := zone.player
+				hero.god_mode = true
+				hero.input_source = InputSource.new()
+				hero.global_position = zone.ground_point(braz.global_position + Vector3(0, 0, 2), 0.2)
+				hero.velocity = Vector3.ZERO
+				await _seconds(1.5)  # the server's proxy follows us there (it judges the reach)
+				if role == "c3":
+					if not await _until(func() -> bool: return braz.is_solved() and world.poi_states_received >= 1,
+							30.0, "the solved braziers for a late joiner"):
+						return
+					if not await _until(func() -> bool: return zone.world.get_node_or_null("PuzzleChest_braziers_v") != null,
+							10.0, "the crypt chest"):
+						return
+					_finish("ok")
+					return
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				if role == "c1":
+					braz.strike(0, hero)
+					braz.strike(1, hero)
+				else:
+					if not await _until(func() -> bool:
+						var lit: Array = braz.state.get("lit", [])
+						return lit.size() == 3 and bool(lit[0]) and bool(lit[1]), 30.0, "c1's two braziers alight here"):
+						return
+					braz.strike(2, hero)
+				if not await _until(func() -> bool: return braz.is_solved(), 20.0, "the braziers solved"):
+					return
+				# stay until the late joiner is in (the server keeps the world)
+				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(2.0)
 				_finish("ok")
 			"rewards":

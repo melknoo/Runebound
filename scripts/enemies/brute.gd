@@ -20,6 +20,7 @@ func _init() -> void:
 	move_speed = 2.2
 	body_color = Color(0.45, 0.48, 0.42)
 	stagger_resist = true
+	loot_kind = &"brute"  # M12: the drop tables read the tier, not the class
 
 
 const RIG_PATH := "res://assets/models/chars/stonehulk.glb"

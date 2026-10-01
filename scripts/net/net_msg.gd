@@ -89,3 +89,9 @@ const KICK := 35
 ## server -> client: [enemy_id, peer] - whom an enemy hunts now (0 = nobody or
 ## not a player): clients mark the enemies that are after their own hero (M10)
 const ENEMY_TARGET := 36
+## client -> server: [poi id, action, arg] - our hero did something to a
+## shared puzzle or secret (lit a brazier, pushed the boulder, turned a stone)
+const POI_ACT := 37
+## server -> client: [poi id, state dict] - its state now (also replayed to
+## late joiners); M12
+const POI_STATE := 38

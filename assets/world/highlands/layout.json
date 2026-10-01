@@ -1120,9 +1120,9 @@
    "pad": 11,
    "radius": 12.0,
    "composition": [
-    "assassin",
-    "assassin",
-    "caster"
+    "grave_shambler",
+    "grave_shambler",
+    "mourner"
    ],
    "banners": 2,
    "y": 10.799,
@@ -1401,9 +1401,9 @@
    "chest": true,
    "rarity_bias": 1,
    "ambush": [
-    "assassin",
-    "assassin",
-    "caster"
+    "smoulder_wisp",
+    "smoulder_wisp",
+    "cinderbark"
    ],
    "y": 21.078,
    "biome": "burnt_forest"
@@ -1436,10 +1436,10 @@
    "pad": 11,
    "radius": 12.0,
    "composition": [
-    "brute",
-    "rusher",
-    "rusher",
-    "caster"
+    "cinderbark",
+    "smoulder_wisp",
+    "smoulder_wisp",
+    "smoulder_wisp"
    ],
    "banners": 3,
    "y": 24.898,
@@ -1614,6 +1614,36 @@
    "pad": 9,
    "y": 19.718,
    "biome": "bone_field"
+  },
+  {
+   "id": "lurker_f1",
+   "type": "lurker",
+   "pos": [
+    -128,
+    -58
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "composition": [
+    "cinderbark"
+   ],
+   "y": 20.374,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "lurker_f2",
+   "type": "lurker",
+   "pos": [
+    -95,
+    -128
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "composition": [
+    "cinderbark"
+   ],
+   "y": 25.907,
+   "biome": "burnt_forest"
   },
   {
    "id": "vig_fallen_s",

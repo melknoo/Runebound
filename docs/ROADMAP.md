@@ -322,7 +322,9 @@ vier Rätsel + Grotten + Kletterpfade, 4 Gegner Dorf + Wald, 5 Gegner Knochenfel
 6 Nester + verfluchte Orte + Prüfungs-Schreine, 7 Foliant + 3 Fähigkeiten, 8 Abschluss.
 **Stand:** Phase 0 gebaut (Text-Tabelle als JSON, Sprachwahl, Lesefenster). Phase 1 gebaut (drei
 Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden Szenen; PROTOCOL 13). Phase 2 gebaut
-(Lore-Objekte, zwei Geister, Chronik auf L, 12 Runensplitter, Glutknollen als Essen, Fokus-Prompt).
+(Lore-Objekte, zwei Geister, Chronik auf L, 12 Runensplitter, Glutknollen als Essen, Fokus-Prompt). Phase 3 gebaut
+(Feuerschalen, Runensteine, Felsbrocken, Dodge-Lauf, zwei Grotten, Kletterpfad, POI-Zustand im Koop). Phase 4 gebaut
+(Grabgänger und Klagende im Dorf, Glutborke und Schwelirrlicht im Wald, Gegner-Nahtstellen).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons

@@ -45,6 +45,9 @@ var current_zone: String = HUB_SCENE
 var flags: Dictionary = {}  # persistent world state, e.g. bosses defeated
 ## M08: cleared camps by id -> {"cleared_at": unix seconds}; they re-arm later.
 var camps: Dictionary = {}
+## M12: world state of puzzles and secrets by POI id -> state dict (solved,
+## open, the braziers' fire...); the same world as `camps`.
+var pois: Dictionary = {}
 ## Index into `characters` of the character being played.
 var active: int = 0
 ## M08: where the hero arrives in the next zone (a POI id, "" = the zone's
@@ -106,10 +109,12 @@ func use_server_save() -> void:
 ## Client joined a server: its world (flags) replaces ours until the session ends.
 func begin_online_session(server_flags: Dictionary) -> void:
 	if not online:
-		_offline_world = {"zone": current_zone, "flags": flags.duplicate(true), "camps": camps.duplicate(true)}
+		_offline_world = {"zone": current_zone, "flags": flags.duplicate(true), "camps": camps.duplicate(true),
+			"pois": pois.duplicate(true)}
 	online = true
 	flags = server_flags.duplicate(true)
 	camps = {}
+	pois = {}  # M12: the server tells (POI_STATE)
 	pending_arrival = ""
 
 
@@ -122,6 +127,7 @@ func end_online_session() -> void:
 	current_zone = str(_offline_world.get("zone", current_zone))
 	flags = (_offline_world.get("flags", {}) as Dictionary).duplicate(true)
 	camps = (_offline_world.get("camps", {}) as Dictionary).duplicate(true)
+	pois = (_offline_world.get("pois", {}) as Dictionary).duplicate(true)
 	pending_arrival = ""
 	_offline_world = {}
 
@@ -145,6 +151,17 @@ func mark_camp_cleared(camp_id: String, at: float) -> void:
 func clear_camp(camp_id: String) -> void:
 	if camps.erase(camp_id):
 		request_save()
+
+
+## M12: a puzzle's or secret's world state ({} = untouched).
+func poi_state(poi_id: String) -> Dictionary:
+	var entry: Variant = pois.get(poi_id)
+	return (entry as Dictionary).duplicate(true) if entry is Dictionary else {}
+
+
+func set_poi_state(poi_id: String, state: Dictionary) -> void:
+	pois[poi_id] = state.duplicate(true)
+	request_save()
 
 
 ## Unix seconds the camp was cleared at, -1 when it is live.
@@ -189,6 +206,7 @@ func wipe() -> void:
 	_loaded_data = {}
 	flags = {}
 	camps = {}
+	pois = {}
 	active = 0
 	current_zone = HUB_SCENE
 	if FileAccess.file_exists(save_path):
@@ -218,12 +236,14 @@ func _load_world(world: Dictionary) -> void:
 	current_zone = str(world.get("zone", HUB_SCENE))
 	flags = (world.get("flags", {}) as Dictionary).duplicate(true)
 	camps = (world.get("camps", {}) as Dictionary).duplicate(true)
+	pois = (world.get("pois", {}) as Dictionary).duplicate(true)  # M12, optional
 
 
 func _world_in_memory() -> Dictionary:
 	if online:  # M09: the session world is the server's; our own stays as stashed
 		return _offline_world.duplicate(true)
-	return {"zone": current_zone, "flags": flags.duplicate(true), "camps": camps.duplicate(true)}
+	return {"zone": current_zone, "flags": flags.duplicate(true), "camps": camps.duplicate(true),
+		"pois": pois.duplicate(true)}
 
 
 # ---------------------------------------------------------------------------

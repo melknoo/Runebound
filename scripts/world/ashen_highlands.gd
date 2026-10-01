@@ -26,6 +26,9 @@ var lore_objects: Dictionary = {}
 var ghosts: Dictionary = {}
 var shards: Dictionary = {}
 var gather_nodes: Dictionary = {}
+## M12 phase 3: puzzles (PoiPuzzle, the dodge run) and grottos by POI id.
+var puzzles: Dictionary = {}
+var grottos: Dictionary = {}
 var arena_centre: Vector3 = Vector3.ZERO
 var _boss_spawn: Vector3 = Vector3.ZERO
 var _boss_started: bool = false
@@ -95,7 +98,8 @@ func _enemy_level(enemy: EnemyBase, pos: Vector3) -> int:
 
 
 func _warm_up_ids() -> Array[String]:
-	return ["rusher", "caster", "assassin", "brute", "colossus"]
+	return ["rusher", "caster", "assassin", "brute", "colossus",
+		"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]  # M12 families
 
 
 func _environment_colors() -> Dictionary:
@@ -150,7 +154,7 @@ func _build_zone() -> void:
 		var made := PoiBuilder.build(self, poi)
 		var id := String(poi.get("id", ""))
 		match String(poi.get("type", "")):
-			"camp", "ambush", "elite_patrol":
+			"camp", "ambush", "elite_patrol", "lurker":
 				camps[id] = made["spawner"]
 			"chest":
 				chests[id] = made["chest"]
@@ -162,6 +166,17 @@ func _build_zone() -> void:
 				ghosts[id] = made["ghost"]
 			"shard":
 				shards[id] = made["shard"]
+			"puzzle_braziers", "puzzle_monolith":
+				puzzles[id] = made["puzzle"]
+			"puzzle_dodge":
+				puzzles[id] = made["run"]
+				chests[id] = made["chest"]
+			"cave":
+				grottos[id] = made
+				if made.get("chest") != null:
+					chests[id] = made["chest"]
+				if made.get("puzzle") != null:
+					puzzles[id + "_boulder"] = made["puzzle"]
 			"ruin":
 				if made.get("chest") != null:
 					chests[id] = made["chest"]
@@ -182,6 +197,7 @@ func _build_zone() -> void:
 	_plant_forest()
 	_dress_biomes()
 	_place_gather_nodes()
+	_dress_secret_routes()
 	_add_ambience("wind_loop", Vector3.INF, -14.0)
 
 
@@ -224,6 +240,34 @@ func _plant_forest() -> void:
 				var on := bool(v)
 				(child as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	, true)
+
+
+## M12: the secret climbs (no trail on the ground or the map) get low stones
+## along their downhill edge, so the way up reads as a path once found.
+func _dress_secret_routes() -> void:
+	if look == null or not look.art_pass:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SCATTER_SEED + 41
+	for route in layout.routes:
+		if not route.get("secret", false):
+			continue
+		var pts := layout.route_points(String(route.get("id", "")))
+		var half := float(route.get("width", 2.4)) * 0.5
+		for i in pts.size() - 1:
+			var a := pts[i]
+			var b := pts[i + 1]
+			var dir := (b - a).normalized()
+			var side := dir.orthogonal()
+			var t := 2.0
+			while t < a.distance_to(b) - 1.0:
+				var c := a + dir * t
+				var l := c + side * (half + 0.9)
+				var r := c - side * (half + 0.9)
+				var low := l if terrain.height_at(l.x, l.y) < terrain.height_at(r.x, r.y) else r
+				PoiBuilder.rock(self, Vector3(low.x, 0.0, low.y),
+					Vector3(rng.randf_range(0.7, 1.2), rng.randf_range(0.6, 1.0), rng.randf_range(0.7, 1.1)), rng.randf_range(0.0, TAU))
+				t += rng.randf_range(3.0, 4.5)
 
 
 ## M12 food: ember tuber patches, rule-placed off the trails and pads (more
@@ -490,6 +534,8 @@ static func marker_icon(poi: Dictionary) -> String:
 		"dungeon": return "dungeon"
 		"lore": return "lore"  # M12: once seen up close
 		"ghost": return "ghost"
+		"puzzle_braziers", "puzzle_monolith", "puzzle_dodge": return "puzzle"
+		"cave": return "cave"
 		_: return ""
 
 
@@ -497,7 +543,9 @@ static func marker_label(poi: Dictionary) -> String:
 	match String(poi.get("type", "")):
 		"waypoint": return "Shrine: " + String(poi.get("name", "Waypoint"))
 		"portal": return "Gate: " + String(poi.get("label", "")).capitalize()
-		"camp": return "Raider camp"
+		"camp":  # M12: the sub-biomes' families have their own camps
+			var family := String(poi.get("biome", "ash"))
+			return Texts.t("map.camp." + family) if family != "ash" else "Raider camp"
 		"chest": return "Treasure"
 		"ruin": return "Ruin"
 		"landmark": return "Landmark"
@@ -505,6 +553,8 @@ static func marker_label(poi: Dictionary) -> String:
 		"dungeon": return "Sealed gate: " + String(poi.get("label", "")).capitalize()
 		"lore": return Texts.t(String(poi.get("text", "")) + ".title")  # M12: DE/EN
 		"ghost": return Texts.t("lore.kind.ghost")
+		"puzzle_braziers", "puzzle_monolith", "puzzle_dodge": return Texts.t("map.puzzle")
+		"cave": return Texts.t("map.cave")
 		_: return ""
 
 
@@ -547,7 +597,7 @@ func compass_markers() -> Array[Dictionary]:
 	var origin := player.global_position if player != null and is_instance_valid(player) else Vector3.ZERO
 	for m in map_markers():
 		var kind := String(m["kind"])
-		if kind in ["chest", "landmark", "ruin", "lore", "ghost"]:  # M12: lore and ghosts only on the map
+		if kind in ["chest", "landmark", "ruin", "lore", "ghost", "puzzle", "cave"]:  # M12: only on the map
 			continue
 		if kind == "camp":
 			if String(m["icon"]) == "camp_cleared" or (m["pos"] as Vector3).distance_to(origin) > COMPASS_CAMP_RANGE:
@@ -564,7 +614,8 @@ func _discover_tick() -> void:
 		if marker_icon(poi) == "":
 			continue
 		var id := String(poi.get("id", ""))
-		var reach := float(poi.get("pad", 0.0)) + (DISCOVER_SMALL if String(poi.get("type", "")) in SMALL_TYPES else DISCOVER_MARGIN)
+		var small := String(poi.get("type", "")) in SMALL_TYPES or bool(poi.get("secret", false))  # M12
+		var reach := float(poi.get("pad", 0.0)) + (DISCOVER_SMALL if small else DISCOVER_MARGIN)
 		for p in players_within(ZoneLayout.pos_of(poi), reach):
 			if p.discover_poi(id) and p.is_local and String(poi.get("type", "")) == "dungeon" and hud != null:
 				hud.toast("A sealed gate: %s" % String(poi.get("label", "")), Color(0.7, 0.55, 1.0))

@@ -6,7 +6,7 @@ extends Node
 ## reads it after the clients are done and then stops the server.
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
-const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards",
+const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -191,8 +191,8 @@ func _types_verdict() -> String:
 		return "fail: roster spawned, nothing died yet"
 	if not _scale_ok:
 		return "fail: enemy health not scaled for 2 heroes"
-	if _types_kills < 9:
-		return "fail: %d of 9 enemies killed" % _types_kills
+	if _types_kills < 13:  # M12: + the four new family enemies
+		return "fail: %d of 13 enemies killed" % _types_kills
 	if _types_credited < _types_kills:
 		return "fail: %d of %d kills credited to a player" % [_types_credited, _types_kills]
 	if _fx_count < 1:
@@ -203,8 +203,10 @@ func _types_verdict() -> String:
 ## Every type once, in front of the heroes, with little health.
 func _spawn_roster(zone: ZoneBase) -> void:
 	var spots := [Vector3(-6, 0.2, -4), Vector3(-3, 0.2, -6), Vector3(0, 0.2, -7), Vector3(3, 0.2, -6),
-		Vector3(6, 0.2, -4), Vector3(-5, 0.2, -9), Vector3(5, 0.2, -9)]
-	var ids := ["brute", "assassin", "warden", "caster", "rusher", "colossus", "vessel"]
+		Vector3(6, 0.2, -4), Vector3(-5, 0.2, -9), Vector3(5, 0.2, -9),
+		Vector3(-8, 0.2, -7), Vector3(8, 0.2, -7), Vector3(-2, 0.2, -11), Vector3(2, 0.2, -11)]
+	var ids := ["brute", "assassin", "warden", "caster", "rusher", "colossus", "vessel",
+		"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]  # M12 families
 	var spawned: Array[EnemyBase] = []
 	for i in ids.size():
 		var e := ZoneBase.make_enemy(ids[i])
@@ -212,6 +214,8 @@ func _spawn_roster(zone: ZoneBase) -> void:
 			var c := Vector3(0, 0, -8)
 			(e as ShatteredVessel).setup_arena(c, [c, c + Vector3(4, 0, 0), c + Vector3(-4, 0, 0)] as Array[Vector3])
 		zone._spawn_enemy(e, spots[i])
+		if e is Cinderbark:
+			(e as Cinderbark).wake()  # no hero walks up to it here
 		spawned.append(e)
 	spawned.append(zone.spawn_elite(EliteModifier.Kind.EMBERBOUND, Vector3(-2, 0.2, -3)))
 	spawned.append(zone.spawn_elite(EliteModifier.Kind.STORMTOUCHED, Vector3(2, 0.2, -3)))
@@ -326,6 +330,20 @@ func _update() -> void:
 				_types_spawned = true
 				zone._spawn_enemy(ZoneBase.make_enemy("colossus"), Vector3(0, 0.2, -8))
 			verdict = "ok"
+		"puzzles":  # M12: the server holds the solved state and saved it in its world
+			var pz := get_tree().current_scene as AshenHighlands
+			if pz == null:
+				verdict = "fail: the server is not in the Highlands"
+			else:
+				var braz := pz.puzzles.get("braziers_v") as BrazierPuzzle
+				if braz == null or not braz.is_solved():
+					verdict = "fail: the braziers are not solved on the server"
+				elif not bool(SaveGame.poi_state("braziers_v").get("solved", false)):
+					verdict = "fail: the server's world did not keep the solved braziers"
+				elif pz.world.get_node_or_null("PuzzleChest_braziers_v") == null:
+					verdict = "fail: no crypt chest on the server"
+				else:
+					verdict = "ok"
 		"rewards":
 			var zone := get_tree().current_scene as AshenHighlands
 			if zone == null:

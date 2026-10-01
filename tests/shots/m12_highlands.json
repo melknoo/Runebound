@@ -347,6 +347,156 @@
    "pitch": -0.3,
    "zoom": 6.0,
    "settle": 0.8
+  },
+  {
+   "name": "enemy_shambler",
+   "player": {
+    "poi": "village_w",
+    "offset": [
+     2.48,
+     0.2,
+     3.73
+    ]
+   },
+   "yaw": 1.007,
+   "pitch": -0.12,
+   "zoom": 5.0,
+   "settle": 2.4,
+   "spawn": [
+    {
+     "id": "grave_shambler",
+     "at": {
+      "poi": "village_w",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": false,
+     "face": 0.587
+    }
+   ]
+  },
+  {
+   "name": "enemy_mourner",
+   "player": {
+    "poi": "village_w",
+    "offset": [
+     3.03,
+     0.2,
+     4.56
+    ]
+   },
+   "yaw": 1.006,
+   "pitch": -0.12,
+   "zoom": 5.0,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "mourner",
+     "at": {
+      "poi": "village_w",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "face": 0.586
+    }
+   ]
+  },
+  {
+   "name": "enemy_cinderbark_tree",
+   "player": {
+    "poi": "trial_f",
+    "offset": [
+     7.15,
+     0.2,
+     10.79
+    ]
+   },
+   "yaw": 1.005,
+   "pitch": -0.12,
+   "zoom": 6.0,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "cinderbark",
+     "at": {
+      "poi": "trial_f",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "face": 0.585
+    }
+   ]
+  },
+  {
+   "name": "enemy_cinderbark_awake",
+   "player": {
+    "poi": "trial_f",
+    "offset": [
+     2.48,
+     0.2,
+     3.73
+    ]
+   },
+   "yaw": 1.007,
+   "pitch": -0.12,
+   "zoom": 6.0,
+   "settle": 2.2,
+   "spawn": [
+    {
+     "id": "cinderbark",
+     "at": {
+      "poi": "trial_f",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": false,
+     "face": 0.587
+    }
+   ]
+  },
+  {
+   "name": "enemy_wisp",
+   "player": {
+    "poi": "trial_f",
+    "offset": [
+     2.75,
+     0.2,
+     4.15
+    ]
+   },
+   "yaw": 1.005,
+   "pitch": -0.12,
+   "zoom": 5.0,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "smoulder_wisp",
+     "at": {
+      "poi": "trial_f",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "face": 0.585
+    }
+   ]
   }
  ]
 }

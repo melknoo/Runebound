@@ -96,6 +96,7 @@ func setup(z: ZoneBase) -> void:
 		NetMsg.TRAVEL_REQUEST: _on_travel_request_msg, NetMsg.TRAVEL_COUNTDOWN: _on_travel_countdown_msg,
 		NetMsg.TRAVEL_CANCEL: _on_travel_cancel_msg, NetMsg.TRAVEL_CANCELLED: _on_travel_cancelled_msg,
 		NetMsg.HERO_FX: _on_hero_fx_msg,
+		NetMsg.POI_ACT: _on_poi_act_msg, NetMsg.POI_STATE: _on_poi_state_msg,
 	}
 	for kind: int in _enemy_handlers:
 		Net.on(kind, _enemy_handlers[kind] as Callable)
@@ -171,6 +172,10 @@ func _on_peer_ready(peer: int) -> void:
 	Net.broadcast_zone(NetMsg.HERO_SPAWN, _spawn_payload(peer), Net.CH_EVENTS, peer)
 	for key in _opened_chests:  # and the chests already opened this session
 		Net.send_to_peer(peer, NetMsg.CHEST_OPENED, [key])
+	for poi_id: String in poi_nodes:  # M12: every shared puzzle's state
+		var puzzle := poi_nodes[poi_id] as PoiPuzzle
+		if is_instance_valid(puzzle) and not puzzle.state.is_empty():
+			Net.send_to_peer(peer, NetMsg.POI_STATE, [poi_id, puzzle.state])
 	for id: int in enemies:  # the newcomer gets every enemy alive right now
 		var e := enemies[id] as EnemyBase
 		if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
@@ -925,6 +930,59 @@ func _on_chest_opened_msg(_from: int, payload: Array) -> void:
 	var chest := _find_chest(str(payload[0]))
 	if chest != null:
 		chest.present_open()
+
+
+# ---------------------------------------------------------------------------
+# M12: shared puzzles and secrets (PoiPuzzle): clients ask, the server acts,
+# everyone sees the state
+# ---------------------------------------------------------------------------
+
+## id -> PoiPuzzle in this zone (they register themselves).
+var poi_nodes: Dictionary = {}
+## Client (tests): POI_STATE messages received.
+var poi_states_received: int = 0
+
+
+func register_poi(puzzle: PoiPuzzle) -> void:
+	poi_nodes[puzzle.id] = puzzle
+
+
+## Client: our hero acted on a shared puzzle.
+func send_poi_act(poi_id: String, action: String, arg: Variant) -> void:
+	Net.send_to_server(NetMsg.POI_ACT, [poi_id, action, arg])
+
+
+## Server: a puzzle's state changed: every client hears it.
+func broadcast_poi_state(poi_id: String, state: Dictionary) -> void:
+	if Net.is_dedicated():
+		Net.broadcast_zone(NetMsg.POI_STATE, [poi_id, state])
+
+
+func _on_poi_act_msg(from: int, payload: Array) -> void:
+	if not Net.is_dedicated() or payload.size() < 3:
+		return
+	var puzzle := poi_nodes.get(str(payload[0])) as PoiPuzzle
+	var proxy := heroes.get(from) as Player
+	if puzzle == null or not is_instance_valid(puzzle) or proxy == null:
+		return
+	if not puzzle.in_reach(proxy, PoiPuzzle.NET_MARGIN):
+		return  # sanity, not anti-cheat
+	puzzle.act(str(payload[1]), payload[2], proxy)
+
+
+func _on_poi_state_msg(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 2 or not payload[1] is Dictionary:
+		return
+	poi_states_received += 1
+	var puzzle := poi_nodes.get(str(payload[0])) as PoiPuzzle
+	if puzzle != null and is_instance_valid(puzzle):
+		puzzle.apply_state(payload[1] as Dictionary)
+
+
+## M12: the server's clock in msec as this client sees it (the snapshot
+## clock); local time offline or before the first snapshot.
+func server_msec() -> float:
+	return float(Time.get_ticks_msec()) + (_clock_offset if _clock_ready else 0.0)
 
 
 ## Server: SaveGame set a world flag (a boss fell): every client hears it.

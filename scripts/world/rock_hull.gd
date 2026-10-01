@@ -24,7 +24,7 @@ const LEDGE := 0.03           # height of the step row under each band boundary
 ## of faces facing outside the playable area that may bulge up to wild_max
 ## (bit 0 +X, 1 -X, 2 +Z, 3 -Z).
 static func build(size: Vector3, seed: int, side_max: float = 0.3, top_max: float = 0.28,
-		wild_faces: int = 0, wild_max: float = 1.6, foot_sink: float = 0.15) -> ArrayMesh:
+		wild_faces: int = 0, wild_max: float = 1.6, foot_sink: float = 0.15, bottom: bool = false) -> ArrayMesh:
 	var noise := FastNoiseLite.new()
 	noise.seed = seed
 	noise.frequency = 0.6
@@ -58,8 +58,13 @@ static func build(size: Vector3, seed: int, side_max: float = 0.3, top_max: floa
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_smooth_group(-1)  # -1 = flat normals: every facet reads as a plane
-	# Faces: axis index, sign. The bottom face is skipped (buried in the floor).
-	for face: Array in [[0, 1.0], [0, -1.0], [2, 1.0], [2, -1.0], [1, 1.0]]:
+	# Faces: axis index, sign. The bottom face is skipped (buried in the floor)
+	# unless asked for (M12: a grotto's roof is seen from below); it comes last,
+	# so every other hull stays exactly as it was.
+	var faces: Array = [[0, 1.0], [0, -1.0], [2, 1.0], [2, -1.0], [1, 1.0]]
+	if bottom:
+		faces.append([1, -1.0])
+	for face: Array in faces:
 		var axis: int = face[0]
 		var sgn: float = face[1]
 		var u_axis := 2 if axis == 0 else 0

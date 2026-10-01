@@ -169,7 +169,7 @@ func _build() -> void:
 	side.add_child(_legend)
 	for entry: Array in [["waypoint", "Waypoint shrine"], ["portal", "Gate"], ["camp", "Raider camp"],
 			["camp_cleared", "Camp cleared"], ["chest", "Treasure"], ["ruin", "Ruin"], ["landmark", "Landmark"],
-			["boss", "Colossus arena"], ["dungeon", "Sealed gate"], ["lore", "Lore"], ["ghost", "Ghost"]]:
+			["boss", "Colossus arena"], ["dungeon", "Sealed gate"], ["lore", "Lore"], ["ghost", "Ghost"], ["puzzle", "Puzzle"], ["cave", "Cave"]]:
 		_legend.add_child(_legend_row(String(entry[0]), String(entry[1])))
 	var known_title := Label.new()
 	known_title.text = "KNOWN PLACES"

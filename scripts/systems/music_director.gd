@@ -129,7 +129,7 @@ func _engaged() -> bool:
 		return false
 	for enemy in EnemyBase.all_enemies:
 		if not is_instance_valid(enemy) or enemy.ai_state == EnemyBase.AIState.IDLE \
-				or enemy.ai_state == EnemyBase.AIState.DEAD or not enemy.is_inside_tree():
+				or enemy.ai_state == EnemyBase.AIState.DEAD or not enemy.is_inside_tree() or not enemy.targetable:
 			continue
 		if enemy.global_position.distance_to(player.global_position) <= ENGAGE_RANGE:
 			return true

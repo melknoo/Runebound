@@ -79,7 +79,7 @@ static func price(id: StringName) -> int:
 static func roll_kill(enemy: EnemyBase) -> int:
 	if enemy is AshveinColossus or enemy is ShatteredVessel:
 		return BOSS_DRAUGHTS
-	var kind := &"elite" if enemy.is_elite else (&"brute" if enemy is Brute else &"trash")
+	var kind := &"elite" if enemy.is_elite else (&"brute" if enemy.loot_kind == &"brute" else &"trash")
 	return 1 if randf() < float(KILL_CHANCE[kind]) else 0
 
 

@@ -189,7 +189,7 @@ func gather_candidates() -> Array[EnemyBase]:
 	var candidates: Array[EnemyBase] = []
 	var scores: Dictionary = {}
 	for enemy in EnemyBase.all_enemies:
-		if not is_instance_valid(enemy) or enemy.ai_state == EnemyBase.AIState.DEAD:
+		if not is_instance_valid(enemy) or enemy.ai_state == EnemyBase.AIState.DEAD or not enemy.targetable:
 			continue
 		var s := _score(enemy, cam_pos, cam_fwd)
 		if s < INF:

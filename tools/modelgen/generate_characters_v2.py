@@ -25,7 +25,8 @@ the character's stance, so crossfades between clips never pop limbs to rest.
 Run:
   & "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe" --background
       --python tools/modelgen/generate_characters_v2.py -- [runebreaker] [elementalist] [druid] [marauder] [duskweaver]
-      [stonehulk] [veilstalker] [warden] [colossus] [vessel] [--sheets]
+      [stonehulk] [veilstalker] [warden] [colossus] [vessel]
+      [shambler] [mourner] [cinderbark] [wisp] (M12) [--sheets]
 --sheets also renders per-clip contact sheets to captures_contact/ (review).
 """
 import math
@@ -1936,13 +1937,396 @@ def vessel_clips(arm):
            {0: EXPO_OUT, 4: QUART_OUT, 14: QUART_OUT})
 
 
+# ---------------------------------------------------------------------------
+# M12 enemy families of the Highlands' sub-biomes. Village (the Restless):
+# GRAVE SHAMBLER (a gaunt dead villager that claws its way out of the ground)
+# and MOURNER (a drifting shrouded spirit that screams). Burnt forest:
+# CINDERBARK (a charred tree that walks; disguised as a trunk until woken)
+# and SMOULDER WISP (a floating ember spirit). Never the player's teal, never
+# the druid's green; each at least +15 L* over its ground (ART_BIBLE).
+# ---------------------------------------------------------------------------
+
+SHAMBLER_LEG = 0.78 - 0.1
+
+
+def build_shambler(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("shambler", humanoid_bones(
+        hip=0.78, chest_top=1.36, shoulder_x=0.3, arm_len=0.74, leg_x=0.13, head_base=1.36, head_top=1.62, lean=-0.18))
+    gs = PAL["grave_shambler"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    skin = pm.paint(gs["skin"], 2, "hide")
+    skin_dark = pm.paint(gs["skin"], 1, "hide")
+    rags = pm.paint(gs["rags"], 2, "cloth")
+    bone = pm.paint(gs["bone"], 1)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.13 * x
+        pm.loft("foot." + side, [(0.0, 0.07, 0.12, lx, -0.03), (0.09, 0.06, 0.09, lx, -0.01)], paint=skin_dark)
+        pm.loft("shin." + side, [(0.1, 0.06, 0.06, lx, 0), (0.42, 0.07, 0.07, lx, 0)], paint=skin)
+        pm.loft("thigh." + side, [(0.42, 0.08, 0.08, lx, 0), (0.78, 0.1, 0.1, lx, 0)], paint=rags)
+        sx = 0.3 * x
+        pm.loft("upper_arm." + side, [(1.3, 0.06, 0.06, sx * 1.02, -0.18), (0.98, 0.055, 0.055, sx * 1.1, -0.18)], paint=skin)
+        pm.loft("forearm." + side, [(0.98, 0.055, 0.055, sx * 1.1, -0.18), (0.66, 0.05, 0.05, sx * 1.14, -0.18)], paint=skin)
+        pm.box("hand." + side, (0.09, 0.12, 0.08), (sx * 1.14, -0.19, 0.6), paint=skin_dark)
+        for kf in range(3):  # long bone claws
+            pm.loft("hand." + side, [(0.56, 0.012, 0.012, sx * 1.14 + (kf - 1) * 0.03, -0.24),
+                                     (0.44, 0.003, 0.003, sx * 1.14 + (kf - 1) * 0.04, -0.3)], sides=4, paint=bone)
+    # a torn villager smock over a starved torso, ribs showing on one side
+    pm.loft("hips", [(0.6, 0.18, 0.14, 0, 0), (0.82, 0.17, 0.13, 0, 0)], paint=rags, sides=6)
+    pm.loft("spine", [(0.82, 0.16, 0.12, 0, -0.04), (1.06, 0.2, 0.14, 0, -0.1)], paint=rags)
+    pm.loft("chest", [(1.04, 0.21, 0.15, 0, -0.1), (1.24, 0.24, 0.16, 0, -0.15), (1.38, 0.16, 0.12, 0, -0.18)], paint=skin)
+    for kr in range(3):
+        pm.box("chest", (0.12, 0.03, 0.02), (0.1, -0.31, 1.12 + kr * 0.06), paint=bone)  # bare ribs, right side
+    pm.loft("chest", [(1.2, 0.25, 0.17, -0.04, -0.14), (1.34, 0.18, 0.13, -0.05, -0.17)], paint=rags)  # smock shoulder
+    # hanging head, slack jaw, sunken pale-gold eyes (glow slot)
+    pm.loft("head", [(1.34, 0.1, 0.11, 0, -0.26), (1.46, 0.12, 0.12, 0, -0.28), (1.6, 0.09, 0.09, 0, -0.26)], paint=skin)
+    pm.box("head", (0.17, 0.09, 0.07), (0, -0.37, 1.34), rot=(0.3, 0, 0), paint=bone)   # dropped jaw
+    pm.box("head", (0.17, 0.03, 0.035), (0, -0.395, 1.47), mat_index=1)                # eyes
+    for x in (1.0, -1.0):
+        pm.loft("head", [(1.56, 0.03, 0.02, 0.06 * x, -0.25), (1.66, 0.01, 0.01, 0.09 * x, -0.2)], sides=4, paint=skin_dark)  # hair wisps
+    mats = [rig.make_material("gs_body", "#FFFFFF"),
+            rig.make_material("gs_eyes", gs["eyes"], emission_hex=gs["eyes"], strength=3.0)]
+    body = pm.to_object("grave_shambler", mats, arm)
+    shambler_clips(arm)
+    finish(body, arm, "grave_shambler", "grave_shambler", (1,), sheets)
+
+
+def shambler_clips(arm):
+    windup = f(const_from("enemies/grave_shambler.gd", "WINDUP_TIME"))
+    strike = f(const_from("enemies/grave_shambler.gd", "ATTACK_TIME"))
+    recover = f(const_from("enemies/grave_shambler.gd", "RECOVER_TIME"))
+    emerge = f(const_from("enemies/grave_shambler.gd", "EMERGE_TIME"))
+    stance = {**crouch(0.06, SHAMBLER_LEG), "spine": (0.25, 0, 0), "chest": (0.18, 0, 0.08), "head": (0.25, 0.1, 0.15),
+              "upper_arm.L": (-0.35, 0, -0.1), "upper_arm.R": (-0.25, 0, 0.12),
+              "forearm.L": (-0.3, 0, 0), "forearm.R": (-0.45, 0, 0), "hand.L": (0.0, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()),
+        (50, k({"chest": (0.22, -0.06, 0.12), "head": (0.32, 0.18, 0.2), "upper_arm.L": (-0.4, 0, -0.14)})),
+        (100, k()),
+    ], sheet=[0, 50])
+    # the shamble: a dragging, uneven gait (one leg stiff), arms reaching ahead
+    run_keys = []
+    for frame, s in ((0, 1.0), (24, -1.0), (48, 1.0)):
+        base = crouch(0.08, SHAMBLER_LEG, (0.0, 0.0, 0.1 * s))
+        run_keys.append((frame, k({**base,
+            "thigh.L": (-0.15 - 0.45 * s, 0, 0), "thigh.R": (-0.15 + 0.3 * s, 0, 0),
+            "shin.L": (0.25 + 0.45 * max(-s, 0), 0, 0), "shin.R": (0.2, 0, 0),
+            "upper_arm.L": (-0.9 + 0.15 * s, 0, -0.1), "upper_arm.R": (-0.8 - 0.15 * s, 0, 0.1),
+            "spine": (0.32, 0.08 * s, 0.06 * s), "head": (0.2, 0.15 * s, 0.12)})))
+    for frame in (12, 36):
+        run_keys.append((frame, {"hips": {"rot": (0, 0, 0), "loc": (0, -0.04, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 12, 24, 36])
+    # attack: both claws raised by 60 % of the windup, a twitching hold, then a
+    # downward double rake that contacts at `windup` on the disc ahead
+    raised = k({"spine": (0.0, 0, 0), "chest": (-0.2, 0, 0), "head": (-0.1, 0, 0),
+                "_reach.L": (pos(fwd=0.15, left=0.28, up=1.75), way(left=0.6, up=0.6)),
+                "_reach.R": (pos(fwd=0.15, left=-0.28, up=1.75), way(left=-0.6, up=0.6))})
+    tremble = {**raised, "chest": (-0.24, 0.05, 0), "head": (-0.16, -0.08, 0)}
+    hold = int(windup * 0.6)
+    swing = windup - 3
+    raked = k({**crouch(0.16, SHAMBLER_LEG, (0.2, 0, 0)), "spine": (0.45, 0, 0), "chest": (0.4, 0, 0), "head": (0.1, 0, 0),
+               "_reach.L": (pos(fwd=0.8, left=0.18, up=0.45), way(fwd=1.0, up=-0.6)),
+               "_reach.R": (pos(fwd=0.8, left=-0.18, up=0.45), way(fwd=1.0, up=-0.6))})
+    action(arm, "attack", [
+        (0, k()),
+        (hold, raised),
+        (hold + (swing - hold) // 2, tremble),
+        (swing, raised),
+        (windup, raked),
+        (windup + strike, {**raked, "chest": (0.46, 0, 0)}),
+        (windup + strike + recover, k()),
+    ], {hold: BACK_OUT, swing: EXPO_IN, windup + strike: QUART_OUT})
+    recoil = k({"spine": (-0.05, 0, 0), "chest": (-0.2, 0.2, 0), "head": (-0.4, 0.2, 0.2),
+                "upper_arm.L": (0.3, 0, -0.6), "upper_arm.R": (0.3, 0, 0.6)})
+    action(arm, "stagger", [
+        (0, k()), (3, recoil), (12, {**recoil, "chest": (-0.12, 0.1, 0)}), (36, k()),
+    ], {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+    # emerge: from under the ground (hips 1.4 m down, both arms reaching up
+    # through the earth) to the stance over EMERGE_TIME; the burst at 70 %
+    under = k({"hips": {"rot": (0.3, 0, 0), "loc": (0, -1.45, 0)}, "spine": (-0.2, 0, 0), "chest": (-0.3, 0, 0),
+               "head": (-0.4, 0, 0),
+               "_reach.L": (pos(fwd=0.1, left=0.3, up=0.95), way(up=1.0)),
+               "_reach.R": (pos(fwd=0.1, left=-0.3, up=0.9), way(up=1.0))})
+    breach = k({"hips": {"rot": (0.2, 0, 0), "loc": (0, -0.55, 0)}, "spine": (0.1, 0, 0), "chest": (-0.1, 0, 0),
+                "head": (-0.2, 0, 0),
+                "_reach.L": (pos(fwd=0.35, left=0.35, up=1.25), way(fwd=0.6, up=0.6)),
+                "_reach.R": (pos(fwd=0.35, left=-0.35, up=1.2), way(fwd=0.6, up=0.6))})
+    action(arm, "emerge", [
+        (0, under),
+        (int(emerge * 0.7), breach),
+        (emerge, k()),
+    ], {0: ("QUAD", "EASE_IN"), int(emerge * 0.7): BACK_OUT})
+
+
+MOURNER_ORB = (0.0, -0.3, 1.5)
+
+
+def build_mourner(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("mourner", caster_bones())
+    mo = PAL["mourner"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    shroud = pm.paint(mo["shroud"], 3, "cloth")
+    shroud_dark = pm.paint(mo["shroud"], 1, "cloth")
+    veil = pm.paint(mo["veil"], 1)
+    hands = pm.paint(mo["shroud"], 2)
+    # a long tattered shroud: no feet, the hem tears into strips near the dust
+    pm.loft("hips", [(0.4, 0.3, 0.27, 0, 0.0), (0.72, 0.25, 0.22, 0, 0.0), (0.98, 0.2, 0.17, 0, 0.0)], paint=shroud)
+    pm.loft("hem", [(0.12, 0.38, 0.35, 0, 0.02), (0.3, 0.36, 0.32, 0, 0.02), (0.5, 0.31, 0.28, 0, 0.01)], paint=shroud)
+    for kk in range(6):
+        a = 2.0 * math.pi * kk / 6.0
+        pm.loft("hem", [(0.14, 0.05, 0.03, 0.33 * math.cos(a), 0.3 * math.sin(a)),
+                        (0.0, 0.02, 0.01, 0.37 * math.cos(a), 0.34 * math.sin(a))], sides=4, paint=shroud_dark)  # torn strips
+    pm.loft("spine", [(0.96, 0.19, 0.15, 0, 0.0), (1.22, 0.2, 0.15, 0, -0.01)], paint=shroud)
+    pm.loft("chest", [(1.2, 0.21, 0.16, 0, -0.01), (1.36, 0.19, 0.14, 0, -0.02), (1.44, 0.12, 0.1, 0, -0.03)], paint=shroud)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        sx = 0.2 * x
+        pm.loft("upper_arm." + side, [(1.38, 0.06, 0.06, sx, -0.02), (1.1, 0.07, 0.07, sx * 1.1, -0.02)], paint=shroud)
+        pm.loft("forearm." + side, [(1.12, 0.07, 0.07, sx * 1.1, -0.02), (0.88, 0.12, 0.1, sx * 1.15, -0.02)], paint=shroud_dark)
+        pm.box("hand." + side, (0.05, 0.07, 0.14), (sx * 1.15, -0.03, 0.82), paint=hands)  # long pale fingers
+    # a veiled head with long hair falling forward; the face a dark hollow
+    pm.loft("head", [(1.4, 0.15, 0.16, 0, 0.0), (1.56, 0.17, 0.18, 0, 0.0), (1.72, 0.13, 0.14, 0, 0.01)], paint=veil)
+    pm.loft("head", [(1.7, 0.18, 0.1, 0, 0.07), (1.3, 0.2, 0.06, 0, 0.1), (1.0, 0.16, 0.04, 0, 0.1)], sides=6, paint=veil)  # hair
+    pm.box("head", (0.18, 0.05, 0.16), (0, -0.165, 1.55), paint=pm.paint(mo["veil"], 0))
+    for x in (1.0, -1.0):
+        pm.box("head", (0.035, 0.02, 0.02), (0.04 * x, -0.192, 1.58), mat_index=1)
+    mats = [rig.make_material("mo_body", "#FFFFFF"),
+            rig.make_material("mo_eyes", mo["eyes"], emission_hex=mo["eyes"], strength=3.0)]
+    body = pm.to_object("mourner", mats, arm)
+    mourner_clips(arm)
+    finish(body, arm, "mourner", "mourner", (1,), sheets)
+
+
+def mourner_clips(arm):
+    windup = f(const_from("enemies/mourner.gd", "WINDUP_TIME"))
+    stance = {"hips": {"rot": (0, 0, 0), "loc": (0, 0, 0)}, "hem": (0.0, 0, 0),
+              "spine": (0.08, 0, 0), "chest": (0.1, 0, 0), "head": (0.2, 0, 0),
+              "upper_arm.L": (-0.15, 0, -0.1), "forearm.L": (-0.3, 0, 0), "hand.L": (0.0, 0, 0),
+              "upper_arm.R": (-0.15, 0, 0.1), "forearm.R": (-0.3, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+
+    def hover(y):
+        return {"hips": {"rot": (0, 0, 0), "loc": (0, y, 0)}}
+
+    action(arm, "idle", [
+        (0, k(hover(0.1))),
+        (40, k({**hover(0.16), "hem": (0.08, 0, 0.04), "head": (0.28, 0.1, 0)})),
+        (80, k({**hover(0.12), "hem": (-0.05, 0, -0.04), "head": (0.16, -0.1, 0)})),
+        (120, k(hover(0.1))),
+    ], sheet=[0, 40, 80])
+    glide = k({**hover(0.14), "spine": (0.14, 0, 0), "chest": (0.12, 0, 0), "hem": (0.3, 0, 0),
+               "upper_arm.L": (0.25, 0, -0.15), "upper_arm.R": (0.25, 0, 0.15)})
+    action(arm, "glide", [
+        (0, glide), (14, {**glide, **hover(0.18), "hem": (0.38, 0, 0.06)}), (28, glide),
+        (42, {**glide, **hover(0.18), "hem": (0.26, 0, -0.06)}), (56, glide),
+    ], sheet=[0, 14, 28, 42])
+    # the scream's gather (the telegraph): head thrown back, arms rising wide by
+    # 60 % of the windup, a shivering hold
+    gather = k({**hover(0.25), "chest": (-0.35, 0, 0), "head": (-0.6, 0, 0), "hem": (0.2, 0, 0),
+                "_reach.L": (pos(fwd=0.05, left=0.6, up=1.65), way(left=1.0, up=0.4)),
+                "_reach.R": (pos(fwd=0.05, left=-0.6, up=1.65), way(left=-1.0, up=0.4))})
+    hold = int(windup * 0.6)
+    action(arm, "charge", [
+        (0, k(hover(0.1))),
+        (hold, gather),
+        (hold + 8, {**gather, "head": (-0.66, 0.06, 0), "chest": (-0.38, 0, 0)}),
+        (windup, gather),
+    ], {hold: QUART_OUT})
+    # the scream: head and chest thrown forward, arms flung wide and back
+    scream = k({**hover(0.18), "chest": (0.4, 0, 0), "spine": (0.15, 0, 0), "head": (0.35, 0, 0), "hem": (-0.25, 0, 0),
+                "_reach.L": (pos(fwd=-0.1, left=0.6, up=1.25), way(fwd=-0.6, left=0.8)),
+                "_reach.R": (pos(fwd=-0.1, left=-0.6, up=1.25), way(fwd=-0.6, left=-0.8))})
+    action(arm, "cast", [
+        (0, gather), (3, scream), (14, {**scream, "chest": (0.32, 0, 0)}), (30, k(hover(0.1))),
+    ], {0: EXPO_OUT, 14: QUART_OUT})
+    recoil = k({**hover(0.05), "chest": (-0.35, 0.1, 0), "head": (-0.3, 0, 0), "hem": (-0.35, 0, 0),
+                "upper_arm.L": (0.4, 0, -0.5), "upper_arm.R": (0.4, 0, 0.5)})
+    action(arm, "stagger", [
+        (0, k(hover(0.1))), (3, recoil), (12, {**recoil, "chest": (-0.25, 0.05, 0)}), (36, k(hover(0.1))),
+    ], {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+
+
+BARK_LEG = 0.78 - 0.1
+
+
+def build_cinderbark(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("cinderbark", humanoid_bones(
+        hip=0.78, chest_top=1.66, shoulder_x=0.42, arm_len=1.0, leg_x=0.24, head_base=1.62, head_top=1.92, lean=-0.06))
+    cb = PAL["cinderbark"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    bark = pm.paint(cb["bark"], 2, "bark")
+    bark_dark = pm.paint(cb["bark"], 1, "bark")
+    ash = pm.paint(cb["ash"], 1)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.24 * x
+        # root feet that splay into the ground
+        for kr in range(3):
+            a = -1.57 + (kr - 1) * 0.6
+            pm.loft("foot." + side, [(0.0, 0.05, 0.05, lx + 0.12 * math.cos(a + 1.57) * x, -0.05 + 0.18 * math.sin(a)),
+                                     (0.08, 0.04, 0.04, lx, -0.05)], sides=5, paint=bark_dark)
+        pm.loft("shin." + side, [(0.08, 0.15, 0.15, lx, 0), (0.42, 0.13, 0.13, lx, 0)], sides=6, paint=bark_dark)
+        pm.loft("thigh." + side, [(0.4, 0.15, 0.15, lx, 0), (0.78, 0.18, 0.18, lx, 0)], sides=6, paint=bark)
+        sx = 0.42 * x
+        # branch arms: long, knotted, splitting into twig fingers
+        pm.loft("upper_arm." + side, [(1.6, 0.11, 0.11, sx, -0.06), (1.12, 0.09, 0.09, sx * 1.1, -0.06)], sides=6, paint=bark)
+        pm.loft("forearm." + side, [(1.12, 0.09, 0.09, sx * 1.1, -0.06), (0.7, 0.07, 0.07, sx * 1.14, -0.06)], sides=6, paint=bark)
+        for kf in range(3):
+            pm.loft("hand." + side, [(0.7, 0.04, 0.04, sx * 1.14, -0.06),
+                                     (0.48, 0.012, 0.012, sx * 1.14 + (kf - 1) * 0.1, -0.1 - kf * 0.04)], sides=4, paint=bark_dark)
+    # a split trunk for a body, ember cracks glowing in it (glow slot), ash on top
+    pm.loft("hips", [(0.6, 0.3, 0.27, 0, 0), (0.84, 0.29, 0.26, 0, 0)], sides=7, paint=bark_dark)
+    pm.loft("spine", [(0.82, 0.29, 0.26, 0, -0.01), (1.2, 0.31, 0.27, 0, -0.03)], sides=7, paint=bark)
+    pm.loft("chest", [(1.18, 0.33, 0.28, 0, -0.03), (1.5, 0.36, 0.3, 0, -0.05), (1.68, 0.27, 0.23, 0, -0.06)], sides=7, paint=bark)
+    for (z, a, ln) in ((0.95, 0.3, 0.32), (1.2, -0.4, 0.4), (1.42, 0.2, 0.36), (1.05, 2.8, 0.3)):
+        pm.box("chest" if z > 1.15 else "spine", (0.05, 0.03, ln), (math.sin(a) * 0.3, -math.cos(a) * 0.27, z),
+               rot=(0, 0, a), mat_index=1)
+    pm.loft("chest", [(1.62, 0.28, 0.24, 0, -0.06), (1.72, 0.18, 0.15, 0, -0.06)], sides=7, paint=ash)
+    # the head: a stump with a hollow, two ember eyes, a crown of dead branches
+    pm.loft("head", [(1.6, 0.17, 0.16, 0, -0.08), (1.8, 0.16, 0.15, 0, -0.1), (1.92, 0.12, 0.11, 0, -0.1)], sides=6, paint=bark_dark)
+    pm.box("head", (0.2, 0.03, 0.04), (0, -0.25, 1.78), mat_index=1)
+    for (a, ln, tilt) in ((0.6, 0.55, 0.5), (2.3, 0.45, 0.6), (4.0, 0.6, 0.45), (5.3, 0.4, 0.7)):
+        pm.loft("head", [(0.0, 0.04, 0.04, 0, 0), (ln, 0.008, 0.008, 0, 0)], sides=4,
+                center=(0.06 * math.cos(a), -0.1 + 0.06 * math.sin(a), 1.9), rot=(tilt, 0, a), paint=bark_dark)
+    mats = [rig.make_material("cb_body", "#FFFFFF"),
+            rig.make_material("cb_eyes", cb["eyes"], emission_hex=cb["eyes"], strength=2.5)]
+    body = pm.to_object("cinderbark", mats, arm)
+    cinderbark_clips(arm)
+    finish(body, arm, "cinderbark", "cinderbark", (1,), sheets)
+
+
+def cinderbark_clips(arm):
+    windup = f(const_from("enemies/cinderbark.gd", "WINDUP_TIME"))
+    recover = f(const_from("enemies/cinderbark.gd", "RECOVER_TIME"))
+    wake = f(const_from("enemies/cinderbark.gd", "WAKE_TIME"))
+    stance = {**crouch(0.04, BARK_LEG), "spine": (0.08, 0, 0), "chest": (0.08, 0, 0), "head": (-0.1, 0, 0),
+              "upper_arm.L": (-0.15, 0, -0.25), "upper_arm.R": (-0.15, 0, 0.25),
+              "forearm.L": (-0.3, 0, 0), "forearm.R": (-0.3, 0, 0), "hand.L": (0.0, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+    # dormant: standing straight, legs together, branch arms raised like boughs,
+    # head bowed - from a step away it is one more charred trunk
+    tree = k({"hips": {"rot": (0, 0, 0), "loc": (0, 0.0, 0)}, "thigh.L": (0, 0, -0.08), "thigh.R": (0, 0, 0.08),
+              "shin.L": (0, 0, 0), "shin.R": (0, 0, 0), "foot.L": (0, 0, 0), "foot.R": (0, 0, 0),
+              "spine": (0.0, 0, 0.04), "chest": (0.0, 0, -0.03), "head": (0.35, 0, 0.1),
+              "upper_arm.L": (-0.1, 0, -2.2), "forearm.L": (-0.5, 0, 0.3),
+              "upper_arm.R": (-0.1, 0, 2.35), "forearm.R": (-0.4, 0, -0.2)})
+    action(arm, "dormant", [(0, tree), (120, tree)], sheet=[0])
+    shake = {**tree, "chest": (-0.1, 0.08, 0.05), "head": (0.1, 0.1, 0)}
+    action(arm, "wake", [
+        (0, tree), (int(wake * 0.35), shake), (int(wake * 0.6), {**shake, "chest": (-0.2, -0.08, -0.05)}), (wake, k()),
+    ], {int(wake * 0.6): BACK_OUT})
+    action(arm, "idle", [
+        (0, k()), (55, k({"chest": (0.12, 0.05, 0), "upper_arm.L": (-0.2, 0, -0.3)})), (110, k()),
+    ], sheet=[0, 55])
+    run_keys = []
+    for frame, s in ((0, 1.0), (22, -1.0), (44, 1.0)):
+        base = crouch(0.06, BARK_LEG, (0.0, 0.0, 0.06 * s))
+        run_keys.append((frame, k({**base,
+            "thigh.L": (-0.3 - 0.45 * s, 0, 0), "thigh.R": (-0.3 + 0.45 * s, 0, 0),
+            "shin.L": (0.6 + 0.4 * max(-s, 0), 0, 0), "shin.R": (0.6 + 0.4 * max(s, 0), 0, 0),
+            "upper_arm.L": (0.3 * s, 0, -0.3), "upper_arm.R": (-0.3 * s, 0, 0.3),
+            "spine": (0.16, 0.06 * s, 0), "chest": (0.1, 0.06 * s, 0)})))
+    for frame in (11, 33):
+        run_keys.append((frame, {"hips": {"rot": (0, 0, 0), "loc": (0, -0.02, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 11, 22, 33])
+    raised = k({**crouch(0.02, BARK_LEG), "spine": (-0.1, 0, 0), "chest": (-0.3, 0, 0), "head": (-0.15, 0, 0),
+                "_reach.L": (pos(fwd=0.1, left=0.45, up=2.35), way(left=0.8, up=0.4)),
+                "_reach.R": (pos(fwd=0.1, left=-0.45, up=2.35), way(left=-0.8, up=0.4))})
+    tremble = {**raised, "chest": (-0.34, 0.04, 0)}
+    hold = int(windup * 0.6)
+    swing = windup - 4
+    slammed = k({**crouch(0.18, BARK_LEG, (0.25, 0, 0)), "spine": (0.35, 0, 0), "chest": (0.5, 0, 0), "head": (-0.2, 0, 0),
+                 "_reach.L": (pos(fwd=1.05, left=0.25, up=0.2), way(fwd=1.0, up=-0.2)),
+                 "_reach.R": (pos(fwd=1.05, left=-0.25, up=0.2), way(fwd=1.0, up=-0.2))})
+    action(arm, "slam", [
+        (0, k()), (hold, raised), (hold + (swing - hold) // 2, tremble), (swing, raised),
+        (windup, slammed), (windup + 12, {**slammed, "chest": (0.46, 0, 0)}), (windup + recover, k()),
+    ], {hold: BACK_OUT, swing: EXPO_IN, windup + 12: QUART_OUT})
+    recoil = k({"spine": (-0.1, 0, 0), "chest": (-0.22, 0.12, 0), "head": (-0.4, 0.1, 0),
+                "upper_arm.L": (0.3, 0, -0.6), "upper_arm.R": (0.3, 0, 0.6)})
+    action(arm, "stagger", [
+        (0, k()), (4, recoil), (14, {**recoil, "chest": (-0.16, 0.08, 0)}), (40, k()),
+    ], {0: EXPO_OUT, 4: QUART_OUT, 14: QUART_OUT})
+
+
+def wisp_bones():
+    return [
+        ("root", None, (0, 0, 0), (0, 0, 0.25)),
+        ("body", "root", (0, 0, 0.8), (0, 0, 1.15)),
+        ("head", "body", (0, 0, 1.15), (0, 0, 1.4)),
+        ("tail", "body", (0, 0, 0.8), (0, 0, 0.35)),        # hanging: the flame trails below
+        ("arm.L", "body", (0.18, 0, 1.08), (0.42, -0.05, 0.9)),
+        ("arm.R", "body", (-0.18, 0, 1.08), (-0.42, -0.05, 0.9)),
+    ]
+
+
+def build_wisp(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("wisp", wisp_bones())
+    sw = PAL["smoulder_wisp"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    flame = pm.paint(sw["flame"], 2, "plain")
+    flame_dark = pm.paint(sw["flame"], 1, "plain")
+    soot = pm.paint(sw["soot"], 1)
+    # a smoking husk with a burning heart: dark soot shell, flame tongues
+    pm.loft("body", [(0.78, 0.17, 0.15, 0, 0), (0.95, 0.22, 0.2, 0, 0), (1.12, 0.18, 0.16, 0, 0)], sides=7, paint=soot)
+    pm.loft("body", [(0.9, 0.12, 0.13, 0, -0.1), (1.0, 0.13, 0.14, 0, -0.12)], sides=7, mat_index=1)  # the glowing heart
+    pm.loft("head", [(1.12, 0.13, 0.12, 0, 0), (1.25, 0.14, 0.13, 0, 0), (1.36, 0.08, 0.08, 0, 0)], sides=6, paint=soot)
+    pm.box("head", (0.13, 0.03, 0.03), (0, -0.125, 1.26), mat_index=1)                    # eyes
+    for (a, ln) in ((0.0, 0.35), (2.1, 0.28), (4.2, 0.3)):
+        pm.loft("head", [(1.32, 0.05, 0.05, 0.05 * math.cos(a), 0.05 * math.sin(a)),
+                         (1.32 + ln, 0.005, 0.005, 0.1 * math.cos(a), 0.1 * math.sin(a))], sides=4, paint=flame)  # crown flames
+    pm.loft("tail", [(0.8, 0.15, 0.13, 0, 0), (0.6, 0.1, 0.09, 0, 0.02), (0.4, 0.02, 0.02, 0, 0.05)], sides=6, paint=flame_dark)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        pm.loft("arm." + side, [(1.08, 0.05, 0.05, 0.2 * x, 0), (0.9, 0.035, 0.035, 0.42 * x, -0.05)], sides=5, paint=flame)
+    mats = [rig.make_material("sw_body", "#FFFFFF"),
+            rig.make_material("sw_eyes", sw["eyes"], emission_hex=sw["eyes"], strength=3.0)]
+    body = pm.to_object("smoulder_wisp", mats, arm)
+    wisp_clips(arm)
+    finish(body, arm, "smoulder_wisp", "smoulder_wisp", (1,), sheets)
+
+
+def wisp_clips(arm):
+    windup = f(const_from("enemies/smoulder_wisp.gd", "WINDUP_TIME"))
+    stance = {"body": {"rot": (0, 0, 0), "loc": (0, 0, 0)}, "head": (0.0, 0, 0), "tail": (0.0, 0, 0),
+              "arm.L": (0.0, 0, 0), "arm.R": (0.0, 0, 0)}
+    k = keyed(stance)
+
+    def bob(y, tail=0.0):
+        return {"body": {"rot": (0, 0, 0), "loc": (0, y, 0)}, "tail": (tail, 0, tail * 0.5)}
+
+    action(arm, "idle", [
+        (0, k(bob(0.0))), (20, k({**bob(0.06, 0.15), "arm.L": (0.2, 0, 0.2)})), (40, k({**bob(0.02, -0.12), "arm.R": (0.2, 0, -0.2)})),
+        (60, k(bob(0.0))),
+    ], sheet=[0, 20, 40])
+    action(arm, "glide", [
+        (0, k({**bob(0.04, 0.35), "head": (0.15, 0, 0)})), (15, k({**bob(0.08, 0.45), "head": (0.12, 0, 0)})),
+        (30, k({**bob(0.04, 0.35), "head": (0.15, 0, 0)})),
+    ], sheet=[0, 15])
+    gather = k({**bob(0.12, -0.2), "head": (-0.3, 0, 0), "arm.L": (-0.9, 0, 0.6), "arm.R": (-0.9, 0, -0.6)})
+    hold = int(windup * 0.6)
+    action(arm, "charge", [
+        (0, k(bob(0.0))), (hold, gather), (hold + 6, {**gather, "head": (-0.36, 0.08, 0)}), (windup, gather),
+    ], {hold: QUART_OUT})
+    spit = k({**bob(0.04, 0.3), "head": (0.45, 0, 0), "arm.L": (0.4, 0, -0.3), "arm.R": (0.4, 0, 0.3)})
+    action(arm, "cast", [(0, gather), (3, spit), (16, k(bob(0.0)))], {0: EXPO_OUT})
+    recoil = k({**bob(-0.05, -0.4), "head": (-0.45, 0.1, 0), "arm.L": (0.6, 0, 0.5), "arm.R": (0.6, 0, -0.5)})
+    action(arm, "stagger", [(0, k(bob(0.0))), (3, recoil), (12, {**recoil, "head": (-0.3, 0, 0)}), (32, k(bob(0.0)))],
+           {0: EXPO_OUT, 3: QUART_OUT})
+
+
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
     builders = {"runebreaker": build_runebreaker, "elementalist": build_elementalist, "druid": build_druid,
                 "marauder": build_marauder, "duskweaver": build_duskweaver,
                 "stonehulk": build_stonehulk, "veilstalker": build_veilstalker, "warden": build_warden,
-                "colossus": build_colossus, "vessel": build_vessel}
+                "colossus": build_colossus, "vessel": build_vessel,
+                "shambler": build_shambler, "mourner": build_mourner, "cinderbark": build_cinderbark,
+                "wisp": build_wisp}
     only = [a for a in args if not a.startswith("--")] or list(builders)
     for name in only:
         builders[name](want_sheets)

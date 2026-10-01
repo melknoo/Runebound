@@ -36,7 +36,7 @@ PAD_BLEND = 10.0
 # the 80 m density, and the trampled-floor radius per type in the path mask.
 KNOWN_TYPES = {"spawn", "portal", "waypoint", "camp", "chest", "landmark", "ruin", "ambush", "dungeon",
                "elite_patrol", "arena", "village", "puzzle_braziers", "puzzle_boulder", "puzzle_monolith",
-               "puzzle_dodge", "trial", "nest", "cursed", "cave", "lore", "ghost", "shard", "vignette"}
+               "puzzle_dodge", "trial", "nest", "cursed", "cave", "lore", "ghost", "shard", "vignette", "lurker"}
 SMALL_TYPES = {"lore", "ghost", "shard", "vignette"}
 FLOOR_RADIUS = {"camp": 6.5, "ruin": 5.0, "ambush": 3.5, "arena": 12.0, "spawn": 5.0, "waypoint": 3.0,
                 "dungeon": 4.0, "village": 8.0, "trial": 5.0, "nest": 5.0, "cursed": 6.0, "cave": 3.5,

@@ -800,7 +800,7 @@ func _material_from_texture(tex_path: String, fallback: Color, uv_scale: float =
 ## StaticBody and its BoxShape3D stay exactly as before. `wild_faces` lets
 ## faces that point out of the playable area bulge (RockHull bitmask).
 func _add_box(pos: Vector3, size: Vector3, mat: Material, rot_degrees: Vector3 = Vector3.ZERO,
-		dress: StringName = &"", wild_faces: int = 0, foot_sink: float = 0.15) -> StaticBody3D:
+		dress: StringName = &"", wild_faces: int = 0, foot_sink: float = 0.15, hull_bottom: bool = false) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.collision_layer = 1
 	body.collision_mask = 0
@@ -819,7 +819,7 @@ func _add_box(pos: Vector3, size: Vector3, mat: Material, rot_degrees: Vector3 =
 	body.global_position = pos
 	body.rotation_degrees = rot_degrees
 	if dress != &"" and look != null and look.art_pass:
-		_dress_box(body, mesh, size, dress, wild_faces, foot_sink)
+		_dress_box(body, mesh, size, dress, wild_faces, foot_sink, hull_bottom)
 	return body
 
 
@@ -844,25 +844,35 @@ func _warm_up_ids() -> Array[String]:
 	return ["rusher", "caster"]
 
 
+## M12: every enemy a spawn id can name (camps, the net, tests); bosses are
+## spawned by their zones only. An unknown id is a rusher (and a warning).
+const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "warden", "colossus", "vessel",
+	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]
+const BOSS_TYPES: Array[String] = ["colossus", "vessel"]
+
+
+static func _enemy_script(id: String) -> GDScript:
+	match id:
+		"caster": return RangedCaster
+		"assassin": return Assassin
+		"brute": return Brute
+		"warden": return HollowWarden
+		"colossus": return AshveinColossus
+		"vessel": return ShatteredVessel
+		"grave_shambler": return GraveShambler
+		"mourner": return Mourner
+		"cinderbark": return Cinderbark
+		"smoulder_wisp": return SmoulderWisp
+	return MeleeRusher
+
+
 ## A fresh enemy of a spawn id, not yet in the tree (spawning and warm-up).
 static func make_enemy(id: String) -> EnemyBase:
-	var e: EnemyBase
-	match id:
-		"caster":
-			e = RangedCaster.new()
-		"assassin":
-			e = Assassin.new()
-		"brute":
-			e = Brute.new()
-		"warden":
-			e = HollowWarden.new()
-		"colossus":
-			e = AshveinColossus.new()
-		"vessel":
-			e = ShatteredVessel.new()
-		_:
-			e = MeleeRusher.new()
-			id = "rusher"
+	if not id in ENEMY_IDS:
+		if id != "":
+			push_warning("ZoneBase: unknown enemy id '%s' (a rusher instead)" % id)
+		id = "rusher"
+	var e := _enemy_script(id).new() as EnemyBase
 	e.type_id = id  # M09: a co-op client spawns the puppet by this id
 	return e
 
@@ -950,12 +960,12 @@ func _add_ash_fall(density: float, parent: Node3D = null) -> void:
 
 
 func _dress_box(body: StaticBody3D, box_mesh: MeshInstance3D, size: Vector3, role: StringName, wild_faces: int,
-		foot_sink: float = 0.15) -> void:
+		foot_sink: float = 0.15, bottom: bool = false) -> void:
 	var p := body.global_position
 	var seed := int(p.x * 73.0) ^ int(p.z * 151.0) ^ int(p.y * 37.0) ^ int(size.x * 11.0 + size.z * 5.0)
 	var hull := MeshInstance3D.new()
 	hull.name = "RockHull"
-	hull.mesh = RockHull.build(size, seed, 0.3, 0.28, wild_faces, 1.6, foot_sink)
+	hull.mesh = RockHull.build(size, seed, 0.3, 0.28, wild_faces, 1.6, foot_sink, bottom)
 	hull.material_override = ArtKit.material(role)
 	body.add_child(hull)
 	box_mesh.visible = false
@@ -1022,7 +1032,7 @@ func setup_enemy_puppet(e: EnemyBase) -> void:
 func spawn_by_id(id: String, pos: Vector3) -> EnemyBase:
 	if id == "elite":
 		return spawn_elite(-1, pos)
-	var enemy := make_enemy(id if id in ["caster", "assassin", "brute", "warden"] else "rusher")
+	var enemy := make_enemy(id if id in ENEMY_IDS and not id in BOSS_TYPES else "rusher")
 	_spawn_enemy(enemy, pos)
 	return enemy
 
@@ -1095,7 +1105,7 @@ func _roll_kill_item(enemy: EnemyBase, class_id: StringName) -> ItemData:
 	if enemy.is_elite:
 		if ItemGenerator.kill_drops(&"elite"):
 			item = ItemGenerator.generate(2, class_id)
-	elif enemy is Brute:
+	elif enemy.loot_kind == &"brute":
 		if ItemGenerator.kill_drops(&"brute"):
 			item = ItemGenerator.generate(1, class_id)
 	elif ItemGenerator.kill_drops(&"trash"):
@@ -1158,7 +1168,9 @@ func receive_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[I
 		var a := TAU * (float(i) + 0.5) / float(maxi(draughts, 1)) + randf_range(-0.4, 0.4)
 		spawn_consumable_drop(Consumables.HEALING_DRAUGHT, pos + Vector3(cos(a), 0.0, sin(a)) * randf_range(0.8, 1.3), hero)
 	if note != "" and hud != null and hero.is_local:
-		hud.toast(note, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
+		# M12: "@key" notes are text-table keys, shown in this machine's language
+		var shown := Texts.t(note.substr(1)) if note.begins_with("@") else note
+		hud.toast(shown, ArtKit.color("color_roles.experience.body", Color(0.62, 0.7, 1.0)))
 
 
 ## M09: a world flag the server set (bosses) reached this zone; zones show

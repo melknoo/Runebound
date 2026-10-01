@@ -97,6 +97,68 @@ only the new texts bilingual, the first start follows the system language).
     bag, patches off trails and pads, the save keys, a ghost, the map; food:
     Ylva sells it, no eating in a fight, slow heal, a hit ends it, 50 % in
     8 s).
+- **Phase 3 (built): shared puzzle state, the four puzzles, the grottos,
+  the secret climb.**
+  - `PoiPuzzle` (scripts/world/puzzles/): a hero `request`s, the authority
+    (offline this machine, online the server) `act`s, keeps the state in the
+    world (`SaveGame.pois`, beside the camps) and tells everyone; every
+    machine `apply_state`s. Net: `POI_ACT` (client -> server, checked
+    against the proxy's reach) and `POI_STATE` (server -> clients, replayed
+    to late joiners); still protocol 13 (no release since).
+  - **Braziers** (Ashwick's chapel): three; any hit lights one (a hurtbox on
+    the enemy-hurtbox layer, `take_hit` gives no Resonance), each burns 10 s;
+    all three at once open the crypt chest. Heroes can share the work.
+  - **Monoliths** (the Crossroads): a crystal's beam runs stone to stone;
+    [E] turns a stone an eighth; when all three face on, the seal lights and
+    a chest appears.
+  - **Boulder** (the tome shelf): push it by walking into it (or [E]) step by
+    step along a fixed track onto the plate; the grotto's door sinks.
+  - **Dodge run** (the bone field): six bone-spike strips burst in a rolling
+    wave (red strip telegraph first) on the server's clock; a hit costs 14,
+    never the last point; a chest at the end.
+  - **Grottos:** two rock-hull caves with a roof (the hull gets its
+    underside), 4.6 m inside for the camera, a light; one with a chest, the
+    tome grotto sealed by the boulder puzzle (the tome comes in phase 7).
+  - **Secret climb:** low stones along its downhill edge. Map icons puzzle /
+    cave (secret ones only once found within 6 m), never on the compass.
+  - Puzzle rewards: 60-80 XP to every hero within 25 m, the chest; reward
+    notes travel as text keys (`@key`) and are shown in the receiver's
+    language.
+  - Smoke 657 green (a brazier lights from a hit and burns out, all three
+    solve and persist, the beam stone by stone, the boulder and the door,
+    the grottos, the dodge strip and the last point, the climb's stones).
+    Net scenario `puzzles` green (two clients share the braziers, a late
+    joiner sees them solved, the server keeps the state).
+- **Phase 4 (built): the enemy seams and the village and forest families.**
+  - Seams: one registry (`ZoneBase.ENEMY_IDS` / `make_enemy`, an unknown id is
+    a rusher with a warning), `EnemyBase.loot_kind` (the drop tables read the
+    tier, not the class), `targetable` + `set_targetable` (a buried, dormant
+    or airborne enemy has no body on the enemy layer, no hurtbox and
+    `take_hit` refuses; targeting, bots, the combat music and the druid's
+    fight check skip it), five AIStates appended (BURIED, EMERGE, DORMANT,
+    WAKE, BLINK). Heroes can be slowed now (`Player.apply_slow`, the
+    stronger slow wins; an enemy hit with a Chill slows 40 % for 3 s).
+  - **The Restless (Ashwick):** the **Grave Shambler** waits buried and claws
+    out when a hero comes within 7 m (a ring telegraph, a burst), then rakes
+    with both claws; the **Mourner**, a pale shrouded spirit, keeps its
+    distance and screams down a strip (damage + the slow).
+  - **The Charwood:** the **Cinderbark** stands among the trunks as one of
+    them (solid, no target, a dim ember tell) until a hero comes within 6 m
+    or a fight starts within 16 m, then slams (24, heavy) and leaves burning
+    bark; the **Smoulder Wisp** spits embers and blinks away when cornered
+    (never through a wall or a trunk).
+  - Camp 3 holds the Restless, camp 8 and ruin 3 the Charwood; two
+    cinderbark lurkers stand in the forest. Map labels per family (DE/EN),
+    enemy names DE/EN.
+  - Four rigs from `generate_characters_v2.py` (shambler, mourner,
+    cinderbark, wisp; 5-6 clips each, timings from the scripts) and their
+    palettes.
+  - Solo check L6: Elementalist 13/13 (0 deaths), Druid 13/13 (also at L4);
+    the Runebreaker bot clears the new camps but dies at ruin 3 after the
+    whole run without healing between fights (KNOWN_ISSUES).
+  - Smoke 667 green (rigs and timings, the registry, buried / dormant /
+    awake, the scream's slow, the blink); net `enemy_types` green with all
+    13 types as puppets.
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

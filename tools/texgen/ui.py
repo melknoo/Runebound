@@ -848,6 +848,26 @@ def mk_ghost() -> Image.Image:
     return outlined(img)
 
 
+def mk_puzzle() -> Image.Image:
+    """M12 map: a puzzle (three rune points around a centre)."""
+    img, d = canvas12()
+    d.polygon([(6, 1), (10, 9), (2, 9)], outline=ACCENT, width=1)
+    for (x, y) in ((6, 1), (10, 9), (2, 9)):
+        d.rectangle([x - 1, y - 1, x + 1, y + 1], fill=ACCENT_HOT)
+    d.point((6, 6), fill=ACCENT_HOT)
+    return outlined(img)
+
+
+def mk_cave() -> Image.Image:
+    """M12 map: a grotto (a dark mouth in a rock arch)."""
+    img, d = canvas12()
+    rock = rgb("#8A8290")
+    d.ellipse([1, 2, 10, 13], fill=rock)
+    d.rectangle([1, 9, 10, 10], fill=rock)
+    d.ellipse([3, 5, 8, 13], fill=INK)
+    return outlined(img)
+
+
 def knob(fill, rim, rim_hi) -> Image.Image:
     """M17a settings: a slider grabber, 8x12 art (bevelled like frame())."""
     w, h = 8, 12
@@ -879,7 +899,7 @@ def main() -> None:
     for name, fn in (("player", mk_player), ("waypoint", mk_waypoint), ("portal", mk_portal), ("camp", mk_camp),
                      ("camp_cleared", mk_camp_cleared), ("chest", mk_chest), ("ruin", mk_ruin),
                      ("landmark", mk_landmark), ("boss", mk_boss), ("dungeon", mk_dungeon),
-                     ("lore", mk_lore), ("ghost", mk_ghost)):
+                     ("lore", mk_lore), ("ghost", mk_ghost), ("puzzle", mk_puzzle), ("cave", mk_cave)):
         save(fn(), "map", name + ".png")
     save(frame(24, PANEL, ACCENT_DIM, ACCENT), "frame.png")
     save(frame(22, rgb("#100C18", 235), rgb("#2E2A3A"), rgb("#4A4458")), "slot.png")

@@ -103,5 +103,53 @@
 	"item.ember_tuber.text": {
 		"en": "Roasted in the warm ash. Restores 50 % of your health over 8 s - only out of a fight, a hit ends the meal. Right-click to eat.",
 		"de": "In der warmen Asche geröstet. Heilt 50 % deines Lebens über 8 s - nur außerhalb des Kampfs, ein Treffer beendet die Mahlzeit. Rechtsklick zum Essen."
+	},
+	"ui.puzzle.solved": {
+		"en": "Something gives way nearby.",
+		"de": "Ganz in der Nähe gibt etwas nach."
+	},
+	"ui.prompt.turn": {
+		"en": "Turn the stone",
+		"de": "Stein drehen"
+	},
+	"ui.prompt.push": {
+		"en": "Push",
+		"de": "Schieben"
+	},
+	"map.puzzle": {
+		"en": "Puzzle",
+		"de": "Rätsel"
+	},
+	"map.cave": {
+		"en": "Grotto",
+		"de": "Grotte"
+	},
+	"enemy.grave_shambler": {
+		"en": "Grave Shambler",
+		"de": "Grabgänger"
+	},
+	"enemy.mourner": {
+		"en": "Mourner",
+		"de": "Klagende"
+	},
+	"enemy.cinderbark": {
+		"en": "Cinderbark",
+		"de": "Glutborke"
+	},
+	"enemy.smoulder_wisp": {
+		"en": "Smoulder Wisp",
+		"de": "Schwelirrlicht"
+	},
+	"map.camp.village": {
+		"en": "Haunt of the Restless",
+		"de": "Spukort der Ruhelosen"
+	},
+	"map.camp.burnt_forest": {
+		"en": "Charwood den",
+		"de": "Kohlwald-Bau"
+	},
+	"map.camp.bone_field": {
+		"en": "Carrion den",
+		"de": "Aasbau"
 	}
 }

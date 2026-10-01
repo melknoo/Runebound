@@ -569,6 +569,23 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
   `text_key` in the text table). Eating is a heal over time under
   `Player.FOOD_HOT`; `consumable_deny_reason` refuses it `in_combat()`, and
   `mark_combat()` (every hit dealt or taken) cancels it.
+- **Shared puzzles (phase 3):** `PoiPuzzle` subclasses (`BrazierPuzzle`,
+  `MonolithPuzzle`, `BoulderPuzzle`) hold a `state` dict; `request(action,
+  arg, hero)` -> authority `act` -> `commit()` (SaveGame.set_poi_state +
+  `NetWorld.broadcast_poi_state` + `apply_state`). NetWorld keeps
+  `poi_nodes` (puzzles register in `_ready`) and replays their states in
+  `_on_peer_ready`. Rules for new puzzles (M13 dungeons too): only the
+  authority changes state; everything a hero does is a request; visuals live
+  in `_present`, one-time openings in `_on_solved` (runs on every machine,
+  also when a solved state loads). Per-hero things (the dodge run's damage)
+  stay local and use `NetWorld.server_msec()` as the shared clock.
+  `Grotto.build` makes the caves (`RockHull.build(..., bottom)` for roofs,
+  meta `floating`).
+- **Enemy seams (phase 4):** new enemies go into `ZoneBase.ENEMY_IDS` and
+  `_enemy_script`; spawn ids in camps / ambushes / lurkers come from the
+  layout. An enemy out of play calls `set_targetable(false)` (on every
+  machine, from its state: `_apply_presence` in `_present_state` too, so
+  puppets follow). Heroes: `Player.apply_slow(pct, s)` / `clear_slow()`.
 - **Areas:** areas may overlap; of those entered at once only the smallest
   names itself, and `Hud.area_name` replaces the name on show and waits for
   the zone's title card. New areas carry a text-table `name_key`.

@@ -270,6 +270,11 @@ func _run() -> void:
 		["warden", ["idle", "run", "windup", "spin", "stagger"], "windup", HollowWarden.WINDUP_TIME],
 		["colossus", ["idle", "run", "slam", "charge_windup", "charge", "stun", "roar", "stagger"], "charge_windup", 0.8],
 		["vessel", ["idle", "run", "slam", "shatter", "p2_idle", "fan", "stagger"], "", 0.0],
+		# M12 families
+		["grave_shambler", ["idle", "run", "attack", "stagger", "emerge"], "emerge", GraveShambler.EMERGE_TIME],
+		["mourner", ["idle", "glide", "charge", "cast", "stagger"], "charge", Mourner.WINDUP_TIME],
+		["cinderbark", ["idle", "run", "slam", "stagger", "dormant", "wake"], "slam", Cinderbark.WINDUP_TIME + Cinderbark.RECOVER_TIME],
+		["smoulder_wisp", ["idle", "glide", "charge", "cast", "stagger"], "charge", SmoulderWisp.WINDUP_TIME],
 	]
 	for spec: Array in rig_specs:
 		var foe := ZoneBase.make_enemy(spec[0])
@@ -2733,7 +2738,8 @@ func _run() -> void:
 		var h := box.size * 0.5
 		# the box bottom sits under the lowest ground of its footprint (no gap on slopes)
 		var span := highlands.terrain.footprint_range(body.global_position, box.size, body.rotation.y)
-		rocks_grounded = rocks_grounded and body.global_position.y - h.y <= span.x + 0.01 and body.global_position.y + h.y > span.y
+		if not body.has_meta(&"floating"):  # M12: a grotto's roof rests on its walls
+			rocks_grounded = rocks_grounded and body.global_position.y - h.y <= span.x + 0.01 and body.global_position.y + h.y > span.y
 		var arrays := ((body.get_node("RockHull") as MeshInstance3D).mesh as ArrayMesh).surface_get_arrays(0)
 		for v: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
 			if absf(v.x) < h.x - 0.001 and absf(v.y) < h.y - 0.001 and absf(v.z) < h.z - 0.001:
@@ -2997,6 +3003,143 @@ func _run() -> void:
 	for m in highlands.map_markers():
 		lore_marked = lore_marked or String(m.get("icon", "")) == "ghost"
 	_check(lore_marked and hero12.map_discovered.has("ghost_burner_f"), "a ghost seen up close shows on the map")
+
+	# --- M12 phase 3: the four outdoor puzzles, the grottos, the secret climb ---
+	var braz := highlands.puzzles["braziers_v"] as BrazierPuzzle
+	hero12.global_position = braz.global_position + Vector3(0, 0.3, 0)
+	var target0 := braz.get_node("BrazierTarget0") as BrazierTarget
+	var gave := target0.take_hit(HitInfo.create(5.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, target0.global_position))
+	_check(not gave and bool((braz.state["lit"] as Array)[0]) and not braz.is_solved()
+		and not EnemyBase.all_enemies.has(braz), "a hit lights a brazier (no Resonance from it); one is not enough")
+	braz.set(&"_lit_at", [float(Time.get_ticks_msec()) - BrazierPuzzle.WINDOW * 1000.0 - 100.0, -1.0, -1.0] as Array[float])
+	braz._process(0.0)
+	_check(not bool((braz.state["lit"] as Array)[0]), "a brazier burns out after %d s" % int(BrazierPuzzle.WINDOW))
+	for bi in 3:
+		braz.strike(bi, hero12)
+	await get_tree().process_frame
+	_check(braz.is_solved() and highlands.world.get_node_or_null("PuzzleChest_braziers_v") != null
+		and bool(SaveGame.poi_state("braziers_v").get("solved", false)),
+		"all three alight at once: solved, the crypt chest is there, the world remembers")
+	var mono := highlands.puzzles["monoliths_x"] as MonolithPuzzle
+	hero12.global_position = mono.global_position + Vector3(0, 0.3, 0)
+	var reach0 := mono.beam_reach()
+	var turns := 0
+	for si in MonolithPuzzle.STONES.size():
+		for _t in 8:
+			if mono.beam_reach() > si or mono.is_solved():
+				break
+			mono.request("turn", si, hero12)
+			turns += 1
+	_check(reach0 < MonolithPuzzle.STONES.size() and mono.is_solved() and mono.beam_reach() == MonolithPuzzle.STONES.size(),
+		"turning the stones carries the beam stone by stone to the seal (%d turns from reach %d)" % [turns, reach0])
+	var cave_tome: Dictionary = highlands.grottos["cave_tome"]
+	var boulder := cave_tome["puzzle"] as BoulderPuzzle
+	var door := cave_tome["door"] as StaticBody3D
+	_check((cave_tome["roof"] as Node).has_meta(&"floating") and door != null and door.collision_layer == 1
+		and highlands.grottos.has("cave_flats") and highlands.chests.has("cave_flats"),
+		"two grottos (roofed rock hulls); the tome grotto is sealed, the other holds a chest")
+	hero12.global_position = boulder.global_position + Vector3(0, 0.3, 0)
+	var rock0 := (boulder.get(&"_rock") as Node3D).global_position
+	for _p in boulder.steps:
+		boulder.request("push", 0, hero12)
+	await _wait_frames(110)
+	var rock1 := (boulder.get(&"_rock") as Node3D).global_position
+	_check(boulder.is_solved() and rock1.distance_to(rock0) > BoulderPuzzle.STEP * (boulder.steps - 1)
+		and door.collision_layer == 0, "the boulder rolls step by step onto the plate and the grotto's door sinks")
+	var run := highlands.puzzles["dodge_b"] as DodgeRun
+	var strip_at := run.strip_centre(2)
+	hero12.global_position = highlands.ground_point(strip_at, 0.1)
+	hero12.health.current_health = 5.0
+	run._burst(2, hero12)
+	var off_at := run.strip_centre(2) + Vector3(0, 0, 0) + (run.end - run.start).normalized() * 2.5
+	_check(run.on_strip(2, strip_at) and not run.on_strip(2, off_at) and is_equal_approx(hero12.health.current_health, 1.0)
+		and not hero12.health.is_dead and highlands.chests.has("dodge_b"),
+		"the dodge run's spikes hurt whoever stands on the strip, never the last point; a chest at the end")
+	hero12.health.current_health = hero12.health.max_health
+	var climb_stones := 0
+	var climb := hl_layout.route_points("climb_tome")
+	for child in highlands.world.get_children():
+		if child.name.begins_with("Rock") and child is Node3D:
+			var cp := Vector2((child as Node3D).global_position.x, (child as Node3D).global_position.z)
+			for ci in climb.size() - 1:
+				var seg := climb[ci + 1] - climb[ci]
+				var tt := clampf((cp - climb[ci]).dot(seg) / seg.length_squared(), 0.0, 1.0)
+				if cp.distance_to(climb[ci] + seg * tt) < 3.0:
+					climb_stones += 1
+					break
+	_check(climb_stones >= 6, "the secret climb has low stones along its edge (%d)" % climb_stones)
+
+	# --- M12 phase 4: the village and forest families ---
+	var types_ok := true
+	for pair: Array in [["grave_shambler", GraveShambler], ["mourner", Mourner], ["cinderbark", Cinderbark],
+			["smoulder_wisp", SmoulderWisp], ["brute", Brute]]:
+		var probe := ZoneBase.make_enemy(String(pair[0]))
+		types_ok = types_ok and is_instance_of(probe, pair[1]) and probe.type_id == String(pair[0])
+		probe.free()
+	var odd := ZoneBase.make_enemy("no_such_enemy")
+	types_ok = types_ok and odd is MeleeRusher
+	odd.free()
+	var c3_comp := PoiBuilder.composition_of(hl_layout.find("camp_3"))
+	var c8_comp := PoiBuilder.composition_of(hl_layout.find("camp_8"))
+	_check(types_ok and c3_comp.has("grave_shambler") and c3_comp.has("mourner") and c8_comp.has("cinderbark")
+		and c8_comp.has("smoulder_wisp") and highlands.camps.has("lurker_f1")
+		and AshenHighlands.marker_label(hl_layout.find("camp_3")) == Texts.t("map.camp.village"),
+		"the registry knows the four new enemies; camp 3 holds the Restless, camp 8 the Charwood, lurkers wait")
+	var foe_spot := hl_layout.poi_pos("trial_f") + Vector3(0, 0.2, 0)
+	hero12.global_position = highlands.ground_point(foe_spot + Vector3(0, 0, 14), 0.2)
+	var shambler := highlands.spawn_by_id("grave_shambler", highlands.ground_point(foe_spot, 0.2)) as GraveShambler
+	await _wait_frames(3)
+	var buried_ok := shambler.ai_state == EnemyBase.AIState.BURIED and not shambler.targetable and shambler.collision_layer == 0 \
+		and not shambler.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, foe_spot)) \
+		and not shambler.visual.visible and is_equal_approx(shambler.health.current_health, shambler.health.max_health)
+	hero12.global_position = highlands.ground_point(foe_spot + Vector3(0, 0, 4), 0.2)
+	await _wait_frames(15)
+	var emerging := shambler.ai_state == EnemyBase.AIState.EMERGE
+	await _wait_frames(70)
+	_check(buried_ok and emerging and shambler.targetable and shambler.visual.visible and shambler.collision_layer == 0b100,
+		"a grave shambler waits buried (no target, no hit), claws out when a hero comes near, then fights")
+	shambler.queue_free()
+	var bark := highlands.spawn_by_id("cinderbark", highlands.ground_point(foe_spot + Vector3(8, 0, 0), 0.2)) as Cinderbark
+	hero12.global_position = highlands.ground_point(foe_spot + Vector3(8, 0, 16), 0.2)
+	await _wait_frames(3)
+	var dormant_ok := bark.ai_state == EnemyBase.AIState.DORMANT and not bark.targetable \
+		and bark.collision_layer == Grove.FOLIAGE_LAYER and bark.loot_kind == &"brute"
+	var aimed := false
+	for cand in highlands.targeting.gather_candidates():
+		aimed = aimed or cand == bark
+	hero12.global_position = highlands.ground_point(foe_spot + Vector3(8, 0, 4), 0.2)
+	await _wait_frames(70)
+	_check(dormant_ok and not aimed and bark.targetable and bark.ai_state != EnemyBase.AIState.DORMANT,
+		"a cinderbark stands as a trunk (solid, no target) until a hero comes close, then wakes")
+	bark.queue_free()
+	var mourn := highlands.spawn_by_id("mourner", highlands.ground_point(foe_spot + Vector3(-8, 0, 0), 0.2)) as Mourner
+	await _wait_frames(2)
+	mourn.visual.rotation.y = 0.0  # facing -Z
+	hero12.global_position = highlands.ground_point(mourn.global_position + Vector3(0, 0, -3.0), 0.2)
+	hero12.clear_slow()
+	mourn.lock_strike()
+	var hp_mourn := hero12.health.current_health
+	mourn._scream()
+	_check(is_equal_approx(hero12.slow_pct, Player.CHILL_SLOW) and hero12.health.current_health < hp_mourn,
+		"the mourner's scream hurts and slows a hero in its strip (%.0f %%)" % (hero12.slow_pct * 100.0))
+	hero12.apply_slow(0.2, 1.0)
+	var kept := is_equal_approx(hero12.slow_pct, Player.CHILL_SLOW)
+	hero12.set(&"_slow_left", 0.01)
+	await _wait_frames(3)
+	_check(kept and is_zero_approx(hero12.slow_pct), "the stronger slow wins, and it wears off")
+	hero12.health.current_health = hero12.health.max_health
+	mourn.queue_free()
+	var wisp := highlands.spawn_by_id("smoulder_wisp", highlands.ground_point(foe_spot + Vector3(0, 0, -10), 0.2)) as SmoulderWisp
+	await _wait_frames(2)
+	wisp.player = hero12
+	hero12.global_position = highlands.ground_point(wisp.global_position + Vector3(0, 0, 2.0), 0.2)
+	var wisp_from := wisp.global_position
+	wisp._start_blink()
+	await _wait_frames(40)
+	_check(wisp.global_position.distance_to(wisp_from) >= SmoulderWisp.BLINK_MIN - 0.5 and wisp.visual.visible
+		and wisp.ai_state == EnemyBase.AIState.CHASE, "a cornered smoulder wisp blinks away (%.1f m)" % wisp.global_position.distance_to(wisp_from))
+	wisp.queue_free()
+	await _wait_frames(2)
 	hero12.global_position = hero_home
 
 	# --- M06 audio: mix buses, music layers, looping ambience ---

@@ -224,4 +224,4 @@ static func _alive(e: Variant) -> bool:
 	if e == null or not is_instance_valid(e):
 		return false
 	var enemy := e as EnemyBase
-	return enemy != null and enemy.ai_state != EnemyBase.AIState.DEAD
+	return enemy != null and enemy.ai_state != EnemyBase.AIState.DEAD and enemy.targetable  # M12

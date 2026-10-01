@@ -13,7 +13,11 @@ signal fx_played(fx: StringName)
 ## M10: the hunted hero changed (the co-op server tells the clients).
 signal target_changed
 
-enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT, RETURN }
+## M12 appended (the ints of the older states never change; the wire clamps
+## to the enum's size): BURIED / EMERGE (the grave shambler), DORMANT / WAKE
+## (the cinderbark standing as a tree), BLINK (the smoulder wisp).
+enum AIState { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD, CIRCLE, RETREAT, RETURN,
+	BURIED, EMERGE, DORMANT, WAKE, BLINK }
 
 const GRAVITY := 24.0
 const AGGRO_RANGE := 16.0
@@ -75,6 +79,14 @@ var _zone: ZoneBase = null
 var health: HealthComponent
 var status: StatusEffectComponent
 var is_elite: bool = false
+## M12: false while an enemy cannot be hit or picked (under the ground, standing
+## as a tree, high in the air): `take_hit` refuses, targeting, aim assist and
+## bots skip it (set_targetable also takes its body and hurtbox off).
+var targetable: bool = true
+## M12: its loot tier (`trash` / `brute`; elites and bosses are recognised on
+## their own) - replaces the class checks in the drop tables.
+var loot_kind: StringName = &"trash"
+var _hurtbox: Hurtbox
 ## M07: set by the zone before the enemy enters the tree (1 = base balance).
 var level: int = 1
 ## Base XP for a kill (docs/PROGRESSION_DESIGN.md); x4 for elites, +15 %/level.
@@ -158,7 +170,7 @@ func _ready() -> void:
 		status.puppet_of = self  # statuses mirror the server; applying one asks it
 	add_child(status)
 
-	Hurtbox.create(self, 0b10000, 0.55, 1.7, 0.85)
+	_hurtbox = Hurtbox.create(self, 0b10000, 0.55, 1.7, 0.85)
 
 	visual = Node3D.new()
 	visual.name = "Visual"
@@ -168,6 +180,15 @@ func _ready() -> void:
 
 func _build_body() -> void:
 	pass  # subclasses build their silhouette here
+
+
+## M12: in or out of play as a target (see `targetable`). Its body leaves the
+## enemy layer (aim assist, bumping) and its hurtbox every hit query.
+func set_targetable(on: bool) -> void:
+	targetable = on
+	collision_layer = 0b100 if on else 0
+	if _hurtbox != null:
+		_hurtbox.collision_layer = 0b10000 if on else 0
 
 
 ## World-space height of the target HP bar; scales with the body so bosses
@@ -705,6 +726,8 @@ func last_attacker() -> Player:
 
 
 func take_hit(hit: HitInfo) -> bool:
+	if not targetable:
+		return false  # M12: buried, standing as a tree, in the air - every hit path ends here
 	if net_puppet:
 		return _forward_hit(hit)
 	if ai_state == AIState.DEAD:

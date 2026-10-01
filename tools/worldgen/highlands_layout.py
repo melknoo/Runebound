@@ -161,7 +161,7 @@ LAYOUT = {
         {"id": "ambush_1", "type": "ambush", "pos": [-26, 36], "yaw": 0.0, "pad": 4, "radius": 7.0,
          "composition": ["rusher", "rusher", "assassin"]},
         {"id": "camp_3", "type": "camp", "pos": [-90, 40], "yaw": 0.0, "pad": 11, "radius": 12.0,
-         "composition": ["assassin", "assassin", "caster"], "banners": 2},
+         "composition": ["grave_shambler", "grave_shambler", "mourner"], "banners": 2},  # M12: the Restless
         {"id": "ruin_2", "type": "ruin", "pos": [-108, 2], "yaw": 1.1, "pad": 11, "walls": 4,
          "chest": True, "rarity_bias": 1, "ambush": []},
         {"id": "camp_4", "type": "camp", "pos": [-8, 10], "yaw": 0.0, "pad": 11, "radius": 12.0,
@@ -189,11 +189,11 @@ LAYOUT = {
          "name": "Northreach Shrine"},
         {"id": "chest_hidden", "type": "chest", "pos": [-52, -100], "yaw": 1.0, "pad": 3, "rarity_bias": 1},
         {"id": "ruin_3", "type": "ruin", "pos": [-138, -76], "yaw": 2.0, "pad": 11, "walls": 6,
-         "chest": True, "rarity_bias": 1, "ambush": ["assassin", "assassin", "caster"]},
+         "chest": True, "rarity_bias": 1, "ambush": ["smoulder_wisp", "smoulder_wisp", "cinderbark"]},  # M12
         {"id": "dungeon_w", "type": "dungeon", "pos": [-152, -28], "yaw": -1.5708, "pad": 7,
          "label": "EMBER WARRENS", "pad_from": [-132, -30]},
         {"id": "camp_8", "type": "camp", "pos": [-70, -136], "yaw": 0.0, "pad": 11, "radius": 12.0,
-         "composition": ["brute", "rusher", "rusher", "caster"], "banners": 3},
+         "composition": ["cinderbark", "smoulder_wisp", "smoulder_wisp", "smoulder_wisp"], "banners": 3},  # M12: the Charwood
         {"id": "wp_gate", "type": "waypoint", "pos": [22, -110], "yaw": 0.0, "pad": 5,
          "name": "Colossus Gate Shrine"},
         # --- M12: new POI types (each built from its phase on; until then
@@ -212,6 +212,9 @@ LAYOUT = {
         {"id": "dodge_b", "type": "puzzle_dodge", "pos": [146, -84], "yaw": 0.0, "pad": 5,
          "lane": [[130, -62], [143, -80]]},
         {"id": "nest_b", "type": "nest", "pos": [150, -128], "yaw": 0.0, "pad": 9},
+        # M12: cinderbarks standing among the forest's trunks (wake when a hero comes close)
+        {"id": "lurker_f1", "type": "lurker", "pos": [-128, -58], "yaw": 0.0, "pad": 0, "composition": ["cinderbark"]},
+        {"id": "lurker_f2", "type": "lurker", "pos": [-95, -128], "yaw": 0.0, "pad": 0, "composition": ["cinderbark"]},
         # M12 places that tell a story without text (small: no pad, off the trails)
         {"id": "vig_fallen_s", "type": "vignette", "kind": "fallen", "pos": [-24, 140], "yaw": 0.6, "pad": 0},
         {"id": "vig_camp_old", "type": "vignette", "kind": "abandoned_camp", "pos": [-80, 140], "yaw": 0.3, "pad": 0},

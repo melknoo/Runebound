@@ -1216,6 +1216,62 @@ def cook_pot():
 M12_PROPS = M12_PROPS + (lore_note, lore_tablet, rune_shard, ember_tuber_plant, cook_pot)
 
 
+def brazier():
+    """M12 puzzle: a chapel brazier - a fieldstone pedestal with an iron bowl
+    of cold coals (the fire is added in the zone when lit); 1.1 m (collider)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(VL["cobble"], 2, "masonry")
+    cap = pm.paint(VL["cobble"], 3)
+    iron = pm.paint(RB["iron"], 1, "plate")
+    coal = pm.paint(BF["bark"], 0)
+    pm.loft(None, [(0.0, 0.32, 0.32, 0, 0), (0.15, 0.26, 0.26, 0, 0), (0.75, 0.2, 0.2, 0, 0), (0.85, 0.27, 0.27, 0, 0)],
+            sides=8, paint=stone)
+    pm.loft(None, [(0.85, 0.28, 0.28, 0, 0), (0.9, 0.29, 0.29, 0, 0)], sides=8, paint=cap)
+    pm.loft(None, [(0.9, 0.16, 0.16, 0, 0), (1.0, 0.34, 0.34, 0, 0), (1.1, 0.38, 0.38, 0, 0)], sides=10, paint=iron)
+    pm.loft(None, [(1.04, 0.3, 0.3, 0, 0), (1.08, 0.31, 0.31, 0, 0)], sides=10, paint=coal)
+    finish(pm, "brazier")
+
+
+def bn_spikes():
+    """M12 dodge run: a strip of bone spikes that bursts out of the dust (2.4 m
+    wide, 0.9 m tall; the zone hides it below the ground between bursts)."""
+    rig.reset_scene()
+    rnd = random.Random(191)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bone = pm.paint(HL["bone"], 1, "plate")
+    dark = pm.paint(BN["bone_dark"], 1)
+    for k in range(7):
+        x = -1.05 + k * 0.35 + rnd.uniform(-0.06, 0.06)
+        y = rnd.uniform(-0.25, 0.25)
+        h = rnd.uniform(0.6, 0.95)
+        tilt = rnd.uniform(-0.18, 0.18)
+        pm.box(None, (0.13, 0.13, h), (x, y, h * 0.5 - 0.05), rot=(tilt, rnd.uniform(-0.15, 0.15), rnd.uniform(0, 1.5)),
+               paint=bone, taper=0.12)
+    pm.box(None, (2.5, 0.7, 0.12), (0.0, 0.0, -0.02), paint=dark)
+    finish(pm, "bn_spikes")
+
+
+def rune_seal():
+    """M12 puzzle: a round seal stone set into the ground with a rune ring
+    (dark until the beam reaches it, then the zone lights it); 0.25 m."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(HL["basalt"], 3, "plate")
+    edge = pm.paint(HL["basalt"], 2)
+    pm.loft(None, [(0.0, 1.05, 1.05, 0, 0), (0.18, 1.0, 1.0, 0, 0), (0.24, 0.92, 0.92, 0, 0)], sides=12, paint=edge)
+    pm.loft(None, [(0.2, 0.88, 0.88, 0, 0), (0.26, 0.86, 0.86, 0, 0)], sides=12, paint=stone)
+    for k in range(8):
+        a = k * math.tau / 8
+        pm.box(None, (0.24, 0.05, 0.02), (math.cos(a) * 0.6, math.sin(a) * 0.6, 0.265), rot=(0, 0, a + math.pi / 2), mat_index=GLOW)
+    pm.box(None, (0.32, 0.06, 0.02), (0.0, 0.0, 0.265), rot=(0, 0, 0.6), mat_index=GLOW)
+    pm.box(None, (0.32, 0.06, 0.02), (0.0, 0.0, 0.265), rot=(0, 0, -0.6), mat_index=GLOW)
+    finish(pm, "rune_seal", ROLES["player_accent"]["body"], 0.5)
+
+
+M12_PROPS = M12_PROPS + (brazier, bn_spikes, rune_seal)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,

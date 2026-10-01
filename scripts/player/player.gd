@@ -101,6 +101,12 @@ var _heal_rate: float = 0.0
 var _hots: Dictionary = {}
 ## M12: the heal-over-time id of a meal (separate from ally heals).
 const FOOD_HOT := &"food"
+## M12: a slow on this hero (the strongest one wins; the druid's Rootwalk
+## clears it): share of the speed taken away, and how long it still lasts.
+const CHILL_SLOW := 0.4
+const CHILL_SLOW_TIME := 3.0
+var slow_pct: float = 0.0
+var _slow_left: float = 0.0
 ## M11: timed stat bonuses (a Growth Totem): key -> [value, seconds left].
 ## stat() adds them.
 var _buffs: Dictionary = {}
@@ -646,7 +652,23 @@ func buff_time(key: StringName) -> float:
 	return float((b as Array)[1]) if b is Array else 0.0
 
 
+## M12: slows this hero by `pct` for `seconds` (the stronger slow wins).
+func apply_slow(pct: float, seconds: float) -> void:
+	if pct >= slow_pct or _slow_left <= 0.0:
+		slow_pct = clampf(pct, 0.0, 0.9)
+	_slow_left = maxf(_slow_left, seconds)
+
+
+func clear_slow() -> void:
+	slow_pct = 0.0
+	_slow_left = 0.0
+
+
 func _tick_support(delta: float) -> void:
+	if _slow_left > 0.0:
+		_slow_left -= delta
+		if _slow_left <= 0.0:
+			slow_pct = 0.0
 	for id: StringName in _hots.keys():
 		var h: Array = _hots[id]
 		if health.is_dead:
@@ -678,7 +700,8 @@ func _tick_support(delta: float) -> void:
 ## nor hitting, yet its party is fighting.
 func fight_near() -> bool:
 	for e in EnemyBase.all_enemies:
-		if not is_instance_valid(e) or e.ai_state in [EnemyBase.AIState.DEAD, EnemyBase.AIState.IDLE, EnemyBase.AIState.RETURN]:
+		if not is_instance_valid(e) or e.ai_state in [EnemyBase.AIState.DEAD, EnemyBase.AIState.IDLE, EnemyBase.AIState.RETURN] \
+				or not e.targetable:
 			continue
 		if (e.target == null or not is_instance_valid(e.target)) and e.target_peer == 0:
 			continue
@@ -1183,7 +1206,7 @@ func is_sprinting() -> bool:
 
 func _process_move(delta: float) -> void:
 	var dir := _move_input_dir()
-	var target_vel := dir * MAX_SPEED * (1.0 + stat(&"move_pct") / 100.0)
+	var target_vel := dir * MAX_SPEED * (1.0 + stat(&"move_pct") / 100.0) * (1.0 - slow_pct)
 	if is_sprinting():
 		target_vel *= SPRINT_MULT
 	elif intent.sprint and dir != Vector3.ZERO and is_local \
@@ -1399,6 +1422,8 @@ func take_hit(hit: HitInfo) -> bool:
 			return false
 	if not health.apply_hit(hit):
 		return false
+	if hit.applies_chill and not hit.from_player:
+		apply_slow(CHILL_SLOW, CHILL_SLOW_TIME)  # M12: the mourner's scream
 	var push := (global_position - hit.source_position)
 	push.y = 0
 	_knockback_velocity += push.normalized() * hit.knockback
