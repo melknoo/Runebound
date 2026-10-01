@@ -1336,10 +1336,10 @@
    "pad": 11,
    "radius": 12.0,
    "composition": [
-    "brute",
-    "assassin",
-    "caster",
-    "rusher"
+    "ash_jackal",
+    "ash_jackal",
+    "ash_jackal",
+    "carrion_vulture"
    ],
    "banners": 3,
    "y": 22.089,
@@ -1644,6 +1644,22 @@
    ],
    "y": 25.907,
    "biome": "burnt_forest"
+  },
+  {
+   "id": "lurker_b1",
+   "type": "lurker",
+   "pos": [
+    132,
+    -112
+   ],
+   "yaw": 0.0,
+   "pad": 0,
+   "radius": 26.0,
+   "composition": [
+    "carrion_vulture"
+   ],
+   "y": 19.301,
+   "biome": "bone_field"
   },
   {
    "id": "vig_fallen_s",

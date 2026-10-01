@@ -29,6 +29,8 @@ var gather_nodes: Dictionary = {}
 ## M12 phase 3: puzzles (PoiPuzzle, the dodge run) and grottos by POI id.
 var puzzles: Dictionary = {}
 var grottos: Dictionary = {}
+## M12 phase 5: the hares and crows around the local hero (null on the server).
+var critter_field: CritterField
 var arena_centre: Vector3 = Vector3.ZERO
 var _boss_spawn: Vector3 = Vector3.ZERO
 var _boss_started: bool = false
@@ -198,6 +200,7 @@ func _build_zone() -> void:
 	_dress_biomes()
 	_place_gather_nodes()
 	_dress_secret_routes()
+	critter_field = CritterField.create(self, layout)  # M12: the animals (local, none on the server)
 	_add_ambience("wind_loop", Vector3.INF, -14.0)
 
 

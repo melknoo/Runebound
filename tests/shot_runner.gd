@@ -8,7 +8,8 @@ extends Node
 ##             look settings go through LookDev.apply()
 ##   shots     [{name, player:[x,y,z], face (yaw rad), yaw, pitch, zoom, clear,
 ##             spawners, spawn:[{id, at:[x,y,z], face, freeze, call}], actions:[...],
-##             settle}]
+##             settle, critters:[{kind: hare|crow, at, face}]}]  (M12: the field's own
+##             animals go away for that shot; these stand still where they are put)
 ## Actions: {"do": "melee"|"ember"|"earthbreaker"|"storm_step"|"chain_spark"|
 ## "fracture_rune"|"dodge"|"tab"}, {"wait": s}, {"press": action, "for": s},
 ## {"hold": action} / {"release": action} (e.g. keep running while casting),
@@ -28,6 +29,7 @@ extends Node
 ## Ylva's shop, lays three flasks 6 m ahead.
 
 var list_path: String = ""
+var _shot_critters: Array[Critter] = []
 
 var _zone: ZoneBase
 var _list: Dictionary = {}
@@ -91,6 +93,10 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 					or child is WardingRune:
 				child.free()
 		_zone.hud.hide_boss_bar()  # a boss freed with the wave must not keep its bar (and hide the compass)
+	for critter in _shot_critters:  # M12: the animals posed for the shot before
+		if is_instance_valid(critter):
+			critter.free()
+	_shot_critters.clear()
 	if shot.has("player"):
 		player.global_position = _pos(_zone, shot["player"])
 		player.velocity = Vector3.ZERO
@@ -118,6 +124,18 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 			enemy.visual.rotation.y = float(spec["face"])
 		if spec.get("freeze", false):
 			frozen.append(enemy)
+	var field: CritterField = _zone.get(&"critter_field") if &"critter_field" in _zone else null
+	if field != null:
+		CritterField.enabled = not shot.has("critters")
+		field.tick()
+	for spec: Dictionary in shot.get("critters", []):
+		var kind := Critter.Kind.CROW if String(spec.get("kind", "hare")) == "crow" else Critter.Kind.HARE
+		var critter := Critter.create(_zone, kind, _pos(_zone, spec.get("at", [0, 0.2, 0])))
+		critter.rotation.y = float(spec.get("face", critter.rotation.y))
+		if critter.anim != null:
+			critter.anim.advance(0.05)  # the first idle pose, then hold it
+		critter.set_process(false)
+		_shot_critters.append(critter)
 	await _wait(0.25)  # let spawns land before freezing them in place
 	for enemy in frozen:
 		if is_instance_valid(enemy):

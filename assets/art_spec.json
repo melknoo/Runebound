@@ -299,6 +299,81 @@
 			],
 			"eyes": "#FFE2A8"
 		},
+		"ash_jackal": {
+			"_rule": "M12 bone field (the carrion brood): a lean ash-grey jackal; fur base step 2 clears the bone-dust ground (25-40 L*) by >= 15, a dark back stripe and ears, pale rib bones, ember eyes",
+			"fur": [
+				"#5A5146",
+				"#70665A",
+				"#8A8070",
+				"#A39886"
+			],
+			"dark": [
+				"#2E2924",
+				"#3E3730",
+				"#4E463C"
+			],
+			"bone": [
+				"#A89D8A",
+				"#C4B9A4",
+				"#DCD2BE"
+			],
+			"eyes": "#FF8A3A"
+		},
+		"carrion_vulture": {
+			"_rule": "M12 bone field (the carrion brood): a great bald vulture; dark wings for the silhouette against the sky, the body on step 3 and a pale ruff for the read on the ground, a raw red head, a bone beak, amber eyes",
+			"feathers": [
+				"#4A4038",
+				"#5E5248",
+				"#76695C",
+				"#8E8070",
+				"#A89A88"
+			],
+			"ruff": [
+				"#B8AE9C",
+				"#D0C7B6",
+				"#E6DFD0"
+			],
+			"skin": [
+				"#7A4038",
+				"#94524A",
+				"#B06A5E"
+			],
+			"beak": [
+				"#8C8272",
+				"#A89D8A",
+				"#C4B9A4"
+			],
+			"eyes": "#FFD25A"
+		},
+		"ash_hare": {
+			"_rule": "M12 animals (scenery, no outline, no glowing eyes): a grey-brown hare a step above the ash ground, white scut and belly",
+			"fur": [
+				"#6E6454",
+				"#887C68",
+				"#A49680",
+				"#BEB09A"
+			],
+			"belly": [
+				"#C8BFAE",
+				"#DCD4C4"
+			],
+			"eye": [
+				"#1A1612"
+			]
+		},
+		"carrion_crow": {
+			"_rule": "M12 animals (scenery, no outline): a small black crow with a blue-grey sheen, far smaller than the vulture",
+			"black": [
+				"#16161A",
+				"#222228",
+				"#30303A",
+				"#40404C"
+			],
+			"beak": [
+				"#2A2A2E",
+				"#3A3A40"
+			]
+		},
 		"runebreaker": {
 			"iron": [
 				"#2B303B",

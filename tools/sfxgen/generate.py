@@ -624,6 +624,37 @@ def wild_bloom():
     save(pad(whoosh, delay(chord, 0.06)), "wild_bloom_01")
 
 
+# --- M12 phase 5: the carrion brood (appended: keep the RNG order above) ---
+
+def jackal_snarl(i: int):
+    """A dry rasping snarl: a growl buzz under a breathy hiss."""
+    d = 0.42
+    x = t(d)
+    f0 = 92.0 + 14.0 * i
+    buzz = np.sign(np.sin(2 * np.pi * f0 * x + 0.6 * np.sin(2 * np.pi * 7.0 * x))) * 0.25
+    growl = lowpass(buzz, 0.12) * env_exp(d, 0.22, 0.03)
+    hiss = highpass(noise(d), 0.4) * env_exp(d, 0.12, 0.02) * 0.25
+    save(pad(growl, hiss), f"jackal_snarl_{i:02d}")
+
+
+def vulture_screech():
+    """A harsh falling screech from high up."""
+    d = 0.7
+    cry = sine_sweep(d, 1650.0, 900.0)
+    rough = cry * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 63.0 * t(d))))
+    body = lowpass(rough, 0.35) * env_exp(d, 0.3, 0.04) * 0.5
+    air = highpass(noise(d), 0.5) * env_exp(d, 0.2, 0.05) * 0.15
+    save(pad(body, air), "vulture_screech_01")
+
+
+def wing_beat(i: int):
+    """Big wings: a soft thump of air and a feathery whoosh."""
+    d = 0.32
+    whump = lowpass(noise(d), 0.04) * env_exp(d, 0.08, 0.02) * 0.8
+    feather = lowpass(highpass(noise(d), 0.25), 0.6) * env_exp(d, 0.1, 0.03) * 0.3
+    save(pad(whump, delay(feather, 0.02 + 0.01 * i)), f"wing_beat_{i:02d}")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -654,4 +685,9 @@ if __name__ == "__main__":
     for i in range(1, 3):
         thorn_volley(i)
     mend(); barkskin(); root_grasp(); grove(); thornfield(); totem(); wild_bloom()
+    for i in range(1, 3):
+        jackal_snarl(i)
+    vulture_screech()
+    for i in range(1, 3):
+        wing_beat(i)
     print("done.")

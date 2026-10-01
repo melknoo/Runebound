@@ -847,7 +847,7 @@ func _warm_up_ids() -> Array[String]:
 ## M12: every enemy a spawn id can name (camps, the net, tests); bosses are
 ## spawned by their zones only. An unknown id is a rusher (and a warning).
 const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "warden", "colossus", "vessel",
-	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]
+	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture"]
 const BOSS_TYPES: Array[String] = ["colossus", "vessel"]
 
 
@@ -863,6 +863,8 @@ static func _enemy_script(id: String) -> GDScript:
 		"mourner": return Mourner
 		"cinderbark": return Cinderbark
 		"smoulder_wisp": return SmoulderWisp
+		"ash_jackal": return AshJackal
+		"carrion_vulture": return CarrionVulture
 	return MeleeRusher
 
 

@@ -159,6 +159,43 @@ only the new texts bilingual, the first start follows the system language).
   - Smoke 667 green (rigs and timings, the registry, buried / dormant /
     awake, the scream's slow, the blink); net `enemy_types` green with all
     13 types as puppets.
+- **Phase 5 (built): the bone field's family and the animals.**
+  - **The carrion brood (Ribs of Emberfall):** the **Ash Jackal** hunts in a
+    pack of three: it trots in a ring around a hero, crouches with its jaws
+    open while a disc fills a leap ahead (where the hero stands), springs
+    and bites. The pack takes turns (no two leaps at one hero within
+    0.9 s), so it reads as a rhythm to dodge. The **Carrion Vulture**
+    circles 6.5 m up, out of reach (no target, no hit, a shadow on the
+    ground), throws its wings up while a lane fills toward a hero, swoops
+    down it (the hero still in it is struck) and lands at its end: on the
+    ground for 2.2 s, the moment to punish it, then it beats back up. Only
+    heavy hits stagger it. In the air its body only stops colliding (it
+    glides over rocks and trunks along the ground); its visual flies.
+  - Camp 7 holds the brood (three jackals and a vulture; label "Carrion
+    den"), a lone vulture lurks over the bones (lurker_b1). The elite
+    raider patrol keeps its route through the field.
+  - **Animals:** hares in the ash and the village, crows on the village's
+    graves and the bone field, none in the burnt forest (`CritterField`:
+    up to 8 around the local hero, 22-42 m out, rather where the camera is
+    not looking; never in a combat pad's clearing). They graze or peck,
+    then flee from any hero (puppets too): a hare sits up at 11 m and bolts
+    in zigzag hops at 7 m, a crow takes off at 8 m and flies off. No body,
+    no collider, no outline, never an enemy or a target, nothing on the
+    net, none on the server. LookDev `critters` (perf A/B in the village:
+    no measurable cost).
+  - Two new rig templates (four-legged, winged; ART_BIBLE §7) and four rigs
+    from them; sounds for the snarl, the screech and wing beats.
+  - Fix from the solo check: an ambush wakes its cinderbarks at once (one
+    spawned 6-9 m off the hero stayed a tree once the fight around it
+    ended).
+  - Solo check L6: camp 7 and the vulture lurker clear for all three
+    classes (14 damage for the Elementalist and the Runebreaker, 28 for
+    the Druid). Ruin 3 as in phase 4 (the Runebreaker bot dies there; the
+    others clear it, the Elementalist 14/14 after the ambush fix).
+  - Smoke 676 green (rigs and timings, the brood's camp, the vulture aloft
+    and landed, the pack's turns and the leap, the animals' biomes, a hare
+    bolting, a crow flying off); net `enemy_types` green with all 15 types
+    as puppets.
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

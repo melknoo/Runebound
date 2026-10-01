@@ -337,3 +337,11 @@
   whether its ember tell is enough to spot it is a playtest question.
 - **No navmesh:** the cinderbark walks straight; the forest keeps 14 m
   clearings around combat pads.
+- **The carrion brood may be too easy:** in the solo check camp 7 cost each
+  class only 14-28 damage (the jackals' leap is telegraphed and short, the
+  vulture strikes once per dive). Tune after the playtest (bite 9, dive 14,
+  the pack gap 0.9 s).
+- **Net suite `travel` under load:** in the full net suite the late joiner
+  sometimes misses its window (c3 sees no puppets, c1/c2 time out); the
+  scenario passes alone (2 of 2). Check again at the M12 wrap-up, with the
+  failing run's logs kept.

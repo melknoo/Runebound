@@ -275,6 +275,8 @@ func _run() -> void:
 		["mourner", ["idle", "glide", "charge", "cast", "stagger"], "charge", Mourner.WINDUP_TIME],
 		["cinderbark", ["idle", "run", "slam", "stagger", "dormant", "wake"], "slam", Cinderbark.WINDUP_TIME + Cinderbark.RECOVER_TIME],
 		["smoulder_wisp", ["idle", "glide", "charge", "cast", "stagger"], "charge", SmoulderWisp.WINDUP_TIME],
+		["ash_jackal", ["idle", "run", "trot", "pounce", "stagger"], "pounce", AshJackal.WINDUP_TIME + AshJackal.LEAP_TIME],
+		["carrion_vulture", ["idle", "soar", "charge", "swoop", "takeoff", "stagger"], "charge", CarrionVulture.DIVE_WINDUP],
 	]
 	for spec: Array in rig_specs:
 		var foe := ZoneBase.make_enemy(spec[0])
@@ -3139,6 +3141,85 @@ func _run() -> void:
 	_check(wisp.global_position.distance_to(wisp_from) >= SmoulderWisp.BLINK_MIN - 0.5 and wisp.visual.visible
 		and wisp.ai_state == EnemyBase.AIState.CHASE, "a cornered smoulder wisp blinks away (%.1f m)" % wisp.global_position.distance_to(wisp_from))
 	wisp.queue_free()
+	await _wait_frames(2)
+	# --- M12 phase 5: the bone field's carrion brood and the animals ---
+	var c7_comp := PoiBuilder.composition_of(hl_layout.find("camp_7"))
+	var brood_ok := is_instance_of(ZoneBase.make_enemy("ash_jackal"), AshJackal) \
+		and is_instance_of(ZoneBase.make_enemy("carrion_vulture"), CarrionVulture)
+	_check(brood_ok and c7_comp.count("ash_jackal") == 3 and c7_comp.has("carrion_vulture")
+		and highlands.camps.has("lurker_b1")
+		and AshenHighlands.marker_label(hl_layout.find("camp_7")) == Texts.t("map.camp.bone_field"),
+		"camp 7 holds the carrion brood (three jackals and a vulture), a vulture lurks over the bones")
+	var brood_spot := foe_spot  # the forest shrine's clearing: the bone field would wake the elite patrol
+	hero12.global_position = highlands.ground_point(brood_spot + Vector3(0, 0, 7.0), 0.2)
+	hero12.health.current_health = hero12.health.max_health
+	var vult := highlands.spawn_by_id("carrion_vulture", highlands.ground_point(brood_spot, 0.2)) as CarrionVulture
+	await _wait_frames(3)
+	var aloft_ok := CarrionVulture.airborne(vult.ai_state) and not vult.targetable and vult.collision_layer == 0 \
+		and vult.collision_mask == 0 and not vult.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, brood_spot))
+	var aimed_v := false
+	for cand in highlands.targeting.gather_candidates():
+		aimed_v = aimed_v or cand == vult
+	vult.player = hero12
+	vult.global_position = highlands.ground_point(brood_spot, 0.2)
+	vult.velocity = Vector3.ZERO
+	var hp_vult := hero12.health.current_health
+	vult._start_dive()
+	await _wait_frames(int((CarrionVulture.DIVE_WINDUP + CarrionVulture.DIVE_TIME) * 60.0) + 6)
+	var landed_ok := vult.ai_state == EnemyBase.AIState.RECOVER and vult.targetable and vult.collision_layer == 0b100 \
+		and vult.global_position.distance_to(brood_spot) > CarrionVulture.DIVE_LENGTH - 2.0
+	_check(aloft_ok and not aimed_v and landed_ok and hero12.health.current_health < hp_vult,
+		"a carrion vulture circles out of reach, swoops down its lane (the hero in it is struck) and lands, open to hits")
+	await _wait_frames(int((CarrionVulture.LANDED_TIME + CarrionVulture.TAKEOFF_TIME) * 60.0) + 6)
+	_check(CarrionVulture.airborne(vult.ai_state) and not vult.targetable,
+		"after LANDED_TIME on the ground the vulture beats back up into the air")
+	vult.queue_free()
+	hero12.health.current_health = hero12.health.max_health
+	AshJackal._next_leap_at.clear()
+	var jack_a := highlands.spawn_by_id("ash_jackal", highlands.ground_point(brood_spot + Vector3(-4, 0, 0), 0.2)) as AshJackal
+	var jack_b := highlands.spawn_by_id("ash_jackal", highlands.ground_point(brood_spot + Vector3(4, 0, 0), 0.2)) as AshJackal
+	await _wait_frames(2)
+	jack_a.player = hero12
+	jack_b.player = hero12
+	var turns_ok := jack_a._claim_leap() and not jack_b._claim_leap()
+	jack_b.queue_free()
+	hero12.global_position = highlands.ground_point(jack_a.global_position + Vector3(0, 0, -AshJackal.LEAP_DIST), 0.2)
+	jack_a.velocity = Vector3.ZERO
+	var jack_from := jack_a.global_position
+	var hp_jack := hero12.health.current_health
+	jack_a._start_windup()
+	await _wait_frames(int((AshJackal.WINDUP_TIME + AshJackal.LEAP_TIME) * 60.0) + 4)
+	_check(turns_ok and hero12.health.current_health < hp_jack and jack_a.global_position.distance_to(jack_from) > 3.0
+		and jack_a.ai_state in [EnemyBase.AIState.RECOVER, EnemyBase.AIState.RETREAT],
+		"ash jackals take turns at a hero; a crouch, the leap onto the marked spot, the bite (%.1f m)" % jack_a.global_position.distance_to(jack_from))
+	jack_a.queue_free()
+	hero12.health.current_health = hero12.health.max_health
+	var field := highlands.critter_field
+	var kinds_ok := CritterField.kind_for(Vector3(0, 1, 0), 0.5) == -1 and CritterField.kind_for(Vector3(0, 0, 1), 0.9) == Critter.Kind.CROW \
+		and CritterField.kind_for(Vector3.ZERO, 0.5) == Critter.Kind.HARE and CritterField.kind_for(Vector3(1, 0, 0), 0.3) == Critter.Kind.CROW
+	hero12.global_position = highlands.ground_point(Vector3(-20.0, 0.0, 150.0), 0.2)
+	if field != null:
+		for i in 40:
+			field.tick()
+	var crit_count := field.critters.size() if field != null else 0
+	var crit_clean := field != null and field.find_children("*", "CollisionObject3D", true, false).is_empty()
+	_check(field != null and kinds_ok and crit_count >= 1 and crit_count <= CritterField.MAX_ACTIVE and crit_clean,
+		"the animals: hares in the ash, crows on the bones, none in the burnt forest; %d around the hero, no bodies, no enemies" % crit_count)
+	var hare := Critter.create(highlands, Critter.Kind.HARE, hero12.global_position + Vector3(5.0, 0, 0))
+	var crow := Critter.create(highlands, Critter.Kind.CROW, hero12.global_position + Vector3(-5.0, 0, 0))
+	for i in 40:
+		await get_tree().process_frame
+	var hare_d := hare.global_position.distance_to(hero12.global_position) if is_instance_valid(hare) else 0.0
+	var crow_up := is_instance_valid(crow) and crow.state == Critter.State.FLEE and crow.height > 0.2
+	_check(is_instance_valid(hare) and hare.state == Critter.State.FLEE and hare_d > 6.0 and crow_up,
+		"a hare bolts from a hero (%.1f m off), a crow takes off" % hare_d)
+	var crow_t := 0.0
+	while is_instance_valid(crow) and crow_t < Critter.CROW_GONE + 2.0:
+		await get_tree().process_frame
+		crow_t += get_process_delta_time()
+	_check(not is_instance_valid(crow), "the crow is gone after its flight (%.1f s)" % crow_t)
+	if is_instance_valid(hare):
+		hare.queue_free()
 	await _wait_frames(2)
 	hero12.global_position = hero_home
 

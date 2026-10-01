@@ -195,6 +195,22 @@ posterize moves values in bands of about 7 L*, and fog lifts distant ground.
   texture.
 - Parts are rigid-skinned on a humanoid template. No root motion: hips stay
   within 0.15 m of the origin. The gameplay `Visual` node owns yaw and scale.
+- M12 adds two more templates in `generate_characters_v2.py`, with the same
+  axis rules (Z-up, faces -Y, every body and leg bone in a plane of constant
+  X, so +X swings a hanging leg back and pitches a forward bone down):
+  - **Four-legged** (`quadruped_bones`): hips (the pivot, upward like the
+    humanoid's), spine and chest forward, neck, head, jaw, tail; per side
+    `f_upper/f_lower/f_paw` and `h_thigh/h_shin/h_hock/h_paw`. Joints come
+    as side-view points, so one template covers the Ash Jackal and the Ash
+    Hare.
+  - **Winged** (`bird_bones`): hips, body, neck, head, tail, per side
+    `wing/wingtip` (pointing sideways: +X raises either wing, +Z sweeps the
+    left one back and the right one forward) and `leg/foot`. The wings are
+    built level with the standing body; flight poses pitch the body forward
+    by its rise and roll the wings back by the same angle (`wings(..., roll)`),
+    so they fly level. Used by the Carrion Vulture and the Carrion Crow.
+  - No bone may point straight along -Y (Blender's roll flips there): keep
+    every forward bone a few degrees off the axis.
 - At most 3 surfaces per character:
   - body (atlas)
   - glow (eyes, runes), never hit-flashed
@@ -214,6 +230,9 @@ posterize moves values in bands of about 7 L*, and fog lifts distant ground.
 ### Outline
 Every character body gets a stencil outline (0.012 thickness, #0B0810).
 Props and environment never get one: the outline marks "this can act".
+The M12 ghosts and animals (hares, crows) are characters without it: they
+never act. Animals also get no glowing eyes, and are drawn 1.35-1.4x life
+size so they read at the camera's distance.
 
 ### Gameplay envelope and validation
 - Silhouettes stay within ±15 % of the hurtbox (r 0.55, h 1.7) and below
@@ -373,6 +392,12 @@ gameplay timing is untouched.
 | Hollow Warden | square violet-grey slabs, tower shield fused to the chest front ("not here"), teal rune core on the back ("hit here"), bladed forearms | idle, walk, windup (coils against the Visual's pre-turn), spin, stagger |
 | Ashvein Colossus (x1.7) | ash-grey basalt hulk, curled horns, ember veins and back crystals on a code-owned surface that ramps up on enrage | idle, walk, slam (rate follows the enraged 0.65 s windup), charge_windup, charge, stun, roar, stagger |
 | Vessel (x1.4) | floating lavender crystal, violet heart, crystal-blade arms, four orbiting shards | idle, glide, slam, shatter (segments burst apart), p2_idle, fan, stagger |
+| Grave Shambler (M12) | grey-green rot skin over the village ground, torn smock, bare ribs, bone claws, sickly gold eyes | idle, run (dragging), attack, stagger, emerge (from 1.4 m under the ground) |
+| Mourner (M12) | pale shroud with torn strips, no feet, a veil and long hair, a dark hollow face with pale-blue eyes | idle, glide, charge (head back, arms wide), cast (the scream), stagger |
+| Cinderbark (M12) | a split charred trunk with ember cracks, branch arms, root feet, a crown of dead branches | dormant (one more trunk), wake, idle, run, slam, stagger |
+| Smoulder Wisp (M12) | a sooty husk around a burning heart, flame tongues, hot pale eyes | idle, glide, charge, cast (the spit), stagger |
+| Ash Jackal (M12, four-legged) | lean ash-grey dog, dark back stripe and ears, pale ribs showing, ember eyes | idle, run (gallop), trot (circling), pounce (crouch = WINDUP, leap = LEAP_TIME), stagger |
+| Carrion Vulture (M12, winged, x1.25) | dark wings for the sky silhouette, a step-3 body and pale ruff for the ground read, raw red bald head, bone beak | idle (on the ground, mantling), soar, charge (wings up in a V = DIVE_WINDUP), swoop (tucked dive, flare), takeoff, stagger |
 
 - Elites keep their model and get an aura only: eyes burn in the affix's
   element colour, and element motes rise off the body. There is no ground

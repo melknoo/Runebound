@@ -454,7 +454,7 @@ class Driver extends Node:
 				zone.player.debug_learn_all()
 				zone.player.god_mode = true  # the bosses' hits must not end the run
 				var wanted: Array[String] = ["rusher", "caster", "brute", "assassin", "warden", "colossus", "vessel",
-					"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]
+					"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture"]
 				var all_seen := func() -> bool:
 					watch.call()
 					for t in wanted:
@@ -466,6 +466,12 @@ class Driver extends Node:
 				if not await _until(func() -> bool:
 					watch.call()
 					return world.enemies.is_empty(), 100.0, "every enemy dead"):
+					var left: Array[String] = []
+					for id: int in world.enemies:
+						var e := world.enemies[id] as EnemyBase
+						if is_instance_valid(e):
+							left.append("%s %s" % [e.type_id, EnemyBase.AIState.keys()[e.ai_state]])
+					print("[test %s] still alive: %s" % [role, ", ".join(left)])
 					return
 				if not boss_bar[0]:
 					_finish("fail: no boss bar while a boss was up")

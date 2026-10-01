@@ -497,6 +497,247 @@
      "face": 0.585
     }
    ]
+  },
+  {
+   "name": "enemy_jackals",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     2.48,
+     0.2,
+     3.73
+    ]
+   },
+   "yaw": 1.007,
+   "pitch": -0.14,
+   "zoom": 6.0,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "ash_jackal",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "face": 0.587
+    },
+    {
+     "id": "ash_jackal",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       -1.8,
+       0.2,
+       -1.0
+      ]
+     },
+     "freeze": true,
+     "face": 1.2
+    },
+    {
+     "id": "ash_jackal",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       1.2,
+       0.2,
+       -2.0
+      ]
+     },
+     "freeze": true,
+     "face": 0.1
+    }
+   ]
+  },
+  {
+   "name": "enemy_jackal_pounce",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     3.5,
+     0.2,
+     5.0
+    ]
+   },
+   "yaw": 1.2,
+   "pitch": -0.2,
+   "zoom": 6.0,
+   "settle": 0.35,
+   "spawn": [
+    {
+     "id": "ash_jackal",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "call": "_start_windup"
+    }
+   ]
+  },
+  {
+   "name": "enemy_vulture_air",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     4.6,
+     0.2,
+     6.9
+    ]
+   },
+   "yaw": 1.0,
+   "pitch": 0.18,
+   "zoom": 7.0,
+   "settle": 0.9,
+   "spawn": [
+    {
+     "id": "carrion_vulture",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "call": "_start_dive"
+    }
+   ]
+  },
+  {
+   "name": "enemy_vulture_landed",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     2.75,
+     0.2,
+     4.15
+    ]
+   },
+   "yaw": 1.005,
+   "pitch": -0.12,
+   "zoom": 5.0,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "carrion_vulture",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true,
+     "call": "land",
+     "face": 0.585
+    }
+   ]
+  },
+  {
+   "name": "animals_ash",
+   "player": {
+    "poi": "camp_1",
+    "offset": [
+     -6,
+     0.2,
+     30
+    ]
+   },
+   "yaw": 1.0,
+   "pitch": -0.3,
+   "zoom": 3.0,
+   "settle": 0.5,
+   "critters": [
+    {
+     "kind": "hare",
+     "at": {
+      "poi": "camp_1",
+      "offset": [
+       -7.9,
+       0.2,
+       27.1
+      ]
+     },
+     "face": 2.4
+    },
+    {
+     "kind": "hare",
+     "at": {
+      "poi": "camp_1",
+      "offset": [
+       -8.9,
+       0.2,
+       27.9
+      ]
+     },
+     "face": 0.4
+    }
+   ]
+  },
+  {
+   "name": "animals_bones",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     2.48,
+     0.2,
+     3.73
+    ]
+   },
+   "yaw": 1.007,
+   "pitch": -0.3,
+   "zoom": 3.0,
+   "settle": 0.5,
+   "critters": [
+    {
+     "kind": "crow",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       0.0,
+       0.2,
+       0.0
+      ]
+     },
+     "face": 1.0
+    },
+    {
+     "kind": "crow",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       -0.7,
+       0.2,
+       0.5
+      ]
+     },
+     "face": 2.6
+    },
+    {
+     "kind": "crow",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       0.6,
+       0.2,
+       -0.6
+      ]
+     },
+     "face": -0.5
+    }
+   ]
   }
  ]
 }

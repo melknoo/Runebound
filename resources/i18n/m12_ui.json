@@ -140,6 +140,14 @@
 		"en": "Smoulder Wisp",
 		"de": "Schwelirrlicht"
 	},
+	"enemy.ash_jackal": {
+		"en": "Ash Jackal",
+		"de": "Aschschakal"
+	},
+	"enemy.carrion_vulture": {
+		"en": "Carrion Vulture",
+		"de": "Aasgeier"
+	},
 	"map.camp.village": {
 		"en": "Haunt of the Restless",
 		"de": "Spukort der Ruhelosen"

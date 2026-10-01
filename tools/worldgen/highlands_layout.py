@@ -182,7 +182,7 @@ LAYOUT = {
          "composition": ["elite", "rusher", "rusher"], "wake_radius": 55.0},
         {"id": "bone_field", "type": "landmark", "pos": [108, -96], "yaw": 0.0, "pad": 0, "prop": "bone_field"},
         {"id": "camp_7", "type": "camp", "pos": [70, -118], "yaw": 0.0, "pad": 11, "radius": 12.0,
-         "composition": ["brute", "assassin", "caster", "rusher"], "banners": 3},
+         "composition": ["ash_jackal", "ash_jackal", "ash_jackal", "carrion_vulture"], "banners": 3},  # M12: the carrion brood
         {"id": "ambush_2", "type": "ambush", "pos": [10, -72], "yaw": 0.0, "pad": 4, "radius": 7.0,
          "composition": ["assassin", "assassin"]},
         {"id": "wp_northreach", "type": "waypoint", "pos": [-32, -80], "yaw": 0.0, "pad": 5,
@@ -215,6 +215,9 @@ LAYOUT = {
         # M12: cinderbarks standing among the forest's trunks (wake when a hero comes close)
         {"id": "lurker_f1", "type": "lurker", "pos": [-128, -58], "yaw": 0.0, "pad": 0, "composition": ["cinderbark"]},
         {"id": "lurker_f2", "type": "lurker", "pos": [-95, -128], "yaw": 0.0, "pad": 0, "composition": ["cinderbark"]},
+        # M12 phase 5: a vulture circling over the bone field's dead
+        {"id": "lurker_b1", "type": "lurker", "pos": [132, -112], "yaw": 0.0, "pad": 0, "radius": 26.0,
+         "composition": ["carrion_vulture"]},
         # M12 places that tell a story without text (small: no pad, off the trails)
         {"id": "vig_fallen_s", "type": "vignette", "kind": "fallen", "pos": [-24, 140], "yaw": 0.6, "pad": 0},
         {"id": "vig_camp_old", "type": "vignette", "kind": "abandoned_camp", "pos": [-80, 140], "yaw": 0.3, "pad": 0},

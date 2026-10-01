@@ -142,6 +142,8 @@ func _spawn_pack(zone: ZoneBase, centre: Vector3, ring: Vector2) -> void:
 			enemy = zone.spawn_by_id(composition[i], pos)
 		enemy.home = home
 		enemy.leash = leash
+		if around_players and enemy.has_method(&"wake"):
+			enemy.call(&"wake")  # M12: an ambush comes at you - no cinderbark stays a tree in it
 		_pack.append(enemy)
 		spawn_frames.append(Engine.get_physics_frames())
 		enemy.enemy_died.connect(_on_pack_member_died.bind(zone))

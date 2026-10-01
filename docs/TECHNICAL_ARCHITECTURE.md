@@ -586,6 +586,16 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
   layout. An enemy out of play calls `set_targetable(false)` (on every
   machine, from its state: `_apply_presence` in `_present_state` too, so
   puppets follow). Heroes: `Player.apply_slow(pct, s)` / `clear_slow()`.
+- **Fliers (phase 5):** the Carrion Vulture's body stays on the ground in
+  every state; in the air (`CarrionVulture.airborne`) it only drops its
+  collision mask and snaps to the heightmap (or the floor under it) each
+  tick, while `_process` lifts the visual to its altitude from the state,
+  so puppets fly too without any extra net data.
+- **Animals (phase 5):** `CritterField` (one per zone with a view, none on
+  the server) keeps `Critter` nodes (Node3D, no physics, own
+  AnimationPlayer with animation LOD) around the local hero. They read
+  `zone.players` to flee from everyone and never enter `all_enemies`, the
+  targeting, the music or the net.
 - **Areas:** areas may overlap; of those entered at once only the smallest
   names itself, and `Hud.area_name` replaces the name on show and waits for
   the zone's title card. New areas carry a text-table `name_key`.

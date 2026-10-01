@@ -191,8 +191,8 @@ func _types_verdict() -> String:
 		return "fail: roster spawned, nothing died yet"
 	if not _scale_ok:
 		return "fail: enemy health not scaled for 2 heroes"
-	if _types_kills < 13:  # M12: + the four new family enemies
-		return "fail: %d of 13 enemies killed" % _types_kills
+	if _types_kills < 15:  # M12: + the six new family enemies
+		return "fail: %d of 15 enemies killed" % _types_kills
 	if _types_credited < _types_kills:
 		return "fail: %d of %d kills credited to a player" % [_types_credited, _types_kills]
 	if _fx_count < 1:
@@ -204,9 +204,10 @@ func _types_verdict() -> String:
 func _spawn_roster(zone: ZoneBase) -> void:
 	var spots := [Vector3(-6, 0.2, -4), Vector3(-3, 0.2, -6), Vector3(0, 0.2, -7), Vector3(3, 0.2, -6),
 		Vector3(6, 0.2, -4), Vector3(-5, 0.2, -9), Vector3(5, 0.2, -9),
-		Vector3(-8, 0.2, -7), Vector3(8, 0.2, -7), Vector3(-2, 0.2, -11), Vector3(2, 0.2, -11)]
+		Vector3(-8, 0.2, -7), Vector3(8, 0.2, -7), Vector3(-2, 0.2, -11), Vector3(2, 0.2, -11),
+		Vector3(-6, 0.2, -12), Vector3(6, 0.2, -12)]
 	var ids := ["brute", "assassin", "warden", "caster", "rusher", "colossus", "vessel",
-		"grave_shambler", "mourner", "cinderbark", "smoulder_wisp"]  # M12 families
+		"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture"]  # M12 families
 	var spawned: Array[EnemyBase] = []
 	for i in ids.size():
 		var e := ZoneBase.make_enemy(ids[i])

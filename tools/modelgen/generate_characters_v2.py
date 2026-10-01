@@ -26,7 +26,7 @@ Run:
   & "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe" --background
       --python tools/modelgen/generate_characters_v2.py -- [runebreaker] [elementalist] [druid] [marauder] [duskweaver]
       [stonehulk] [veilstalker] [warden] [colossus] [vessel]
-      [shambler] [mourner] [cinderbark] [wisp] (M12) [--sheets]
+      [shambler] [mourner] [cinderbark] [wisp] [jackal] [vulture] [hare] [crow] (M12) [--sheets]
 --sheets also renders per-clip contact sheets to captures_contact/ (review).
 """
 import math
@@ -2318,6 +2318,543 @@ def wisp_clips(arm):
            {0: EXPO_OUT, 3: QUART_OUT})
 
 
+# ---------------------------------------------------------------------------
+# M12 phase 5: the four-legged and the winged template (the bone field's
+# carrion brood and the Highlands' animals). Conventions as above: Z-up,
+# faces -Y, L = +X. Every body and leg bone lies in a plane of constant X,
+# so its local X is world +X: +X swings a hanging leg BACK, pitches a
+# forward bone (spine, head, jaw) DOWN, bows an upward one forward and
+# lifts a tail that points back; +Z turns any of them toward the
+# character's right. Wings point sideways: +X raises either wing, +Z sweeps
+# the LEFT wing back and the RIGHT wing forward (mirror Z on the right).
+# No bone points straight along -Y (Blender's roll flips there).
+# ---------------------------------------------------------------------------
+
+def _yz(d, key, x=0.0):
+    y, z = d[key]
+    return (x, y, z)
+
+
+def quadruped_bones(d):
+    """d: side-view joints (fwd_y, z), forward = -Y: hip, shoulder (top of
+    the withers), neck, head (snout tip), jaw0/jaw1, tail; front leg f_top,
+    f_elbow, f_wrist, f_toe; hind leg h_top, h_stifle, h_hock, h_ankle,
+    h_toe; leg_x = half the track."""
+    hy, hz = d["hip"]
+    sy, sz = d["shoulder"]
+    mid = ((hy + sy) * 0.5, (hz + sz) * 0.5 + 0.015)
+    bones = [
+        ("root", None, (0, 0, 0), (0, 0, 0.25)),
+        ("hips", "root", (0, hy, hz), (0, hy, hz + 0.1)),          # upward: the whole body's pivot
+        ("spine", "hips", (0, hy, hz), (0, mid[0], mid[1])),
+        ("chest", "spine", (0, mid[0], mid[1]), (0, sy, sz)),
+        ("neck", "chest", (0, sy, sz), _yz(d, "neck")),
+        ("head", "neck", _yz(d, "neck"), _yz(d, "head")),
+        ("jaw", "head", _yz(d, "jaw0"), _yz(d, "jaw1")),
+        ("tail", "hips", (0, hy, hz), _yz(d, "tail")),
+    ]
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = d["leg_x"] * x
+        bones += [
+            ("f_upper." + side, "chest", _yz(d, "f_top", lx), _yz(d, "f_elbow", lx)),
+            ("f_lower." + side, "f_upper." + side, _yz(d, "f_elbow", lx), _yz(d, "f_wrist", lx)),
+            ("f_paw." + side, "f_lower." + side, _yz(d, "f_wrist", lx), _yz(d, "f_toe", lx)),
+            ("h_thigh." + side, "hips", _yz(d, "h_top", lx), _yz(d, "h_stifle", lx)),
+            ("h_shin." + side, "h_thigh." + side, _yz(d, "h_stifle", lx), _yz(d, "h_hock", lx)),
+            ("h_hock." + side, "h_shin." + side, _yz(d, "h_hock", lx), _yz(d, "h_ankle", lx)),
+            ("h_paw." + side, "h_hock." + side, _yz(d, "h_ankle", lx), _yz(d, "h_toe", lx)),
+        ]
+    return bones
+
+
+QUAD_LEGS = ("f_upper", "f_lower", "f_paw", "h_thigh", "h_shin", "h_hock", "h_paw")
+
+
+def quad_stance(extra=None):
+    pose = {"hips": {"rot": (0.0, 0.0, 0.0), "loc": (0.0, 0.0, 0.0)}, "spine": (0.0, 0, 0), "chest": (0.0, 0, 0),
+            "neck": (0.0, 0, 0), "head": (0.0, 0, 0), "jaw": (0.0, 0, 0), "tail": (0.0, 0, 0)}
+    for side in ("L", "R"):
+        for b in QUAD_LEGS:
+            pose[b + "." + side] = (0.0, 0, 0)
+    pose.update(extra or {})
+    return pose
+
+
+def _along(start, end):
+    """loft()/box() `rot` that lays local +Z along start->end (both (y, z),
+    forward = -Y), and the length: the form's rings run 0..length."""
+    dy, dz = end[0] - start[0], end[1] - start[1]
+    length = math.hypot(dy, dz)
+    return (math.atan2(-dy, dz), 0.0, 0.0), length
+
+
+def bird_bones(d):
+    """d: side-view joints (fwd_y, z): hip (top of the legs), chest (front of
+    the body), neck, head (beak tip), tail; shoulder (x, y, z) of the left
+    wing, wing / tip = the two half-span lengths, leg_x, knee_z, foot_len."""
+    hy, hz = d["hip"]
+    sx, sy, sz = d["shoulder"]
+    bones = [
+        ("root", None, (0, 0, 0), (0, 0, 0.25)),
+        ("hips", "root", (0, hy, hz), (0, hy, hz + 0.08)),           # upward: the whole bird's pivot
+        ("body", "hips", (0, hy, hz), _yz(d, "chest")),
+        ("neck", "body", _yz(d, "chest"), _yz(d, "neck")),
+        ("head", "neck", _yz(d, "neck"), _yz(d, "head")),
+        ("tail", "hips", (0, hy, hz), _yz(d, "tail")),
+    ]
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        bones += [
+            ("wing." + side, "body", (sx * x, sy, sz), ((sx + d["wing"]) * x, sy, sz)),
+            ("wingtip." + side, "wing." + side, ((sx + d["wing"]) * x, sy, sz), ((sx + d["wing"] + d["tip"]) * x, sy, sz)),
+            ("leg." + side, "hips", (d["leg_x"] * x, hy, hz), (d["leg_x"] * x, hy + 0.01, d["knee_z"])),
+            ("foot." + side, "leg." + side, (d["leg_x"] * x, hy + 0.01, d["knee_z"]),
+             (d["leg_x"] * x, hy - d["foot_len"], 0.01)),
+        ]
+    return bones
+
+
+def bird_stance(extra=None):
+    pose = {"hips": {"rot": (0.0, 0.0, 0.0), "loc": (0.0, 0.0, 0.0)}, "body": (0.0, 0, 0), "neck": (0.0, 0, 0),
+            "head": (0.0, 0, 0), "tail": (0.0, 0, 0)}
+    for side in ("L", "R"):
+        for b in ("wing", "wingtip", "leg", "foot"):
+            pose[b + "." + side] = (0.0, 0, 0)
+    pose.update(extra or {})
+    return pose
+
+
+def wings(open_l, tip_l=(0.0, 0.0, 0.0), roll=0.0):
+    """Both wings from the LEFT wing's Euler (the right mirrors Z and Y).
+    `roll`: the body's forward pitch to undo on the wings (they are built
+    level with the standing body; in level flight the body pitches forward)."""
+    left = (open_l[0], open_l[1] - roll, open_l[2])
+    return {"wing.L": left, "wing.R": (left[0], -left[1], -left[2]),
+            "wingtip.L": tip_l, "wingtip.R": (tip_l[0], -tip_l[1], -tip_l[2])}
+
+
+# --- ASH JACKAL: a lean grey carrion dog, ribs showing, ember eyes --------
+
+JACKAL = {"hip": (0.30, 0.64), "shoulder": (-0.30, 0.76), "neck": (-0.42, 0.92), "head": (-0.72, 0.84),
+          "jaw0": (-0.50, 0.85), "jaw1": (-0.70, 0.80), "tail": (0.62, 0.48),
+          "f_top": (-0.28, 0.64), "f_elbow": (-0.27, 0.36), "f_wrist": (-0.29, 0.07), "f_toe": (-0.37, 0.02),
+          "h_top": (0.30, 0.60), "h_stifle": (0.20, 0.40), "h_hock": (0.34, 0.16), "h_ankle": (0.31, 0.04),
+          "h_toe": (0.23, 0.01), "leg_x": 0.10}
+
+
+def build_jackal(sheets=False):
+    rig.reset_scene()
+    d = JACKAL
+    arm = rig.build_armature("jackal", quadruped_bones(d))
+    aj = PAL["ash_jackal"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    fur = pm.paint(aj["fur"], 2, "hide")
+    fur_light = pm.paint(aj["fur"], 3, "hide")
+    dark = pm.paint(aj["dark"], 1, "hide")
+    bone = pm.paint(aj["bone"], 1)
+    # the body: haunch, a starved waist with the ribs showing, a deep chest
+    rot, _ln = _along(d["hip"], d["shoulder"])
+    pm.loft("hips", [(-0.15, 0.08, 0.09, 0, 0.0), (-0.02, 0.125, 0.135, 0, 0.01), (0.14, 0.11, 0.12, 0, 0.0)],
+            center=(0, 0.3, 0.62), rot=rot, paint=fur)
+    pm.loft("spine", [(-0.04, 0.105, 0.11, 0, 0.0), (0.08, 0.09, 0.095, 0, 0.0), (0.18, 0.105, 0.12, 0, -0.01)],
+            center=(0, 0.16, 0.69), rot=rot, paint=fur)
+    for kr in range(3):
+        for x in (1.0, -1.0):
+            pm.box("spine", (0.012, 0.025, 0.1), (0.093 * x, 0.12 - kr * 0.05, 0.64), rot=(0.0, 0.25 * x, 0), paint=bone)
+    pm.loft("chest", [(-0.08, 0.11, 0.12, 0, 0.0), (0.05, 0.135, 0.17, 0, -0.035), (0.17, 0.11, 0.13, 0, -0.01)],
+            center=(0, -0.15, 0.71), rot=rot, paint=fur_light)
+    pm.box("spine", (0.06, 0.34, 0.03), (0, 0.15, 0.785), paint=dark)                      # the dark back stripe
+    pm.box("chest", (0.07, 0.3, 0.03), (0, -0.16, 0.835), paint=dark)
+    rot, ln = _along(d["shoulder"], d["neck"])
+    pm.loft("neck", [(0.0, 0.085, 0.09, 0, 0), (ln * 0.5, 0.07, 0.08, 0, 0.01), (ln, 0.065, 0.07, 0, 0)],
+            center=(0, -0.3, 0.74), rot=rot, paint=fur)
+    pm.loft("neck", [(0.02, 0.03, 0.03, 0, 0.07), (ln, 0.025, 0.03, 0, 0.06)], center=(0, -0.3, 0.74), rot=rot,
+            sides=4, paint=dark)                                                               # a bristling mane
+    rot, ln = _along(d["neck"], d["head"])
+    pm.loft("head", [(-0.04, 0.075, 0.08, 0, 0.0), (0.08, 0.08, 0.072, 0, 0.0), (0.18, 0.045, 0.042, 0, -0.01),
+                     (ln, 0.022, 0.024, 0, -0.012)], center=(0, -0.42, 0.92), rot=rot, paint=fur)
+    pm.box("head", (0.03, 0.03, 0.025), (0, -0.715, 0.845), paint=dark)                    # the nose
+    for x in (1.0, -1.0):
+        pm.box("head", (0.06, 0.025, 0.15), (0.05 * x, -0.45, 1.03), rot=(0.25, 0, -0.3 * x), taper=0.2, paint=dark)  # ears
+        pm.box("head", (0.028, 0.02, 0.016), (0.046 * x, -0.555, 0.935), mat_index=1)        # ember eyes
+    rot, ln = _along(d["jaw0"], d["jaw1"])
+    pm.loft("jaw", [(0.0, 0.045, 0.02, 0, 0), (ln, 0.02, 0.012, 0, 0)], center=(0, -0.5, 0.85), rot=rot, paint=fur_light)
+    for x in (1.0, -1.0):
+        pm.box("jaw", (0.008, 0.008, 0.03), (0.018 * x, -0.66, 0.825), paint=bone)            # fangs
+    rot, ln = _along(d["hip"], d["tail"])
+    pm.loft("tail", [(0.02, 0.035, 0.035, 0, 0), (0.14, 0.075, 0.075, 0, 0), (0.28, 0.07, 0.065, 0, 0), (ln + 0.04, 0.02, 0.02, 0, 0)],
+            center=(0, 0.3, 0.66), rot=rot, paint=fur)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = d["leg_x"] * x
+        pm.loft("f_upper." + side, [(0.68, 0.055, 0.075, lx, -0.28), (0.36, 0.04, 0.045, lx, -0.27)], sides=6, paint=fur)
+        pm.loft("f_lower." + side, [(0.37, 0.032, 0.034, lx, -0.27), (0.06, 0.026, 0.028, lx, -0.29)], sides=6, paint=fur_light)
+        pm.box("f_paw." + side, (0.05, 0.09, 0.04), (lx, -0.325, 0.03), paint=dark)
+        pm.loft("h_thigh." + side, [(0.66, 0.07, 0.11, lx, 0.3), (0.4, 0.05, 0.065, lx, 0.21)], sides=6, paint=fur)
+        pm.loft("h_shin." + side, [(0.41, 0.038, 0.045, lx, 0.21), (0.16, 0.028, 0.032, lx, 0.33)], sides=6, paint=fur)
+        pm.loft("h_hock." + side, [(0.17, 0.022, 0.025, lx, 0.33), (0.04, 0.02, 0.022, lx, 0.31)], sides=6, paint=fur_light)
+        pm.box("h_paw." + side, (0.05, 0.09, 0.04), (lx, 0.27, 0.025), paint=dark)
+    mats = [rig.make_material("aj_body", "#FFFFFF"),
+            rig.make_material("aj_eyes", aj["eyes"], emission_hex=aj["eyes"], strength=3.0)]
+    body = pm.to_object("ash_jackal", mats, arm)
+    jackal_clips(arm)
+    finish(body, arm, "ash_jackal", "ash_jackal", (1,), sheets)
+
+
+def jackal_clips(arm):
+    windup = f(const_from("enemies/ash_jackal.gd", "WINDUP_TIME"))
+    leap = f(const_from("enemies/ash_jackal.gd", "LEAP_TIME"))
+    stance = quad_stance({"neck": (0.15, 0, 0), "head": (-0.1, 0, 0), "tail": (-0.15, 0, 0)})
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()),
+        (30, k({"neck": (0.12, 0, 0.22), "head": (-0.12, 0, 0.1), "tail": (-0.1, 0, 0.14), "chest": (0.03, 0, 0)})),
+        (60, k({"neck": (0.2, 0, -0.16), "head": (-0.06, 0, -0.1), "tail": (-0.2, 0, -0.1)})),
+        (100, k()),
+    ], sheet=[0, 30, 60])
+
+    def legs_gallop(ph, lag):
+        out = {}
+        for side, off in (("L", 0.0), ("R", lag)):
+            c = math.cos(2.0 * math.pi * (ph + off))
+            s = math.sin(2.0 * math.pi * (ph + off))
+            out["f_upper." + side] = (-0.65 * c, 0, 0)
+            out["f_lower." + side] = (0.75 * max(0.0, -s), 0, 0)      # the paw folds up on the swing forward
+            out["f_paw." + side] = (0.4 * max(0.0, -s), 0, 0)
+            out["h_thigh." + side] = (0.58 * c, 0, 0)
+            out["h_shin." + side] = (-0.35 * max(0.0, s), 0, 0)
+            out["h_hock." + side] = (0.5 * max(0.0, s), 0, 0)
+        return out
+
+    # the gallop: stretched (front reaching, hind pushed back) <-> gathered
+    run_keys = []
+    for frame in (0, 4, 8, 11, 15, 19, 22, 26, 30):
+        ph = frame / 30.0
+        c = math.cos(2.0 * math.pi * ph)
+        s = math.sin(2.0 * math.pi * ph)
+        run_keys.append((frame, k({**legs_gallop(ph, 0.08),
+            "hips": {"rot": (-0.05 * c, 0, 0), "loc": (0, 0.025 * c, 0)},
+            "spine": (0.03 - 0.06 * c, 0, 0), "chest": (0.02 - 0.04 * c, 0, 0),
+            "neck": (0.18 + 0.1 * c, 0, 0), "head": (-0.15 - 0.05 * c, 0, 0), "tail": (0.1 + 0.08 * s, 0, 0)})))
+    action(arm, "run", run_keys, sheet=[0, 8, 15, 22])
+
+    # the trot while it circles a hero: diagonal pairs, head low, watching
+    trot_keys = []
+    for frame in (0, 5, 10, 15, 20):
+        ph = frame / 20.0
+        legs = {}
+        for side, off_f, off_h in (("L", 0.0, 0.5), ("R", 0.5, 0.0)):
+            for kind, off in (("f", off_f), ("h", off_h)):
+                c = math.cos(2.0 * math.pi * (ph + off))
+                s = math.sin(2.0 * math.pi * (ph + off))
+                if kind == "f":
+                    legs["f_upper." + side] = (-0.35 * c, 0, 0)
+                    legs["f_lower." + side] = (0.55 * max(0.0, -s), 0, 0)
+                else:
+                    legs["h_thigh." + side] = (-0.35 * c, 0, 0)
+                    legs["h_shin." + side] = (-0.3 * max(0.0, -s), 0, 0)
+                    legs["h_hock." + side] = (0.4 * max(0.0, -s), 0, 0)
+        trot_keys.append((frame, k({**legs, "neck": (0.28, 0, 0), "head": (-0.25, 0, 0),
+                                    "hips": {"rot": (0, 0, 0), "loc": (0, 0.012 * math.cos(4.0 * math.pi * ph), 0)}})))
+    action(arm, "trot", trot_keys, sheet=[0, 5, 10])
+
+    # the pounce: a crouch with the jaws open over the wind-up (the marker
+    # fills), a tremble, then the leap stretched out and the bite on landing
+    crouched = k({"hips": {"rot": (0.12, 0, 0), "loc": (0, -0.14, 0)}, "spine": (0.1, 0, 0), "chest": (0.05, 0, 0),
+                  "neck": (0.35, 0, 0), "head": (-0.38, 0, 0), "jaw": (0.38, 0, 0), "tail": (-0.35, 0, 0),
+                  "f_upper.L": (0.5, 0, 0), "f_lower.L": (-0.65, 0, 0), "f_paw.L": (0.15, 0, 0),
+                  "f_upper.R": (0.5, 0, 0), "f_lower.R": (-0.65, 0, 0), "f_paw.R": (0.15, 0, 0),
+                  "h_thigh.L": (-0.5, 0, 0), "h_shin.L": (0.7, 0, 0), "h_hock.L": (-0.4, 0, 0),
+                  "h_thigh.R": (-0.5, 0, 0), "h_shin.R": (0.7, 0, 0), "h_hock.R": (-0.4, 0, 0)})
+    tremble = {**crouched, "tail": (-0.25, 0, 0.2), "neck": (0.38, 0, 0.05), "jaw": (0.45, 0, 0)}
+    stretched = k({"hips": {"rot": (-0.15, 0, 0), "loc": (0, 0.02, 0)}, "spine": (-0.1, 0, 0), "neck": (-0.2, 0, 0),
+                   "head": (0.08, 0, 0), "jaw": (0.5, 0, 0), "tail": (0.35, 0, 0),
+                   "f_upper.L": (-1.1, 0, 0), "f_lower.L": (-0.2, 0, 0), "f_paw.L": (-0.2, 0, 0),
+                   "f_upper.R": (-1.0, 0, 0), "f_lower.R": (-0.15, 0, 0), "f_paw.R": (-0.2, 0, 0),
+                   "h_thigh.L": (0.9, 0, 0), "h_shin.L": (0.3, 0, 0), "h_hock.L": (0.4, 0, 0),
+                   "h_thigh.R": (0.85, 0, 0), "h_shin.R": (0.3, 0, 0), "h_hock.R": (0.4, 0, 0)})
+    landed = k({"hips": {"rot": (0.1, 0, 0), "loc": (0, -0.05, 0)}, "spine": (0.12, 0, 0), "neck": (0.3, 0, 0),
+                "head": (-0.1, 0, 0), "jaw": (0.0, 0, 0), "tail": (0.0, 0, 0),
+                "f_upper.L": (-0.15, 0, 0), "f_lower.L": (0.35, 0, 0), "f_paw.L": (-0.2, 0, 0),
+                "f_upper.R": (-0.1, 0, 0), "f_lower.R": (0.35, 0, 0), "f_paw.R": (-0.2, 0, 0),
+                "h_thigh.L": (-0.5, 0, 0), "h_shin.L": (0.3, 0, 0), "h_hock.L": (-0.2, 0, 0),
+                "h_thigh.R": (-0.45, 0, 0), "h_shin.R": (0.3, 0, 0), "h_hock.R": (-0.2, 0, 0)})
+    hold = int(windup * 0.5)
+    action(arm, "pounce", [
+        (0, k()), (hold, crouched), (hold + (windup - hold) // 2, tremble), (windup - 2, crouched),
+        (windup + leap // 2, stretched), (windup + leap, landed),
+    ], {hold: BACK_OUT, windup - 2: EXPO_IN, windup + leap // 2: QUART_OUT})
+    recoil = k({"hips": {"rot": (-0.2, 0, 0.15), "loc": (0, -0.04, 0)}, "neck": (-0.45, 0, 0.1), "head": (0.1, 0, 0),
+                "jaw": (0.3, 0, 0), "tail": (-0.45, 0, 0), "f_upper.L": (-0.3, 0, 0), "f_upper.R": (0.2, 0, 0),
+                "h_thigh.L": (0.2, 0, 0), "h_thigh.R": (-0.2, 0, 0)})
+    action(arm, "stagger", [
+        (0, k()), (3, recoil), (12, {**recoil, "neck": (-0.3, 0, 0.05)}), (36, k()),
+    ], {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+
+
+# --- ASH HARE: a small grey-brown hare of the ash (scenery, no outline) ---
+
+HARE = {"hip": (0.08, 0.17), "shoulder": (-0.08, 0.16), "neck": (-0.12, 0.22), "head": (-0.21, 0.2),
+        "jaw0": (-0.15, 0.19), "jaw1": (-0.2, 0.18), "tail": (0.13, 0.15),
+        "f_top": (-0.07, 0.12), "f_elbow": (-0.075, 0.07), "f_wrist": (-0.08, 0.02), "f_toe": (-0.11, 0.01),
+        "h_top": (0.07, 0.14), "h_stifle": (0.0, 0.1), "h_hock": (0.08, 0.04), "h_ankle": (0.075, 0.015),
+        "h_toe": (-0.01, 0.0), "leg_x": 0.045}
+
+
+def build_hare(sheets=False):
+    rig.reset_scene()
+    d = HARE
+    arm = rig.build_armature("hare", quadruped_bones(d))
+    ah = PAL["ash_hare"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    fur = pm.paint(ah["fur"], 2, "hide")
+    fur_dark = pm.paint(ah["fur"], 1, "hide")
+    belly = pm.paint(ah["belly"], 0)
+    eye = pm.paint(ah["eye"], 0)
+    rot, _ln = _along(d["hip"], d["shoulder"])
+    pm.loft("hips", [(-0.07, 0.04, 0.045, 0, 0.0), (0.0, 0.065, 0.07, 0, 0.0), (0.08, 0.06, 0.065, 0, 0.0)],
+            center=(0, 0.07, 0.165), rot=rot, paint=fur)
+    pm.loft("chest", [(-0.02, 0.06, 0.065, 0, 0.0), (0.06, 0.05, 0.055, 0, -0.005), (0.1, 0.035, 0.04, 0, 0.0)],
+            center=(0, -0.01, 0.165), rot=rot, paint=fur)
+    pm.box("chest", (0.06, 0.1, 0.03), (0, -0.04, 0.11), paint=belly)
+    rot, ln = _along(d["neck"], d["head"])
+    pm.loft("head", [(-0.04, 0.035, 0.04, 0, 0.0), (0.03, 0.04, 0.04, 0, 0.0), (ln, 0.02, 0.02, 0, -0.01)],
+            center=(0, -0.12, 0.22), rot=rot, paint=fur)
+    for x in (1.0, -1.0):
+        pm.box("head", (0.03, 0.012, 0.13), (0.02 * x, -0.115, 0.3), rot=(0.35, 0, -0.12 * x), taper=0.6, paint=fur)  # ears
+        pm.box("head", (0.02, 0.006, 0.02), (0.022 * x, -0.12, 0.36), rot=(0.35, 0, -0.12 * x), paint=fur_dark)     # ear tips
+        pm.box("head", (0.012, 0.012, 0.012), (0.03 * x, -0.165, 0.225), paint=eye)
+    pm.box("tail", (0.04, 0.04, 0.035), (0, 0.135, 0.165), paint=belly)                    # the white scut
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = d["leg_x"] * x
+        pm.loft("f_upper." + side, [(0.13, 0.015, 0.018, lx, -0.07), (0.07, 0.012, 0.014, lx, -0.075)], sides=5, paint=fur)
+        pm.loft("f_lower." + side, [(0.075, 0.011, 0.012, lx, -0.075), (0.02, 0.01, 0.011, lx, -0.08)], sides=5, paint=fur)
+        pm.box("f_paw." + side, (0.02, 0.04, 0.015), (lx, -0.095, 0.012), paint=fur_dark)
+        pm.loft("h_thigh." + side, [(0.15, 0.03, 0.05, lx * 1.1, 0.07), (0.09, 0.025, 0.035, lx * 1.1, 0.01)], sides=6, paint=fur)
+        pm.loft("h_shin." + side, [(0.1, 0.016, 0.02, lx, 0.0), (0.04, 0.013, 0.015, lx, 0.08)], sides=5, paint=fur)
+        pm.box("h_paw." + side, (0.025, 0.09, 0.015), (lx, 0.035, 0.01), paint=fur_dark)       # the long hind foot
+    mats = [rig.make_material("ah_body", "#FFFFFF")]
+    body = pm.to_object("ash_hare", mats, arm)
+    hare_clips(arm)
+    finish(body, arm, "ash_hare", "ash_hare", (), sheets)
+
+
+def hare_clips(arm):
+    stance = quad_stance()
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()),
+        (20, k({"neck": (-0.1, 0, 0.1), "head": (0.08, 0, 0)})),
+        (40, k()),
+        (70, k({"neck": (0.55, 0, 0), "head": (0.25, 0, 0), "spine": (0.08, 0, 0)})),     # grazing
+        (95, k({"neck": (0.5, 0, -0.1), "head": (0.3, 0, 0), "spine": (0.08, 0, 0)})),
+        (120, k()),
+    ], sheet=[0, 20, 70])
+    hop_keys = []
+    for frame, ph in ((0, 0.0), (5, 0.25), (10, 0.5), (15, 0.75), (20, 1.0)):
+        c = math.cos(2.0 * math.pi * ph)
+        s = math.sin(2.0 * math.pi * ph)
+        pose = {"hips": {"rot": (-0.12 * c, 0, 0), "loc": (0, 0.03 * max(0.0, c), 0)}, "spine": (-0.1 * c, 0, 0),
+                "neck": (-0.1, 0, 0), "head": (0.05, 0, 0)}
+        for side in ("L", "R"):
+            pose["f_upper." + side] = (-0.8 * c, 0, 0)
+            pose["f_lower." + side] = (0.4 * max(0.0, -s), 0, 0)
+            pose["h_thigh." + side] = (0.75 * c, 0, 0)
+            pose["h_shin." + side] = (0.4 * max(0.0, c), 0, 0)
+            pose["h_paw." + side] = (0.6 * max(0.0, c), 0, 0)
+        hop_keys.append((frame, k(pose)))
+    action(arm, "hop", hop_keys, sheet=[0, 5, 10, 15])
+    up = k({"hips": {"rot": (-0.55, 0, 0), "loc": (0, 0.02, 0)}, "neck": (-0.25, 0, 0), "head": (0.2, 0, 0),
+            "f_upper.L": (0.5, 0, 0), "f_upper.R": (0.5, 0, 0), "f_lower.L": (-0.3, 0, 0), "f_lower.R": (-0.3, 0, 0),
+            "h_thigh.L": (-0.35, 0, 0), "h_thigh.R": (-0.35, 0, 0)})
+    action(arm, "alert", [(0, k()), (10, up), (24, up)], {0: BACK_OUT}, sheet=[0, 10])
+
+
+# --- CARRION VULTURE: a great bald carrion bird; soars, dives, lands -----
+
+VULTURE = {"hip": (0.06, 0.34), "chest": (-0.32, 0.58), "neck": (-0.38, 0.74), "head": (-0.62, 0.7),
+           "tail": (0.42, 0.24), "shoulder": (0.13, -0.22, 0.56), "wing": 0.52, "tip": 0.6,
+           "leg_x": 0.08, "knee_z": 0.1, "foot_len": 0.12}
+VULTURE_PITCH = 0.56  # the standing body's rise: pitched this far forward it flies level
+
+
+def build_vulture(sheets=False):
+    rig.reset_scene()
+    d = VULTURE
+    arm = rig.build_armature("vulture", bird_bones(d))
+    cv = PAL["carrion_vulture"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    body_p = pm.paint(cv["feathers"], 3, "cloth")
+    wing_p = pm.paint(cv["feathers"], 2, "cloth")
+    prim_p = pm.paint(cv["feathers"], 1)
+    ruff = pm.paint(cv["ruff"], 1, "hide")
+    skin = pm.paint(cv["skin"], 1)
+    beak = pm.paint(cv["beak"], 1)
+    rot, ln = _along(d["hip"], d["chest"])
+    pm.loft("body", [(-0.08, 0.13, 0.11, 0, 0.0), (0.1, 0.2, 0.17, 0, 0.02), (0.3, 0.18, 0.15, 0, 0.02), (ln, 0.11, 0.1, 0, 0.0)],
+            center=(0, 0.06, 0.34), rot=rot, paint=body_p)
+    pm.loft("body", [(ln - 0.08, 0.15, 0.14, 0, 0.0), (ln + 0.03, 0.12, 0.11, 0, 0.01)], center=(0, 0.06, 0.34), rot=rot,
+            sides=7, paint=ruff)                                                                # the pale ruff
+    rot, ln = _along(d["chest"], d["neck"])
+    pm.loft("neck", [(0.0, 0.05, 0.05, 0, 0), (ln + 0.02, 0.04, 0.04, 0, 0)], center=(0, -0.32, 0.58), rot=rot, sides=6, paint=skin)
+    rot, ln = _along(d["neck"], d["head"])
+    pm.loft("head", [(-0.03, 0.05, 0.055, 0, 0.0), (0.07, 0.055, 0.05, 0, 0.0), (0.13, 0.034, 0.034, 0, -0.005)],
+            center=(0, -0.38, 0.74), rot=rot, sides=6, paint=skin)
+    pm.loft("head", [(0.12, 0.028, 0.034, 0, -0.005), (ln, 0.012, 0.02, 0, -0.03)], center=(0, -0.38, 0.74), rot=rot,
+            sides=5, paint=beak)
+    pm.box("head", (0.02, 0.025, 0.04), (0, -0.615, 0.685), paint=beak)                    # the hook
+    for x in (1.0, -1.0):
+        pm.box("head", (0.02, 0.025, 0.015), (0.045 * x, -0.45, 0.755), mat_index=1)          # eyes
+    pm.box("tail", (0.24, 0.3, 0.03), (0, 0.3, 0.27), rot=(-0.55, 0, 0), taper=1.0, paint=wing_p)
+    sx, sy, sz = d["shoulder"]
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        pm.box("wing." + side, (d["wing"], 0.42, 0.04), ((sx + d["wing"] * 0.5) * x, sy + 0.08, sz), paint=wing_p)
+        pm.box("wing." + side, (d["wing"], 0.08, 0.05), ((sx + d["wing"] * 0.5) * x, sy - 0.12, sz + 0.01), paint=body_p)
+        tip0 = sx + d["wing"]
+        for kf in range(5):  # the fingered primaries, fanned
+            pm.box("wingtip." + side, (d["tip"] - kf * 0.06, 0.075, 0.025),
+                   ((tip0 + (d["tip"] - kf * 0.06) * 0.5) * x, sy - 0.08 + kf * 0.075, sz),
+                   rot=(0, 0, (0.05 * kf - 0.06) * x), paint=prim_p)
+        lx = d["leg_x"] * x
+        pm.loft("leg." + side, [(0.34, 0.06, 0.07, lx, 0.06), (0.12, 0.024, 0.024, lx, 0.07)], sides=6, paint=body_p)
+        pm.loft("foot." + side, [(0.12, 0.02, 0.02, lx, 0.07), (0.03, 0.02, 0.02, lx, 0.07)], sides=5, paint=skin)
+        for kt in range(3):
+            pm.box("foot." + side, (0.018, 0.09, 0.018), (lx + (kt - 1) * 0.03, 0.02, 0.015), rot=(0, 0, (kt - 1) * 0.35), paint=beak)
+    mats = [rig.make_material("cv_body", "#FFFFFF"),
+            rig.make_material("cv_eyes", cv["eyes"], emission_hex=cv["eyes"], strength=3.0)]
+    body = pm.to_object("carrion_vulture", mats, arm)
+    vulture_clips(arm)
+    finish(body, arm, "carrion_vulture", "carrion_vulture", (1,), sheets)
+
+
+def vulture_clips(arm):
+    windup = f(const_from("enemies/carrion_vulture.gd", "DIVE_WINDUP"))
+    dive = f(const_from("enemies/carrion_vulture.gd", "DIVE_TIME"))
+    takeoff = f(const_from("enemies/carrion_vulture.gd", "TAKEOFF_TIME"))
+    folded = {**wings((-0.15, 0, 1.45), (0.05, 0, 0.1))}
+    stance = bird_stance({**folded, "neck": (0.1, 0, 0), "head": (-0.05, 0, 0)})
+    p = VULTURE_PITCH  # in the air the body is pitched by p: wings(..., roll=p) keeps them level
+    k = keyed(stance)
+    # on the ground: hunched, wings folded, the bald head bobbing; a mantle
+    action(arm, "idle", [
+        (0, k()),
+        (30, k({"neck": (0.3, 0, 0.15), "head": (0.1, 0, 0)})),
+        (60, k({**wings((0.05, 0, 1.0), (0.0, 0, 0.3)), "neck": (0.35, 0, 0), "body": (0.1, 0, 0)})),   # mantling
+        (90, k({"neck": (0.05, 0, -0.15)})),
+        (120, k()),
+    ], sheet=[0, 30, 60])
+    # in the air: body level, legs tucked, wings wide in a shallow V, slow beats
+    flying = {"hips": {"rot": (p, 0, 0), "loc": (0, 0, 0)}, "neck": (0.2, 0, 0), "head": (0.05, 0, 0),
+              "tail": (0.0, 0, 0), "leg.L": (1.2, 0, 0), "leg.R": (1.2, 0, 0), "foot.L": (0.8, 0, 0), "foot.R": (0.8, 0, 0)}
+    action(arm, "soar", [
+        (0, k({**flying, **wings((0.12, 0, 0), (0.08, 0, 0), p)})),
+        (30, k({**flying, **wings((0.32, 0, 0.05), (-0.1, 0, 0), p), "hips": {"rot": (p, 0.06, 0), "loc": (0, 0, 0)}})),
+        (60, k({**flying, **wings((-0.08, 0, 0), (0.15, 0, 0), p)})),
+        (90, k({**flying, **wings((0.25, 0, 0.05), (-0.05, 0, 0), p), "hips": {"rot": (p, -0.06, 0), "loc": (0, 0, 0)}})),
+        (120, k({**flying, **wings((0.12, 0, 0), (0.08, 0, 0), p)})),
+    ], sheet=[0, 30, 60])
+    # the dive's tell (the lane on the ground fills): wings thrown up high in
+    # a deep V, head down at the prey, a shiver at the top
+    raised = k({**flying, **wings((1.05, 0, 0.1), (0.3, 0, 0), p), "neck": (0.45, 0, 0), "head": (0.3, 0, 0)})
+    hold = int(windup * 0.6)
+    action(arm, "charge", [
+        (0, k({**flying, **wings((0.12, 0, 0), (0.08, 0, 0), p)})),
+        (hold, raised),
+        (hold + (windup - hold) // 2, {**raised, **wings((1.12, 0, 0.12), (0.36, 0, 0), p)}),
+        (windup, raised),
+    ], {hold: QUART_OUT})
+    # the swoop: wings tucked back, nose down along the lane, then the flare
+    # (wings forward, talons out) and down on the ground
+    tucked = k({**flying, **wings((0.2, 0, 1.0), (0.0, 0, 0.8), p), "hips": {"rot": (p + 0.35, 0, 0), "loc": (0, 0, 0)},
+                "neck": (-0.1, 0, 0), "head": (0.05, 0, 0)})
+    flare = k({**wings((0.65, 0, -0.45), (0.25, 0, -0.1)), "hips": {"rot": (-0.2, 0, 0), "loc": (0, 0.05, 0)},
+               "neck": (0.15, 0, 0), "head": (0.1, 0, 0), "tail": (0.5, 0, 0),
+               "leg.L": (-0.8, 0, 0), "leg.R": (-0.8, 0, 0), "foot.L": (-0.3, 0, 0), "foot.R": (-0.3, 0, 0)})
+    action(arm, "swoop", [
+        (0, tucked), (int(dive * 0.7), tucked), (dive, flare), (dive + 12, k()),
+    ], {int(dive * 0.7): EXPO_OUT, dive: QUART_OUT})
+    # up again: a crouch, two heavy beats, legs tucked, level flight
+    crouch_up = k({"hips": {"rot": (0.3, 0, 0), "loc": (0, -0.08, 0)}, **wings((0.9, 0, 0.1), (0.3, 0, 0)),
+                   "leg.L": (-0.4, 0, 0), "leg.R": (-0.4, 0, 0), "foot.L": (0.5, 0, 0), "foot.R": (0.5, 0, 0)})
+    down1 = k({"hips": {"rot": (0.4, 0, 0), "loc": (0, 0.05, 0)}, **wings((-0.65, 0, -0.2), (-0.3, 0, 0)),
+               "leg.L": (0.4, 0, 0), "leg.R": (0.4, 0, 0)})
+    up2 = k({**flying, **wings((0.8, 0, 0.1), (0.25, 0, 0), p * 0.7), "hips": {"rot": (p * 0.7, 0, 0), "loc": (0, 0, 0)}})
+    action(arm, "takeoff", [
+        (0, k()), (int(takeoff * 0.25), crouch_up), (int(takeoff * 0.5), down1), (int(takeoff * 0.75), up2),
+        (takeoff, k({**flying, **wings((-0.3, 0, -0.1), (-0.2, 0, 0), p)})),
+    ], {int(takeoff * 0.25): QUART_OUT, int(takeoff * 0.5): EXPO_OUT})
+    recoil = k({**wings((0.7, 0, -0.3), (0.3, 0, 0)), "hips": {"rot": (-0.3, 0, 0.1), "loc": (0, -0.03, 0)},
+                "neck": (-0.5, 0, 0.15), "head": (0.2, 0, 0)})
+    action(arm, "stagger", [
+        (0, k()), (3, recoil), (12, {**recoil, "neck": (-0.35, 0, 0.1)}), (36, k()),
+    ], {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+
+
+# --- CARRION CROW: small, black, pecks at the bones (scenery) ------------
+
+CROW = {"hip": (0.02, 0.14), "chest": (-0.1, 0.22), "neck": (-0.13, 0.27), "head": (-0.22, 0.25),
+        "tail": (0.16, 0.12), "shoulder": (0.045, -0.07, 0.215), "wing": 0.15, "tip": 0.2,
+        "leg_x": 0.025, "knee_z": 0.05, "foot_len": 0.05}
+
+
+def build_crow(sheets=False):
+    rig.reset_scene()
+    d = CROW
+    arm = rig.build_armature("crow", bird_bones(d))
+    cc = PAL["carrion_crow"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    black = pm.paint(cc["black"], 2, "cloth")
+    black_dark = pm.paint(cc["black"], 1)
+    beak = pm.paint(cc["beak"], 1)
+    rot, ln = _along(d["hip"], d["chest"])
+    pm.loft("body", [(-0.03, 0.045, 0.04, 0, 0.0), (0.04, 0.065, 0.06, 0, 0.0), (ln + 0.02, 0.04, 0.035, 0, 0.0)],
+            center=(0, 0.02, 0.14), rot=rot, paint=black)
+    rot, ln = _along(d["chest"], d["head"])
+    pm.loft("head", [(0.02, 0.035, 0.04, 0, 0.0), (0.07, 0.03, 0.032, 0, 0.0)], center=(0, -0.11, 0.24), rot=rot, sides=6, paint=black)
+    rot, ln = _along(d["neck"], d["head"])
+    pm.loft("head", [(0.02, 0.012, 0.014, 0, 0.0), (ln, 0.003, 0.004, 0, -0.004)], center=(0, -0.13, 0.27), rot=rot, sides=4, paint=beak)
+    pm.box("tail", (0.05, 0.12, 0.012), (0, 0.11, 0.125), rot=(-0.3, 0, 0), paint=black_dark)
+    sx, sy, sz = d["shoulder"]
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        pm.box("wing." + side, (d["wing"], 0.11, 0.012), ((sx + d["wing"] * 0.5) * x, sy + 0.03, sz), paint=black)
+        pm.box("wingtip." + side, (d["tip"], 0.07, 0.01), ((sx + d["wing"] + d["tip"] * 0.5) * x, sy + 0.03, sz), taper=0.6,
+               paint=black_dark)
+        lx = d["leg_x"] * x
+        pm.loft("leg." + side, [(0.13, 0.012, 0.012, lx, 0.02), (0.05, 0.006, 0.006, lx, 0.03)], sides=4, paint=black_dark)
+        pm.box("foot." + side, (0.012, 0.05, 0.008), (lx, 0.005, 0.008), paint=black_dark)
+    mats = [rig.make_material("cc_body", "#FFFFFF")]
+    body = pm.to_object("carrion_crow", mats, arm)
+    crow_clips(arm)
+    finish(body, arm, "carrion_crow", "carrion_crow", (), sheets)
+
+
+def crow_clips(arm):
+    folded = wings((-0.25, 0, 1.45), (0.0, 0, 0.1))
+    stance = bird_stance({**folded})
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()),
+        (12, k({"hips": {"rot": (0.6, 0, 0), "loc": (0, -0.01, 0)}, "neck": (0.4, 0, 0)})),   # a peck
+        (18, k({"hips": {"rot": (0.4, 0, 0), "loc": (0, -0.005, 0)}, "neck": (0.3, 0, 0)})),
+        (30, k()),
+        (60, k({"neck": (-0.1, 0, 0.35), "head": (0.0, 0.2, 0)})),                              # looks about
+        (90, k()),
+    ], sheet=[0, 12, 60])
+    p = 0.6  # the crow's standing rise
+    flying = {"hips": {"rot": (p, 0, 0), "loc": (0, 0, 0)}, "neck": (0.1, 0, 0), "tail": (0.0, 0, 0),
+              "leg.L": (1.2, 0, 0), "leg.R": (1.2, 0, 0)}
+    up = wings((0.9, 0, 0), (0.3, 0, 0), p)
+    down = wings((-0.7, 0, -0.1), (-0.3, 0, 0), p)
+    action(arm, "fly", [
+        (0, k({**flying, **up})), (6, k({**flying, **down})), (12, k({**flying, **up})),
+    ], sheet=[0, 6])
+    action(arm, "takeoff", [
+        (0, k()),
+        (5, k({"hips": {"rot": (0.3, 0, 0), "loc": (0, -0.02, 0)}, **wings((0.9, 0, 0.2), (0.3, 0, 0))})),
+        (10, k({**flying, **down})),
+        (15, k({**flying, **up})),
+        (20, k({**flying, **down})),
+    ], {5: QUART_OUT}, sheet=[0, 5, 10])
+
+
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
@@ -2326,7 +2863,8 @@ if __name__ == "__main__":
                 "stonehulk": build_stonehulk, "veilstalker": build_veilstalker, "warden": build_warden,
                 "colossus": build_colossus, "vessel": build_vessel,
                 "shambler": build_shambler, "mourner": build_mourner, "cinderbark": build_cinderbark,
-                "wisp": build_wisp}
+                "wisp": build_wisp, "jackal": build_jackal, "vulture": build_vulture,
+                "hare": build_hare, "crow": build_crow}
     only = [a for a in args if not a.startswith("--")] or list(builders)
     for name in only:
         builders[name](want_sheets)
