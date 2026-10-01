@@ -31,6 +31,10 @@ const WINDOW_SIZES: Array[String] = ["1280x720", "1600x900", "1920x1080", "2560x
 ## 0 = no limit.
 const FPS_LIMITS: Array[int] = [30, 60, 90, 120, 144, 0]
 
+## Headless and test runs: the defaults, no file, developer tools on, and no
+## pause when the window loses focus (a windowed perf run must not stop).
+var test_run: bool = false
+
 var _values: Dictionary = {}
 ## False on headless and test runs until a test calls use_file().
 var _persist: bool = false
@@ -44,11 +48,12 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS  # the FPS counter keeps counting in a paused menu
 	_values = DEFAULTS.duplicate()
 	var args := OS.get_cmdline_user_args()
-	var test_run := DisplayServer.get_name() == "headless" or SaveGame.is_test_run()
+	var is_test := DisplayServer.get_name() == "headless" or SaveGame.is_test_run()
 	for arg in args:
-		test_run = test_run or arg.begins_with("--net-test")
-	_dev_forced = test_run or "--dev" in args
-	_persist = not test_run
+		is_test = is_test or arg.begins_with("--net-test")
+	test_run = is_test
+	_dev_forced = is_test or "--dev" in args
+	_persist = not is_test
 	if _persist:
 		_read()
 	apply_all()

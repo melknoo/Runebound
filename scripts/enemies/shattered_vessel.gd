@@ -182,7 +182,7 @@ func _begin_shatter() -> void:
 	health.invulnerable = true
 	_enter_state(AIState.RECOVER)
 	play_fx(&"shatter")
-	await get_tree().create_timer(1.0).timeout
+	await get_tree().create_timer(1.0, false).timeout  # M17a: waits out a pause
 	if not is_instance_valid(self) or health.is_dead:
 		return
 	health.invulnerable = false

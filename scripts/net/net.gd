@@ -105,6 +105,9 @@ var zone_scene: String = ""
 var roster: Dictionary = {}
 ## Why the last session ended or failed (the title screen shows it).
 var last_reason: String = ""
+## M17a: the server of the current session as the player picked it (its
+## ServerList name, else the host), for the Esc menu.
+var server_name: String = ""
 ## Client: where the welcome says to appear (next to a party member; INF = the
 ## zone's own spawn). Read once by ZoneBase._spawn_player.
 var pending_spawn: Vector3 = Vector3.INF
@@ -354,9 +357,13 @@ func join(address: String, player_name: String, class_id: StringName, level: int
 		log_line("resolving %s ..." % host_name)
 
 
-## Client: leave on purpose (back to the title screen).
-func leave() -> void:
-	_end_session("You left the server.")
+const LEFT_REASON := "You left the server."
+
+
+## Client: leave on purpose (back to the title screen; M17a: or quit the
+## game once the character is saved).
+func leave(quit: bool = false) -> void:
+	_end_session(LEFT_REASON, quit)
 
 
 ## True while a join is resolving / connecting / waiting for the handshake.
@@ -831,6 +838,7 @@ func _on_peer_disconnected(id: int) -> void:
 func _on_connected() -> void:
 	if mode != Mode.CLIENT:
 		return
+	server_name = _join_name()
 	_join.clear()
 	_tune_peer(1)
 	log_line("joined as %s (peer %d)" % [str(_welcome.get("name", "?")), my_id()])
@@ -914,8 +922,10 @@ func _fail(reason: String) -> void:
 
 ## Client: the session is over (left, kicked, server gone): keep the
 ## character, restore the singleplayer world, back to the title screen.
-func _end_session(reason: String) -> void:
+func _end_session(reason: String, quit: bool = false) -> void:
 	if mode != Mode.CLIENT:
+		if quit:
+			get_tree().quit()
 		return
 	var was_in_game := _join.is_empty()
 	last_reason = reason
@@ -925,7 +935,9 @@ func _end_session(reason: String) -> void:
 		SaveGame.end_online_session()
 	_close()
 	session_ended.emit(reason)
-	if was_in_game:
+	if quit:
+		get_tree().quit()
+	elif was_in_game:
 		get_tree().change_scene_to_file.call_deferred(TITLE_SCENE)
 
 

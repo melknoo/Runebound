@@ -905,16 +905,6 @@ func _flourish(to: Vector3, out_time: float, back_time: float) -> void:
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if not is_local:
-		return  # M09: remote heroes must not flip this machine's mouse
-	if event.is_action_pressed(&"toggle_cursor"):
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		else:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
-
 func apply_hitstop(duration: float) -> void:
 	_hitstop_left = maxf(_hitstop_left, duration)
 

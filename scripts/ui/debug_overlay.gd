@@ -27,6 +27,8 @@ func setup(combat_lab: Node) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if PauseMenu.showing:
+		return  # M17a: nothing under the Esc menu
 	if event.is_action_pressed(&"debug_toggle"):
 		if not _visible and not GameSettings.dev_tools():
 			return  # M17a: the developer tools are a setting (off by default)

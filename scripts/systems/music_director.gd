@@ -24,6 +24,7 @@ var _fade: Tween
 
 func _ready() -> void:
 	instance = self
+	process_mode = Node.PROCESS_MODE_ALWAYS  # M17a: the music plays on in the paused Esc menu
 	_player = AudioStreamPlayer.new()
 	_player.name = "Music"
 	_player.bus = &"Music"

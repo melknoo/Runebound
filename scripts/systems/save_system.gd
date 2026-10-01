@@ -164,7 +164,10 @@ func _process(delta: float) -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST and _pending_save:
+	# M17a: closing the window saves whenever a hero is in the scene (XP,
+	# talents and vitals are not all on the debounced path), else only a
+	# pending save
+	if what == NOTIFICATION_WM_CLOSE_REQUEST and (_pending_save or _find_player() != null):
 		_write_now()
 
 

@@ -77,9 +77,15 @@ func marker_count() -> int:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if visible and event.is_action_pressed(&"toggle_cursor"):
+		close()
+		get_viewport().set_input_as_handled()
+		return
 	if zone != null and zone.debug_overlay != null and zone.debug_overlay._visible:
 		return  # the F1 overlay owns the letter keys while it shows
-	if visible and (event.is_action_pressed(&"toggle_cursor") or event.is_action_pressed(&"map_toggle")):
+	if PauseMenu.showing:
+		return  # M17a: nothing opens under the Esc menu
+	if visible and event.is_action_pressed(&"map_toggle"):
 		close()
 		get_viewport().set_input_as_handled()
 	elif not visible and event.is_action_pressed(&"map_toggle"):

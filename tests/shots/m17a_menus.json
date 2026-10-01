@@ -1,0 +1,11 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/m17a_menus",
+	"comment": "M17a: the Esc menu in Runehold (paused) and its settings window on the Controls tab.",
+	"shots": [
+		{"name": "pause_menu", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"do": "pause_menu"}, {"wait": 0.3}], "settle": 0.1},
+		{"name": "pause_settings", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"do": "close"}, {"do": "pause_settings", "tab": "controls"}, {"wait": 0.3}], "settle": 0.1}
+	]
+}

@@ -152,13 +152,15 @@ func _show_pages() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	var zone := get_parent() as ZoneBase
-	if zone != null and zone.debug_overlay != null and zone.debug_overlay._visible:
-		return  # the F1 overlay owns the letter keys while it shows
 	if visible and event.is_action_pressed(&"toggle_cursor"):
 		close()
 		get_viewport().set_input_as_handled()
 		return
+	var zone := get_parent() as ZoneBase
+	if zone != null and zone.debug_overlay != null and zone.debug_overlay._visible:
+		return  # the F1 overlay owns the letter keys while it shows
+	if PauseMenu.showing:
+		return  # M17a: nothing opens under the Esc menu
 	for i in TAB_ACTIONS.size():
 		if InputMap.has_action(TAB_ACTIONS[i]) and event.is_action_pressed(TAB_ACTIONS[i]):
 			toggle_tab(i as Tab)

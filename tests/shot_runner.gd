@@ -203,12 +203,20 @@ func _do(action: Dictionary) -> void:
 			"talents", "hero_talents": _zone.talent_ui.toggle()
 			"hero_character": _zone.hero_ui.toggle_tab(HeroUI.Tab.CHARACTER)
 			"close":
+				if _zone.pause_menu != null:
+					_zone.pause_menu.close()
 				_zone.hero_ui.close()
 				_zone.trainer_ui.close()
 				_zone.waypoint_ui.close()
 				_zone.map_ui.close()
 				_zone.playtest_ui.close()
 			"map": _zone.map_ui.toggle()  # M08
+			"pause_menu": _zone.pause_menu.open()  # M17a: the Esc menu (pauses the solo world)
+			"pause_settings":  # M17a: the settings from the Esc menu, on a tab ({"tab": "controls"})
+				_zone.pause_menu.open()
+				_zone.pause_menu.open_settings()
+				var tab := SettingsUI.TAB_SECTIONS.find(str(action.get("tab", "audio")))
+				(_zone.pause_menu.get(&"_settings") as SettingsUI).open_tab(maxi(tab, 0) as SettingsUI.Tab)
 			"playtest": _zone.playtest_ui.toggle()  # the J checklist
 			"waypoint":  # M08: the travel list of the nearest shrine
 				var nearest: Waypoint = null

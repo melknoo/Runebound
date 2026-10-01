@@ -27,6 +27,7 @@ var trainer_ui: TrainerUI
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
 var map_ui: MapUI            # M08 zone map (M)
 var playtest_ui: PlaytestUI  # the playtest checklist (J)
+var pause_menu: PauseMenu    # M17a: the Esc menu
 var aggro_marks: AggroMarks  # M10: "!" over the enemies after this hero (in a party)
 var enemies_root: Node3D
 ## Data-driven presentation (M06); null = legacy environment + greybox materials.
@@ -133,6 +134,12 @@ func _build_player_ui() -> void:
 	add_child(debug_overlay)
 	debug_overlay.setup(self)
 
+	# M17a: before the windows - later siblings see input first, so an open
+	# window still takes Esc and only an Esc nobody wanted opens the menu.
+	pause_menu = PauseMenu.new()
+	add_child(pause_menu)
+	pause_menu.setup(self)
+
 	# M07b hero window: inventory (I), character (C), talents (N) and, M10,
 	# the abilities / loadout (K) as tabs.
 	hero_ui = HeroUI.new()
@@ -172,7 +179,7 @@ func debug_swap_class(class_id: StringName) -> Player:
 		return player
 	var old := player
 	var pos := old.global_position
-	for ui: Node in [hud, debug_overlay, hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks]:
+	for ui: Node in [hud, debug_overlay, pause_menu, hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks]:
 		if ui != null:
 			remove_child(ui)
 			ui.queue_free()
@@ -851,7 +858,7 @@ func _warm_up_characters(spot: Vector3) -> void:
 		e.process_mode = Node.PROCESS_MODE_DISABLED  # no AI, no animation, no physics step
 		e.global_position = spot
 	var ref: WeakRef = weakref(holder)
-	get_tree().create_timer(0.3).timeout.connect(func() -> void:
+	get_tree().create_timer(0.3, false).timeout.connect(func() -> void:
 		var h: Node = ref.get_ref()
 		if h != null:
 			h.queue_free()
@@ -1309,6 +1316,46 @@ func travel_to(scene_path: String, arrival: String = "") -> void:
 	_fade_then(func() -> void:
 		get_tree().change_scene_to_file(scene_path)
 	, false)
+
+
+## M17a: closes every open window (hero window, trainer / shop, travel list,
+## map, playtest list); true when one was open.
+func close_windows() -> bool:
+	var closed := false
+	for ui: CanvasLayer in [hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui]:
+		if ui != null and ui.visible:
+			ui.call(&"close")
+			closed = true
+	return closed
+
+
+## M17a Esc menu: back to the title. Solo saves first (vitals, XP, talents),
+## online leaves the server (Net saves and changes the scene itself).
+func return_to_title() -> void:
+	if _travelling:
+		return
+	get_tree().paused = false
+	if Net.is_client():
+		Net.leave()
+		return
+	_travelling = true
+	SaveGame.save_now()
+	Sfx.play_ui("portal_travel", -8.0)
+	if MusicDirector.instance != null:
+		MusicDirector.instance.stop(0.5)
+	_fade_then(func() -> void:
+		get_tree().change_scene_to_file(Net.TITLE_SCENE)
+	, false)
+
+
+## M17a Esc menu: save (online: leave the server cleanly) and quit.
+func quit_game() -> void:
+	get_tree().paused = false
+	if Net.is_client():
+		Net.leave(true)
+		return
+	SaveGame.save_now()
+	get_tree().quit()
 
 
 ## M08 fast travel to a waypoint key (WaypointRegistry): a fade and a hop

@@ -119,7 +119,7 @@ func _set_marker_visible(vis: bool) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"target_cycle"):
+	if event.is_action_pressed(&"target_cycle") and not PauseMenu.showing:
 		cycle_target()
 
 

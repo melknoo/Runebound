@@ -3582,6 +3582,52 @@ func _run() -> void:
 	GameSettings.set(&"_dev_forced", true)
 	GameSettings.reset_section("gameplay")
 
+	# --- M17a: the Esc menu ---
+	var menu := zone_now.pause_menu
+	var esc_ev := InputEventAction.new()
+	esc_ev.action = &"toggle_cursor"
+	esc_ev.pressed = true
+	_check(menu != null and not menu.visible and not PauseMenu.showing and not get_tree().paused,
+		"every zone has an Esc menu, closed at the start")
+	Input.parse_input_event(esc_ev)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(menu.visible and PauseMenu.showing and get_tree().paused and menu.get(&"_title").text == "PAUSED",
+		"Esc with nothing open opens the menu and pauses the solo world")
+	var inv_ev := InputEventAction.new()
+	inv_ev.action = &"inventory_toggle"
+	inv_ev.pressed = true
+	zone_now.hero_ui._unhandled_input(inv_ev)
+	_check(not zone_now.hero_ui.visible, "no window opens under the Esc menu (I does nothing)")
+	menu.open_settings()
+	await get_tree().process_frame
+	var menu_settings_open := menu.get(&"_settings") != null
+	Input.parse_input_event(esc_ev)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(menu_settings_open and menu.get(&"_settings") == null and menu.visible,
+		"Settings opens from the menu; Esc closes them and the menu stays")
+	Input.parse_input_event(esc_ev)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(not menu.visible and not PauseMenu.showing and not get_tree().paused, "Esc again closes the menu and the world runs on")
+	zone_now.hero_ui.open_tab(HeroUI.Tab.INVENTORY)
+	Input.parse_input_event(esc_ev)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(not zone_now.hero_ui.visible and not menu.visible, "an open window takes Esc first (it closes, no menu)")
+	zone_now.playtest_ui.open()
+	var list_open := zone_now.playtest_ui.visible
+	zone_now.debug_overlay.set(&"_visible", true)
+	Input.parse_input_event(esc_ev)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(list_open and not zone_now.playtest_ui.visible and not menu.visible,
+		"Esc closes a window even while the F1 panel shows (the playtest list)")
+	zone_now.debug_overlay.set(&"_visible", false)
+	menu.close()
+	zone_now.player.health.current_health = zone_now.player.health.max_health * 0.6
+
 	# --- M10: several characters per save, each with its own world (title screen) ---
 	SaveGame.flags = {"colossus_defeated": true}
 	SaveGame.save_now()
@@ -3599,13 +3645,20 @@ func _run() -> void:
 		old_cfg.set_value("coop", "last_server", " %s " % str(acer["address"]).to_upper())
 		old_cfg.set_value("coop", "invites", {str(acer["address"]).to_lower(): smoke_code})
 		old_cfg.save(ClientSettings.path)
-	get_tree().change_scene_to_file("res://scenes/title.tscn")
-	for i in 30:
+	# M17a: the way back is the Esc menu's "Save and return to title"
+	var hp_left := zone_now.player.health.current_health
+	menu.open()
+	(menu.get(&"_back_btn") as Button).pressed.emit()
+	for i in 300:
 		await get_tree().process_frame
 		if get_tree().current_scene != null and get_tree().current_scene.scene_file_path == "res://scenes/title.tscn":
 			break
 	var title := get_tree().current_scene
 	_check(title != null and title.scene_file_path == "res://scenes/title.tscn", "the title screen loads")
+	var saved_hp := float((SaveGame.active_character().get("vitals", {}) as Dictionary).get("hp", -1.0))
+	_check(is_equal_approx(saved_hp, hp_left) and not get_tree().paused and not PauseMenu.showing,
+		"\"Save and return to title\" saves the hero (health %.0f) and unpauses" % saved_hp)
+	_check(not (title.get(&"_main_status") as Label).visible, "a return from the menu shows no warning on the title")
 	var first_count := SaveGame.characters().size()
 	var tank_line := str(title.call(&"_continue_label"))
 	var mage_index := SaveGame.create_character(&"elementalist", "Brynja")

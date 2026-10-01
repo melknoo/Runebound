@@ -67,6 +67,8 @@ func set_target(t: Node3D) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		look((event as InputEventMouseMotion).relative)
+	elif PauseMenu.showing:
+		return  # M17a: the wheel belongs to the Esc menu (online nothing pauses)
 	elif event.is_action_pressed(&"zoom_in"):
 		_zoom = maxf(_zoom - ZOOM_STEP * GameSettings.zoom_speed(), ZOOM_MIN)
 	elif event.is_action_pressed(&"zoom_out"):

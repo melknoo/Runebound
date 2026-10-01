@@ -35,6 +35,27 @@ rig; English; the character's name online; developer tools off by default).
   - Smoke 576 green (bus math, file round trip with the coop section kept,
     sensitivity / invert / zoom / shake / flash / damage numbers, the dev
     tools gate, the settings window on the title).
+- **Phase 2 (built): the Esc menu.**
+  - `PauseMenu` (CanvasLayer 12, runs while paused): Resume, Settings, Save
+    and return to title, Save and quit. Solo it pauses the tree; online
+    ("MENU", "Online on Acer - the world keeps moving") it only locks the
+    hero, "Leave the server" / "Leave and quit" (`Net.leave(quit)`, a
+    voluntary leave shows no warning on the title). Solo it also opens when
+    the window loses focus (setting; never on test runs).
+  - Esc: an open window closes first (the menu sits before the windows in
+    the tree), else the menu opens; windows close on Esc even under the F1
+    panel; the hero's cursor toggle is gone; window hotkeys, Tab and the
+    zoom stay quiet under the menu (`PauseMenu.showing`).
+  - Pause hygiene: music and UI sounds play on (`PROCESS_MODE_ALWAYS`),
+    gameplay timers wait out a pause. Closing the window saves whenever a
+    hero is in the scene.
+  - `ZoneBase.close_windows / return_to_title / quit_game`; shot list
+    `m17a_menus` (the menu, its settings), shot actions `pause_menu`,
+    `pause_settings`.
+  - Smoke 585 green (Esc routing, pause, no hotkeys under the menu, settings
+    from the menu, the way back saves the hero's health); net `handshake`
+    (c2 opens the menu online - nothing pauses - and leaves through it) and
+    `server_gone` green.
 
 ## Co-op: server dropdown and the version refusal (2026-10-01)
 - **Why the join failed on 2026-09-30:** the laptop server runs the

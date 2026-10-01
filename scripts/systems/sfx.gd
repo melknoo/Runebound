@@ -35,6 +35,7 @@ func _ready() -> void:
 	for i in 8:
 		var p := AudioStreamPlayer.new()
 		p.bus = &"UI"
+		p.process_mode = Node.PROCESS_MODE_ALWAYS  # M17a: menu clicks in the paused Esc menu
 		add_child(p)
 		_pool_ui.append(p)
 	music = MusicDirector.new()

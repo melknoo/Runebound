@@ -85,7 +85,21 @@ class Driver extends Node:
 					return
 				if role == "c2":
 					await _seconds(2.0)
-					Net.leave()
+					# M17a: the Esc menu online - the world keeps running, the hero
+					# stands still, and "Leave the server" leaves (no warning after).
+					var zone := get_tree().current_scene as ZoneBase
+					zone.pause_menu.open()
+					if get_tree().paused or not zone.player.input_locked or not PauseMenu.showing:
+						_finish("fail: the online menu paused the game (%s) or left the hero free" % get_tree().paused)
+						return
+					(zone.pause_menu.get(&"_back_btn") as Button).pressed.emit()
+					if not await _until(func() -> bool:
+						var scene := get_tree().current_scene
+						return scene != null and scene.scene_file_path == Net.TITLE_SCENE, 15.0, "the title after Leave the server"):
+						return
+					if Net.last_reason != Net.LEFT_REASON or SaveGame.online or PauseMenu.showing or Net.is_online():
+						_finish("fail: after leaving: reason \"%s\", online save %s" % [Net.last_reason, SaveGame.online])
+						return
 					_finish("ok")
 					return
 				if not await _until(func() -> bool: return Net.roster.size() == 1, 30.0, "c2 leaving the roster"):

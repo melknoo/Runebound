@@ -138,9 +138,10 @@
   (Pixelify letters + grid-exact 5x7 digits, `tools/fontgen/numerals.py`).
 - Fracture Rune now goes through the player's hit roll (gear %, crit, talent
   multipliers): a small buff to check in play.
-- Esc: HeroUI / TrainerUI consume `toggle_cursor` first (later-added nodes
-  get `_unhandled_input` first); if the cursor still toggles under an open
-  window, make Player skip the toggle while `input_locked`.
+- Resolved 2026-10-01 (M17a): Esc closes an open window first, else opens
+  the Esc menu (PauseMenu sits before the windows in the tree); the hero no
+  longer toggles the cursor, and windows close on Esc even while the F1
+  panel shows.
 - While the F1 overlay shows, C / L / 0 belong to it (reset cooldowns, learn
   all, +500 gold); the hero window ignores keys until it closes. The overlay
   comments used to say F3; the key is F1.

@@ -917,7 +917,7 @@ static func warm_up(root: Node, hidden: Vector3) -> void:
 
 
 static func _free_after(node: Node, seconds: float) -> void:
-	var timer := node.get_tree().create_timer(seconds) if node.is_inside_tree() else null
+	var timer := node.get_tree().create_timer(seconds, false) if node.is_inside_tree() else null  # M17a: waits out a pause
 	if timer == null:
 		node.queue_free()
 		return

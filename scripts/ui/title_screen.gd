@@ -55,7 +55,7 @@ func _ready() -> void:
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	Net.session_failed.connect(_on_failed)
-	if Net.last_reason != "":
+	if Net.last_reason != "" and Net.last_reason != Net.LEFT_REASON:  # M17a: leaving on purpose is no warning
 		_say(_main_status, Net.last_reason, WARN)
 	var broken := Net.broken_scripts()
 	if not broken.is_empty():

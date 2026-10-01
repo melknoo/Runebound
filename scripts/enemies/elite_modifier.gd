@@ -130,7 +130,7 @@ func _charge_nova() -> void:
 	# elite keeps moving while it charges.
 	var pos := enemy.global_position
 	enemy.play_fx(&"nova_charge")
-	await enemy.get_tree().create_timer(NOVA_TELEGRAPH).timeout
+	await enemy.get_tree().create_timer(NOVA_TELEGRAPH, false).timeout  # M17a: waits out a pause
 	_nova_charging = false
 	if enemy == null or not is_instance_valid(enemy) or enemy.ai_state == EnemyBase.AIState.DEAD:
 		return

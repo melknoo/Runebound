@@ -287,7 +287,8 @@ Charaktername**; **Entwickler-Werkzeuge** (F1, J-Liste) als Schalter, Standard a
 Phasen: 1 Einstellungs-Kern + Fenster, 2 Esc-Menü, 3 Hauptmenü + Lagerfeuer-Szene,
 4 Tastenbelegung, 5 Abschluss.
 **Stand:** Phase 1 gebaut (`GameSettings`, Einstellungsfenster mit vier Tabs, im Titel unter
-„Settings“).
+„Settings“). Phase 2 gebaut (Esc-Menü: solo pausiert, online läuft die Welt, zurück zum Titel
+speichert, Esc schließt zuerst offene Fenster).
 
 ### M12 — Highlands mit Substanz
 Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands
