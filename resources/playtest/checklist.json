@@ -3,6 +3,26 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m17a",
+			"title": "M17a: Menüs & Einstellungen",
+			"items": [
+				{"id": "m17_flow", "src": "M17a", "title": "Charakter, dann allein oder online", "hint": "Titel -> Characters: einen wählen, dann „Play solo“ oder „Play online“. Ist der Weg klar?"},
+				{"id": "m17_continue", "src": "M17a", "title": "Weiter wie zuletzt", "hint": "„Continue“ startet den letzten Charakter so wie zuletzt (allein oder auf demselben Server). Stimmt die Zeile darunter?"},
+				{"id": "m17_campfire", "src": "M17a", "title": "Lagerfeuer-Szene im Titel", "hint": "Nacht, Feuer, dein Charakter daneben, langsame Kamera, Musik: gefällt die Stimmung? Zu dunkel, zu unruhig?"},
+				{"id": "m17_hero_switch", "src": "M17a", "title": "Figur am Feuer wechselt", "hint": "Einen anderen Charakter anklicken oder beim Erstellen die Klasse wechseln: wechselt die Figur mit ihrer kleinen Geste?"},
+				{"id": "m17_online_name", "src": "M17a", "title": "Online heißt du wie dein Charakter", "hint": "Ein Charakter ohne Namen wird beim Online-Spielen einmal nach einem gefragt. Sehen die anderen den richtigen Namen?"},
+				{"id": "m17_esc_solo", "src": "M17a", "title": "Esc-Menü allein", "hint": "Esc im Spiel: die Welt hält an, die Musik läuft weiter; Resume / Settings / Save and return to title / Save and quit. Ein offenes Fenster schließt Esc zuerst."},
+				{"id": "m17_esc_online", "src": "M17a", "title": "Esc-Menü online", "hint": "Online läuft die Welt weiter, dein Held steht still. „Leave the server“ führt ohne Warnung zum Titel."},
+				{"id": "m17_focus_pause", "src": "M17a", "title": "Pause bei Alt+Tab", "hint": "Allein: geht beim Wechsel in ein anderes Fenster das Menü auf? Gewollt? (abschaltbar unter Gameplay)"},
+				{"id": "m17_audio", "src": "M17a", "title": "Lautstärken", "hint": "Master, Musik, Effekte, Ambiente, Interface: wirken die Regler wie erwartet und bleiben sie nach einem Neustart?"},
+				{"id": "m17_video", "src": "M17a", "title": "Fenster und Bildrate", "hint": "Fenster / randlos / Vollbild, Fenstergröße, VSync, Bildraten-Limit, FPS-Anzeige: klappt alles?"},
+				{"id": "m17_mouse", "src": "M17a", "title": "Maus und Kamera", "hint": "Mausempfindlichkeit, Y umkehren, Zoom-Tempo: passen die Standardwerte, fehlt etwas?"},
+				{"id": "m17_comfort", "src": "M17a", "title": "Komfort", "hint": "Bildschirmwackeln (Regler), roter Treffer-Blitz und Schadenszahlen abschaltbar: fehlt eine Option?"},
+				{"id": "m17_rebind", "src": "M17a", "title": "Tasten neu belegen", "hint": "Settings -> Controls: eine Taste anklicken, die neue drücken (Esc bricht ab, Entf löscht). Folgen HUD und Hinweise? Bleibt es nach dem Neustart?"},
+				{"id": "m17_devtools", "src": "M17a", "title": "Entwickler-Werkzeuge", "hint": "Gameplay -> Developer tools: ohne sie sind F1 und J aus (für Freunde). Mit run_godot play / coop sind sie an."}
+			]
+		},
+		{
 			"id": "m11",
 			"title": "M11: Druide & Heilen",
 			"items": [
@@ -128,7 +148,7 @@
 			"title": "Koop",
 			"items": [
 				{"id": "c_friend_join", "src": "M09b", "title": "Freund tritt ohne Tailscale bei", "hint": "Nur mit Spiel (Branch release), „Acer“ im Dropdown und seinem Code. Klappt das auf Anhieb?"},
-				{"id": "c_server_pick", "src": "neu", "title": "Server im Dropdown", "hint": "Join co-op: „Acer“ wählen, Code eintragen, verbinden. Steht nirgends die Adresse? „Other address …“ für LAN oder run_godot server (127.0.0.1)?"},
+				{"id": "c_server_pick", "src": "neu", "title": "Server im Dropdown", "hint": "Characters -> Play online: „Acer“ wählen, Code eintragen, verbinden. Steht nirgends die Adresse? „Other address …“ für LAN oder run_godot server (127.0.0.1)?"},
 				{"id": "c_deploy", "src": "neu", "title": "Server-Update per Push", "hint": "Während ihr spielt: kommen die Hinweise (5 min, 1 min, 10 s), und klappt der Wiedereinstieg?"},
 				{"id": "c_countdown", "src": "M09", "title": "Gruppenreise", "hint": "5 s Countdown, X bricht ab: angenehm?"},
 				{"id": "c_rewards", "src": "M09", "title": "Beute in der Gruppe", "hint": "Jeder in 60 m bekommt volle XP und eigene Drops, Truhen einen Beutel bis 12 m: passt das?"},

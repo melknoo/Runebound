@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-01 · Milestone: **M17a Menus & settings** (pulled forward
-from M17, in progress, below). **M11 Three roles II (the root druid,
+from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
 Draughts**; the user's playtest is the gate for both (still open, M11 started
@@ -10,7 +10,7 @@ friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
-## M17a Menus & settings (pulled forward from M17, in progress 2026-10-01)
+## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a
 solo game, and that the game had no Esc menu and no settings. Plan with the
 user's answers: ROADMAP M17a (character first, then Play solo / Play
@@ -97,6 +97,31 @@ rig; English; the character's name online; developer tools off by default).
     keys show in the keyboard layout's own letters.
   - Smoke 605 green (defaults, a move, a conflict, Esc refused, relabelled
     HUD and tabs, save and reload, reset; the Controls tab by key events).
+- **Phase 5 (built): wrap-up.** TECHNICAL_ARCHITECTURE "Menus and
+  settings (M17a)" (and the autoload list), KNOWN_ISSUES "M17a open items",
+  the J list got a group "M17a: Menüs & Einstellungen" (14 points; the
+  server-dropdown point now starts from "Play online"). Smoke 605 green,
+  the whole net suite green (24 scenarios incl. the WebSocket ones).
+- **No protocol change:** the server needs no new release for M17a (the
+  user may still ship it so friends get the menus: `tools
+un_godot.cmd
+  release`).
+- **Gate walk (user):**
+  1. `tools
+un_godot.cmd play`: the campfire scene. Continue (the line
+     under it says how), or Characters -> pick one (the figure by the fire
+     changes) -> Play solo.
+  2. In Runehold press Esc: the world stops, the music plays on. Settings:
+     a volume, the mouse sensitivity, Controls -> rebind a key (e.g.
+     Interact) and look at the [E] prompt; Gameplay -> screen shake.
+     "Save and return to title".
+  3. Characters -> Play online -> Acer (or `tools
+un_godot.cmd coop`):
+     Esc online - the world keeps moving -> "Leave the server".
+  4. Settings from the title: window mode / FPS limit, then restart: is
+     everything kept?
+  5. The J list, group "M17a: Menüs & Einstellungen" (developer tools: on
+     with `run_godot play`, else Gameplay -> Developer tools).
 
 ## Co-op: server dropdown and the version refusal (2026-10-01)
 - **Why the join failed on 2026-09-30:** the laptop server runs the

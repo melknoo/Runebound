@@ -16,6 +16,7 @@ const TAB_TITLES: Array[String] = ["AUDIO", "VIDEO", "CONTROLS", "GAMEPLAY"]
 const TAB_SECTIONS: Array[String] = ["audio", "video", "controls", "gameplay"]
 const PANEL := Vector2(920, 620)
 const LABEL_WIDTH := 330.0
+const WARN := Color("#E08A7A")
 
 var current: Tab = Tab.AUDIO
 
@@ -29,7 +30,6 @@ var _bind_buttons: Dictionary = {}
 ## {"action", "slot"} while a binding waits for its key ({} otherwise).
 var _capture: Dictionary = {}
 var _bind_status: Label
-const WARN := Color("#E08A7A")
 
 
 func _ready() -> void:

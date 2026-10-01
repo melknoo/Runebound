@@ -19,9 +19,11 @@ When reporting information to me, be extremely concise and sacrifice grammar for
   from space) — do not go back to it.
 - **Projectiles position BEFORE `add_child`.** Spawning at origin for one
   frame overlaps the arena floor and self-detonates.
-- **Autoloads:** `GameFeel` (hitstop, camera feedback, damage numbers),
-  `Sfx` (pooled positional audio, auto-scanned variant library).
-  `VFX` is a static class, not an autoload.
+- **Autoloads** (in this order): `GameFeel` (hitstop, camera feedback,
+  damage numbers), `Sfx` (pooled positional audio, auto-scanned variant
+  library, the mix buses, hosts the MusicDirector), `SaveGame`, `Net` (M09),
+  `GameSettings` (M17a, last: the buses and `SaveGame.is_test_run` exist by
+  then). `VFX`, `KeyBindings`, `InputSetup` are static classes.
 - Tests are **scenes**, not `--script` MainLoops — autoloads only exist in
   scene runs.
 
@@ -605,9 +607,11 @@ never `DisplayServer` (headless bot clients are clients).
   of a listed server never shows: `Net.join(..., invite, label)` names the
   server by `label` in its messages. `user://settings.cfg` [coop] keeps
   `server_pick` (a list id or "other"), `last_server` (the typed address),
-  `invites` (code per address) and `name`; settings from before the list
-  pick the entry whose address was typed last. `ClientSettings.path` points
-  tests at a file of their own.
+  `invites` (code per address), `name` (only a prefill now: online the
+  party sees the character's name, M17a) and `last_mode` (solo | online:
+  how the title's Continue plays); settings from before the list pick the
+  entry whose address was typed last. `ClientSettings.path` points tests at
+  a file of their own.
 - **Auto-deploy (M09b):** the server runs the `release` branch
   (`RUNEBOUND_BRANCH`, server.env; `runebound-server.sh update` switches the
   clone before pulling); `tools\run_godot.cmd release` fast-forwards
@@ -740,6 +744,55 @@ never `DisplayServer` (headless bot clients are clients).
   (headless client driver that survives the zone change),
   `tests/net_server_probe.gd` (server side). `tests/server_perf.tscn`
   (`--heroes=N --dedicated --strip=anim,ui,sleep,enemies --tanky=K`).
+
+## Menus and settings (M17a)
+- **GameSettings** (autoload, `scripts/systems/game_settings.gd`): typed
+  values with a defaults table in `user://settings.cfg` sections audio /
+  video / controls / gameplay / keys; ClientSettings keeps [coop] in the
+  same file (every write is load -> set -> save). `set_value` applies at
+  once and emits `changed(key)` ("keys" for the bindings). Volumes scale
+  the buses on top of `Sfx.BUSES` (0 mutes; Effects = SFX + Telegraph).
+  Hot-path getters: `mouse_sensitivity`, `invert_y`, `zoom_speed`
+  (CameraRig.look / zoom), `shake` (CameraRig.add_trauma / add_impulse),
+  `hurt_flash` (HUD), `dev_tools` (F1 overlay, J list, the title's playtest
+  line). **Headless and test runs** (`SaveGame.is_test_run`, `--net-test`)
+  run on the defaults, never read / write / apply the file or the window
+  (`test_run`), the developer tools are on there and with `-- --dev`
+  (`run_godot play` / `coop`); tests opt in with `use_file(path)`.
+- **KeyBindings** (static): GROUPS lists 22 rebindable actions; defaults =
+  the InputMap after `InputSetup.ensure()` (which now runs once per run, in
+  GameSettings, so zone loads keep the player's keys); codes `key:<physical>`
+  / `mouse:<button>`; `bind()` moves a key from the action that had it;
+  Esc / F1 reserved; `label()` shows the keyboard layout's letters
+  (`DisplayServer.keyboard_get_label_from_physical`). Every key hint reads
+  `InputSetup.key_label(action)`; HUD and HeroUI relabel on `changed("keys")`.
+- **SettingsUI** (`scripts/ui/settings_ui.gd`): one window (tabs Audio /
+  Video / Controls / Gameplay, rows re-read GameSettings on `changed`) for
+  the title and the Esc menu; the owner forwards Esc via `cancel()`; while a
+  binding waits for its key, `_input` takes every key and click (Esc there
+  cancels the capture, never the window).
+- **PauseMenu** (`scripts/ui/pause_menu.gd`, CanvasLayer 12,
+  `PROCESS_MODE_ALWAYS`): added in `ZoneBase._build_player_ui` before the
+  windows, so an open window takes Esc first (later siblings see
+  `_unhandled_input` first); the menu owns Esc in `_input` while open.
+  Solo: `get_tree().paused`; online: only `player.input_locked`.
+  `PauseMenu.showing` (static) keeps window hotkeys, Tab and the zoom quiet
+  under it. Pause rules for new code: anything that must run in the menu
+  (music, UI sounds) is `PROCESS_MODE_ALWAYS`; gameplay `create_timer` calls
+  pass `process_always = false`. `ZoneBase.return_to_title` (solo: save,
+  fade, title; online: `Net.leave()`), `quit_game` (`Net.leave(true)`
+  online), `close_windows`. Closing the window saves whenever a hero is in
+  the scene.
+- **Title** (`scripts/ui/title_screen.gd`, root of `scenes/title.tscn`):
+  pages main / characters / create / join, the menu on CanvasLayer 5 above
+  the backdrop's post layer. **TitleBackdrop** is a ZoneBase with
+  `_is_backdrop()`: after `_build_zone` it only gets `_backdrop_ready`
+  (StyleManager grading, ash fall on its own camera, music) - no NetWorld,
+  hero, UI, `Net.zone_entered`, discovery or mouse capture. **HeroPreview**
+  dresses the class rig (`ArtKit.dress_rig`, also used by Npc), idles, and
+  plays the class's signature clip on a new pick; before a rig is freed it
+  drops its materials (else the renderer logged "material is null").
+  Look review: `-- --snap=<png> --snap-page=<page>` (a test-run flag).
 
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
