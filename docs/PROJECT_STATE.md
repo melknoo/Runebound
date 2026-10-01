@@ -63,6 +63,40 @@ only the new texts bilingual, the first start follows the system language).
   - Smoke 629 green (mask weights per camp, biome stamps, four looks per
     role, the forest off routes and clear of camps, the camera ignores
     trunks, bones only in the bone field, one area name, the set pieces).
+- **Phase 2 (built): lore, ghosts, the chronicle, shards, gathering, food.**
+  - `Interactable` (scripts/world/interactable.gd): the base of everything
+    used with [E] (prompt text, can_interact, interact; ticks only within
+    20 m of the local hero). **[E] focus:** of the prompts in reach only the
+    nearest shows and fires (InteractPrompt; chests, shrines, portals and
+    NPCs too).
+  - **Lore:** 12 lore objects (graves, notes, a letter, two carved stones)
+    and 2 ghosts (a pale, see-through figure without outline that fades in
+    as you come near and turns to you; [E] Listen), all texts DE/EN; one
+    rare meta break (the grave whose name the AI never wrote). The first
+    read pays 15 XP (a ghost 20) and goes into the **chronicle** (key L, the
+    lore window with a list: everything read, newest first, and the shards).
+    Lore and ghosts show on the map once seen within 6 m, never on the
+    compass.
+  - **Rune shards:** 12 hidden off the paths (one on the secret climb), each
+    with a faint teal gleam; taking one pays 25 XP + 15 gold and a line
+    (`shard.<n>`); per character. The set's reward comes with the blessings
+    (phase 6).
+  - **Food:** the Ember Tuber (DE Glutknolle): 50 % health over 8 s, only out
+    of a fight, a hit (dealt or taken) ends the meal, 10 in the bag. From 40
+    rule-placed tuber patches (village gardens, forest edge, the ash; none in
+    the bone field), a cooking pot in every raider camp (2 a time) and Ylva
+    (12 gold). Patches and pots grow back / refill 15 min after use, per
+    character, on every machine (no net traffic; personal food).
+  - Save: `lore_read`, `collected`, `gathered` per character (read with
+    defaults, no version bump).
+  - New props lore_note, lore_tablet, rune_shard, ember_tuber_plant,
+    cook_pot; icons ember_tuber, map lore / ghost; shots 19-23 in
+    `m12_highlands`.
+  - Smoke 649 green (texts complete, the nearest prompt wins, reading +
+    XP once, the chronicle on L, a shard once, gathering + regrowth + a full
+    bag, patches off trails and pads, the save keys, a ghost, the map; food:
+    Ylva sells it, no eating in a fight, slow heal, a hit ends it, 50 % in
+    8 s).
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

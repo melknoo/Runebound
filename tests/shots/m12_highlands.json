@@ -272,6 +272,81 @@
    "pitch": -0.3,
    "zoom": 6.0,
    "settle": 0.6
+  },
+  {
+   "name": "ghost",
+   "player": {
+    "poi": "ghost_burner_f",
+    "offset": [
+     3,
+     0.2,
+     4
+    ]
+   },
+   "yaw": 1.094,
+   "pitch": -0.15,
+   "zoom": 6.0,
+   "settle": 0.8
+  },
+  {
+   "name": "lore_note",
+   "player": {
+    "poi": "lore_hunter_f",
+    "offset": [
+     1.8,
+     0.2,
+     2.4
+    ]
+   },
+   "yaw": 1.094,
+   "pitch": -0.25,
+   "zoom": 6.0,
+   "settle": 0.8
+  },
+  {
+   "name": "lore_tablet",
+   "player": {
+    "poi": "lore_roots_f",
+    "offset": [
+     2,
+     0.2,
+     2.6
+    ]
+   },
+   "yaw": 1.106,
+   "pitch": -0.25,
+   "zoom": 6.0,
+   "settle": 0.8
+  },
+  {
+   "name": "shard",
+   "player": {
+    "poi": "shard_4",
+    "offset": [
+     1.6,
+     0.2,
+     2.0
+    ]
+   },
+   "yaw": 1.125,
+   "pitch": -0.25,
+   "zoom": 6.0,
+   "settle": 0.8
+  },
+  {
+   "name": "camp_pot",
+   "player": {
+    "poi": "camp_2",
+    "offset": [
+     4,
+     0.2,
+     4
+    ]
+   },
+   "yaw": 1.235,
+   "pitch": -0.3,
+   "zoom": 6.0,
+   "settle": 0.8
   }
  ]
 }

@@ -42,6 +42,12 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 			return BiomeDressing.village(zone, poi)
 		"vignette":  # M12: places that tell a story without text
 			BiomeDressing.vignette(zone, poi)
+		"lore":  # M12: graves, notes, carved stones to read
+			return {"lore": LoreObject.build(zone, poi)}
+		"ghost":
+			return {"ghost": Ghost.build(zone, poi)}
+		"shard":
+			return {"shard": RuneShard.build(zone, poi)}
 		_:
 			pass  # spawn (no geometry); M12 types not built yet stay empty
 	return {}
@@ -200,6 +206,9 @@ static func camp(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 			blocker(zone, spot, Vector3(0.36, 3.2, 0.36))
 			spots.append(spot)
 		SetPieces.raider_camp(zone, pos, spots)
+	# M12 food: the camp's cooking pot by the fire (personal, refills, works
+	# on every machine - a client never learns a camp's state)
+	GatherNode.create(zone, "pot_" + String(poi.get("id", "")), pos + Vector3(1.9, 0.0, -0.9), 0.4, "pot", 2)
 	return spawner
 
 

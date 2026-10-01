@@ -240,6 +240,7 @@ static func new_character(class_id: StringName, char_name: String) -> Dictionary
 	return {"name": char_name, "class_id": String(class_id), "known_abilities": [], "loadout": [], "gold": 0,
 		"inventory": [], "equipped": {}, "progression": {"level": 1, "xp": 0, "talents": {}},
 		"waypoints": [], "map_discovered": [], "discovered": [],
+		"lore_read": [], "collected": [], "gathered": {},
 		"world": {"zone": HUB_SCENE, "flags": {}, "camps": {}}}
 
 
@@ -409,6 +410,11 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 	player.discovered_waypoints = PackedStringArray(ch.get("waypoints", []))
 	player.discovered_zones = PackedStringArray(ch.get("discovered", []))
 	player.map_discovered = PackedStringArray(ch.get("map_discovered", []))
+	player.lore_read = PackedStringArray(ch.get("lore_read", []))  # M12, optional
+	player.collected = PackedStringArray(ch.get("collected", []))
+	var picked: Variant = ch.get("gathered", {})
+	player.gathered = (picked as Dictionary).duplicate() if picked is Dictionary else {}
+	player.chronicle_changed.emit()
 	player.equipment._recompute()
 	player.equipment.changed.emit()
 	player.abilities_changed.emit()
@@ -419,7 +425,8 @@ static func character_dict(player: Player) -> Dictionary:
 	var ch := {"class_id": String(player.class_data.id), "known_abilities": [], "loadout": [], "gold": player.gold,
 		"inventory": [], "equipped": {}, "progression": player.progression.to_dict(),
 		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered),
-		"discovered": Array(player.discovered_zones)}
+		"discovered": Array(player.discovered_zones),
+		"lore_read": Array(player.lore_read), "collected": Array(player.collected), "gathered": player.gathered.duplicate()}
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:

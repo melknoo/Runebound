@@ -8,6 +8,9 @@ extends RefCounted
 ## the inventory (right-click), by the user's choice: slow on purpose.
 
 const HEALING_DRAUGHT: StringName = &"healing_draught"
+## M12 food (user decision 2026-10-01): gathered from ember tuber patches and
+## camp cooking pots, sold by Ylva; eaten only out of combat, a hit ends it.
+const EMBER_TUBER: StringName = &"ember_tuber"
 
 ## id -> definition. heal_pct of the maximum health over `time` seconds; at
 ## most `cap` in the bag; `price` in gold at Ylva's in Runehold.
@@ -16,6 +19,11 @@ const DEFS := {
 		"name": "Healing Draught",
 		"text": "Restores 35 % of your health over 4 s. Right-click to drink.",
 		"heal_pct": 0.35, "time": 4.0, "cap": 5, "price": 30,
+	},
+	# M12: names and texts from the text table (DE/EN)
+	&"ember_tuber": {
+		"kind": "food", "name": "Ember Tuber", "name_key": "item.ember_tuber.name", "text_key": "item.ember_tuber.text",
+		"heal_pct": 0.5, "time": 8.0, "cap": 10, "price": 12,
 	},
 }
 
@@ -36,7 +44,27 @@ static func def(id: StringName) -> Dictionary:
 
 
 static func display_name(id: StringName) -> String:
-	return str(def(id).get("name", String(id)))
+	var d := def(id)
+	if d.has("name_key"):
+		return Texts.t(str(d["name_key"]))
+	return str(d.get("name", String(id)))
+
+
+## The description shown in the bag (M12: from the text table when it has a key).
+static func text(id: StringName) -> String:
+	var d := def(id)
+	if d.has("text_key"):
+		return Texts.t(str(d["text_key"]))
+	return str(d.get("text", ""))
+
+
+## "draught" or (M12) "food".
+static func kind(id: StringName) -> String:
+	return str(def(id).get("kind", "draught"))
+
+
+static func is_food(id: StringName) -> bool:
+	return kind(id) == "food"
 
 
 static func cap(id: StringName) -> int:

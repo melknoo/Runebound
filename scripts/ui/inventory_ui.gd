@@ -106,9 +106,10 @@ func _refresh() -> void:
 		bag_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		bag_btn.text = "%s  %d/%d" % [Consumables.display_name(cid), count, Consumables.cap(cid)]
 		bag_btn.icon = Hud.icon(cid)
-		bag_btn.add_theme_color_override("font_color", ArtKit.color("color_roles.health.hot", Color("#FF9C9C"))
-			if count > 0 else UiTheme.MUTED)
-		bag_btn.tooltip_text = "Right-click: drink"
+		var tone := ArtKit.color("palettes.burnt_forest.ember.2", Color("#D86A2C")) if Consumables.is_food(cid) \
+			else ArtKit.color("color_roles.health.hot", Color("#FF9C9C"))
+		bag_btn.add_theme_color_override("font_color", tone if count > 0 else UiTheme.MUTED)
+		bag_btn.tooltip_text = "Right-click: eat" if Consumables.is_food(cid) else "Right-click: drink"
 		bag_btn.pressed.connect(_select_consumable.bind(cid))
 		bag_btn.gui_input.connect(_on_right_click.bind(func() -> void: _drink(cid)))
 		_bag_box.add_child(bag_btn)
@@ -209,10 +210,10 @@ func _render_consumable(cid: StringName) -> void:
 	var count := player.consumable_count(cid)
 	_add_detail_label(Consumables.display_name(cid), ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
 	_add_detail_label("Consumable · %d/%d in the bag" % [count, Consumables.cap(cid)], Color(0.7, 0.7, 0.75))
-	_add_detail_label(str(Consumables.def(cid).get("text", "")), Color(0.85, 0.85, 0.9), true)
+	_add_detail_label(Consumables.text(cid), Color(0.85, 0.85, 0.9), true)
 	var why := player.consumable_deny_reason(cid)
 	var drink_btn := Button.new()
-	drink_btn.text = "Drink" if why == "" else why
+	drink_btn.text = ("Eat" if Consumables.is_food(cid) else "Drink") if why == "" else why
 	drink_btn.disabled = why != ""
 	drink_btn.pressed.connect(func() -> void: _drink(cid))
 	_detail.add_child(drink_btn)

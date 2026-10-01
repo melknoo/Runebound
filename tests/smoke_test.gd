@@ -2511,7 +2511,7 @@ func _run() -> void:
 		var shelf := 0
 		for row: Node in hub.trainer_ui._rows.get_children():
 			shelf += 0 if row.is_queued_for_deletion() else 1  # the trainer's rows go at the frame's end
-		_check(hub.trainer_ui.visible and shelf == 1, "the merchant opens the panel as a shop with one shelf row (%d)" % shelf)
+		_check(hub.trainer_ui.visible and shelf == 2, "the merchant opens the panel as a shop: draughts and (M12) ember tubers (%d rows)" % shelf)
 		var price := Consumables.price(draught)
 		_check(hub.trainer_ui.try_buy_consumable(draught) and hp.gold == 100 - price and hp.consumable_count(draught) == 4,
 			"buying a draught costs %d gold and fills the bag" % price)
@@ -2540,6 +2540,40 @@ func _run() -> void:
 	_check(mid_drink > before_drink and mid_drink < before_drink + hp.health.max_health * 0.3
 		and absf(healed - hp.health.max_health * 0.35) < 1.0 and is_zero_approx(hp.healing_left()),
 		"a draught heals over its 4 s: %.0f after 1 s, %.0f in all (35 %% of %.0f)" % [mid_drink - before_drink, healed, hp.health.max_health])
+	# M12 food: Ylva sells ember tubers; eaten only out of a fight, a hit ends the meal
+	var tuber := Consumables.EMBER_TUBER
+	if merchant != null:
+		hp.add_gold(100)
+		hub.trainer_ui.open(merchant, hp)
+		_check(merchant.sells.has(tuber) and hub.trainer_ui.try_buy_consumable(tuber) and hp.consumable_count(tuber) == 1,
+			"M12: Ylva sells ember tubers (%d gold)" % Consumables.price(tuber))
+		hub.trainer_ui.close()
+	hp.add_consumable(tuber, 2)
+	_check(Consumables.is_food(tuber) and Consumables.display_name(tuber) == "Ember Tuber" and Consumables.cap(tuber) == 10
+		and Consumables.text(tuber).contains("50 %"), "the ember tuber is food from the text table (cap 10, 50 % over 8 s)")
+	hp.health.current_health = hp.health.max_health * 0.3
+	hp.mark_combat()
+	_check(hp.consumable_deny_reason(tuber) == Texts.t("ui.food.in_combat") and not hp.use_consumable(tuber),
+		"no eating in a fight")
+	hp.set(&"_last_combat_msec", -1000000)
+	var before_meal := hp.health.current_health
+	_check(hp.use_consumable(tuber) and hp.is_eating() and hp.consumable_deny_reason(tuber) == Texts.t("ui.food.eating"),
+		"out of the fight the hero eats (one meal at a time)")
+	await _wait_frames(120)
+	var after_2s := hp.health.current_health - before_meal
+	hp.mark_combat()
+	await _wait_frames(30)
+	var after_hit := hp.health.current_health - before_meal
+	_check(not hp.is_eating() and after_2s > hp.health.max_health * 0.08 and after_2s < hp.health.max_health * 0.2
+		and absf(after_hit - after_2s) < 0.5,
+		"a meal heals slowly (%.0f in 2 s) and a hit ends it (%.0f after)" % [after_2s, after_hit])
+	hp.set(&"_last_combat_msec", -1000000)
+	hp.health.current_health = hp.health.max_health * 0.3
+	before_meal = hp.health.current_health
+	hp.use_consumable(tuber)
+	await _wait_frames(540)
+	_check(absf(hp.health.current_health - before_meal - hp.health.max_health * 0.5) < 1.0 and not hp.is_eating(),
+		"a whole meal gives 50 %% over 8 s (%.0f of %.0f)" % [hp.health.current_health - before_meal, hp.health.max_health])
 	# drops: a draught on the ground glides into the bag; a full bag leaves it lying
 	var drops_before := 0
 	for child in hub.world.get_children():
@@ -2876,6 +2910,94 @@ func _run() -> void:
 		if child.name.begins_with("Scatter_bf_stump"):
 			stumps += (child as Node).get_meta(Scatter.POINTS_META, PackedVector3Array()).size()
 	_check(snags >= 25 and stumps >= 20, "the forest's undergrowth: %d snags, %d smouldering stumps" % [snags, stumps])
+
+	# --- M12 phase 2: interactables, lore, the chronicle, shards, gathering, ghosts ---
+	var texts_ok := true
+	for poi in hl_layout.by_type("lore") + hl_layout.by_type("ghost"):
+		var lid := String(poi.get("text", ""))
+		texts_ok = texts_ok and Texts.has(lid + ".title") and Texts.has(lid + ".body")
+	for poi in hl_layout.by_type("shard"):
+		texts_ok = texts_ok and Texts.has("shard.%d" % int(poi.get("index", 0)))
+	_check(texts_ok and highlands.lore_objects.size() == 12 and highlands.ghosts.size() == 2 and highlands.shards.size() == RuneShard.TOTAL,
+		"12 lore objects, 2 ghosts, 12 shards; every text in the table (%d / %d / %d)"
+		% [highlands.lore_objects.size(), highlands.ghosts.size(), highlands.shards.size()])
+	var hero12 := highlands.player
+	var spot12 := hl_layout.poi_pos("camp_1") + Vector3(0, 0, 18)
+	hero12.global_position = highlands.ground_point(spot12, 0.2)
+	var near_a := LoreObject.build(highlands, {"id": "smoke_a", "kind": "note", "text": "lore.ash.letter_1",
+		"pos": [spot12.x + 1.0, spot12.z]})
+	var near_b := LoreObject.build(highlands, {"id": "smoke_b", "kind": "note", "text": "lore.ash.ledger",
+		"pos": [spot12.x + 1.8, spot12.z]})
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(near_a._prompt.visible and not near_b._prompt.visible,
+		"two things in reach: only the nearer one shows its [E] prompt")
+	near_a.queue_free()
+	near_b.queue_free()
+	hero12.progression.xp = 0  # well short of the next level: the reward shows as it is
+	var xp0 := hero12.progression.xp
+	var lore_grave := highlands.lore_objects["lore_grave_nameless"] as LoreObject
+	hero12.global_position = lore_grave.global_position + Vector3(1.0, 0.2, 0)
+	lore_grave.use_by(hero12)
+	var first_xp := hero12.progression.xp - xp0
+	_check(highlands.lore_ui.visible and highlands.lore_ui.shown_id == "lore.village.grave_nameless"
+		and str((highlands.lore_ui.get(&"_kind") as Label).text) == "GRAVE" and hero12.lore_read.has("lore.village.grave_nameless")
+		and first_xp == LoreObject.READ_XP, "reading a grave opens its text, puts it in the chronicle, +%d XP" % first_xp)
+	highlands.lore_ui.close()
+	lore_grave.use_by(hero12)
+	_check(hero12.progression.xp - xp0 == LoreObject.READ_XP, "reading it again pays nothing")
+	highlands.lore_ui.close()
+	var chron_ev := InputEventAction.new()
+	chron_ev.action = &"chronicle_toggle"
+	chron_ev.pressed = true
+	highlands.lore_ui._unhandled_input(chron_ev)
+	var chron_list := highlands.lore_ui.get(&"_list_box") as VBoxContainer
+	await get_tree().process_frame
+	_check(highlands.lore_ui.visible and highlands.lore_ui.chronicle and chron_list.get_child_count() >= 2
+		and highlands.lore_ui.shown_id == "lore.village.grave_nameless", "L opens the chronicle with what this hero has read")
+	highlands.lore_ui._unhandled_input(chron_ev)
+	_check(not highlands.lore_ui.visible and not hero12.input_locked, "L again closes it")
+	var shard := highlands.shards["shard_4"] as RuneShard
+	var gold0 := hero12.gold
+	hero12.global_position = shard.global_position + Vector3(1.0, 0.2, 0)
+	shard.use_by(hero12)
+	await get_tree().process_frame
+	_check(hero12.collected.has("shard_4") and shard.prompt_text(hero12) == "" and not shard.can_interact(hero12),
+		"a rune shard is taken once (gold +%d)" % (hero12.gold - gold0))
+	_check(highlands.gather_nodes.size() == 40 and highlands.world.get_node_or_null("Gather_pot_camp_1") != null,
+		"40 ember tuber patches and a cooking pot in every camp")
+	var patch12 := highlands.gather_nodes["tuber_0"] as GatherNode
+	var bag0 := hero12.consumable_count(Consumables.EMBER_TUBER)
+	hero12.consumables[Consumables.EMBER_TUBER] = 0
+	patch12.use_by(hero12)
+	_check(hero12.consumable_count(Consumables.EMBER_TUBER) == 1 and not patch12.ready_for(hero12) and patch12.prompt_text(hero12) == "",
+		"gathering a patch fills the bag; the patch is empty for this hero")
+	hero12.gathered["tuber_0"] = Time.get_unix_time_from_system() - GatherNode.RESPAWN_S - 1.0
+	hero12.consumables[Consumables.EMBER_TUBER] = Consumables.cap(Consumables.EMBER_TUBER)
+	_check(patch12.ready_for(hero12) and patch12.prompt_text(hero12) == Texts.t("ui.prompt.bag_full"),
+		"a patch grows back after 15 min; a full bag says so")
+	hero12.consumables[Consumables.EMBER_TUBER] = bag0
+	var gather_bad := 0
+	for key: String in highlands.gather_nodes:
+		var gnp := (highlands.gather_nodes[key] as Node3D).global_position
+		if highlands._near_route(Vector2(gnp.x, gnp.z), hl_corridors, 1.5) or highlands._near_pad(Vector2(gnp.x, gnp.z), vl_pads, 2.0):
+			gather_bad += 1
+	_check(gather_bad == 0, "no tuber patch sits on a trail or a pad (%d)" % gather_bad)
+	var saved12 := SaveGame.character_dict(hero12)
+	_check((saved12["lore_read"] as Array).has("lore.village.grave_nameless") and (saved12["collected"] as Array).has("shard_4")
+		and (saved12["gathered"] as Dictionary).has("tuber_0"), "lore read, shards and gathered patches go into the save")
+	var ghost12 := highlands.ghosts["ghost_burner_f"] as Ghost
+	hero12.global_position = ghost12.global_position + Vector3(1.5, 0.2, 0)
+	ghost12.use_by(hero12)
+	_check(highlands.lore_ui.visible and highlands.lore_ui.shown_id == "lore.ghost.burner" and hero12.lore_read.has("lore.ghost.burner"),
+		"a ghost tells its story ([E] Listen)")
+	highlands.lore_ui.close()
+	highlands._discover_tick()
+	var lore_marked := false
+	for m in highlands.map_markers():
+		lore_marked = lore_marked or String(m.get("icon", "")) == "ghost"
+	_check(lore_marked and hero12.map_discovered.has("ghost_burner_f"), "a ghost seen up close shows on the map")
+	hero12.global_position = hero_home
 
 	# --- M06 audio: mix buses, music layers, looping ambience ---
 	var music_bus := AudioServer.get_bus_index("Music")

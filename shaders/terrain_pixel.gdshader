@@ -18,6 +18,12 @@ shader_type spatial;
 //    rings stay the player's ground-VFX shape.
 //  * Vertex color multiplies albedo (baked AO / strata on hulls; white on
 //    plain meshes).
+//  * M12 sub-biomes (use_biomes): a baked weight mask (R, G, B = looks 1-3,
+//    the ash where all are 0, same bounds as the trail mask) picks one of
+//    four looks per 2x2 texel cell (a dithered, pixel-stepped edge). Top,
+//    side and trail textures come from 4-layer arrays, layer B amount and
+//    ember density per look from biome_params. Off by default: Runehold, the
+//    Spire and the title never pay for it.
 render_mode diffuse_toon, specular_disabled;
 
 uniform sampler2D top_a : source_color, filter_nearest_mipmap_anisotropic, repeat_enable;
@@ -50,6 +56,13 @@ uniform float rune_glyph_every = 1.6;
 uniform vec4 rune_color : source_color = vec4(0.37, 0.88, 0.91, 1.0);
 uniform float rune_energy = 0.7;
 uniform float roughness_toon : hint_range(0.0, 1.0) = 0.6;
+uniform int use_biomes = 0;
+uniform sampler2D biome_mask : hint_default_black, filter_linear, repeat_disable;
+uniform sampler2DArray tops_a : source_color, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform sampler2DArray tops_b : source_color, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform sampler2DArray sides : source_color, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform sampler2DArray trails : source_color, filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform vec4 biome_params[4];  // per look: x = layer B amount, y = ember density
 
 varying vec3 world_pos;
 varying vec3 world_normal;
@@ -89,15 +102,33 @@ void fragment() {
 	float edge_dither = (bayer4(n.y > 0.5 ? texel : side_texel) - 0.5) * 0.14;
 	bool is_top = n.y + edge_dither > slope_top;
 
+	// M12: which of the four looks this texel cell shows
+	float look = 0.0;
+	float b_amount = layer_b_amount;
+	float b_embers = ember_density;
+	if (use_biomes == 1) {
+		vec3 bw = texture(biome_mask, (world_pos.xz - mask_bounds.xy) / mask_bounds.zw).rgb;
+		float bt = hash12(floor(world_pos.xz * px_per_m * 0.5) + 17.0);
+		look = bt < bw.r ? 1.0 : (bt < bw.r + bw.g ? 2.0 : (bt < bw.r + bw.g + bw.b ? 3.0 : 0.0));
+		vec4 bp = biome_params[int(look)];
+		b_amount = bp.x;
+		b_embers = bp.y;
+	}
+
 	vec3 col;
 	bool use_b = false;
 	if (is_top) {
 		float macro = texture(macro_noise, (texel / px_per_m) * macro_scale).r;
-		use_b = macro + (bayer4(texel) - 0.5) * 0.12 < layer_b_amount;
+		use_b = macro + (bayer4(texel) - 0.5) * 0.12 < b_amount;
 		vec2 top_uv = world_pos.xz * uv_per_m;
-		// each top layer at its own tile size (64 px = 2 m, 128 px = 4 m, ...)
-		col = use_b ? texture(top_b, world_pos.xz * px_per_m / float(textureSize(top_b, 0).x)).rgb
-			: texture(top_a, world_pos.xz * px_per_m / float(textureSize(top_a, 0).x)).rgb;
+		if (use_biomes == 1) {
+			vec3 tuv = vec3(world_pos.xz * px_per_m / float(textureSize(tops_a, 0).x), look);
+			col = use_b ? texture(tops_b, tuv).rgb : texture(tops_a, tuv).rgb;
+		} else {
+			// each top layer at its own tile size (64 px = 2 m, 128 px = 4 m, ...)
+			col = use_b ? texture(top_b, world_pos.xz * px_per_m / float(textureSize(top_b, 0).x)).rgb
+				: texture(top_a, world_pos.xz * px_per_m / float(textureSize(top_a, 0).x)).rgb;
+		}
 		if (paved_circles + paved_paths > 0) {
 			vec2 p = (texel + 0.5) / px_per_m;
 			float d = 1e4;
@@ -122,12 +153,15 @@ void fragment() {
 			vec2 p = (texel + 0.5) / px_per_m;
 			float m = texture(path_mask, (p - mask_bounds.xy) / mask_bounds.zw).r;
 			if (m + (bayer4(texel) - 0.5) * 0.5 > 0.5) {
-				col = texture(paving, world_pos.xz * px_per_m / float(textureSize(paving, 0).x)).rgb;
+				col = use_biomes == 1
+					? texture(trails, vec3(world_pos.xz * px_per_m / float(textureSize(trails, 0).x), look)).rgb
+					: texture(paving, world_pos.xz * px_per_m / float(textureSize(paving, 0).x)).rgb;
 				use_b = false;
 			}
 		}
 	} else {
-		col = texture(side_tex, side_uv * uv_per_m).rgb;
+		col = use_biomes == 1 ? texture(sides, vec3(side_uv * uv_per_m, look)).rgb
+			: texture(side_tex, side_uv * uv_per_m).rgb;
 	}
 
 	float inlay = 0.0;
@@ -158,9 +192,9 @@ void fragment() {
 	}
 
 	// Ember specks: only on scorched top texels, dim and slowly breathing.
-	if (use_b && ember_density > 0.0) {
+	if (use_b && b_embers > 0.0) {
 		float h = hash12(texel);
-		if (h < ember_density) {
+		if (h < b_embers) {
 			float flicker = 0.55 + 0.45 * sin(TIME * (0.8 + h * 90.0) + h * 6283.0);
 			EMISSION = ember_color.rgb * ember_energy * flicker;
 		}

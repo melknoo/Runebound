@@ -7,6 +7,8 @@ extends CharacterBody3D
 ## `_anim_profile` and `_process_class_state`. Make heroes with
 ## `Player.create(class_data)`, never `Player.new()` directly.
 
+## M12: lore read or a collectible taken (the chronicle refreshes).
+signal chronicle_changed
 signal health_changed(current: float, maximum: float)
 ## The class resource (Runebreaker: Resonance, Elementalist: Aether). The name
 ## stays "resonance" in code; ClassData.resource_label is what players read.
@@ -97,6 +99,8 @@ var _heal_rate: float = 0.0
 ## M11: heals over time from allies (the druid's Regrowth): id -> [left, rate].
 ## The same id refreshes; separate from the draught.
 var _hots: Dictionary = {}
+## M12: the heal-over-time id of a meal (separate from ally heals).
+const FOOD_HOT := &"food"
 ## M11: timed stat bonuses (a Growth Totem): key -> [value, seconds left].
 ## stat() adds them.
 var _buffs: Dictionary = {}
@@ -108,6 +112,11 @@ var discovered_waypoints: PackedStringArray = PackedStringArray()
 var map_discovered: PackedStringArray = PackedStringArray()
 ## M09 (save v5): zones this character has discovered (their discovery XP).
 var discovered_zones: PackedStringArray = PackedStringArray()
+## M12 (per character): lore read (its chronicle), collectibles taken (rune
+## shards), gather nodes used (key -> unix time; they grow back).
+var lore_read: PackedStringArray = PackedStringArray()
+var collected: PackedStringArray = PackedStringArray()
+var gathered: Dictionary = {}
 ## action id -> Callable that tries to start it (built in _register_actions).
 var _actions: Dictionary = {}
 ## M07b input seam: Player reads only `intent`, which `input_source` fills
@@ -468,6 +477,35 @@ func discover_poi(id: String) -> bool:
 	return true
 
 
+## M12: true the first time this character reads lore `id` (the chronicle).
+func read_lore(id: String) -> bool:
+	if id == "" or lore_read.has(id):
+		return false
+	lore_read.append(id)
+	chronicle_changed.emit()
+	SaveGame.request_save()
+	return true
+
+
+## M12: true the first time this character takes collectible `id`.
+func collect(id: String) -> bool:
+	if id == "" or collected.has(id):
+		return false
+	collected.append(id)
+	chronicle_changed.emit()
+	SaveGame.request_save()
+	return true
+
+
+## M12: when this character last used gather node `key` (unix s, 0 = never).
+func gathered_at(key: String) -> float:
+	return float(gathered.get(key, 0.0))
+
+
+func mark_gathered(key: String) -> void:
+	gathered[key] = Time.get_unix_time_from_system()
+
+
 func add_gold(amount: int) -> void:
 	if amount == 0:
 		return
@@ -511,7 +549,13 @@ func consumable_deny_reason(id: StringName) -> String:
 		return "None left"
 	if health.is_dead:
 		return "Dead"
-	if _heal_left > 0.0:
+	if Consumables.is_food(id):
+		# M12 food: a rest out of combat (user decision 2026-10-01)
+		if in_combat():
+			return Texts.t("ui.food.in_combat")
+		if _hots.has(FOOD_HOT):
+			return Texts.t("ui.food.eating")
+	elif _heal_left > 0.0:
 		return "Still drinking"
 	if health.current_health >= health.max_health:
 		return "Health is full"
@@ -526,12 +570,21 @@ func use_consumable(id: StringName) -> bool:
 	consumables[id] = consumable_count(id) - 1
 	var total := health.max_health * float(d.get("heal_pct", 0.0))
 	var time := maxf(float(d.get("time", 1.0)), 0.1)
-	_heal_left = total
-	_heal_rate = total / time
-	hero_fx(&"drink", [global_position, total])
+	if Consumables.is_food(id):
+		add_hot(FOOD_HOT, total, time)  # a fight (dealt or taken) breaks it: mark_combat
+		Sfx.play_ui("pickup", -6.0)
+	else:
+		_heal_left = total
+		_heal_rate = total / time
+		hero_fx(&"drink", [global_position, total])
 	consumables_changed.emit()
 	SaveGame.request_save()
 	return true
+
+
+## M12: true while food is still healing (a rest out of combat).
+func is_eating() -> bool:
+	return _hots.has(FOOD_HOT)
 
 
 ## Health a running draught has still to give (0 when none).
@@ -1111,6 +1164,12 @@ var _sprint_note_at: int = -1000000
 
 func mark_combat() -> void:
 	_last_combat_msec = Time.get_ticks_msec()
+	if _hots.has(FOOD_HOT):  # M12: a hit, dealt or taken, ends the meal
+		_hots.erase(FOOD_HOT)
+		if is_local:
+			var zone := ZoneBase.zone_of(self)
+			if zone != null and zone.hud != null:
+				zone.hud.toast(Texts.t("ui.food.interrupted"), UiTheme.MUTED)
 
 
 func in_combat() -> bool:

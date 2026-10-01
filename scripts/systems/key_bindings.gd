@@ -17,6 +17,7 @@ const GROUPS := [
 		[&"target_cycle", "Next target"]]],
 	["Interface", [[&"interact", "Interact"], [&"inventory_toggle", "Inventory"], [&"hero_character", "Character"],
 		[&"talents_toggle", "Talents"], [&"loadout_toggle", "Abilities (loadout)"], [&"map_toggle", "Map"],
+		[&"chronicle_toggle", "Chronicle"],
 		[&"party_cancel", "Cancel party travel"], [&"zoom_in", "Zoom in"], [&"zoom_out", "Zoom out"],
 		[&"playtest_toggle", "Playtest list (developer tools)"]]],
 ]

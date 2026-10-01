@@ -101,6 +101,9 @@ answer every fight); healing between fights comes from consumables, drunk
   in Runehold sells them for 30 gold.
 - On the ground a draught is a red flask that glides into the bag like gold
   - while the bag has room; with a full bag it stays where it lies.
+- M12: **Ember Tuber** (food, DE Glutknolle) - 50 % over 8 s, only out of a
+  fight, a hit ends the meal, 10 in the bag; gathered from tuber patches and
+  camp cooking pots (personal, 15 min to grow back), or 12 gold at Ylva's.
 - The HUD counts them next to the gold. Food follows with the animals of M12
   (the same table, other ids).
 

@@ -1126,6 +1126,96 @@ M12_PROPS = (vl_rafters, vl_fence, vl_well, vl_grave, vl_grave_cross, vl_barrica
              bf_snag, bf_log, bf_stump, bn_rib, bn_skull, bn_vertebra, vg_fallen, vg_tent, vg_spears)
 
 
+def lore_note():
+    """M12 lore: a note nailed to a split stake, 0.9 m (thin, walk-through)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    paper = pm.paint(HL["bone"], 2, "cloth")
+    ink = pm.paint(HL["bone"], 0)
+    pm.box(None, (0.07, 0.07, 0.95), (0.0, 0.0, 0.45), rot=(0.05, 0.0, 0.0), paint=wood, taper=0.8)
+    pm.box(None, (0.3, 0.012, 0.36), (0.0, -0.05, 0.72), rot=(0.05, 0.08, 0.0), paint=paper)
+    for k in range(4):
+        pm.box(None, (0.2 - k * 0.03, 0.004, 0.012), (-0.01, -0.058, 0.8 - k * 0.055), rot=(0.05, 0.08, 0.0), paint=ink)
+    pm.box(None, (0.03, 0.03, 0.03), (0.0, -0.06, 0.88), paint=pm.paint(RB["iron"], 1))  # the nail
+    finish(pm, "lore_note")
+
+
+def lore_tablet():
+    """M12 lore: a standing stone with carved lines, the old runes in them
+    glowing faintly in the ancient-rune teal; 1.15 m (collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(HL["basalt"], 3, "plate")
+    moss = pm.paint(HL["ash_top"], 1)
+    pm.box(None, (0.9, 0.3, 1.1), (0.0, 0.0, 0.5), rot=(0.04, 0.03, 0.0), paint=stone, taper=0.85)
+    pm.box(None, (0.95, 0.36, 0.12), (0.0, 0.0, 0.03), paint=moss)
+    for k in range(4):
+        pm.box(None, (0.55 - (k % 2) * 0.15, 0.02, 0.035), (0.0, -0.16, 0.85 - k * 0.15), rot=(0.04, 0.03, 0.0),
+               mat_index=GLOW)
+    finish(pm, "lore_tablet", ROLES["player_accent"]["body"], 0.45)
+
+
+def rune_shard():
+    """M12 collectible: a shard of the Rune, pale stone cut by a teal rune
+    line, 0.36 m (walk-through; it bobs and turns in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(HL["bone"], 1, "plate")
+    pm.box(None, (0.16, 0.1, 0.32), (0.0, 0.0, 0.17), rot=(0.15, 0.1, 0.3), paint=stone, taper=0.35)
+    pm.box(None, (0.1, 0.07, 0.18), (0.08, 0.02, 0.09), rot=(-0.3, 0.2, 1.2), paint=stone, taper=0.4)
+    pm.box(None, (0.025, 0.11, 0.22), (0.0, 0.0, 0.17), rot=(0.15, 0.1, 0.3), mat_index=GLOW, taper=0.4)
+    finish(pm, "rune_shard", ROLES["player_accent"]["hot"], 0.9)
+
+
+def ember_tuber_plant():
+    """M12 food: ember tubers half sunk in the warm ash, their skins cracked
+    with a dim ember glow, a few dry leaves; 0.25 m (walk-through)."""
+    rig.reset_scene()
+    rnd = random.Random(171)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    skin = pm.paint(HL["rust_hide"], 1, "hide")
+    leaf = pm.paint(HL["dead_grass"], 2)
+    for k in range(3):
+        a = k * math.tau / 3 + rnd.uniform(-0.3, 0.3)
+        r = 0.09 if k else 0.0
+        cx, cy = math.cos(a) * r, math.sin(a) * r
+        s = rnd.uniform(0.07, 0.1)
+        pm.loft(None, [(-0.03, s * 0.9, s * 0.8, cx, cy), (s * 0.6, s * 1.1, s, cx, cy), (s * 1.4, s * 0.4, s * 0.35, cx, cy)],
+                sides=7, paint=skin)
+        pm.box(None, (s * 0.9, 0.012, 0.012), (cx, cy - s * 0.95, s * 0.6), rot=(0.0, 0.0, a), mat_index=GLOW)
+    for k in range(5):
+        a = k * math.tau / 5 + 0.4
+        pm.loft(None, [(0.0, 0.012, 0.008, 0, 0), (0.22, 0.003, 0.003, math.cos(a) * 0.12, math.sin(a) * 0.12)],
+                sides=3, center=(0.0, 0.0, 0.08), paint=leaf)
+    finish(pm, "ember_tuber_plant", BF["ember"][2], 0.8)
+
+
+def cook_pot():
+    """M12 food: a raider camp's iron cooking pot on three stones, a ladle in
+    it, a dim ember glow under it; 0.38 m (walk-through)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(RB["iron"], 1, "plate")
+    rim = pm.paint(RB["iron"], 2)
+    stone = pm.paint(HL["basalt"], 2)
+    wood = pm.paint(CM["wood"], 2, "bark")
+    stew = pm.paint(HL["rust_hide"], 2)
+    for k in range(3):
+        a = k * math.tau / 3
+        pm.box(None, (0.12, 0.12, 0.1), (math.cos(a) * 0.2, math.sin(a) * 0.2, 0.05), rot=(0.0, 0.0, a), paint=stone)
+    pm.loft(None, [(0.08, 0.14, 0.14, 0, 0), (0.18, 0.24, 0.24, 0, 0), (0.32, 0.22, 0.22, 0, 0), (0.36, 0.2, 0.2, 0, 0)],
+            sides=10, paint=iron)
+    pm.loft(None, [(0.355, 0.21, 0.21, 0, 0), (0.37, 0.215, 0.215, 0, 0)], sides=10, paint=rim)
+    pm.loft(None, [(0.33, 0.18, 0.18, 0, 0), (0.345, 0.18, 0.18, 0, 0)], sides=10, paint=stew)
+    pm.box(None, (0.025, 0.025, 0.4), (0.06, 0.02, 0.42), rot=(0.0, 0.5, 0.2), paint=wood)
+    pm.box(None, (0.14, 0.14, 0.02), (0.0, 0.0, 0.03), mat_index=GLOW)
+    finish(pm, "cook_pot", BF["ember"][1], 0.7)
+
+
+M12_PROPS = M12_PROPS + (lore_note, lore_tablet, rune_shard, ember_tuber_plant, cook_pot)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,

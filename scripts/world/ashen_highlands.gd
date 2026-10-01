@@ -20,6 +20,12 @@ var camps: Dictionary = {}
 var chests: Dictionary = {}
 ## Waypoint shrines by POI id.
 var waypoints: Dictionary = {}
+## M12: lore objects, ghosts and rune shards by POI id; the ember tuber
+## patches (rule-placed) by their key.
+var lore_objects: Dictionary = {}
+var ghosts: Dictionary = {}
+var shards: Dictionary = {}
+var gather_nodes: Dictionary = {}
 var arena_centre: Vector3 = Vector3.ZERO
 var _boss_spawn: Vector3 = Vector3.ZERO
 var _boss_started: bool = false
@@ -150,6 +156,12 @@ func _build_zone() -> void:
 				chests[id] = made["chest"]
 			"waypoint":
 				waypoints[id] = made["waypoint"]
+			"lore":
+				lore_objects[id] = made["lore"]
+			"ghost":
+				ghosts[id] = made["ghost"]
+			"shard":
+				shards[id] = made["shard"]
 			"ruin":
 				if made.get("chest") != null:
 					chests[id] = made["chest"]
@@ -169,6 +181,7 @@ func _build_zone() -> void:
 	_scatter()
 	_plant_forest()
 	_dress_biomes()
+	_place_gather_nodes()
 	_add_ambience("wind_loop", Vector3.INF, -14.0)
 
 
@@ -208,8 +221,44 @@ func _plant_forest() -> void:
 	LookDev.register(&"grove_shadows", func(v: Variant) -> void:  # perf A/B: the trunks' shadows
 		for child in dressing().get_children():
 			if child.name.begins_with("Grove_"):
-				(child as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if bool(v) 					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				var on := bool(v)
+				(child as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	, true)
+
+
+## M12 food: ember tuber patches, rule-placed off the trails and pads (more
+## in the village gardens and at the forest's edge, none in the bone field),
+## at least 14 m apart. Keys are their order: stable for the saves.
+const GATHER_COUNT := 40
+
+
+func _place_gather_nodes() -> void:
+	if layout == null or terrain == null:
+		return
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SCATTER_SEED + 31
+	var corridors := _route_segments()
+	var pads := _pads()
+	var placed: Array[Vector2] = []
+	var half := layout.size_m * 0.5 - 30.0
+	var tries := 0
+	while placed.size() < GATHER_COUNT and tries < 4000:
+		tries += 1
+		var p := Vector2(rng.randf_range(-half, half), rng.randf_range(-half, half))
+		var w := layout.biome_weights(p.x, p.y)
+		var chance := 0.35 * clampf(1.0 - w.x - w.y - w.z, 0.0, 1.0) + 1.0 * w.x + 0.55 * w.y
+		if rng.randf() >= chance or _near_route(p, corridors, 2.0) or _near_pad(p, pads, 3.0):
+			continue
+		if terrain.normal_at(p.x, p.y).y < 0.88:
+			continue
+		var crowded := false
+		for q in placed:
+			crowded = crowded or q.distance_to(p) < 14.0
+		if crowded:
+			continue
+		var key := "tuber_%d" % placed.size()
+		gather_nodes[key] = GatherNode.create(self, key, Vector3(p.x, 0.0, p.y), rng.randf_range(0.0, TAU))
+		placed.append(p)
 
 
 ## M12: the village's lane fences and the graveyard's looks (gaps where the
@@ -439,6 +488,8 @@ static func marker_icon(poi: Dictionary) -> String:
 		"landmark": return "landmark"
 		"arena": return "boss"
 		"dungeon": return "dungeon"
+		"lore": return "lore"  # M12: once seen up close
+		"ghost": return "ghost"
 		_: return ""
 
 
@@ -452,7 +503,14 @@ static func marker_label(poi: Dictionary) -> String:
 		"landmark": return "Landmark"
 		"arena": return "Colossus arena"
 		"dungeon": return "Sealed gate: " + String(poi.get("label", "")).capitalize()
+		"lore": return Texts.t(String(poi.get("text", "")) + ".title")  # M12: DE/EN
+		"ghost": return Texts.t("lore.kind.ghost")
 		_: return ""
+
+
+## M12: small POIs (lore, ghosts) are discovered only up close.
+const DISCOVER_SMALL := 6.0
+const SMALL_TYPES: Array[String] = ["lore", "ghost", "shard", "vignette"]
 
 
 ## Everything the local hero has seen (shrines count once attuned); the
@@ -489,7 +547,7 @@ func compass_markers() -> Array[Dictionary]:
 	var origin := player.global_position if player != null and is_instance_valid(player) else Vector3.ZERO
 	for m in map_markers():
 		var kind := String(m["kind"])
-		if kind in ["chest", "landmark", "ruin"]:
+		if kind in ["chest", "landmark", "ruin", "lore", "ghost"]:  # M12: lore and ghosts only on the map
 			continue
 		if kind == "camp":
 			if String(m["icon"]) == "camp_cleared" or (m["pos"] as Vector3).distance_to(origin) > COMPASS_CAMP_RANGE:
@@ -506,7 +564,7 @@ func _discover_tick() -> void:
 		if marker_icon(poi) == "":
 			continue
 		var id := String(poi.get("id", ""))
-		var reach := float(poi.get("pad", 0.0)) + DISCOVER_MARGIN
+		var reach := float(poi.get("pad", 0.0)) + (DISCOVER_SMALL if String(poi.get("type", "")) in SMALL_TYPES else DISCOVER_MARGIN)
 		for p in players_within(ZoneLayout.pos_of(poi), reach):
 			if p.discover_poi(id) and p.is_local and String(poi.get("type", "")) == "dungeon" and hud != null:
 				hud.toast("A sealed gate: %s" % String(poi.get("label", "")), Color(0.7, 0.55, 1.0))

@@ -555,6 +555,20 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
   soldiers, an abandoned camp, a cart, a barricade, a last stand, the giant
   skeleton, rib sets). Clearings: combat pads keep 14 m free of trunks
   (no navmesh).
+- **Interactables (phase 2):** `Interactable` (prompt_text / can_interact /
+  interact, `use_by(hero)` for tests) under `LoreObject`, `Ghost`,
+  `RuneShard` and `GatherNode`; built from layout POIs of type lore, ghost
+  and shard (`PoiBuilder.build`), tuber patches rule-placed by the zone
+  (`tuber_<n>` keys), a pot per camp (`pot_<camp id>`). `InteractPrompt`
+  keeps a static map of the prompts in reach this frame (instance ids, not
+  nodes) and shows only the nearest. All of them act for the local hero
+  only: lore, shards and food are per character and never touch the
+  network. `LoreUI` reads `<id>.title/.body`; `open_chronicle()` adds the
+  list (Player.lore_read, Player.collected).
+- **Food:** `Consumables.DEFS[ember_tuber]` (`kind` food, `name_key` /
+  `text_key` in the text table). Eating is a heal over time under
+  `Player.FOOD_HOT`; `consumable_deny_reason` refuses it `in_combat()`, and
+  `mark_combat()` (every hit dealt or taken) cancels it.
 - **Areas:** areas may overlap; of those entered at once only the smallest
   names itself, and `Hud.area_name` replaces the name on show and waits for
   the zone's title card. New areas carry a text-table `name_key`.

@@ -19,5 +19,89 @@
 	"ui.settings.language_hint": {
 		"en": "German covers the new world texts so far (graves, notes, places). Menus follow later.",
 		"de": "Deutsch gibt es bisher für die neuen Texte der Welt (Gräber, Notizen, Orte). Die Menüs folgen später."
+	},
+	"ui.prompt.read": {
+		"en": "Read",
+		"de": "Lesen"
+	},
+	"ui.prompt.listen": {
+		"en": "Listen",
+		"de": "Zuhören"
+	},
+	"ui.prompt.gather": {
+		"en": "Gather",
+		"de": "Sammeln"
+	},
+	"ui.prompt.take_food": {
+		"en": "Take food",
+		"de": "Essen nehmen"
+	},
+	"ui.prompt.take_shard": {
+		"en": "Take the shard",
+		"de": "Splitter nehmen"
+	},
+	"ui.prompt.bag_full": {
+		"en": "Bag full",
+		"de": "Tasche voll"
+	},
+	"ui.food.in_combat": {
+		"en": "Not in a fight",
+		"de": "Nicht im Kampf"
+	},
+	"ui.food.eating": {
+		"en": "Still eating",
+		"de": "Isst noch"
+	},
+	"ui.food.interrupted": {
+		"en": "The meal is interrupted",
+		"de": "Die Mahlzeit ist unterbrochen"
+	},
+	"ui.shard.found": {
+		"en": "Shard of the Rune  %d / %d",
+		"de": "Splitter der Rune  %d / %d"
+	},
+	"ui.chronicle.title": {
+		"en": "Chronicle",
+		"de": "Chronik"
+	},
+	"ui.chronicle.shards": {
+		"en": "Shards of the Rune: %d / %d",
+		"de": "Splitter der Rune: %d / %d"
+	},
+	"ui.chronicle.empty_title": {
+		"en": "Nothing written yet",
+		"de": "Noch nichts aufgeschrieben"
+	},
+	"ui.chronicle.empty": {
+		"en": "Graves, notes and carved stones tell what happened in the Highlands. Whatever you read goes into your chronicle.",
+		"de": "Gräber, Notizen und Steininschriften erzählen, was in den Highlands geschah. Alles, was du liest, kommt in deine Chronik."
+	},
+	"lore.kind.grave": {
+		"en": "Grave",
+		"de": "Grab"
+	},
+	"lore.kind.note": {
+		"en": "Note",
+		"de": "Notiz"
+	},
+	"lore.kind.letter": {
+		"en": "Letter",
+		"de": "Brief"
+	},
+	"lore.kind.inscription": {
+		"en": "Inscription",
+		"de": "Inschrift"
+	},
+	"lore.kind.ghost": {
+		"en": "Ghost",
+		"de": "Geist"
+	},
+	"item.ember_tuber.name": {
+		"en": "Ember Tuber",
+		"de": "Glutknolle"
+	},
+	"item.ember_tuber.text": {
+		"en": "Roasted in the warm ash. Restores 50 % of your health over 8 s - only out of a fight, a hit ends the meal. Right-click to eat.",
+		"de": "In der warmen Asche geröstet. Heilt 50 % deines Lebens über 8 s - nur außerhalb des Kampfs, ein Treffer beendet die Mahlzeit. Rechtsklick zum Essen."
 	}
 }

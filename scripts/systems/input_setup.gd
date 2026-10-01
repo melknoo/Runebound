@@ -19,6 +19,7 @@ const KEYS := {
 	&"party_cancel": [KEY_X],                  # M09 cancels a party travel countdown
 	&"sprint": [KEY_SHIFT],                    # M08 notes: held, out of combat
 	&"playtest_toggle": [KEY_J],               # the playtest checklist (PlaytestUI)
+	&"chronicle_toggle": [KEY_L],              # M12 the chronicle (lore read, shards found)
 }
 
 

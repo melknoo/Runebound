@@ -286,10 +286,11 @@ func _shop_row(cid: StringName) -> Control:
 	row.add_child(text)
 	var name_label := Label.new()
 	name_label.text = "%s   %d/%d in your bag" % [Consumables.display_name(cid), player.consumable_count(cid), Consumables.cap(cid)]
-	name_label.add_theme_color_override("font_color", ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
+	name_label.add_theme_color_override("font_color", ArtKit.color("palettes.burnt_forest.ember.2", Color("#D86A2C"))
+		if Consumables.is_food(cid) else ArtKit.color("color_roles.health.hot", Color("#FF9C9C")))
 	text.add_child(name_label)
 	var desc := Label.new()
-	desc.text = str(Consumables.def(cid).get("text", ""))
+	desc.text = Consumables.text(cid)
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc.custom_minimum_size = Vector2(520, 0)
 	desc.add_theme_color_override("font_color", UiTheme.TEXT)

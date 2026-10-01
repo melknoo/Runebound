@@ -803,6 +803,51 @@ def mk_dungeon() -> Image.Image:
     return outlined(img)
 
 
+# ---------------------------------------------------------------------------
+# M12: food and the new map icons
+# ---------------------------------------------------------------------------
+
+def icon_ember_tuber() -> Image.Image:
+    """M12 food: a roasted ember tuber, its cracked skin glowing in the burnt
+    forest's ember orange (warm, never the health red of the draught)."""
+    img, d = canvas()
+    skin, dark = rgb("#7C3F26"), rgb("#4A2418")
+    ember, hot = rgb(SPEC["palettes"]["burnt_forest"]["ember"][1]), rgb(SPEC["palettes"]["burnt_forest"]["ember"][2])
+    d.ellipse([3, 7, 16, 17], fill=skin)                          # the tuber
+    d.chord([3, 7, 16, 17], 30, 150, fill=dark)                   # shadowed underside
+    d.line([6, 10, 9, 13], fill=ember)                            # glowing cracks
+    d.line([9, 13, 12, 11], fill=hot)
+    d.line([12, 11, 14, 13], fill=ember)
+    d.line([9, 7, 8, 3], fill=rgb("#66583B"))                     # dry stalk and a leaf
+    d.polygon([(8, 4), (12, 1), (11, 4)], fill=rgb("#7A6A48"))
+    img.putpixel((6, 9), (255, 230, 200, 220))                    # glint
+    return outlined(img)
+
+
+def mk_lore() -> Image.Image:
+    """M12 map: something to read (a headstone with a line of text)."""
+    img, d = canvas12()
+    stone = rgb("#B8AE9C")
+    d.rectangle([3, 3, 8, 10], fill=stone)
+    d.ellipse([3, 1, 8, 6], fill=stone)
+    d.line([4, 5, 7, 5], fill=INK)
+    d.line([4, 7, 7, 7], fill=INK)
+    return outlined(img)
+
+
+def mk_ghost() -> Image.Image:
+    """M12 map: a ghost (a pale hooded shape, its hem frayed)."""
+    img, d = canvas12()
+    pale = rgb("#C6D8E2")
+    d.ellipse([3, 1, 8, 6], fill=pale)
+    d.rectangle([3, 4, 8, 9], fill=pale)
+    for x in (3, 5, 7):
+        d.point((x, 10), fill=pale)
+    d.point((4, 4), fill=INK)
+    d.point((7, 4), fill=INK)
+    return outlined(img)
+
+
 def knob(fill, rim, rim_hi) -> Image.Image:
     """M17a settings: a slider grabber, 8x12 art (bevelled like frame())."""
     w, h = 8, 12
@@ -833,7 +878,8 @@ def main() -> None:
     print("UI kit:")
     for name, fn in (("player", mk_player), ("waypoint", mk_waypoint), ("portal", mk_portal), ("camp", mk_camp),
                      ("camp_cleared", mk_camp_cleared), ("chest", mk_chest), ("ruin", mk_ruin),
-                     ("landmark", mk_landmark), ("boss", mk_boss), ("dungeon", mk_dungeon)):
+                     ("landmark", mk_landmark), ("boss", mk_boss), ("dungeon", mk_dungeon),
+                     ("lore", mk_lore), ("ghost", mk_ghost)):
         save(fn(), "map", name + ".png")
     save(frame(24, PANEL, ACCENT_DIM, ACCENT), "frame.png")
     save(frame(22, rgb("#100C18", 235), rgb("#2E2A3A"), rgb("#4A4458")), "slot.png")
@@ -852,7 +898,7 @@ def main() -> None:
                      ("warding_rune", icon_warding_rune), ("frost_nova", icon_frost_nova),
                      ("flame_wall", icon_flame_wall), ("ball_lightning", icon_ball_lightning),
                      ("ember_fall", icon_ember_fall), ("coin", icon_coin),
-                     ("healing_draught", icon_healing_draught),
+                     ("healing_draught", icon_healing_draught), ("ember_tuber", icon_ember_tuber),
                      ("thorn_volley", icon_thorn_volley), ("mending_bloom", icon_mending_bloom),
                      ("barkskin", icon_barkskin), ("regrowth", icon_regrowth), ("root_grasp", icon_root_grasp),
                      ("renewal_grove", icon_healing_zone), ("thornfield", icon_thornfield),

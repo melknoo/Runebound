@@ -12,7 +12,7 @@ const FLAVOUR := [
 ]
 
 ## What she sells (Consumables ids, in shelf order).
-@export var sells: Array[StringName] = [Consumables.HEALING_DRAUGHT]
+@export var sells: Array[StringName] = [Consumables.HEALING_DRAUGHT, Consumables.EMBER_TUBER]  # M12: food too
 
 var _visit := 0
 

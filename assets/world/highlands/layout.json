@@ -1733,6 +1733,346 @@
    "biome": "bone_field"
   },
   {
+   "id": "lore_letter_s",
+   "type": "lore",
+   "kind": "letter",
+   "text": "lore.ash.letter_1",
+   "pos": [
+    -21,
+    143
+   ],
+   "yaw": 0.4,
+   "pad": 0,
+   "y": 9.485,
+   "biome": "ash"
+  },
+  {
+   "id": "lore_camp_order",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.ash.camp_order",
+   "pos": [
+    -76,
+    144
+   ],
+   "yaw": 2.6,
+   "pad": 0,
+   "y": 5.565,
+   "biome": "ash"
+  },
+  {
+   "id": "lore_ledger",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.ash.ledger",
+   "pos": [
+    12,
+    131
+   ],
+   "yaw": -0.4,
+   "pad": 0,
+   "y": 8.15,
+   "biome": "ash"
+  },
+  {
+   "id": "lore_grave_maud",
+   "type": "lore",
+   "kind": "grave",
+   "text": "lore.village.grave_maud",
+   "pos": [
+    -148,
+    60
+   ],
+   "yaw": 3.14,
+   "pad": 0,
+   "y": 12.536,
+   "biome": "village"
+  },
+  {
+   "id": "lore_grave_tobin",
+   "type": "lore",
+   "kind": "grave",
+   "text": "lore.village.grave_tobin",
+   "pos": [
+    -147,
+    64
+   ],
+   "yaw": 3.0,
+   "pad": 0,
+   "y": 12.536,
+   "biome": "village"
+  },
+  {
+   "id": "lore_grave_nameless",
+   "type": "lore",
+   "kind": "grave",
+   "text": "lore.village.grave_nameless",
+   "pos": [
+    -144,
+    67
+   ],
+   "yaw": 3.3,
+   "pad": 0,
+   "y": 12.536,
+   "biome": "village"
+  },
+  {
+   "id": "lore_notice_v",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.village.notice",
+   "pos": [
+    -121,
+    23
+   ],
+   "yaw": 2.4,
+   "pad": 0,
+   "y": 10.993,
+   "biome": "village"
+  },
+  {
+   "id": "lore_diary_v",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.village.diary",
+   "pos": [
+    -108,
+    13
+   ],
+   "yaw": 0.3,
+   "pad": 0,
+   "y": 14.04,
+   "biome": "village"
+  },
+  {
+   "id": "lore_hunter_f",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.forest.hunter",
+   "pos": [
+    -110,
+    -90
+   ],
+   "yaw": 1.0,
+   "pad": 0,
+   "y": 26.6,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "lore_roots_f",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.forest.roots",
+   "pos": [
+    -136,
+    -88
+   ],
+   "yaw": -1.3,
+   "pad": 0,
+   "y": 21.51,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "lore_skull_b",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.bones.skull",
+   "pos": [
+    138,
+    -90
+   ],
+   "yaw": 2.9,
+   "pad": 0,
+   "y": 17.87,
+   "biome": "bone_field"
+  },
+  {
+   "id": "lore_scholar_b",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.bones.scholar",
+   "pos": [
+    100,
+    -118
+   ],
+   "yaw": 0.6,
+   "pad": 0,
+   "y": 29.797,
+   "biome": "bone_field"
+  },
+  {
+   "id": "ghost_burner_f",
+   "type": "ghost",
+   "text": "lore.ghost.burner",
+   "rig": "runebreaker",
+   "pos": [
+    -150,
+    -70
+   ],
+   "yaw": 1.2,
+   "pad": 0,
+   "y": 21.076,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "ghost_collector_b",
+   "type": "ghost",
+   "text": "lore.ghost.collector",
+   "rig": "elementalist",
+   "pos": [
+    156,
+    -108
+   ],
+   "yaw": -2.0,
+   "pad": 0,
+   "y": 19.679,
+   "biome": "bone_field"
+  },
+  {
+   "id": "shard_1",
+   "type": "shard",
+   "index": 1,
+   "pos": [
+    60,
+    150
+   ],
+   "pad": 0,
+   "y": 9.138,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_2",
+   "type": "shard",
+   "index": 2,
+   "pos": [
+    -60,
+    120
+   ],
+   "pad": 0,
+   "y": 11.26,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_3",
+   "type": "shard",
+   "index": 3,
+   "pos": [
+    -95,
+    105
+   ],
+   "pad": 0,
+   "y": 6.008,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_4",
+   "type": "shard",
+   "index": 4,
+   "pos": [
+    25,
+    75
+   ],
+   "pad": 0,
+   "y": 9.625,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_5",
+   "type": "shard",
+   "index": 5,
+   "pos": [
+    100,
+    90
+   ],
+   "pad": 0,
+   "y": 12.742,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_6",
+   "type": "shard",
+   "index": 6,
+   "pos": [
+    -150,
+    5
+   ],
+   "pad": 0,
+   "y": 15.227,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_7",
+   "type": "shard",
+   "index": 7,
+   "pos": [
+    -104,
+    60
+   ],
+   "pad": 0,
+   "y": 9.545,
+   "biome": "village"
+  },
+  {
+   "id": "shard_8",
+   "type": "shard",
+   "index": 8,
+   "pos": [
+    -150,
+    -104
+   ],
+   "pad": 0,
+   "y": 33.124,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "shard_9",
+   "type": "shard",
+   "index": 9,
+   "pos": [
+    -60,
+    -120
+   ],
+   "pad": 0,
+   "y": 27.792,
+   "biome": "burnt_forest"
+  },
+  {
+   "id": "shard_10",
+   "type": "shard",
+   "index": 10,
+   "pos": [
+    150,
+    -150
+   ],
+   "pad": 0,
+   "y": 20.667,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_11",
+   "type": "shard",
+   "index": 11,
+   "pos": [
+    60,
+    -60
+   ],
+   "pad": 0,
+   "y": 18.738,
+   "biome": "ash"
+  },
+  {
+   "id": "shard_12",
+   "type": "shard",
+   "index": 12,
+   "pos": [
+    -36,
+    -160
+   ],
+   "pad": 0,
+   "y": 28.005,
+   "biome": "ash"
+  },
+  {
    "id": "arena",
    "type": "arena",
    "pos": [

@@ -1,5 +1,5 @@
 {
-	"_note": "M12 lore texts (graves, notes, ghosts, inscriptions). <id>.title + <id>.body; every key needs en + de. Meta breaks (STORY_DESIGN) stay rare.",
+	"_note": "M12 lore texts (graves, notes, ghosts, inscriptions). <id>.title + <id>.body; every key needs en + de. Meta breaks (STORY_DESIGN) stay rare: in phase 2 only the nameless grave.",
 	"lore.ash.letter_1.title": {
 		"en": "A soldier's last letter",
 		"de": "Der letzte Brief eines Soldaten"
@@ -7,5 +7,121 @@
 	"lore.ash.letter_1.body": {
 		"en": "Edda, the ash has not stopped falling for nine days. The captain says the Rune will hold. He said that about the bridge, too.\n\nIf this reaches you, do not come north. Burn the letter, keep the ring. I kept mine as well, to the end.",
 		"de": "Edda, seit neun Tagen fällt die Asche ohne Pause. Der Hauptmann sagt, die Rune hält. Das hat er von der Brücke auch gesagt.\n\nWenn dich das erreicht, komm nicht nach Norden. Verbrenn den Brief, behalt den Ring. Ich habe meinen auch behalten, bis zum Schluss."
-	}
+	},
+	"lore.ash.camp_order.title": {
+		"en": "Orders, scratched on a board",
+		"de": "Befehle, in ein Brett geritzt"
+	},
+	"lore.ash.camp_order.body": {
+		"en": "We leave at first light. Take the meat, leave the dead.\n\nNobody goes west past the stones. Nobody sleeps near the ribs. And whoever keeps hearing the singing from the old village: you stay behind. You are not coming with us like that.",
+		"de": "Wir ziehen beim ersten Licht ab. Nehmt das Fleisch mit, lasst die Toten liegen.\n\nKeiner geht westlich an den Steinen vorbei. Keiner schläft bei den Rippen. Und wer immer noch das Singen aus dem alten Dorf hört: Du bleibst hier. So kommst du nicht mit."
+	},
+	"lore.ash.ledger.title": {
+		"en": "A carter's ledger",
+		"de": "Das Buch eines Fuhrmanns"
+	},
+	"lore.ash.ledger.body": {
+		"en": "Salt, twelve sacks, for Ashwick. Paid.\nLamp oil, four casks, for Ashwick. Paid.\nNails, a great many, for Ashwick. Not paid. The reeve says the coffins come first and the debts after.\n\nLast entry, in another hand: the road is closed. Do not wait for him.",
+		"de": "Salz, zwölf Säcke, für Aschwick. Bezahlt.\nLampenöl, vier Fässer, für Aschwick. Bezahlt.\nNägel, sehr viele, für Aschwick. Nicht bezahlt. Der Vogt sagt, erst die Särge, dann die Schulden.\n\nLetzter Eintrag, in einer anderen Schrift: Die Straße ist zu. Wartet nicht auf ihn."
+	},
+	"lore.village.grave_maud.title": {
+		"en": "Maud, who kept the well",
+		"de": "Maud, die den Brunnen hütete"
+	},
+	"lore.village.grave_maud.body": {
+		"en": "Here lies Maud, who kept the well of Ashwick for forty years.\n\nWhen the water turned grey she still drew it every morning, so that no one would have to see it first.",
+		"de": "Hier ruht Maud, die vierzig Jahre lang den Brunnen von Aschwick hütete.\n\nAls das Wasser grau wurde, schöpfte sie es trotzdem jeden Morgen, damit es keiner vor ihr sehen musste."
+	},
+	"lore.village.grave_tobin.title": {
+		"en": "Tobin, seven years",
+		"de": "Tobin, sieben Jahre"
+	},
+	"lore.village.grave_tobin.body": {
+		"en": "Tobin, aged seven. The ash began to fall on his name day.\n\nHe thought it was snow. We let him think it.",
+		"de": "Tobin, sieben Jahre alt. An seinem Namenstag fing die Asche an zu fallen.\n\nEr dachte, es wäre Schnee. Wir haben ihn in dem Glauben gelassen."
+	},
+	"lore.village.grave_nameless.title": {
+		"en": "A stone without a name",
+		"de": "Ein Stein ohne Namen"
+	},
+	"lore.village.grave_nameless.body": {
+		"en": "Here lies a villager of Ashwick.\n\nHis name was never written: the AI that made this world was busy with ribs and ghosts and simply never got to him. He would have liked a name, people say. Something short. Something with a good ring to it.\n\nIf you think of one, say it out loud here. He will not mind which.",
+		"de": "Hier ruht ein Dorfbewohner von Aschwick.\n\nSein Name wurde nie geschrieben: Die KI, die diese Welt gemacht hat, war mit Rippen und Geistern beschäftigt und ist schlicht nie bei ihm angekommen. Er hätte gern einen Namen gehabt, sagen die Leute. Etwas Kurzes. Etwas, das gut klingt.\n\nWenn dir einer einfällt, sag ihn hier laut. Welcher, ist ihm gleich."
+	},
+	"lore.village.notice.title": {
+		"en": "A notice by the well",
+		"de": "Ein Aushang am Brunnen"
+	},
+	"lore.village.notice.body": {
+		"en": "By order of the Reeve of Ashwick:\n\nNo one draws water after dark.\nNo one answers a knock after dark.\nNo one opens the graveyard gate, whoever stands behind it and whatever name they call.\n\nThe chapel bell will ring if we must leave. Do not wait for it twice.",
+		"de": "Auf Anordnung des Vogts von Aschwick:\n\nNach Einbruch der Dunkelheit schöpft niemand Wasser.\nNach Einbruch der Dunkelheit öffnet niemand auf ein Klopfen.\nNiemand öffnet das Friedhofstor, wer auch immer dahinter steht und welchen Namen er auch ruft.\n\nWenn wir gehen müssen, läutet die Kapellenglocke. Wartet nicht auf das zweite Läuten."
+	},
+	"lore.village.diary.title": {
+		"en": "A torn diary page",
+		"de": "Eine ausgerissene Tagebuchseite"
+	},
+	"lore.village.diary.body": {
+		"en": "The bell never rang. Someone took the rope for the barricade.\n\nThey came up from the graveyard at dusk, slowly, the way people walk home from the fields. Old Hedda was among them. She still had flour on her hands.\n\nWe are going east to Runehold. If the dead walk faster than we do, then this is where it ends.",
+		"de": "Die Glocke hat nie geläutet. Jemand hat das Seil für die Barrikade genommen.\n\nSie kamen in der Dämmerung vom Friedhof herauf, langsam, so wie man vom Feld nach Hause geht. Die alte Hedda war dabei. Sie hatte noch Mehl an den Händen.\n\nWir gehen nach Osten, nach Runehold. Wenn die Toten schneller laufen als wir, endet es hier."
+	},
+	"lore.forest.hunter.title": {
+		"en": "A hunter's note",
+		"de": "Die Notiz eines Jägers"
+	},
+	"lore.forest.hunter.body": {
+		"en": "The Charwood did not burn from the top down, the way a forest burns in summer. It burned from the roots up.\n\nI dug under a stump to see. The ground was warm a forearm deep, and the roots still glowed like coals in a smithy. Something under this wood is still burning. Something under this wood is still awake.",
+		"de": "Der Kohlwald ist nicht von oben her abgebrannt, wie ein Wald im Sommer brennt. Er brannte von den Wurzeln aufwärts.\n\nIch habe unter einem Stumpf gegraben, um nachzusehen. Der Boden war eine Unterarmlänge tief noch warm, und die Wurzeln glühten wie Kohlen in einer Schmiede. Unter diesem Wald brennt noch etwas. Unter diesem Wald ist noch etwas wach."
+	},
+	"lore.forest.roots.title": {
+		"en": "Words carved in a standing stone",
+		"de": "Worte in einem Menhir"
+	},
+	"lore.forest.roots.body": {
+		"en": "Where the roots climb, the ash remembers.\nWhere the stone is moved, the book is kept.\n\nBelow, smaller, in a later hand: the old path still goes up behind the stone, if your feet are brave.",
+		"de": "Wo die Wurzeln klettern, erinnert sich die Asche.\nWo der Stein bewegt wird, liegt das Buch verwahrt.\n\nDarunter, kleiner, in späterer Schrift: Hinter dem Stein geht der alte Pfad noch hinauf, wenn deine Füße mutig sind."
+	},
+	"lore.bones.skull.title": {
+		"en": "Runes cut into the skull",
+		"de": "Runen im Schädel"
+	},
+	"lore.bones.skull.body": {
+		"en": "EMBERFALL, the carved letters say, and beneath them in the old runes: the one who carried the fire.\n\nIt flew over the Highlands when the Rune was whole, and the fire it carried kept the frost from the valleys. When the Rune broke, it fell. The fire did not go out. It only came down with it.",
+		"de": "EMBERFALL, sagen die eingeritzten Buchstaben, und darunter in den alten Runen: der, der das Feuer trug.\n\nEr flog über die Highlands, als die Rune noch ganz war, und das Feuer, das er trug, hielt den Frost aus den Tälern. Als die Rune zerbrach, stürzte er. Das Feuer ging nicht aus. Es kam nur mit ihm herunter."
+	},
+	"lore.bones.scholar.title": {
+		"en": "A scholar's field notes",
+		"de": "Feldnotizen eines Gelehrten"
+	},
+	"lore.bones.scholar.body": {
+		"en": "Day four at the ribs. The bones are warm to the touch at noon and warmer at midnight. That should not be.\n\nThe carrion birds will not land on them. The jackals sleep against them in the cold. I have stopped writing down the sounds at night, because each time I read them back they are different.",
+		"de": "Vierter Tag bei den Rippen. Die Knochen sind mittags warm und um Mitternacht noch wärmer. Das dürfte nicht sein.\n\nDie Aasvögel landen nicht auf ihnen. Die Schakale schlafen in der Kälte an sie geschmiegt. Die Geräusche in der Nacht schreibe ich nicht mehr auf, denn jedes Mal, wenn ich sie nachlese, sind es andere."
+	},
+	"lore.ghost.burner.title": {
+		"en": "The charcoal burner",
+		"de": "Der Köhler"
+	},
+	"lore.ghost.burner.body": {
+		"en": "Forty years I made charcoal in this wood. Slow fire, buried, never let it breathe too much. Then the whole Charwood became my kiln, and no one asked me how to bank it.\n\nYou smell of the south. Of clean ash. Go up behind the stones if you must, but do not dig. Whatever burns down there has been patient for a long time.",
+		"de": "Vierzig Jahre habe ich in diesem Wald Kohle gemacht. Langsames Feuer, vergraben, nie zu viel Luft. Dann wurde der ganze Kohlwald zu meinem Meiler, und keiner hat mich gefragt, wie man ihn abdeckt.\n\nDu riechst nach dem Süden. Nach sauberer Asche. Geh hinter den Steinen hinauf, wenn du musst, aber grab nicht. Was da unten brennt, ist schon sehr lange geduldig."
+	},
+	"lore.ghost.collector.title": {
+		"en": "The bone collector",
+		"de": "Die Knochensammlerin"
+	},
+	"lore.ghost.collector.body": {
+		"en": "I came for the bones. Good money in bones, when they are this old and this big. I filled a cart. The next morning every piece was back in the dust, in its place, and the cart was gone.\n\nI stayed to find out how. I am still finding out. Sit with me a while; the ribs keep the wind off.",
+		"de": "Ich kam wegen der Knochen. Mit Knochen lässt sich gut verdienen, wenn sie so alt und so groß sind. Ich habe einen Karren gefüllt. Am nächsten Morgen lag jedes Stück wieder im Staub, an seinem Platz, und der Karren war fort.\n\nIch bin geblieben, um herauszufinden, wie. Ich finde es immer noch heraus. Setz dich ein Weilchen zu mir; die Rippen halten den Wind ab."
+	},
+	"shard.1": {"en": "A shard of the Rune, still warm. It hums a single note.", "de": "Ein Splitter der Rune, noch warm. Er summt einen einzigen Ton."},
+	"shard.2": {"en": "This one is cold, and its edge is sharper than any blade.", "de": "Dieser ist kalt, und seine Kante ist schärfer als jede Klinge."},
+	"shard.3": {"en": "A shard with half a rune on it. The other half is somewhere else.", "de": "Ein Splitter mit einer halben Rune darauf. Die andere Hälfte ist woanders."},
+	"shard.4": {"en": "It throws a faint teal light on your palm, then on nothing.", "de": "Er wirft ein schwaches türkisfarbenes Licht auf deine Hand, dann auf nichts mehr."},
+	"shard.5": {"en": "The ash around it did not settle. It drifted away.", "de": "Die Asche um ihn herum hat sich nicht gesetzt. Sie ist fortgeweht."},
+	"shard.6": {"en": "Someone wrapped this one in cloth and hid it under a stone. The cloth is gone.", "de": "Jemand hat diesen in Stoff gewickelt und unter einem Stein versteckt. Der Stoff ist fort."},
+	"shard.7": {"en": "Close to the graves the shard is heavier. Away from them, light again.", "de": "Nah bei den Gräbern ist der Splitter schwerer. Weiter weg wieder leicht."},
+	"shard.8": {"en": "Up here the shard sings louder, as if it could see the Spire.", "de": "Hier oben singt der Splitter lauter, als könnte er die Spitze im Norden sehen."},
+	"shard.9": {"en": "Soot covers it, but under the soot the rune is unbroken.", "de": "Ruß bedeckt ihn, aber unter dem Ruß ist die Rune unversehrt."},
+	"shard.10": {"en": "It lay between two bones as if the beast had held it.", "de": "Er lag zwischen zwei Knochen, als hätte das Tier ihn gehalten."},
+	"shard.11": {"en": "Two shards fit together here, almost. Almost.", "de": "Zwei Splitter passen hier zusammen, fast. Fast."},
+	"shard.12": {"en": "Facing north it trembles. The Spire is close.", "de": "Nach Norden gerichtet zittert er. Die Spitze im Norden ist nah."}
 }
