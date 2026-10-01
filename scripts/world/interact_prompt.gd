@@ -32,9 +32,4 @@ func pressed(player: Player) -> bool:
 
 
 static func key_name() -> String:
-	if not InputMap.has_action(ACTION):
-		return "?"
-	for ev in InputMap.action_get_events(ACTION):
-		if ev is InputEventKey:
-			return OS.get_keycode_string((ev as InputEventKey).physical_keycode)
-	return "?"
+	return InputSetup.key_label(ACTION)  # M17a: rebindable

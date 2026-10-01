@@ -82,6 +82,21 @@ rig; English; the character's name online; developer tools off by default).
   - Smoke 595 green (the backdrop and its rig follow selection and class,
     Create selects, the name rule online, Continue's mode line, Delete, Esc
     back).
+- **Phase 4 (built): key bindings.**
+  - `KeyBindings`: 22 actions in three groups (movement, combat - basic
+    attack and the four loadout slots -, interface; the playtest key only
+    with the developer tools), two bindings each, keys or mouse buttons.
+    The defaults are the InputMap after `InputSetup.ensure()` (now applied
+    once per run, so a zone load keeps the player's keys); changed ones go
+    to `[keys]` in settings.cfg. A key given to one action leaves the action
+    that had it ("Not bound" in red). Esc and F1 stay reserved.
+  - Controls tab: click a binding, press the new key or mouse button; Esc
+    cancels, Delete clears; "Reset tab" puts every key back.
+  - Labels follow: HUD slots, the hero window's tabs, the [E] prompts, the
+    talent toast, the party banner's cancel key, the trainer's loadout hint;
+    keys show in the keyboard layout's own letters.
+  - Smoke 605 green (defaults, a move, a conflict, Esc refused, relabelled
+    HUD and tabs, save and reload, reset; the Controls tab by key events).
 
 ## Co-op: server dropdown and the version refusal (2026-10-01)
 - **Why the join failed on 2026-09-30:** the laptop server runs the

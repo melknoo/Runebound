@@ -31,7 +31,15 @@ static func slot_label(slot: int) -> String:
 	return key_label(SLOT_ACTIONS[slot]) if slot >= 0 and slot < SLOT_ACTIONS.size() else ""
 
 
+## M17a: applied once per run (GameSettings at startup), so the player's
+## own bindings (KeyBindings) stay when a zone loads.
+static var _ensured: bool = false
+
+
 static func ensure() -> void:
+	if _ensured:
+		return
+	_ensured = true
 	for action: StringName in KEYS:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
@@ -44,23 +52,11 @@ static func ensure() -> void:
 			InputMap.action_add_event(action, ev)
 
 
-## Label for a HUD slot: the first key of an action ("1", "2", ...). Actions
-## the project binds itself (mouse buttons, Space) are read from the InputMap.
+## Label for a HUD slot or a prompt: the action's first binding as the
+## player has it now ("1", "RMB", "SPC"; M17a: rebindable, in the keyboard
+## layout's own letters); "-" when nothing is bound.
 static func key_label(action: StringName) -> String:
-	var keys: Array = KEYS.get(action, [])
-	if not keys.is_empty():
-		return OS.get_keycode_string(keys[0])
 	if action == &"" or not InputMap.has_action(action):
 		return "?"
-	for ev in InputMap.action_get_events(action):
-		if ev is InputEventMouseButton:
-			match (ev as InputEventMouseButton).button_index:
-				MOUSE_BUTTON_LEFT: return "LMB"
-				MOUSE_BUTTON_RIGHT: return "RMB"
-				MOUSE_BUTTON_MIDDLE: return "MMB"
-				_: return "M%d" % (ev as InputEventMouseButton).button_index
-		if ev is InputEventKey:
-			var key := ev as InputEventKey
-			var code := key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
-			return "SPC" if code == KEY_SPACE else OS.get_keycode_string(code)
-	return "?"
+	var codes := KeyBindings.codes(action)
+	return KeyBindings.label(codes[0], true) if not codes.is_empty() else "-"

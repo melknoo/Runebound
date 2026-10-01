@@ -58,6 +58,25 @@ func ability_names() -> Array[String]:
 	return out
 
 
+## The key a slot shows: LMB (basic attack), the loadout's RMB / 1 / 2 / 3,
+## SPC (dodge) - whatever the player bound them to (M17a).
+static func _slot_key_label(key: StringName) -> String:
+	if key == &"basic":
+		return InputSetup.key_label(&"primary_attack")
+	if key == &"dodge":
+		return InputSetup.key_label(&"dodge")
+	return InputSetup.slot_label(SLOT_KEYS.find(key) - 1)
+
+
+func _on_setting_changed(setting: String) -> void:
+	if setting != "keys":
+		return
+	for key: StringName in _slots:
+		var entry: Dictionary = _slots[key]
+		entry["key"] = _slot_key_label(key)
+		(entry["key_label"] as Label).text = entry["key"]
+
+
 ## Ability id shown in a slot (&"" when empty); `key` is one of SLOT_KEYS.
 func slot_ability(key: StringName) -> StringName:
 	return _slots[key]["id"] if _slots.has(key) else &""
@@ -196,12 +215,7 @@ func _build() -> void:
 	# M10: six fixed slots - LMB (basic attack), RMB / 1 / 2 / 3 (the loadout),
 	# SPC (dodge). An empty slot shows its frame and key only.
 	for key: StringName in SLOT_KEYS:
-		var label := "LMB"
-		if key == &"dodge":
-			label = "SPC"
-		elif key != &"basic":
-			label = InputSetup.slot_label(SLOT_KEYS.find(key) - 1)
-		_add_slot(slot_row, key, label)
+		_add_slot(slot_row, key, _slot_key_label(key))
 	_slot_row = slot_row
 	var row_width := SLOT_SIZE * SLOT_KEYS.size() + SLOT_GAP * (SLOT_KEYS.size() - 1)
 	# offsets, not position: once laid out, position is in parent space
@@ -210,6 +224,7 @@ func _build() -> void:
 	player.progression.talents_changed.connect(_refresh_slots)
 	player.abilities_changed.connect(_refresh_slots)
 	player.loadout_changed.connect(_refresh_slots)
+	GameSettings.changed.connect(_on_setting_changed)  # M17a: rebound keys relabel the slots
 	_refresh_slots()
 	_slots_built = true
 
@@ -614,7 +629,7 @@ func _on_level_up(level: int) -> void:
 	var free := player.progression.points_free()
 	toast("LEVEL %d" % level, ArtKit.color("color_roles.resonance.hot", Color("#FFF0B8")))
 	if free > 0:
-		toast("Talent point%s ready (%d)  -  N" % ["s" if free > 1 else "", free],
+		toast("Talent point%s ready (%d)  -  %s" % ["s" if free > 1 else "", free, InputSetup.key_label(&"talents_toggle")],
 			ArtKit.color("color_roles.experience.body", Color("#9FB4FF")))
 	Sfx.play_ui("level_up", -4.0)
 	var scene := get_tree().current_scene

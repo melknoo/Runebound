@@ -3485,9 +3485,9 @@ func _run() -> void:
 
 	# --- M17a: settings (GameSettings) ---
 	_check(GameSettings.dev_tools() and is_equal_approx(float(GameSettings.value("audio/master")), 1.0)
-		and not FileAccess.file_exists("user://settings_smoke_m17a.cfg"),
-		"a test run plays on the default settings with the developer tools on")
+		and GameSettings.test_run, "a test run plays on the default settings with the developer tools on")
 	var settings_file := "user://settings_smoke_m17a.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(settings_file))  # a killed run may have left one
 	var pre := ConfigFile.new()
 	pre.set_value("coop", "name", "Keeper")
 	pre.save(settings_file)
@@ -3581,6 +3581,38 @@ func _run() -> void:
 		"without the developer tools setting F1 and J do nothing; with it F1 opens the debug panel")
 	GameSettings.set(&"_dev_forced", true)
 	GameSettings.reset_section("gameplay")
+	# M17a phase 4: key bindings
+	_check(KeyBindings.codes(&"interact") == PackedStringArray(["key:%d" % KEY_E]) and InputSetup.key_label(&"dodge") == "SPC"
+		and InputSetup.key_label(&"primary_attack") == "LMB" and InputSetup.key_label(&"secondary_ability") == "RMB",
+		"the default bindings: E interacts, Space dodges, the mouse attacks")
+	var taken_none := KeyBindings.bind(&"interact", 0, "key:%d" % KEY_F)
+	_check(taken_none == &"" and InputSetup.key_label(&"interact") == "F" and InteractPrompt.key_name() == "F",
+		"interact moves to F; the [E] prompts follow")
+	var taken_k := KeyBindings.bind(&"talents_toggle", 0, "key:%d" % KEY_K)
+	_check(taken_k == &"loadout_toggle" and KeyBindings.is_unbound(&"loadout_toggle")
+		and KeyBindings.codes(&"talents_toggle") == PackedStringArray(["key:%d" % KEY_K]),
+		"a key taken from another action leaves it (the loadout has no key now)")
+	KeyBindings.bind(&"ability_q", 0, "key:%d" % KEY_4)
+	_check(KeyBindings.bind(&"dodge", 0, "key:%d" % KEY_ESCAPE) == &"" and InputSetup.key_label(&"dodge") == "SPC",
+		"Esc cannot be bound (it opens the menu)")
+	GameSettings.save_bindings()
+	var slot1_label := str((zone_now.hud._slots[&"slot1"]["key_label"] as Label).text)
+	var talents_tab := str((zone_now.hero_ui.get(&"_buttons") as Array)[HeroUI.Tab.TALENTS].text)
+	_check(slot1_label == "4" and talents_tab.contains("K"),
+		"rebinding relabels the HUD slot (%s) and the hero window tab (%s)" % [slot1_label, talents_tab])
+	var keys_cfg := ConfigFile.new()
+	keys_cfg.load(settings_file)
+	GameSettings.use_file(settings_file)
+	_check(keys_cfg.has_section_key("keys", "interact") and InputSetup.key_label(&"interact") == "F"
+		and KeyBindings.is_unbound(&"loadout_toggle") and not keys_cfg.has_section_key("keys", "dodge"),
+		"the changed bindings are saved and read back (only the changed ones)")
+	GameSettings.reset_bindings()
+	keys_cfg = ConfigFile.new()
+	keys_cfg.load(settings_file)
+	_check(InputSetup.key_label(&"interact") == "E" and InputSetup.key_label(&"loadout_toggle") == "K"
+		and KeyBindings.codes(&"ability_q") == PackedStringArray(["key:%d" % KEY_1, "key:%d" % KEY_Q])
+		and not keys_cfg.has_section("keys") and str((zone_now.hud._slots[&"slot1"]["key_label"] as Label).text) == "1",
+		"Reset puts every key back (and empties the [keys] section)")
 
 	# --- M17a: the Esc menu ---
 	var menu := zone_now.pause_menu
@@ -3791,6 +3823,39 @@ func _run() -> void:
 	if music_slider != null:
 		music_slider.value = 0.3
 	_check(is_equal_approx(float(GameSettings.value("audio/music")), 0.3), "moving a slider changes the setting")
+	# the Controls tab: click a binding, press the new key; Esc cancels, Delete clears
+	settings_ui.open_tab(SettingsUI.Tab.CONTROLS)
+	await get_tree().process_frame
+	var bind_btn := settings_ui.find_child("bind_interact_0", true, false) as Button
+	var g_key := InputEventKey.new()
+	g_key.physical_keycode = KEY_G
+	g_key.keycode = KEY_G
+	g_key.pressed = true
+	if bind_btn != null:
+		bind_btn.pressed.emit()
+	var waiting := settings_ui.is_capturing() and bind_btn != null and bind_btn.text == "Press a key ..."
+	Input.parse_input_event(g_key)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(waiting and not settings_ui.is_capturing() and InputSetup.key_label(&"interact") == "G" and bind_btn.text == "G",
+		"the Controls tab: click Interact, press G - Interact is on G")
+	bind_btn.pressed.emit()
+	Input.parse_input_event(esc_ev)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var still_g := InputSetup.key_label(&"interact") == "G" and title.get(&"_settings") != null
+	bind_btn.pressed.emit()
+	var del_key := InputEventKey.new()
+	del_key.physical_keycode = KEY_DELETE
+	del_key.keycode = KEY_DELETE
+	del_key.pressed = true
+	Input.parse_input_event(del_key)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check(still_g and KeyBindings.is_unbound(&"interact") and bind_btn.text == "Not bound",
+		"Esc while waiting cancels (the window stays open), Delete clears the binding (shown as Not bound)")
+	GameSettings.reset_bindings()
+	_check(InputSetup.key_label(&"interact") == "E" and bind_btn.text == "E", "the list follows a reset")
 	title._unhandled_input(esc_ev)
 	await get_tree().process_frame
 	_check(title.get(&"_settings") == null and (title.get(&"_column") as Control).visible, "Esc closes the settings window")

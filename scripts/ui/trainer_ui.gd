@@ -68,7 +68,7 @@ func try_buy(data: AbilityData) -> bool:
 	if zone != null and zone.hud != null:
 		# M10: a new ability takes the first free loadout slot; else it waits in K
 		var slot := player.slot_of(data.id)
-		var where := ("slot %s" % InputSetup.slot_label(slot)) if slot >= 0 else "slots full, swap it in with K"
+		var where := ("slot %s" % InputSetup.slot_label(slot)) if slot >= 0 else "slots full, swap it in with %s" % InputSetup.key_label(&"loadout_toggle")
 		zone.hud.toast("Learned %s  -  %s" % [data.display_name, where],
 			ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 	SaveGame.save_now()

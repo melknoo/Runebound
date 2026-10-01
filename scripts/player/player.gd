@@ -411,9 +411,9 @@ func _sync_loadout() -> void:
 ## it sits in no slot).
 func key_label_for(id: StringName) -> String:
 	if id == &"dodge":
-		return "SPC"
+		return InputSetup.key_label(&"dodge")  # M17a: rebindable
 	if id == basic_attack():
-		return "LMB"
+		return InputSetup.key_label(&"primary_attack")
 	var slot := slot_of(id)
 	return InputSetup.slot_label(slot) if slot >= 0 else ""
 

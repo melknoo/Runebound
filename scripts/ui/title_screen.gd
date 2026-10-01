@@ -252,7 +252,8 @@ func _build_main_page(pages: Control) -> void:
 	var todo := PlaytestLog.counts()
 	if int(todo["total"]) > 0 and GameSettings.dev_tools():  # M17a: a developer tool
 		var hint := Label.new()
-		hint.text = "Playtest: %d offen, %d Probleme  (J im Spiel)" % [int(todo["open"]), int(todo["problem"])]
+		hint.text = "Playtest: %d offen, %d Probleme  (%s im Spiel)" % [int(todo["open"]), int(todo["problem"]),
+			InputSetup.key_label(&"playtest_toggle")]
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		hint.add_theme_color_override("font_color", UiTheme.MUTED)
 		_main_page.add_child(hint)

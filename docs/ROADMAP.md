@@ -290,7 +290,8 @@ Phasen: 1 Einstellungs-Kern + Fenster, 2 Esc-Menü, 3 Hauptmenü + Lagerfeuer-Sz
 „Settings“). Phase 2 gebaut (Esc-Menü: solo pausiert, online läuft die Welt, zurück zum Titel
 speichert, Esc schließt zuerst offene Fenster). Phase 3 gebaut (Hauptmenü: Charakter wählen, dann
 allein oder online; „Weiter“ wie zuletzt; Lagerfeuer-Szene bei Nacht mit dem Rig des gewählten
-Charakters; online gilt der Charaktername).
+Charakters; online gilt der Charaktername). Phase 4 gebaut (Tastenbelegung: zwei Tasten je Aktion,
+Konflikte, Zurücksetzen; HUD und Hinweise zeigen die eigene Belegung).
 
 ### M12 — Highlands mit Substanz
 Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands

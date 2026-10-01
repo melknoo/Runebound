@@ -1007,8 +1007,8 @@ func _tick_travel(delta: float) -> void:
 			travel = {}
 			Net.change_zone(str(go["scene"]), str(go["arrival"]))
 	elif _banner != null:
-		_banner.text = "Party travel to %s in %d   [X] Cancel   (%s)" % [str(travel["label"]),
-			ceili(maxf(float(travel["left"]), 0.0)), Net.peer_name(int(travel["by"]))]
+		_banner.text = "Party travel to %s in %d   [%s] Cancel   (%s)" % [str(travel["label"]),
+			ceili(maxf(float(travel["left"]), 0.0)), InputSetup.key_label(&"party_cancel"), Net.peer_name(int(travel["by"]))]
 
 
 func _on_travel_countdown_msg(_from: int, payload: Array) -> void:

@@ -94,6 +94,13 @@ func _build() -> void:
 	loadout_tab.setup(player, self)
 	content.add_child(loadout_tab)
 	_pages = [inventory_tab, character_tab, talent_tab, loadout_tab]
+	GameSettings.changed.connect(_on_setting_changed)  # M17a: rebound keys relabel the tabs
+
+
+func _on_setting_changed(setting: String) -> void:
+	if setting == "keys":
+		for i in _buttons.size():
+			_buttons[i].text = "%s   %s" % [TAB_TITLES[i], InputSetup.key_label(TAB_ACTIONS[i])]
 
 
 func is_open() -> bool:

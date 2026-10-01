@@ -4,6 +4,9 @@ extends Control
 ## menu. Tabs Audio / Video / Controls / Gameplay; every change applies and
 ## saves at once (GameSettings). "Reset tab" puts one tab back to the
 ## defaults. Back, the X or Esc (the owner calls `cancel()`) emit `closed`.
+## Controls also lists the key bindings (KeyBindings): click one, then press
+## the new key or mouse button; Esc cancels, Delete clears. While it waits
+## for a key it takes every key and click (so Esc never closes the window).
 
 signal closed
 
@@ -21,6 +24,12 @@ var _pages: Array[Control] = []
 ## Callables that re-read GameSettings into the widgets (after a reset).
 var _refreshers: Array[Callable] = []
 var _window_size_pick: OptionButton
+## action -> [slot 0 button, slot 1 button]
+var _bind_buttons: Dictionary = {}
+## {"action", "slot"} while a binding waits for its key ({} otherwise).
+var _capture: Dictionary = {}
+var _bind_status: Label
+const WARN := Color("#E08A7A")
 
 
 func _ready() -> void:
@@ -92,17 +101,21 @@ func _build() -> void:
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		pages.add_child(scroll)
+		var gutter := MarginContainer.new()  # keeps the values clear of the scroll bar
+		gutter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		gutter.add_theme_constant_override("margin_right", 22)
+		scroll.add_child(gutter)
 		var page := VBoxContainer.new()
 		page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		page.add_theme_constant_override("separation", 14)
-		scroll.add_child(page)
+		gutter.add_child(page)
 		build.call(page)
 		_pages.append(scroll)
 
 	var bottom := HBoxContainer.new()
 	bottom.add_theme_constant_override("separation", 12)
 	body.add_child(bottom)
-	var reset := UiTheme.menu_button("Reset tab", func() -> void: GameSettings.reset_section(TAB_SECTIONS[current]))
+	var reset := UiTheme.menu_button("Reset tab", _reset_tab)
 	reset.custom_minimum_size = Vector2(200, 44)
 	bottom.add_child(reset)
 	var spacer := Control.new()
@@ -113,7 +126,16 @@ func _build() -> void:
 	bottom.add_child(back)
 
 
+func _reset_tab() -> void:
+	_capture = {}
+	GameSettings.reset_section(TAB_SECTIONS[current])
+	if current == Tab.CONTROLS:
+		GameSettings.reset_bindings()
+		_say_bind("Every key is back to its default.")
+
+
 func _show_tab(tab: Tab) -> void:
+	_capture = {}
 	current = tab
 	for i in _pages.size():
 		_pages[i].visible = i == int(tab)
@@ -153,6 +175,25 @@ func _build_controls(page: VBoxContainer) -> void:
 	page.add_child(_slider_row("Mouse sensitivity", "controls/sensitivity", 0.25, 3.0, 0.05, _percent))
 	page.add_child(_check_row("Invert mouse Y", "controls/invert_y"))
 	page.add_child(_slider_row("Zoom speed", "controls/zoom_speed", 0.5, 2.0, 0.1, _percent))
+	var heading := UiTheme.title_label("KEYS")
+	heading.add_theme_font_size_override("font_size", UiTheme.BODY)
+	page.add_child(heading)
+	page.add_child(UiTheme.caption("Click a key, then press the new key or mouse button.  Esc cancels, Delete clears."))
+	_bind_status = UiTheme.caption("")
+	_bind_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_bind_status.visible = false
+	page.add_child(_bind_status)
+	for group: Array in KeyBindings.GROUPS:
+		var group_label := UiTheme.caption(str(group[0]))
+		group_label.add_theme_color_override("font_color", ArtKit.color("color_roles.resonance.body", Color("#E8B23A")))
+		page.add_child(group_label)
+		for entry: Array in group[1]:
+			var action: StringName = entry[0]
+			if action == &"playtest_toggle" and not GameSettings.dev_tools():
+				continue  # a developer tool
+			page.add_child(_bind_row(action, str(entry[1])))
+	_refreshers.append(_refresh_bindings)
+	_refresh_bindings()
 
 
 func _build_gameplay(page: VBoxContainer) -> void:
@@ -235,6 +276,99 @@ func _option_row(text: String, key: String, items: Array) -> HBoxContainer:
 	_refreshers.append(refresh)
 	refresh.call()
 	return row
+
+
+func _bind_row(action: StringName, text: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	row.add_child(_row_label(text))
+	var buttons: Array[Button] = []
+	for slot in KeyBindings.SLOTS:
+		var b := UiTheme.menu_button("", _start_capture.bind(action, slot))
+		b.custom_minimum_size = Vector2(220, 40)
+		b.name = "bind_%s_%d" % [action, slot]
+		row.add_child(b)
+		buttons.append(b)
+	_bind_buttons[action] = buttons
+	return row
+
+
+func _refresh_bindings() -> void:
+	for action: StringName in _bind_buttons:
+		var codes := KeyBindings.codes(action)
+		var buttons: Array = _bind_buttons[action]
+		for slot in buttons.size():
+			var b := buttons[slot] as Button
+			if not _capture.is_empty() and _capture["action"] == action and int(_capture["slot"]) == slot:
+				b.text = "Press a key ..."
+				b.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
+			elif slot < codes.size():
+				b.text = KeyBindings.label(codes[slot])
+				b.remove_theme_color_override("font_color")
+			elif slot == 0:
+				b.text = "Not bound"
+				b.add_theme_color_override("font_color", WARN)
+			else:
+				b.text = "-"
+				b.remove_theme_color_override("font_color")
+
+
+func _start_capture(action: StringName, slot: int) -> void:
+	_capture = {"action": action, "slot": slot}
+	_say_bind("Press the new key or mouse button for %s." % KeyBindings.display_name(action))
+	_refresh_bindings()
+
+
+## While a binding waits: the next key or mouse button is its new key.
+func _input(event: InputEvent) -> void:
+	if _capture.is_empty() or not is_visible_in_tree():
+		return
+	var key := event as InputEventKey
+	var mouse := event as InputEventMouseButton
+	var cancel_action := event is InputEventAction and event.is_action_pressed(&"toggle_cursor")
+	if (key == null or not key.pressed or key.echo) and (mouse == null or not mouse.pressed) and not cancel_action:
+		return
+	get_viewport().set_input_as_handled()
+	var action: StringName = _capture["action"]
+	var slot := int(_capture["slot"])
+	_capture = {}
+	if cancel_action or (key != null and (key.keycode == KEY_ESCAPE or key.physical_keycode == KEY_ESCAPE)):
+		_say_bind("")
+		_refresh_bindings()
+		return
+	if key != null and (key.physical_keycode in [KEY_DELETE, KEY_BACKSPACE]):
+		KeyBindings.clear(action, slot)
+		GameSettings.save_bindings()
+		_say_bind("%s: binding cleared." % KeyBindings.display_name(action))
+		return
+	var code := KeyBindings.code_of(event)
+	if KeyBindings.RESERVED.has(code):
+		_say_bind("Esc and F1 stay with the menu and the debug panel.", WARN)
+		_refresh_bindings()
+		return
+	var taken := KeyBindings.bind(action, slot, code)
+	GameSettings.save_bindings()
+	if taken != &"" and KeyBindings.is_unbound(taken):
+		_say_bind("%s is now %s. %s has no key any more." % [KeyBindings.label(code), KeyBindings.display_name(action),
+			KeyBindings.display_name(taken)], WARN)
+	elif taken != &"":
+		_say_bind("%s is now %s (taken from %s)." % [KeyBindings.label(code), KeyBindings.display_name(action),
+			KeyBindings.display_name(taken)])
+	else:
+		_say_bind("%s is now %s." % [KeyBindings.label(code), KeyBindings.display_name(action)])
+
+
+func _say_bind(text: String, color: Color = UiTheme.MUTED) -> void:
+	if _bind_status == null:
+		return
+	_bind_status.text = text
+	_bind_status.visible = text != ""
+	_bind_status.add_theme_color_override("font_color", color)
+
+
+## True while a binding waits for its key (the owner leaves Esc alone then).
+func is_capturing() -> bool:
+	return not _capture.is_empty()
 
 
 func _refresh_window_size() -> void:

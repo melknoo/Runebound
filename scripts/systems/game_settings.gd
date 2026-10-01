@@ -54,8 +54,11 @@ func _ready() -> void:
 	test_run = is_test
 	_dev_forced = is_test or "--dev" in args
 	_persist = not is_test
+	InputSetup.ensure()  # the project's keys, once; then the player's own (KeyBindings)
+	KeyBindings.capture_defaults()
 	if _persist:
 		_read()
+		_read_keys()
 	apply_all()
 
 
@@ -64,8 +67,42 @@ func use_file(file: String) -> void:
 	path = file
 	_persist = true
 	_values = DEFAULTS.duplicate()
+	KeyBindings.reset_all()
 	_read()
+	_read_keys()
 	apply_all()
+
+
+## M17a key bindings: writes the bindings that differ from the defaults
+## into [keys] (the whole section anew) and tells the labels.
+func save_bindings() -> void:
+	if _persist:
+		var cfg := ConfigFile.new()
+		cfg.load(path)
+		if cfg.has_section("keys"):
+			cfg.erase_section("keys")
+		var changed_now := KeyBindings.overrides()
+		for action: StringName in changed_now:
+			cfg.set_value("keys", String(action), changed_now[action])
+		cfg.save(path)
+	changed.emit("keys")
+
+
+func reset_bindings() -> void:
+	KeyBindings.reset_all()
+	save_bindings()
+
+
+func _read_keys() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(path) != OK or not cfg.has_section("keys"):
+		return
+	var known := KeyBindings.actions()
+	for field in cfg.get_section_keys("keys"):
+		var action := StringName(field)
+		var v: Variant = cfg.get_value("keys", field)
+		if known.has(action) and (v is PackedStringArray or v is Array):
+			KeyBindings.set_codes(action, PackedStringArray(v))
 
 
 func value(key: String) -> Variant:
