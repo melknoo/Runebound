@@ -3731,6 +3731,54 @@ func _run() -> void:
 	_check(Net.version_reason(8, 12).contains("older RUNEBOUND") and Net.version_reason(8, 12).contains("release")
 		and Net.version_reason(12, 8).contains("Update your game") and not Net.version_reason(12, 8).contains("older RUNEBOUND"),
 		"a protocol refusal says which side is behind (a newer game: the host updates the server)")
+	# M17a: character first, then solo or online; the campfire scene behind
+	var backdrop := title.get(&"_backdrop") as TitleBackdrop
+	_check(backdrop != null and backdrop.hero != null and backdrop.camera != null and backdrop.camera.current
+		and backdrop.hero.class_id == SaveGame.active_class_id(),
+		"the title has its campfire scene with the active character's rig (%s)" % [backdrop.hero.class_id if backdrop != null and backdrop.hero != null else &"-"])
+	title.call(&"_show_create")
+	for b: Button in title.get(&"_class_buttons"):
+		if b.get_meta(&"class_id") == &"druid":
+			b.button_pressed = true
+			b.pressed.emit()
+	_check(backdrop.hero.class_id == &"druid", "picking a class on the create page shows that class by the fire")
+	(title.get(&"_char_name_edit") as LineEdit).text = ""
+	var chars_before := SaveGame.characters().size()
+	title.call(&"_create")
+	_check(SaveGame.characters().size() == chars_before + 1 and SaveGame.active == chars_before
+		and (title.get(&"_chars_page") as Control).visible and SaveGame.active_class_id() == &"druid",
+		"Create adds the character, selects it and shows the list (Play solo / Play online)")
+	title.call(&"_select_character", 0)
+	_check(SaveGame.active == 0 and backdrop.hero.class_id == SaveGame.active_class_id(),
+		"clicking a character selects it and the fire shows its class")
+	title.call(&"_select_character", chars_before)
+	title.call(&"_show_join")
+	var name_edit := title.get(&"_name_edit") as LineEdit
+	var join_as := str((title.get(&"_join_as") as Label).text)
+	_check(name_edit.visible and join_as.contains("Druid, level 1"),
+		"an unnamed character going online is asked for a name (%s)" % join_as)
+	name_edit.text = ""
+	var blocked := not bool(title.call(&"_apply_name"))
+	name_edit.text = "Ashroot"
+	_check(blocked and bool(title.call(&"_apply_name")) and str(SaveGame.active_character().get("name", "")) == "Ashroot"
+		and not name_edit.visible and str((title.get(&"_join_as") as Label).text).contains("Ashroot, Druid level 1"),
+		"the name is required, then saved to the character (the party sees it)")
+	title.call(&"_show_join")
+	_check(not name_edit.visible, "a named character goes online under its own name (no name field)")
+	ClientSettings.set_value("last_mode", "online")
+	ClientSettings.set_value("server_pick", "acer")
+	var online_line := str(title.call(&"_continue_mode_text"))
+	ClientSettings.set_value("last_mode", "solo")
+	var solo_line := str(title.call(&"_continue_mode_text"))
+	_check(online_line == "Online  -  Acer" and solo_line == "Solo  -  Runehold",
+		"Continue says how it plays: \"%s\" / \"%s\"" % [online_line, solo_line])
+	title.call(&"_delete_character", SaveGame.active)
+	title.call(&"_delete_character", SaveGame.active)
+	_check(SaveGame.characters().size() == chars_before, "the selected character is deleted with two clicks")
+	title.call(&"_show_characters")
+	title.call(&"_unhandled_input", esc_ev)
+	_check((title.get(&"_main_page") as Control).visible, "Esc goes back from the list to the main page")
+
 	# M17a: the settings window on the title screen
 	title.call(&"_show_main")
 	title.call(&"show_settings")
@@ -3743,10 +3791,7 @@ func _run() -> void:
 	if music_slider != null:
 		music_slider.value = 0.3
 	_check(is_equal_approx(float(GameSettings.value("audio/music")), 0.3), "moving a slider changes the setting")
-	var esc := InputEventAction.new()
-	esc.action = &"toggle_cursor"
-	esc.pressed = true
-	title._unhandled_input(esc)
+	title._unhandled_input(esc_ev)
 	await get_tree().process_frame
 	_check(title.get(&"_settings") == null and (title.get(&"_column") as Control).visible, "Esc closes the settings window")
 	GameSettings.reset_section("audio")

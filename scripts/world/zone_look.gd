@@ -108,6 +108,43 @@ static func runehold() -> ZoneLook:
 	return l
 
 
+## M17a title scene: the Highlands' edge at night. A pale moon low behind the
+## camp, cold violet ambient and fog; the campfire carries the warm light.
+static func title_night() -> ZoneLook:
+	var l := ZoneLook.new()
+	l.sky_top = Color(0.035, 0.03, 0.075)
+	l.sky_mid = Color(0.08, 0.055, 0.13)
+	l.sky_horizon = Color(0.26, 0.11, 0.15)
+	l.sun_disc = Color(0.86, 0.88, 1.0)
+	l.cloud_color = Color(0.07, 0.05, 0.11)
+	l.cloud_lit_color = Color(0.2, 0.16, 0.28)
+	l.cloud_amount = 0.18
+	l.silhouette_far = Color(0.1, 0.06, 0.12)
+	l.silhouette_near = Color(0.06, 0.04, 0.08)
+	l.volcano = Vector3(0.9, 0.22, 0.0)  # no ash peak over the flat camp ground
+	l.spire = Vector3(0.12, 0.018, 0.24)
+	l.sun_rotation_deg = Vector3(-28, 160, 0)
+	l.sun_color = Color(0.56, 0.6, 0.92)
+	l.sun_energy = 0.32
+	l.rim_rotation_deg = Vector3(-20, -30, 0)
+	l.rim_color = Color(0.4, 0.36, 0.78)
+	l.rim_energy = 0.3
+	l.ambient_color = Color(0.14, 0.12, 0.22)
+	l.ambient_energy = 0.9
+	l.fog_color = Color(0.09, 0.07, 0.13)
+	l.fog_density = 0.04
+	l.fog_height = 2.0
+	l.fog_height_density = 0.05
+	l.glow_intensity = 0.9
+	l.glow_bloom = 0.08
+	l.split_shadows = Color(0.44, 0.45, 0.6)
+	l.split_highlights = Color(0.62, 0.52, 0.42)
+	l.split_amount = 0.4
+	l.vignette = 0.32
+	l.ash_fall = 0.5
+	return l
+
+
 ## Shattered Spire interior: near-black violet, cold top light, dense low
 ## haze; crystals, beacons and telegraphs carry the light.
 static func spire_interior() -> ZoneLook:

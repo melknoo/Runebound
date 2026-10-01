@@ -56,6 +56,32 @@ rig; English; the character's name online; developer tools off by default).
     from the menu, the way back saves the hero's health); net `handshake`
     (c2 opens the menu online - nothing pauses - and leaves through it) and
     `server_gone` green.
+- **Phase 3 (built): the main menu.**
+  - Flow (`title_screen.gd`): main = Continue (the last character the way
+    it was last played: "Solo - Runehold" or "Online - Acer", from
+    `ClientSettings` `last_mode`), Characters, Settings, Quit. Characters =
+    the list (click selects), Play solo / Play online / Delete (two clicks) /
+    New character; Create returns to the list with the new one selected.
+    Online = the server dropdown and code as before; the party sees the
+    **character's name** (the "Your name" field is gone; an unnamed
+    character is asked once, `SaveGame.rename_character`). A refused
+    Continue lands on the online page with the reason.
+  - Backdrop `TitleBackdrop` (a ZoneBase with `_is_backdrop`: look, props,
+    StyleManager grading and music only): a camp at the Highlands' edge at
+    night (`ZoneLook.title_night`, bonfire as the key light, log seats,
+    charred trees, a rune monolith, ash fall, the Spire on the horizon),
+    slow camera drift, Runehold's music. `HeroPreview` shows the selected
+    character's own rig by the fire; a new pick plays its signature move
+    (war cry, frost nova, bloom). `ArtKit.dress_rig` is shared with the NPCs.
+    The menu sits left on CanvasLayer 5, above the post layer.
+  - Found: freeing an outlined rig together with its materials made the
+    renderer log "material is null" (the preview drops its materials first;
+    KNOWN_ISSUES asks whether enemy deaths do the same).
+  - Title snaps in `captures_shots/m17a_menus/` (main, characters, create,
+    online). The title's `--connect=` auto-join (run_godot coop) still joins.
+  - Smoke 595 green (the backdrop and its rig follow selection and class,
+    Create selects, the name rule online, Continue's mode line, Delete, Esc
+    back).
 
 ## Co-op: server dropdown and the version refusal (2026-10-01)
 - **Why the join failed on 2026-09-30:** the laptop server runs the

@@ -64,16 +64,7 @@ func _build_rig() -> bool:
 	var model := scene.instantiate() as Node3D
 	model.rotation.y = PI  # Blender front lands at Godot +Z
 	_visual.add_child(model)
-	var meshes := model.find_children("*", "MeshInstance3D", true, false)
-	if not meshes.is_empty():
-		var mesh := meshes[0] as MeshInstance3D
-		var mat := ArtKit.character_material(material_id)  # a fresh material per call
-		mat.albedo_color = body_tint
-		mesh.set_surface_override_material(0, mat)
-		if mesh.mesh.get_surface_count() > 1:
-			mesh.set_surface_override_material(1, ArtKit.glow_material(rune_color, 1.0))
-		for s in range(2, mesh.mesh.get_surface_count()):  # weapon surfaces: plain steel
-			mesh.set_surface_override_material(s, ArtKit.character_material(material_id))
+	ArtKit.dress_rig(model, material_id, body_tint, rune_color)
 	var anims := model.find_children("*", "AnimationPlayer", true, false)
 	if not anims.is_empty():
 		_anim = anims[0] as AnimationPlayer

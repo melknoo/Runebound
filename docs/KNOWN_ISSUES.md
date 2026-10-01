@@ -207,6 +207,18 @@
 - The laptop server shows single tick spikes up to ~60 ms under full load
   (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
+## M17a open items (menus & settings, in progress)
+- The title scene (campfire at night) is a first composition: camera
+  framing, how dark the night reads, the fire's strength and the music
+  (Runehold's track) want the user's eye.
+- Freeing an outlined rig together with its materials made the renderer log
+  "material is null" (seen when the title swaps the hero's rig; HeroPreview
+  now drops the materials first). Check whether enemy deaths in a windowed
+  run log the same.
+- Settings: window size presets only apply in windowed mode; the UI does not
+  scale with the window (fixed pixel font sizes), so very large windows show
+  a small HUD.
+
 ## M11 open items (built, needs the user's playtest)
 - **Travel no longer heals** (every class): health carries across zones and
   in the save; only death, draughts, heals and the Runehold hearth refill

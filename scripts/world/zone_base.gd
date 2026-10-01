@@ -65,11 +65,14 @@ func _ready() -> void:
 	enemies_root.name = "Enemies"
 	world.add_child(enemies_root)
 
-	if Net.is_online():  # before the build: chests, hazards and spawners look for it
+	if Net.is_online() and not _is_backdrop():  # before the build: chests, hazards and spawners look for it
 		net_world = NetWorld.new()
 		net_world.setup(self)
 		add_child(net_world)
 	_build_zone()
+	if _is_backdrop():
+		_backdrop_ready()  # M17a: a scene behind a menu - no hero, UI or network
+		return
 	if not Net.has_view():
 		_zone_ready()
 		Net.zone_entered(scene_file_path)
@@ -121,6 +124,17 @@ func _ready() -> void:
 		party_panel = PartyPanel.new()
 		hud.add_child(party_panel)
 		party_panel.setup(self)
+
+
+## M17a: true for a scene that only stands behind a menu (TitleBackdrop):
+## after `_build_zone` it gets `_backdrop_ready` instead of a hero, UI,
+## network, discovery and the mouse capture.
+func _is_backdrop() -> bool:
+	return false
+
+
+func _backdrop_ready() -> void:
+	pass
 
 
 ## The HUD and the windows that follow the local hero.
@@ -899,7 +913,8 @@ func _add_ground_skirt(role: StringName, extent: float) -> void:
 
 ## Slow ash flakes in a box that travels with the camera rig; world-space
 ## particles, so the fall doesn't slide along with the player (ZoneLook.ash_fall).
-func _add_ash_fall(density: float) -> void:
+## Falling ash around the camera (`parent`: another holder, e.g. the title's camera).
+func _add_ash_fall(density: float, parent: Node3D = null) -> void:
 	var p := GPUParticles3D.new()
 	p.name = "AshFall"
 	p.amount = maxi(int(180.0 * density), 1)
@@ -925,7 +940,7 @@ func _add_ash_fall(density: float) -> void:
 	quad.material = VFX._particle_material(VFX._tex("dust"))
 	p.draw_pass_1 = quad
 	p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	camera_rig.add_child(p)
+	(parent if parent != null else camera_rig as Node3D).add_child(p)
 	p.position = Vector3(0, 2.0, 0)
 
 

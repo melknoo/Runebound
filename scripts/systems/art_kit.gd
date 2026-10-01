@@ -130,6 +130,23 @@ static func rig_scene(path: String) -> PackedScene:
 	return _rig_scenes[path]
 
 
+## Dresses an instanced class rig (NPCs, the title's hero preview): its
+## atlas body material (tinted unless WHITE), the rune surface glowing in
+## `rune_color`, weapon surfaces in plain atlas colours.
+static func dress_rig(model: Node3D, atlas_id: String, tint: Color, rune_color: Color, glow: float = 1.0) -> void:
+	var meshes := model.find_children("*", "MeshInstance3D", true, false)
+	if meshes.is_empty():
+		return
+	var mesh := meshes[0] as MeshInstance3D
+	var mat := character_material(atlas_id)  # a fresh material per call
+	mat.albedo_color = tint
+	mesh.set_surface_override_material(0, mat)
+	if mesh.mesh.get_surface_count() > 1:
+		mesh.set_surface_override_material(1, glow_material(rune_color, glow))
+	for s in range(2, mesh.mesh.get_surface_count()):  # weapon surfaces: plain steel
+		mesh.set_surface_override_material(s, character_material(atlas_id))
+
+
 ## Per-instance body material bound to a character's baked pixel atlas
 ## (64 px/m = 2:1 over the environment, Gate 0).
 static func character_material(atlas_id: String) -> StandardMaterial3D:

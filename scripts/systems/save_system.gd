@@ -267,6 +267,18 @@ func select_character(i: int) -> bool:
 	return true
 
 
+## M17a: names character `i` (the online page asks an unnamed one once).
+## Title screen only.
+func rename_character(i: int, char_name: String) -> bool:
+	var chars := _chars_with_world()
+	if i < 0 or i >= chars.size() or char_name.strip_edges() == "":
+		return false
+	(chars[i] as Dictionary)["name"] = char_name.strip_edges()
+	_loaded_data = {"version": VERSION, "characters": chars, "active": active}
+	save_now()
+	return true
+
+
 ## Deletes character `i` for good. Title screen only.
 func delete_character(i: int) -> bool:
 	var chars := _chars_with_world()
