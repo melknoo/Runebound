@@ -543,7 +543,8 @@ func _process(_delta: float) -> void:
 func _on_health_changed(current: float, maximum: float) -> void:
 	var frac := clampf(current / maximum, 0.0, 1.0)
 	_health_fill.size.x = (BAR_WIDTH - BAR_INSET * 2.0) * frac
-	if _last_health >= 0.0 and current < _last_health:  # a heal (draught) never flashes red
+	# a heal (draught) never flashes red; M17a: the flash can be switched off
+	if _last_health >= 0.0 and current < _last_health and GameSettings.hurt_flash():
 		_hurt_flash.color.a = maxf(_hurt_flash.color.a, 0.22)
 	_last_health = current
 

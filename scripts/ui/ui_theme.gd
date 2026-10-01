@@ -80,8 +80,95 @@ static func theme() -> Theme:
 	t.set_color("font_hover_color", "PopupMenu", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
 	t.set_color("font_disabled_color", "PopupMenu", MUTED)
 	t.set_constant("v_separation", "PopupMenu", 12)
+	_add_settings_widgets(t)
 	_theme = t
 	return t
+
+
+## M17a settings widgets (tools/texgen/ui.py): sliders with a pixel knob,
+## checkboxes, scroll bars in the accent colours.
+static func _add_settings_widgets(t: Theme) -> void:
+	var accent := ArtKit.color("color_roles.player_accent.body", Color("#3CBEB4"))
+	var hot := ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6"))
+	t.set_stylebox("slider", "HSlider", nine("bar.png", 6, 5))
+	t.set_stylebox("grabber_area", "HSlider", _flat(accent.darkened(0.45), 5))
+	t.set_stylebox("grabber_area_highlight", "HSlider", _flat(accent.darkened(0.25), 5))
+	for icon: String in ["grabber", "grabber_disabled"]:
+		t.set_icon(icon, "HSlider", _tex("grabber.png"))
+	t.set_icon("grabber_highlight", "HSlider", _tex("grabber_hover.png"))
+	# CheckBox inherits Button: without its own (empty) boxes it would wear the button frame.
+	for box: String in ["normal", "hover", "pressed", "hover_pressed", "disabled", "focus"]:
+		t.set_stylebox(box, "CheckBox", StyleBoxEmpty.new())
+	t.set_icon("checked", "CheckBox", _tex("check_on.png"))
+	t.set_icon("unchecked", "CheckBox", _tex("check_off.png"))
+	t.set_icon("checked_disabled", "CheckBox", _tex("check_on.png"))
+	t.set_icon("unchecked_disabled", "CheckBox", _tex("check_off.png"))
+	t.set_color("font_hover_color", "CheckBox", hot)
+	t.set_color("font_pressed_color", "CheckBox", TEXT)
+	t.set_color("font_hover_pressed_color", "CheckBox", hot)
+	t.set_constant("h_separation", "CheckBox", 12)
+	for bar: String in ["VScrollBar", "HScrollBar"]:
+		t.set_stylebox("scroll", bar, nine("bar.png", 6, 5))
+		t.set_stylebox("scroll_focus", bar, nine("bar.png", 6, 5))
+		t.set_stylebox("grabber", bar, _flat(accent.darkened(0.4), 5))
+		t.set_stylebox("grabber_highlight", bar, _flat(accent, 5))
+		t.set_stylebox("grabber_pressed", bar, _flat(hot, 5))
+
+
+static func _flat(color: Color, margin: int) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = color
+	sb.border_color = INK
+	sb.set_border_width_all(2)
+	sb.set_content_margin_all(margin)
+	return sb
+
+
+static func _tex(file: String) -> Texture2D:
+	var path := UI_DIR + file
+	return load(path) if ResourceLoader.exists(path) else null
+
+
+# --- M17a: shared menu building blocks (title screen, Esc menu, settings) ---
+
+## A 44 px menu button.
+static func menu_button(text: String, on_press: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.custom_minimum_size = Vector2(0, 44)
+	b.pressed.connect(on_press)
+	return b
+
+
+## A muted caption line.
+static func caption(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_color_override("font_color", MUTED)
+	return l
+
+
+## A 44 px text field in the slot frame.
+static func line_edit(text: String, placeholder: String) -> LineEdit:
+	var e := LineEdit.new()
+	e.text = text
+	e.placeholder_text = placeholder
+	e.custom_minimum_size = Vector2(0, 44)
+	e.add_theme_stylebox_override("normal", nine("slot.png", 12, 10))
+	e.add_theme_stylebox_override("focus", nine("button_hover.png", 16, 10))
+	e.add_theme_color_override("font_placeholder_color", MUTED)
+	e.add_theme_color_override("caret_color", TEXT)
+	return e
+
+
+## A window title in the accent colour (40 px).
+static func title_label(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_override("font", font(true))
+	l.add_theme_font_size_override("font_size", TITLE)
+	l.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.body", Color("#3CBEB4")))
+	return l
 
 
 ## Pixel-art 9-slice from the UI kit (art is saved at 2x, drawn 1:1).

@@ -22,6 +22,7 @@ GameFeel="*res://scripts/systems/game_feel.gd"
 Sfx="*res://scripts/systems/sfx.gd"
 SaveGame="*res://scripts/systems/save_system.gd"
 Net="*res://scripts/net/net.gd"
+GameSettings="*res://scripts/systems/game_settings.gd"
 
 [display]
 

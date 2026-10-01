@@ -803,6 +803,32 @@ def mk_dungeon() -> Image.Image:
     return outlined(img)
 
 
+def knob(fill, rim, rim_hi) -> Image.Image:
+    """M17a settings: a slider grabber, 8x12 art (bevelled like frame())."""
+    w, h = 8, 12
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, w - 1, h - 1], fill=INK)
+    d.rectangle([1, 1, w - 2, h - 2], fill=rim)
+    d.rectangle([2, 2, w - 3, h - 3], fill=fill)
+    d.line([1, 1, w - 2, 1], fill=rim_hi)
+    d.line([1, 1, 1, h - 2], fill=rim_hi)
+    for x, y in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        img.putpixel((x, y), (0, 0, 0, 0))
+    return img
+
+
+def check_box(on: bool) -> Image.Image:
+    """M17a settings: a checkbox, 12x12 art; ticked = an accent block inside."""
+    img = frame(12, rgb("#100C18", 235), rgb("#2E2A3A"), rgb("#4A4458"), corner=False)
+    if on:
+        d = ImageDraw.Draw(img)
+        d.rectangle([3, 3, 8, 8], fill=ACCENT)
+        d.line([3, 3, 8, 3], fill=ACCENT_HOT)
+        d.line([3, 3, 3, 8], fill=ACCENT_HOT)
+    return img
+
+
 def main() -> None:
     print("UI kit:")
     for name, fn in (("player", mk_player), ("waypoint", mk_waypoint), ("portal", mk_portal), ("camp", mk_camp),
@@ -837,6 +863,11 @@ def main() -> None:
                      ("cindermaw", legendary_cindermaw), ("conductors_oath", legendary_conductors_oath),
                      ("glacier_heart", legendary_glacier_heart)):
         save(fn(), "items", name + ".png")
+    # M17a settings widgets
+    save(knob(ACCENT, ACCENT_DIM, ACCENT_HOT), "grabber.png")
+    save(knob(ACCENT_HOT, ACCENT, rgb("#FFFFFF")), "grabber_hover.png")
+    save(check_box(False), "check_off.png")
+    save(check_box(True), "check_on.png")
 
 
 if __name__ == "__main__":

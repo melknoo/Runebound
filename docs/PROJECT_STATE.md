@@ -1,7 +1,8 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-01 · Milestone: **M11 Three roles II (the root druid,
-healer)** - all four phases built (below); the user's playtest is the gate. **M10 Three roles I (tank +
+Updated: 2026-10-01 · Milestone: **M17a Menus & settings** (pulled forward
+from M17, in progress, below). **M11 Three roles II (the root druid,
+healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
 Draughts**; the user's playtest is the gate for both (still open, M11 started
 alongside at the user's wish). M09 Co-op was played by the user and a
@@ -9,12 +10,39 @@ friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
+## M17a Menus & settings (pulled forward from M17, in progress 2026-10-01)
+The user found that picking a character on the title went straight into a
+solo game, and that the game had no Esc menu and no settings. Plan with the
+user's answers: ROADMAP M17a (character first, then Play solo / Play
+online; Esc pauses solo only; audio, video, mouse and camera, comfort and
+key rebinding; a campfire scene behind the title with the character's own
+rig; English; the character's name online; developer tools off by default).
+- **Phase 1 (built): settings core + window.**
+  - Autoload `GameSettings` (`user://settings.cfg`, sections audio / video /
+    controls / gameplay next to `ClientSettings`' coop; load -> set -> save
+    per change). Volumes ride on `Sfx.BUSES`' mix levels (Effects = SFX +
+    Telegraph); window mode / size, VSync, FPS limit, an FPS counter; mouse
+    sensitivity, invert Y, zoom speed (`CameraRig.look`); screen shake
+    (scales trauma and impulses), the red hit flash, damage numbers; the
+    developer tools gate F1 and J and the title's playtest line (`-- --dev`
+    or a test run turns them on; `run_godot play` / `coop` pass `--dev`).
+    Headless and test runs use the defaults and never touch the file.
+  - `SettingsUI` (tabs Audio / Video / Controls / Gameplay, live, "Reset
+    tab"), opened from the title's new "Settings" button. New UI kit pieces
+    in `tools/texgen/ui.py` (slider knob, checkbox) and UiTheme styles for
+    sliders, checkboxes and scroll bars.
+  - Title look review: `-- --snap=<png> --snap-page=<page>` (a test-run flag).
+  - Smoke 576 green (bus math, file round trip with the coop section kept,
+    sensitivity / invert / zoom / shake / flash / damage numbers, the dev
+    tools gate, the settings window on the title).
+
 ## Co-op: server dropdown and the version refusal (2026-10-01)
 - **Why the join failed on 2026-09-30:** the laptop server runs the
   `release` branch, which was still at the M09b state (protocol 8) while
   `main` was at 12 (M10, M10b, M11). The refusal told the (newer) game to
   `git pull`. Now `Net.version_reason` names the side that is behind, and
-  `release` was shipped (`toolsun_godot.cmd release`).
+  `release` was shipped (`tools
+un_godot.cmd release`).
 - **Server dropdown** (user: pick the Acer by an alias, room for more
   servers): `resources/net/servers.json` + `ServerList`, the Join page shows
   names only, "Other address ..." for LAN / local servers

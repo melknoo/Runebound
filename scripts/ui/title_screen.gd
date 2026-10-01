@@ -41,6 +41,9 @@ var _connect_btn: Button
 var _back_btn: Button
 var _status: Label
 var _main_status: Label
+var _column: VBoxContainer
+## M17a: the settings window while it is open (null otherwise).
+var _settings: SettingsUI
 ## `--connect=` joins (run_godot coop) keep the player's saved name and server.
 var _auto: bool = false
 
@@ -64,13 +67,22 @@ func _ready() -> void:
 	var auto_connect := ""
 	var auto_name := ""
 	var auto_invite := ""
+	var snap := ""
+	var snap_page := "main"
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--connect="):
+		if arg.begins_with("--snap="):
+			snap = arg.trim_prefix("--snap=")
+		elif arg.begins_with("--snap-page="):
+			snap_page = arg.trim_prefix("--snap-page=")
+		elif arg.begins_with("--connect="):
 			auto_connect = arg.trim_prefix("--connect=")
 		elif arg.begins_with("--name="):
 			auto_name = arg.trim_prefix("--name=")
 		elif arg.begins_with("--invite="):
 			auto_invite = arg.trim_prefix("--invite=")
+	if snap != "":
+		_snap.call_deferred(snap, snap_page)
+		return
 	if auto_connect != "" and Net.last_reason == "":
 		_auto = true
 		_show_join()
@@ -80,6 +92,31 @@ func _ready() -> void:
 		if auto_name != "":
 			_name_edit.text = auto_name
 		_connect()
+
+
+## Look review (M17a): `-- --snap=<png> [--snap-page=main|characters|create|join|settings[_<tab>]]`
+## shows that page, saves a screenshot and quits. A test-run flag: the
+## capture save and the default settings, never the player's own.
+func _snap(file: String, page: String) -> void:
+	match page:
+		"characters": _show_characters()
+		"create": _show_create()
+		"join": _show_join()
+		"settings": show_settings()
+		_:
+			if page.begins_with("settings_"):  # settings_video, settings_controls, ...
+				show_settings()
+				_settings.open_tab(maxi(SettingsUI.TAB_SECTIONS.find(page.trim_prefix("settings_")), 0) as SettingsUI.Tab)
+			else:
+				_show_main()
+	for i in 45:
+		await get_tree().process_frame
+	var img := get_viewport().get_texture().get_image()
+	var out := file if file.is_absolute_path() else ProjectSettings.globalize_path(file)
+	DirAccess.make_dir_recursive_absolute(out.get_base_dir())
+	img.save_png(out)
+	print("snap: ", out)
+	get_tree().quit()
 
 
 func _exit_tree() -> void:
@@ -104,7 +141,10 @@ func _process(_delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not event.is_action_pressed(&"toggle_cursor") or Net.is_joining():
 		return
-	if _create_page.visible:
+	if _settings != null:
+		_settings.cancel()
+		get_viewport().set_input_as_handled()
+	elif _create_page.visible:
 		_show_characters()
 		get_viewport().set_input_as_handled()
 	elif _join_page.visible or _chars_page.visible:
@@ -119,6 +159,7 @@ func _build() -> void:
 	add_child(bg)
 
 	var column := VBoxContainer.new()
+	_column = column
 	column.set_anchors_preset(Control.PRESET_CENTER)
 	column.custom_minimum_size = Vector2(560, 0)
 	column.position = Vector2(-280, -250)
@@ -146,12 +187,13 @@ func _build() -> void:
 	_main_page.add_child(_continue_btn)
 	_main_page.add_child(_button("Characters", _show_characters))
 	_main_page.add_child(_button("Join co-op", _show_join))
+	_main_page.add_child(_button("Settings", show_settings))
 	_main_page.add_child(_button("Quit", func() -> void: get_tree().quit()))
 	_main_status = _status_label()
 	_main_page.add_child(_main_status)
 	# The playtest checklist (PlaytestLog): how much is left to try.
 	var todo := PlaytestLog.counts()
-	if int(todo["total"]) > 0:
+	if int(todo["total"]) > 0 and GameSettings.dev_tools():  # M17a: a developer tool
 		var hint := Label.new()
 		hint.text = "Playtest: %d offen, %d Probleme  (J im Spiel)" % [int(todo["open"]), int(todo["problem"])]
 		hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -342,6 +384,25 @@ func _show_join() -> void:
 	if _name_edit.text != "":
 		focus = _address_edit if _picked_server().is_empty() else _server_pick
 	focus.grab_focus()
+
+
+## M17a: the settings window over the title (Esc / Back closes it).
+func show_settings() -> void:
+	if _settings != null:
+		return
+	_settings = SettingsUI.new()
+	add_child(_settings)
+	_column.visible = false
+	_settings.closed.connect(_close_settings)
+
+
+func _close_settings() -> void:
+	if _settings == null:
+		return
+	_settings.queue_free()
+	_settings = null
+	_column.visible = true
+	_continue_btn.grab_focus()
 
 
 func _show_main() -> void:

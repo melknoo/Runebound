@@ -66,13 +66,11 @@ func set_target(t: Node3D) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		var motion := event as InputEventMouseMotion
-		_yaw -= motion.relative.x * sensitivity
-		_pitch = clampf(_pitch - motion.relative.y * sensitivity, PITCH_MIN, PITCH_MAX)
+		look((event as InputEventMouseMotion).relative)
 	elif event.is_action_pressed(&"zoom_in"):
-		_zoom = maxf(_zoom - ZOOM_STEP, ZOOM_MIN)
+		_zoom = maxf(_zoom - ZOOM_STEP * GameSettings.zoom_speed(), ZOOM_MIN)
 	elif event.is_action_pressed(&"zoom_out"):
-		_zoom = minf(_zoom + ZOOM_STEP, ZOOM_MAX)
+		_zoom = minf(_zoom + ZOOM_STEP * GameSettings.zoom_speed(), ZOOM_MAX)
 
 
 func _process(delta: float) -> void:
@@ -97,13 +95,23 @@ func _process(delta: float) -> void:
 	_impulse = _impulse.lerp(Vector3.ZERO, minf(14.0 * delta, 1.0))
 
 
+## Mouse motion -> yaw / pitch, with the player's sensitivity and invert-Y
+## (M17a, GameSettings).
+func look(relative: Vector2) -> void:
+	var s := sensitivity * GameSettings.mouse_sensitivity()
+	var flip := -1.0 if GameSettings.invert_y() else 1.0
+	_yaw -= relative.x * s
+	_pitch = clampf(_pitch - relative.y * s * flip, PITCH_MIN, PITCH_MAX)
+
+
 func add_impulse(dir: Vector3, strength: float) -> void:
 	var local_dir := camera.global_transform.basis.inverse() * dir
-	_impulse += local_dir.normalized() * strength
+	_impulse += local_dir.normalized() * strength * GameSettings.shake()
 
 
+## M17a: scaled by the player's screen-shake setting (0 = none).
 func add_trauma(amount: float) -> void:
-	_trauma = minf(_trauma + amount, 1.0)
+	_trauma = minf(_trauma + amount * GameSettings.shake(), 1.0)
 
 
 ## Camera-forward yaw basis for movement input.

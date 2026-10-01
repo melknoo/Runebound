@@ -28,6 +28,8 @@ func setup(combat_lab: Node) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed(&"debug_toggle"):
+		if not _visible and not GameSettings.dev_tools():
+			return  # M17a: the developer tools are a setting (off by default)
 		_visible = not _visible
 		_panel.visible = _visible
 		return

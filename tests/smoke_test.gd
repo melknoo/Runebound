@@ -3483,6 +3483,105 @@ func _run() -> void:
 			if child.global_position.distance_to(far_spot) < 3.0:
 				child.free()
 
+	# --- M17a: settings (GameSettings) ---
+	_check(GameSettings.dev_tools() and is_equal_approx(float(GameSettings.value("audio/master")), 1.0)
+		and not FileAccess.file_exists("user://settings_smoke_m17a.cfg"),
+		"a test run plays on the default settings with the developer tools on")
+	var settings_file := "user://settings_smoke_m17a.cfg"
+	var pre := ConfigFile.new()
+	pre.set_value("coop", "name", "Keeper")
+	pre.save(settings_file)
+	GameSettings.use_file(settings_file)
+	GameSettings.set_value("audio/music", 0.5)
+	var m17_music_bus := AudioServer.get_bus_index("Music")
+	_check(is_equal_approx(AudioServer.get_bus_volume_db(m17_music_bus), float(Sfx.BUSES["Music"]) + linear_to_db(0.5))
+		and not AudioServer.is_bus_mute(m17_music_bus), "music at 50 %% sits 6 dB under its mix level (%.1f dB)" % AudioServer.get_bus_volume_db(m17_music_bus))
+	GameSettings.set_value("audio/effects", 0.0)
+	_check(AudioServer.is_bus_mute(AudioServer.get_bus_index("SFX")) and AudioServer.is_bus_mute(AudioServer.get_bus_index("Telegraph")),
+		"effects at 0 mute the SFX and telegraph buses")
+	var saved_cfg := ConfigFile.new()
+	saved_cfg.load(settings_file)
+	_check(is_equal_approx(float(saved_cfg.get_value("audio", "music", -1.0)), 0.5) and str(saved_cfg.get_value("coop", "name", "")) == "Keeper",
+		"a setting is saved at once and the co-op section stays in the file")
+	GameSettings.reset_section("audio")
+	GameSettings.use_file(settings_file)
+	_check(is_equal_approx(float(GameSettings.value("audio/music")), 1.0) and not AudioServer.is_bus_mute(AudioServer.get_bus_index("SFX"))
+		and is_equal_approx(AudioServer.get_bus_volume_db(m17_music_bus), float(Sfx.BUSES["Music"])),
+		"Reset brings the volumes back and survives a reload")
+	GameSettings.set_value("controls/sensitivity", 2.0)
+	GameSettings.use_file(settings_file)
+	_check(is_equal_approx(GameSettings.mouse_sensitivity(), 2.0), "the sensitivity is read back from the file")
+	var m17_rig := zone_now.camera_rig
+	var yaw0 := float(m17_rig.get(&"_yaw"))
+	var pitch0 := float(m17_rig.get(&"_pitch"))
+	m17_rig.look(Vector2(10, 10))
+	var yaw_step := yaw0 - float(m17_rig.get(&"_yaw"))
+	var pitch_step := pitch0 - float(m17_rig.get(&"_pitch"))
+	GameSettings.set_value("controls/invert_y", true)
+	m17_rig.look(Vector2(0, 10))
+	var pitch_back := float(m17_rig.get(&"_pitch")) - (pitch0 - pitch_step)
+	_check(is_equal_approx(yaw_step, m17_rig.sensitivity * 20.0) and is_equal_approx(pitch_step, m17_rig.sensitivity * 20.0)
+		and is_equal_approx(pitch_back, m17_rig.sensitivity * 20.0),
+		"mouse look follows the sensitivity (x2) and invert-Y turns the pitch around")
+	GameSettings.reset_section("controls")
+	GameSettings.set_value("controls/zoom_speed", 2.0)
+	var zoom0 := float(m17_rig.get(&"_zoom"))
+	var zoom_ev := InputEventAction.new()
+	zoom_ev.action = &"zoom_out"
+	zoom_ev.pressed = true
+	m17_rig._unhandled_input(zoom_ev)
+	_check(is_equal_approx(float(m17_rig.get(&"_zoom")) - zoom0, minf(CameraRig.ZOOM_STEP * 2.0, CameraRig.ZOOM_MAX - zoom0)),
+		"the zoom speed scales a wheel step")
+	GameSettings.reset_section("controls")
+	GameSettings.set_value("gameplay/shake", 0.5)
+	m17_rig.set(&"_trauma", 0.0)
+	m17_rig.add_trauma(0.4)
+	var half_trauma := float(m17_rig.get(&"_trauma"))
+	GameSettings.set_value("gameplay/shake", 0.0)
+	m17_rig.set(&"_trauma", 0.0)
+	m17_rig.add_trauma(0.4)
+	_check(is_equal_approx(half_trauma, 0.2) and is_zero_approx(float(m17_rig.get(&"_trauma"))),
+		"screen shake follows its setting (50 % halves it, 0 turns it off)")
+	var flash_hud := zone_now.hud
+	var flash_hp := zone_now.player.health
+	GameSettings.set_value("gameplay/hurt_flash", false)
+	flash_hud._hurt_flash.color.a = 0.0
+	flash_hud.set(&"_last_health", flash_hp.max_health)
+	flash_hud._on_health_changed(flash_hp.max_health * 0.5, flash_hp.max_health)
+	var flash_off := flash_hud._hurt_flash.color.a
+	GameSettings.set_value("gameplay/hurt_flash", true)
+	flash_hud.set(&"_last_health", flash_hp.max_health)
+	flash_hud._on_health_changed(flash_hp.max_health * 0.5, flash_hp.max_health)
+	_check(is_zero_approx(flash_off) and flash_hud._hurt_flash.color.a > 0.1, "the red hit flash can be switched off")
+	flash_hud._on_health_changed(flash_hp.current_health, flash_hp.max_health)
+	flash_hud._hurt_flash.color.a = 0.0
+	GameSettings.set_value("gameplay/damage_numbers", false)
+	var labels0 := zone_now.find_children("*", "Label3D", true, false).size()
+	GameFeel.damage_number(zone_now.player.global_position, 12.0)
+	var labels_off := zone_now.find_children("*", "Label3D", true, false).size()
+	GameSettings.set_value("gameplay/damage_numbers", true)
+	GameFeel.damage_number(zone_now.player.global_position, 12.0)
+	_check(labels_off == labels0 and zone_now.find_children("*", "Label3D", true, false).size() == labels0 + 1,
+		"damage numbers can be switched off")
+	GameSettings.set(&"_dev_forced", false)
+	var f1 := InputEventAction.new()
+	f1.action = &"debug_toggle"
+	f1.pressed = true
+	zone_now.debug_overlay._unhandled_input(f1)
+	var j_key := InputEventAction.new()
+	j_key.action = &"playtest_toggle"
+	j_key.pressed = true
+	zone_now.playtest_ui._unhandled_input(j_key)
+	var dev_hidden := not zone_now.debug_overlay._visible and not zone_now.playtest_ui.visible
+	GameSettings.set_value("gameplay/dev_tools", true)
+	zone_now.debug_overlay._unhandled_input(f1)
+	var dev_shown := zone_now.debug_overlay._visible
+	zone_now.debug_overlay._unhandled_input(f1)
+	_check(dev_hidden and dev_shown and not zone_now.debug_overlay._visible,
+		"without the developer tools setting F1 and J do nothing; with it F1 opens the debug panel")
+	GameSettings.set(&"_dev_forced", true)
+	GameSettings.reset_section("gameplay")
+
 	# --- M10: several characters per save, each with its own world (title screen) ---
 	SaveGame.flags = {"colossus_defeated": true}
 	SaveGame.save_now()
@@ -3579,6 +3678,26 @@ func _run() -> void:
 	_check(Net.version_reason(8, 12).contains("older RUNEBOUND") and Net.version_reason(8, 12).contains("release")
 		and Net.version_reason(12, 8).contains("Update your game") and not Net.version_reason(12, 8).contains("older RUNEBOUND"),
 		"a protocol refusal says which side is behind (a newer game: the host updates the server)")
+	# M17a: the settings window on the title screen
+	title.call(&"_show_main")
+	title.call(&"show_settings")
+	await get_tree().process_frame
+	var settings_ui := title.get(&"_settings") as SettingsUI
+	var music_slider := settings_ui.find_child("audio_music", true, false) as HSlider if settings_ui != null else null
+	_check(settings_ui != null and settings_ui.is_visible_in_tree() and not (title.get(&"_column") as Control).visible
+		and music_slider != null and is_equal_approx(music_slider.value, 1.0),
+		"Settings on the title opens the settings window (four tabs, the music slider at 100 %)")
+	if music_slider != null:
+		music_slider.value = 0.3
+	_check(is_equal_approx(float(GameSettings.value("audio/music")), 0.3), "moving a slider changes the setting")
+	var esc := InputEventAction.new()
+	esc.action = &"toggle_cursor"
+	esc.pressed = true
+	title._unhandled_input(esc)
+	await get_tree().process_frame
+	_check(title.get(&"_settings") == null and (title.get(&"_column") as Control).visible, "Esc closes the settings window")
+	GameSettings.reset_section("audio")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://settings_smoke_m17a.cfg"))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(ClientSettings.path))
 	ClientSettings.path = real_settings
 

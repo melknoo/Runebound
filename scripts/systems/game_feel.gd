@@ -5,6 +5,7 @@ extends Node
 
 var camera_rig: Node3D = null
 
+## M17a: the player's "Damage numbers" setting (GameSettings applies it).
 var damage_numbers_enabled: bool = true
 
 
@@ -45,8 +46,6 @@ func camera_shake(amount: float) -> void:
 func float_text(pos: Vector3, text: String, color: Color) -> void:
 	if not Net.has_view():
 		return  # M09: the dedicated server draws nothing
-	if not damage_numbers_enabled:
-		return
 	var root := get_tree().current_scene
 	if root == null:
 		return

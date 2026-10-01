@@ -30,7 +30,7 @@ const M07B_TRAINER_KIT := {"earthbreaker": [2, 50], "ember_lance": [3, 150], "st
 	"chain_spark": [5, 400], "fracture_rune": [7, 600]}
 const DEBOUNCE := 2.0
 ## Command-line flags (after `--`) that mark an automated capture/perf run.
-const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress"]
+const TEST_RUN_FLAGS: Array[String] = ["--capture", "--worldcapture", "--shots", "--perf", "--stress", "--snap"]
 const TEST_SAVE_PATH := "user://capture_save.json"
 ## Any other headless run without `--save=` (never the player's real save).
 const HEADLESS_SAVE_PATH := "user://headless_save.json"

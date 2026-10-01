@@ -274,6 +274,21 @@ Look ist von dir abgenommen). Phase 4 gebaut (Solo-Check: der Druide schafft all
 Stufe 4 und 6 ohne Tod; Shots `m11_druid`, Docs, Playtest-Gruppe „M11: Druide & Heilen“,
 Gate-Walk in PROJECT_STATE). Smoke 555 grün, Netz-Suite grün.
 
+### M17a — Menüs & Einstellungen (aus M17 vorgezogen, in Arbeit)
+Anlass (2026-10-01): Wer im Titel einen Charakter wählt, landet sofort solo im Spiel; im Spiel
+gibt es kein Esc-Menü und nirgends Einstellungen. **Entscheidungen des Spielers (2026-10-01):**
+erst der Charakter, dann **Allein spielen** oder **Online spielen**; „Weiter“ spielt den letzten
+Charakter so wie zuletzt; das **Esc-Menü pausiert solo**, online läuft die Welt weiter (der Held
+steht still); Einstellungen **Audio + Grafik, Maus & Kamera, Komfort und Tastenbelegung**; im
+Titel eine **lebendige Szene** (Lagerfeuer bei Nacht, der gewählte Charakter in seinem Rig);
+Menüs **Englisch** wie der Rest (die Sprachwahl bleibt bei M12); **online gilt der
+Charaktername**; **Entwickler-Werkzeuge** (F1, J-Liste) als Schalter, Standard aus
+(`run_godot play` / `coop` schalten sie an). Kein Protokoll-Wechsel geplant.
+Phasen: 1 Einstellungs-Kern + Fenster, 2 Esc-Menü, 3 Hauptmenü + Lagerfeuer-Szene,
+4 Tastenbelegung, 5 Abschluss.
+**Stand:** Phase 1 gebaut (`GameSettings`, Einstellungsfenster mit vier Tabs, im Titel unter
+„Settings“).
+
 ### M12 — Highlands mit Substanz
 Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands
 with substance“): **Unter-Biome** mit eigenem Look, **neue POI-Arten** (Mini-Rätsel draußen,
@@ -308,7 +323,8 @@ Wiederholbare 10–20-min-Runs (Koop): prozedurale Encounter aus Kit und Zonen, 
 Mechanik-Eskalation, Risk/Reward-Modifier, Ziel-Loot. Setzt Cap, Talente und Klassen voraus.
 
 ### M17 — Release-Politur
-Hauptmenü, Settings (Rebinding, Sensitivity, Shake/Flash, Accessibility), Damage-Number-Optionen,
+Hauptmenü, Settings (Rebinding, Sensitivity, Shake/Flash, Damage-Number-Optionen) sind als M17a
+vorgezogen; hier bleiben Accessibility,
 Performance-Pass auf Zielhardware (Server-Laptop + Clients), Balancing-Runde, Bugfest, Server-Setup-
 Anleitung.
 

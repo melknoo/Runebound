@@ -125,7 +125,7 @@ switch ($Mode) {
 		}
 		exit $code
 	}
-	"play"    { & $godot --path $proj }
+	"play"    { & $godot --path $proj -- --dev }  # M17a: --dev turns on the developer tools (F1, J)
 	"capture" { & $godot --path $proj @cap --resolution 1600x900 res://scenes/combat_lab.tscn -- --capture }
 	"worldcapture" { & $godot --path $proj @cap --resolution 1600x900 res://scenes/hub.tscn -- --worldcapture }
 	"shots"   {
@@ -175,7 +175,7 @@ switch ($Mode) {
 				"--name=$($names[$i])", "--class=$($classes[$i])", "--duration=14400", "--save=user://companion_$i.json",
 				"--result=user://companion_$i.result"
 		}
-		& $godot --path $proj -- "--connect=127.0.0.1:$port"
+		& $godot --path $proj -- "--connect=127.0.0.1:$port" --dev
 		foreach ($p in $procs) { if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }
 		exit 0
 	}

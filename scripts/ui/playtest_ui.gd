@@ -62,7 +62,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		close()
 		get_viewport().set_input_as_handled()
 	elif not visible and event.is_action_pressed(&"playtest_toggle"):
-		if player != null and not player.input_locked:
+		if player != null and not player.input_locked and GameSettings.dev_tools():
 			open()
 			get_viewport().set_input_as_handled()
 
