@@ -294,8 +294,18 @@ func hide_boss_bar() -> void:
 
 ## M08: a place name when the hero walks into a named area (smaller and
 ## quicker than the zone title card).
+## M12: one place name at a time (a new one replaces the one on show) and
+## never on top of the zone's title card (it waits until the card is gone).
+var _area_label: Label = null
+var _title_until_ms: int = 0
+
+
 func area_name(text: String) -> void:
+	if is_instance_valid(_area_label):
+		_area_label.queue_free()
+	var wait := maxf(float(_title_until_ms - Time.get_ticks_msec()) / 1000.0, 0.0)
 	var label := Label.new()
+	_area_label = label
 	label.text = text
 	label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	label.position = Vector2(-300, 104)
@@ -309,7 +319,7 @@ func area_name(text: String) -> void:
 	label.modulate.a = 0.0
 	get_child(0).add_child(label)
 	var tw := label.create_tween()
-	tw.tween_property(label, "modulate:a", 1.0, 0.4)
+	tw.tween_property(label, "modulate:a", 1.0, 0.4).set_delay(wait)
 	tw.tween_interval(1.8)
 	tw.tween_property(label, "modulate:a", 0.0, 0.7)
 	tw.tween_callback(label.queue_free)
@@ -661,6 +671,7 @@ func title_card(title: String, subtitle: String = "") -> void:
 		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		sub.add_theme_color_override("font_color", ArtKit.color("color_roles.experience.body", Color("#9FB4FF")))
 		box.add_child(sub)
+	_title_until_ms = Time.get_ticks_msec() + 4000  # the card's whole tween (area names wait)
 	var tw := box.create_tween()
 	tw.tween_property(box, "modulate:a", 1.0, 0.6).set_delay(0.3)
 	tw.tween_interval(2.2)

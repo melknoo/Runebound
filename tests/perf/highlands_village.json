@@ -1,0 +1,12 @@
+{
+	"zone": "res://scenes/ashen_highlands.tscn",
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 12.0,
+	"budget_fps": 60,
+	"comment": "M12 Ashwick: the village square from the lane side, houses, well, fences; five-enemy pull.",
+	"player": {"poi": "village_w", "offset": [0, 0.2, 9]},
+	"yaw": 0.0,
+	"pitch": -0.2,
+	"wave": [["rusher", [0, 0, -6]], ["rusher", [2.5, 0, -7]], ["rusher", [-2.5, 0, -7]], ["caster", [4, 0, -11]], ["caster", [-4, 0, -12]]]
+}

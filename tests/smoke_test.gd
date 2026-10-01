@@ -2839,6 +2839,43 @@ func _run() -> void:
 	_check(area_new == 1 and area_text == "Ashwick",
 		"entering two areas at once shows one name, the smaller place (%d, %s)" % [area_new, area_text])
 	highlands.player.global_position = hero_home
+	# M12 phase 1b: the set pieces (village, graveyard, the skeleton, the scenes)
+	var house_walls := 0
+	for child in highlands.world.get_children():
+		if child.name.begins_with("HouseWall"):
+			house_walls += 1
+	var kit_counts := {}
+	for child in highlands.dressing().get_children():
+		for kit_name in ["vl_rafters", "vl_well", "vl_grave", "vl_fence", "bn_rib", "bn_skull", "vg_fallen", "vg_tent", "vl_barricade"]:
+			if child.name.begins_with(kit_name):
+				kit_counts[kit_name] = int(kit_counts.get(kit_name, 0)) + 1
+	var graves := int(kit_counts.get("vl_grave", 0))  # vl_grave and vl_grave_cross
+	_check(house_walls >= 30 and int(kit_counts.get("vl_rafters", 0)) >= 7 and int(kit_counts.get("vl_well", 0)) == 1,
+		"Ashwick: seven ruined houses (%d wall pieces), their rafters and the well" % house_walls)
+	_check(graves >= 10 and int(kit_counts.get("vl_fence", 0)) >= 10,
+		"the graveyard has its graves (%d) and the lane and graveyard their fences (%d)" % [graves, int(kit_counts.get("vl_fence", 0))])
+	_check(int(kit_counts.get("bn_rib", 0)) >= 15 and int(kit_counts.get("bn_skull", 0)) == 1,
+		"the bone field: a giant skeleton with its skull and rib sets (%d ribs)" % int(kit_counts.get("bn_rib", 0)))
+	_check(int(kit_counts.get("vg_fallen", 0)) >= 7 and int(kit_counts.get("vg_tent", 0)) == 2 and int(kit_counts.get("vl_barricade", 0)) == 2,
+		"places that tell a story: the fallen, the abandoned camp, the barricade %s" % str(kit_counts))
+	var fences_on_pads := 0
+	var vl_pads := highlands._pads()
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("vl_fence"):
+			var fp := (child as Node3D).global_position
+			for pad in vl_pads:
+				if Vector2(fp.x - pad.x, fp.z - pad.y).length() < pad.z - 1.5:
+					fences_on_pads += 1
+	_check(fences_on_pads == 0, "no fence stands on a combat or shrine pad (%d)" % fences_on_pads)
+	var snags := 0
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("Grove_bf_snag"):
+			snags += (child as MultiMeshInstance3D).multimesh.instance_count
+	var stumps := 0
+	for child in highlands.dressing().get_children():
+		if child.name.begins_with("Scatter_bf_stump"):
+			stumps += (child as Node).get_meta(Scatter.POINTS_META, PackedVector3Array()).size()
+	_check(snags >= 25 and stumps >= 20, "the forest's undergrowth: %d snags, %d smouldering stumps" % [snags, stumps])
 
 	# --- M06 audio: mix buses, music layers, looping ambience ---
 	var music_bus := AudioServer.get_bus_index("Music")

@@ -38,8 +38,12 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 			return {"spawner": patrol(zone, poi)}
 		"waypoint":
 			return {"waypoint": waypoint(zone, poi)}
+		"village":  # M12: Ashwick's houses, well and cart
+			return BiomeDressing.village(zone, poi)
+		"vignette":  # M12: places that tell a story without text
+			BiomeDressing.vignette(zone, poi)
 		_:
-			pass  # spawn (no geometry)
+			pass  # spawn (no geometry); M12 types not built yet stay empty
 	return {}
 
 

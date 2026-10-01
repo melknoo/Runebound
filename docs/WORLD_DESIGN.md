@@ -123,6 +123,26 @@ combat POI on a flat pad (< 3 deg), route grades <= `grade_max`, camps
 (`players_within`); enemies only through the zone factory. M15's two new
 zones copy this pattern (with the M12 additions below).
 
+## The Highlands' sub-biomes (M12, built so far)
+Three looks on top of the ash (the south, the middle and Cinder Flats stay
+ash and raiders):
+- **Ashwick, the abandoned village** (Westreach, level 2): grey-olive earth,
+  dead grass, cobbled street and lane; seven ruined houses around a square
+  with the well, fences, a cart, a barricade at the east entrance; the
+  graveyard south-west (its curse comes later), the trial shrine east of it,
+  the chapel spot with the braziers in the west.
+- **The Charwood, the burnt forest** (north-west, level 3): charcoal ground
+  with soot drifts and embers, dense charred trunks and snags, fallen logs,
+  smouldering stumps; camp 8, ruin 3 and the Ember Warrens gate in
+  clearings; the trial shrine, the wisp nest, a last stand of spears, and a
+  secret climb (no trail) up to the tome shelf.
+- **The Ribs of Emberfall, the bone field** (east, level 3): dark bone dust
+  with pale chips, bones everywhere, a giant skeleton (skull, spine, a cage
+  of ribs to walk in) and rib sets; camp 7, the elite patrol, the Hollow
+  Cistern gate, the trial shrine, the jackal den and the dodge run.
+- Ash places that tell a story: fallen soldiers at the south funnel, an
+  abandoned raider camp, an overturned cart.
+
 ## Planned: the Highlands with substance (M12)
 User decisions of 2026-09-29 (ROADMAP "Spieler-Leitlinien"). The user's
 verdict on today's Highlands: visually uniform (ash and brown everywhere, the

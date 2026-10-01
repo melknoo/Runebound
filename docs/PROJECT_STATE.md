@@ -34,6 +34,35 @@ only the new texts bilingual, the first start follows the system language).
   - Smoke 614 green (every key in both languages, test runs in English, the
     switch translates a Label, the setting round trip and Reset, the lore
     window open / switch / close paths).
+- **Phase 1 (built): the sub-biomes, their looks, the places that tell a
+  story** (WORLD_DESIGN "The Highlands' sub-biomes", TECHNICAL_ARCHITECTURE
+  "Sub-biomes (M12)").
+  - Layout once for all of M12: three biome shapes, the pads and spurs of
+    every new POI (village, braziers, graveyard, three trial shrines, two
+    nests, two caves, the monolith puzzle, the dodge run; built in their
+    phases), a secret climb (no trail) to the tome shelf, the forest's south
+    edge at level 3, three new named areas (Ashwick, the Charwood, the Ribs
+    of Emberfall) with DE/EN names. The old POI ids all stay (saves keep
+    their map, camps and shrines). **Protocol 13** (both sides must stand on
+    the same ground: ship a release before co-op).
+  - Bake: `biome_mask.png`, the map tinted per biome, biome stamps, new
+    layout rules. Terrain shader `use_biomes` with texture arrays; 18 new
+    textures and three palettes; rocks, ruins and walls follow the mask.
+  - Dressing: the forest (trunks with shadows on the new foliage physics
+    layer, snags, logs, stumps), dead grass in the village, bones in the
+    bone field; 16 new props; Ashwick's houses, well, fences and cart; the
+    graveyard's graves; fallen soldiers, an abandoned camp, a cart, a
+    barricade, a last stand, the giant skeleton and three rib sets.
+  - Place names: overlapping areas show one name (the smaller place), a new
+    name replaces the one on show and waits for the title card.
+  - Shots `m12_highlands` (18). Perf (median of 3; the iGPU swings ~20 %
+    between runs): interleaved `highlands_open` before M12 50.5 / 42.7 FPS
+    vs M12 49.0 / 47.1 (no measurable cost); M12 scenarios `highlands_forest`
+    45.5-54.6, `highlands_village` 48.9, `highlands_bones` 51.9 FPS; the
+    trunks' shadows cost 0.2 ms GPU (`--ab=grove_shadows`).
+  - Smoke 629 green (mask weights per camp, biome stamps, four looks per
+    role, the forest off routes and clear of camps, the camera ignores
+    trunks, bones only in the bone field, one area name, the set pieces).
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

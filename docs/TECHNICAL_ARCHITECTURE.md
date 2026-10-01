@@ -523,6 +523,42 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
 - **Not in M08:** navmesh (open pads + leash instead), fog-of-war on the
   map, per-portal arrival in the Spire.
 
+## Sub-biomes (M12)
+- **Layout:** `biomes` in `tools/worldgen/highlands_layout.py` - per biome a
+  mask channel, a ragged `blend_m` edge and shapes (circles, capsules). Not
+  the named-area circles: they overlap the wrong POIs. The bake writes
+  `biome_mask.png` (RGBA, 1 px/m: R village, G burnt forest, B bone field,
+  ash where all are 0) with its own RNG (height and trail mask stay
+  byte-identical), tints `map.png` per biome (dithered pick) and stamps
+  `biome` on every POI and area in `layout.json`. Rules added: known POI
+  types only (`KNOWN_TYPES`), small POIs (lore, ghost, shard, vignette) off
+  the trails and out of the 80 m density rule, nests and trials >= 35 m from
+  camps; `secret` routes are graded but leave no trail (ground or map).
+- **Runtime:** `ZoneLayout.biome_weights(x, z)` / `biome_weight(id, x, z)` /
+  `biome_at` / `biome_rect` read the PNG bytes (headless and the server
+  too). `ArtKit.biomed(role, mask, bounds)` turns a terrain material into
+  the four-look version: `shaders/terrain_pixel.gdshader` `use_biomes` picks
+  a look per 2x2 texel cell from the mask (dithered, a pixel edge) and
+  samples 4-layer `Texture2DArray`s (top A/B, side, trail) plus per-look
+  layer-B amount and ember density (`ArtKit.BIOME_LOOKS`). Off by default:
+  Runehold, the Spire and the title never pay for it. In the Highlands the
+  rock and ruin roles are overridden for the zone's lifetime
+  (`ArtKit.override_role`, cleared in `_exit_tree`), so rocks, ruins and
+  the village walls follow the mask too.
+- **Dressing:** `Scatter` items take `weight` (a biome's mask weight),
+  `area` and `range`; `Grove.plant` sets forest trunks as 32 m MultiMesh
+  chunks with shadows (0.2 ms GPU) and a cylinder collider each on the
+  physics layer 7 `foliage` (heroes and enemies collide, the camera's
+  spring arm ignores it). `BiomeDressing` builds the village (houses with
+  slope-following walls, rafters, the well), the graveyard's looks, lane
+  fences, the forest's snags / logs / stumps and the vignettes (fallen
+  soldiers, an abandoned camp, a cart, a barricade, a last stand, the giant
+  skeleton, rib sets). Clearings: combat pads keep 14 m free of trunks
+  (no navmesh).
+- **Areas:** areas may overlap; of those entered at once only the smallest
+  names itself, and `Hud.area_name` replaces the name on show and waits for
+  the zone's title card. New areas carry a text-table `name_key`.
+
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**
 (singleplayer = OFFLINE with a local hero; the dedicated server = SERVER
@@ -796,6 +832,7 @@ never `DisplayServer` (headless bot clients are clients).
 
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
+M12: 7 foliage (forest trunks; heroes and enemies mask it, the camera does not)
 Melee hits = shape queries against hurtbox layers; projectiles = Area3D.
 
 ## Data

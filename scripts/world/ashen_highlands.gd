@@ -168,6 +168,7 @@ func _build_zone() -> void:
 	_dress_rim()
 	_scatter()
 	_plant_forest()
+	_dress_biomes()
 	_add_ambience("wind_loop", Vector3.INF, -14.0)
 
 
@@ -195,14 +196,49 @@ func _plant_forest() -> void:
 		var combat := String(poi.get("type", "")) in ["camp", "ruin", "ambush", "trial", "nest", "cursed", "arena"]
 		clearings.append(Vector3(p.x, p.z, pad + (14.0 if combat else 4.0)))
 	var corridors := _route_segments()
+	var avoid := func(p: Vector2) -> bool: return _near_route(p, corridors, 2.5)
 	Grove.plant(self, {
 		"prop": "charred_tree", "area": layout.biome_rect("burnt_forest"),
 		"weight": biome_weight_fn("burnt_forest"), "density": 0.62, "spacing": 5.0,
 		"scale": Vector2(1.0, 1.7), "lean": 0.14, "exclude": clearings,
-		"avoid": func(p: Vector2) -> bool: return _near_route(p, corridors, 2.5),
-		"height_at": terrain.height_at, "collider": Vector2(0.22, 3.2), "range": 150.0,
+		"avoid": avoid, "height_at": terrain.height_at, "collider": Vector2(0.22, 3.2), "range": 150.0,
 		"seed": SCATTER_SEED + 12,
 	})
+	BiomeDressing.forest_details(self, layout, clearings, avoid, SCATTER_SEED + 13)
+	LookDev.register(&"grove_shadows", func(v: Variant) -> void:  # perf A/B: the trunks' shadows
+		for child in dressing().get_children():
+			if child.name.begins_with("Grove_"):
+				(child as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if bool(v) 					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	, true)
+
+
+## M12: the village's lane fences and the graveyard's looks (gaps where the
+## paths come in); the curse itself comes with its own phase.
+func _dress_biomes() -> void:
+	if look == null or not look.art_pass or layout.biome_ids.is_empty():
+		return
+	var corridors := _route_segments()
+	var pads := _pads()
+	var keep: Array[Vector3] = []
+	for pad in pads:
+		keep.append(Vector3(pad.x, pad.y, pad.z + 1.0))
+	BiomeDressing.lane_fences(self, layout.route_points("village_lane"), 3.0, SCATTER_SEED + 21, keep,
+		func(p: Vector2) -> bool: return _near_route(p, corridors, 1.2))
+	for poi in layout.by_type("cursed"):
+		var centre := ZoneLayout.pos_of(poi)
+		var c2 := Vector2(centre.x, centre.z)
+		var reach := float(poi.get("pad", 10.0)) + 3.0
+		var gaps: Array[float] = []
+		for route in layout.routes:
+			var pts := layout.route_points(String(route.get("id", "")))
+			for i in pts.size():
+				if pts[i].distance_to(c2) > reach:
+					continue
+				for j: int in [i - 1, i + 1]:
+					if j >= 0 and j < pts.size():
+						var d := pts[j] - c2
+						gaps.append(atan2(d.y, d.x))
+		BiomeDressing.graveyard(self, poi, gaps)
 
 
 ## Rock hulls along the baked ridge lines: silhouettes on the crests and
@@ -297,6 +333,9 @@ func _scatter_items() -> Array:
 		{"prop": "bone_pile", "field": true, "per_100m2": 0.9, "slope_max": 0.6, "scale": Vector2(0.8, 1.5),
 			"cluster": Vector2i(1, 2), "spread": 0.9, "weight": biome_weight_fn("bone_field"),
 			"area": layout.biome_rect("bone_field")},
+		{"prop": "bf_stump", "field": true, "per_100m2": 0.35, "slope_max": 0.5, "scale": Vector2(0.8, 1.3),
+			"cluster": Vector2i(1, 1), "spread": 0.0, "weight": biome_weight_fn("burnt_forest"),
+			"area": layout.biome_rect("burnt_forest"), "range": 60.0},
 	])
 	return items
 

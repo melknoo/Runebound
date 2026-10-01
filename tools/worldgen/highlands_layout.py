@@ -212,6 +212,16 @@ LAYOUT = {
         {"id": "dodge_b", "type": "puzzle_dodge", "pos": [146, -84], "yaw": 0.0, "pad": 5,
          "lane": [[130, -62], [143, -80]]},
         {"id": "nest_b", "type": "nest", "pos": [150, -128], "yaw": 0.0, "pad": 9},
+        # M12 places that tell a story without text (small: no pad, off the trails)
+        {"id": "vig_fallen_s", "type": "vignette", "kind": "fallen", "pos": [-24, 140], "yaw": 0.6, "pad": 0},
+        {"id": "vig_camp_old", "type": "vignette", "kind": "abandoned_camp", "pos": [-80, 140], "yaw": 0.3, "pad": 0},
+        {"id": "vig_cart_s", "type": "vignette", "kind": "cart", "pos": [8, 128], "yaw": -0.4, "pad": 0},
+        {"id": "vig_barricade_v", "type": "vignette", "kind": "barricade", "pos": [-104, 17], "yaw": 0.25, "pad": 0},
+        {"id": "vig_last_stand_f", "type": "vignette", "kind": "last_stand", "pos": [-100, -60], "yaw": 1.1, "pad": 0},
+        {"id": "vig_skeleton_b", "type": "vignette", "kind": "skeleton", "pos": [127, -93], "yaw": 1.33, "pad": 0},
+        {"id": "vig_ribs_b1", "type": "vignette", "kind": "ribs", "pos": [126, -122], "yaw": 0.4, "pad": 0},
+        {"id": "vig_ribs_b2", "type": "vignette", "kind": "ribs", "pos": [152, -100], "yaw": 2.1, "pad": 0},
+        {"id": "vig_ribs_b3", "type": "vignette", "kind": "ribs", "pos": [92, -134], "yaw": -0.8, "pad": 0},
         {"id": "arena", "type": "arena", "pos": [0, -142], "yaw": 0.0, "pad": 18, "radius": 16.0,
          "boss_offset": [0, -8], "trigger_offset": [0, 4], "trigger_radius": 12.0,
          "portals": [

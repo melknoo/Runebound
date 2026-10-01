@@ -320,7 +320,8 @@ Phasen: 0 Text-Tabelle + Sprachwahl + Lesefenster, 1 Layout + Biom-Look + Props 
 Szenen, 2 Interaktion + Lore + Geister + Chronik + Splitter + Essen, 3 POI-Zustand im Koop + die
 vier Rätsel + Grotten + Kletterpfade, 4 Gegner Dorf + Wald, 5 Gegner Knochenfeld + Tiere,
 6 Nester + verfluchte Orte + Prüfungs-Schreine, 7 Foliant + 3 Fähigkeiten, 8 Abschluss.
-**Stand:** Phase 0 gebaut (Text-Tabelle als JSON, Sprachwahl, Lesefenster).
+**Stand:** Phase 0 gebaut (Text-Tabelle als JSON, Sprachwahl, Lesefenster). Phase 1 gebaut (drei
+Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden Szenen; PROTOCOL 13).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons

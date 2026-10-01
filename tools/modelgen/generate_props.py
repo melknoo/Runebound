@@ -795,6 +795,337 @@ def waypoint_shrine():
     finish(pm, "waypoint_shrine", ROLES["player_accent"]["body"], 0.9, kit="common")
 
 
+# ---------------------------------------------------------------------------
+# M12 Highlands sub-biomes: the abandoned village (vl_*), the burnt forest
+# (bf_*), the bone field (bn_*) and the places that tell a story (vg_*). All
+# in the highlands kit; anything over 0.4 m gets a collider in the zone
+# (PoiBuilder.blocker), the ribs and the skull stand on their own colliders.
+# ---------------------------------------------------------------------------
+
+VL = SPEC["palettes"]["village"]
+BF = SPEC["palettes"]["burnt_forest"]
+BN = SPEC["palettes"]["bone_field"]
+
+
+def _beam(pm, a, b, w, paint, h=None):
+    """A square beam from point a to point b (metres, Z up)."""
+    dx, dy, dz = b[0] - a[0], b[1] - a[1], b[2] - a[2]
+    length = math.sqrt(dx * dx + dy * dy + dz * dz)
+    pitch = math.asin(max(-1.0, min(1.0, dz / max(length, 1e-6))))
+    yaw = math.atan2(-dx, dy)
+    centre = ((a[0] + b[0]) * 0.5, (a[1] + b[1]) * 0.5, (a[2] + b[2]) * 0.5)
+    pm.box(None, (w, length, h if h is not None else w), centre, rot=(pitch, 0.0, yaw), paint=paint)
+
+
+def vl_rafters():
+    """Charred roof timbers of a ruined village house: a sagging ridge beam
+    and rafter pairs, some broken, on top of 2.4 m walls (5 x 4.4 m)."""
+    rig.reset_scene()
+    rnd = random.Random(101)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    timber = pm.paint(VL["timber"], 1, "bark")
+    burnt = pm.paint(BF["bark"], 2, "bark")
+    _beam(pm, (-2.6, 0.0, 3.5), (2.6, 0.0, 3.3), 0.2, timber)
+    for k, x in enumerate((-2.2, -0.75, 0.75, 2.2)):
+        for side in (-1, 1):
+            if (k, side) in ((1, 1), (3, -1)):
+                # broken rafter: only the lower stub, hanging a little
+                _beam(pm, (x, side * 2.25, 2.4), (x + 0.1, side * 1.3, 2.75), 0.13, burnt)
+                continue
+            _beam(pm, (x + rnd.uniform(-0.05, 0.05), side * 2.25, 2.4), (x, 0.0, 3.45), 0.14,
+                  burnt if rnd.random() < 0.5 else timber)
+    for side in (-1, 1):
+        _beam(pm, (-2.6, side * 2.2, 2.42), (2.6, side * 2.2, 2.42), 0.18, timber)  # wall plates
+    finish(pm, "vl_rafters")
+
+
+def vl_fence():
+    """A broken farm fence, 2.4 m: three posts (one leaning), two rails, one
+    rail hanging off. 0.95 m tall (collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    dark = pm.paint(VL["timber"], 1, "bark")
+    for x, tilt in ((-1.15, 0.0), (0.0, 0.12), (1.15, -0.05)):
+        pm.box(None, (0.12, 0.12, 0.95), (x, 0.0, 0.47), rot=(0.0, tilt, 0.0), paint=dark, taper=0.85)
+    _beam(pm, (-1.2, -0.08, 0.72), (1.2, -0.08, 0.7), 0.07, wood, h=0.12)
+    _beam(pm, (-1.2, -0.08, 0.35), (0.1, -0.08, 0.36), 0.07, wood, h=0.12)
+    _beam(pm, (0.1, -0.08, 0.36), (1.05, -0.12, 0.05), 0.07, wood, h=0.12)  # the fallen half
+    finish(pm, "vl_fence")
+
+
+def vl_well():
+    """The village well: a fieldstone ring, a dark shaft, a timber frame with
+    a crank and a bucket. 1.8 m tall (collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(VL["cobble"], 2, "masonry")
+    cap = pm.paint(VL["cobble"], 3)
+    shaft = pm.paint(BF["bark"], 0)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    iron = pm.paint(RB["iron"], 1)
+    pm.loft(None, [(0.0, 0.85, 0.85, 0, 0), (0.62, 0.82, 0.82, 0, 0)], sides=10, paint=stone)
+    pm.loft(None, [(0.62, 0.86, 0.86, 0, 0), (0.72, 0.84, 0.84, 0, 0)], sides=10, paint=cap)
+    pm.loft(None, [(0.6, 0.62, 0.62, 0, 0), (0.74, 0.62, 0.62, 0, 0)], sides=10, paint=shaft)
+    for x in (-0.78, 0.78):
+        pm.box(None, (0.12, 0.12, 1.15), (x, 0.0, 1.25), paint=wood)
+    _beam(pm, (-0.9, 0.0, 1.78), (0.9, 0.0, 1.78), 0.1, wood)
+    pm.loft(None, [(-0.03, 0.09, 0.09, 0, 0), (0.03, 0.09, 0.09, 0, 0)], sides=8, center=(0.92, 0.0, 1.78),
+            rot=(0.0, math.pi / 2, 0.0), paint=iron)
+    pm.box(None, (0.03, 0.03, 0.55), (0.0, 0.0, 1.47), paint=iron)  # rope
+    pm.loft(None, [(0.0, 0.13, 0.13, 0, 0), (0.22, 0.15, 0.15, 0, 0)], sides=8, center=(0.0, 0.0, 0.98), paint=wood)
+    finish(pm, "vl_well")
+
+
+def vl_grave():
+    """A weathered headstone on a low mound, leaning (0.85 m)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(VL["cobble"], 3, "plate")
+    moss = pm.paint(VL["dead_grass"], 1)
+    earth = pm.paint(VL["earth"], 2)
+    pm.loft(None, [(0.0, 0.32, 0.75, 0, -0.45), (0.14, 0.25, 0.65, 0, -0.45), (0.2, 0.12, 0.4, 0, -0.45)],
+            sides=8, paint=earth)
+    pm.box(None, (0.55, 0.13, 0.78), (0.0, 0.0, 0.4), rot=(0.12, 0.05, 0.0), paint=stone)
+    pm.loft(None, [(0.0, 0.27, 0.065, 0, 0), (0.12, 0.2, 0.065, 0, 0), (0.17, 0.08, 0.065, 0, 0)], sides=8,
+            center=(0.0, 0.05, 0.78), rot=(0.12, 0.05, 0.0), paint=stone)
+    pm.box(None, (0.5, 0.15, 0.12), (0.0, 0.02, 0.06), paint=moss)
+    finish(pm, "vl_grave")
+
+
+def vl_grave_cross():
+    """A wooden grave marker: a cross of split planks on a mound (1.0 m)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    earth = pm.paint(VL["earth"], 2)
+    pm.loft(None, [(0.0, 0.3, 0.7, 0, -0.4), (0.15, 0.22, 0.6, 0, -0.4), (0.2, 0.1, 0.35, 0, -0.4)], sides=8, paint=earth)
+    pm.box(None, (0.1, 0.07, 1.0), (0.0, 0.0, 0.5), rot=(0.0, -0.1, 0.0), paint=wood)
+    pm.box(None, (0.52, 0.07, 0.1), (-0.05, -0.01, 0.75), rot=(0.0, 0.1, 0.0), paint=wood)
+    finish(pm, "vl_grave_cross")
+
+
+def vl_barricade():
+    """Planks nailed across a cart wheel and barrels: the last barricade of
+    the village, 2.6 m wide, 1.3 m tall (collider in the zone)."""
+    rig.reset_scene()
+    rnd = random.Random(113)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    dark = pm.paint(VL["timber"], 1, "planks")
+    iron = pm.paint(RB["iron"], 1)
+    for x in (-0.95, 0.95):
+        pm.loft(None, [(0.0, 0.3, 0.3, 0, 0), (0.45, 0.35, 0.35, 0, 0), (0.9, 0.3, 0.3, 0, 0)], sides=8,
+                center=(x, 0.1, 0.0), paint=dark)
+        for z in (0.12, 0.78):
+            pm.loft(None, [(-0.02, 0.32, 0.32, 0, 0), (0.02, 0.32, 0.32, 0, 0)], sides=8, center=(x, 0.1, z), paint=iron)
+    for k in range(5):
+        y = -0.25 + rnd.uniform(-0.04, 0.04)
+        _beam(pm, (-1.35, y, 0.25 + k * 0.22 + rnd.uniform(-0.1, 0.1)), (1.35, y, 0.35 + k * 0.2 + rnd.uniform(-0.15, 0.15)),
+              0.06, wood if k % 2 else dark, h=0.18)
+    pm.loft(None, [(-0.04, 0.55, 0.55, 0, 0), (0.04, 0.55, 0.55, 0, 0)], sides=12, center=(0.15, -0.35, 0.62),
+            rot=(math.pi / 2, 0.0, 0.1), paint=dark)  # cart wheel
+    finish(pm, "vl_barricade")
+
+
+def vl_cart():
+    """An overturned hand cart with a broken wheel and spilt sacks (2.4 x
+    1.3 m, 1.0 m tall; collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    dark = pm.paint(VL["timber"], 1, "bark")
+    sack = pm.paint(VL["thatch"], 2, "cloth")
+    pm.box(None, (1.7, 1.1, 0.1), (0.0, 0.0, 0.5), rot=(1.25, 0.0, 0.0), paint=wood)          # bed on its side
+    pm.box(None, (1.7, 0.08, 0.45), (0.0, -0.32, 0.25), paint=dark)                            # side board
+    pm.box(None, (1.7, 0.08, 0.4), (0.0, 0.48, 0.85), rot=(1.25, 0.0, 0.0), paint=dark)
+    _beam(pm, (0.85, 0.2, 0.15), (1.9, 0.45, 0.05), 0.08, dark)                                 # shafts
+    _beam(pm, (0.85, -0.2, 0.25), (1.85, -0.6, 0.05), 0.08, dark)
+    pm.loft(None, [(-0.04, 0.48, 0.48, 0, 0), (0.04, 0.48, 0.48, 0, 0)], sides=12, center=(-0.3, 0.62, 0.95),
+            rot=(0.25, 0.0, 0.0), paint=dark)
+    pm.loft(None, [(-0.04, 0.48, 0.48, 0, 0), (0.04, 0.48, 0.48, 0, 0)], sides=12, center=(-0.9, -1.0, 0.05),
+            rot=(0.0, 0.0, 0.4), paint=dark)                                                    # the loose wheel
+    for (x, y, r) in ((0.3, -0.85, 0.24), (0.75, -0.7, 0.2), (-0.2, -0.75, 0.18)):
+        pm.loft(None, [(0.0, r, r * 0.8, 0, 0), (r * 0.9, r * 1.05, r * 0.85, 0, 0), (r * 1.4, r * 0.4, r * 0.35, 0, 0)],
+                sides=7, center=(x, y, 0.0), paint=sack)
+    finish(pm, "vl_cart")
+
+
+def bf_snag():
+    """A tall dead trunk of the burnt forest: thick, its top snapped off,
+    two stub branches, dim ember cracks low on the bark (4.6 m)."""
+    rig.reset_scene()
+    rnd = random.Random(131)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bark = pm.paint(BF["bark"], 1, "bark")
+    char = pm.paint(BF["bark"], 2, "bark")
+    soot = pm.paint(BF["soot"], 0)
+    pm.loft(None, [(-0.1, 0.42, 0.4, 0, 0), (0.4, 0.3, 0.29, 0.02, 0), (2.2, 0.24, 0.23, -0.06, 0.03),
+                   (3.9, 0.18, 0.17, 0.05, 0.0), (4.3, 0.14, 0.12, 0.08, 0.02), (4.6, 0.05, 0.08, 0.13, 0.0)],
+            sides=7, paint=bark)
+    for (z, a, ln) in ((2.6, 0.8, 0.9), (3.3, 3.6, 0.7), (1.8, 5.2, 0.45)):
+        pm.loft(None, [(0.0, 0.08, 0.08, 0, 0), (ln, 0.02, 0.02, 0, 0)], sides=5, center=(0, 0, z),
+                rot=(rnd.uniform(0.9, 1.15), 0, a), paint=char)
+    for (z, a) in ((0.55, 0.4), (1.05, 2.3), (0.75, 4.1)):  # ember cracks, dim
+        pm.box(None, (0.05, 0.03, 0.42), (math.cos(a) * 0.31, math.sin(a) * 0.31, z), rot=(0, 0, a), mat_index=GLOW)
+    pm.loft(None, [(-0.1, 0.62, 0.6, 0, 0), (0.1, 0.45, 0.43, 0, 0)], sides=8, paint=soot)  # soot at the foot
+    finish(pm, "bf_snag", BF["ember"][1], 0.7)
+
+
+def bf_log():
+    """A fallen charred trunk, 3.6 m, 0.55 m high (collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bark = pm.paint(BF["bark"], 1, "bark")
+    cut = pm.paint(BF["bark"], 3)
+    pm.loft(None, [(-1.8, 0.28, 0.26, 0, 0), (-0.4, 0.26, 0.25, 0, 0.02), (1.0, 0.24, 0.23, 0, -0.02), (1.8, 0.2, 0.19, 0, 0)],
+            sides=7, center=(0, 0, 0.26), rot=(0, math.pi / 2, 0), paint=bark)
+    pm.loft(None, [(-0.01, 0.27, 0.25, 0, 0), (0.01, 0.27, 0.25, 0, 0)], sides=7, center=(-1.81, 0, 0.26),
+            rot=(0, math.pi / 2, 0), paint=cut)
+    pm.loft(None, [(0.0, 0.06, 0.06, 0, 0), (0.6, 0.015, 0.015, 0, 0)], sides=5, center=(0.4, 0.1, 0.45),
+            rot=(0.6, 0.0, 0.5), paint=bark)
+    finish(pm, "bf_log")
+
+
+def bf_stump():
+    """A smouldering stump, 0.35 m (walk-through): ember glow in its cracked top."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bark = pm.paint(BF["bark"], 1, "bark")
+    top = pm.paint(BF["bark"], 0)
+    pm.loft(None, [(-0.05, 0.36, 0.34, 0, 0), (0.12, 0.28, 0.27, 0, 0), (0.33, 0.25, 0.24, 0, 0)], sides=8, paint=bark)
+    pm.loft(None, [(0.33, 0.24, 0.23, 0, 0), (0.35, 0.2, 0.19, 0, 0)], sides=8, paint=top)
+    for a in (0.3, 1.9, 3.8, 5.1):
+        pm.box(None, (0.16, 0.025, 0.02), (math.cos(a) * 0.1, math.sin(a) * 0.1, 0.355), rot=(0, 0, a), mat_index=GLOW)
+    finish(pm, "bf_stump", BF["ember"][2], 0.9)
+
+
+def bn_rib():
+    """A giant rib of the bone field: rises from the dust and bends over,
+    7 m tall, 0.5 m thick at the root (collider at the root in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bone = pm.paint(HL["bone"], 1, "plate")
+    dark = pm.paint(BN["bone_dark"], 1)
+    pts = [(0.0, 0.0, -0.3), (0.0, -0.4, 1.6), (0.0, -0.5, 3.4), (0.0, -0.1, 5.0), (0.0, 0.9, 6.3), (0.0, 2.2, 6.9), (0.0, 3.3, 6.7)]
+    widths = [0.5, 0.44, 0.38, 0.32, 0.26, 0.2, 0.12]
+    for (a, b, w0, w1) in zip(pts, pts[1:], widths, widths[1:]):
+        _beam(pm, a, b, (w0 + w1) * 0.5, bone, h=(w0 + w1) * 0.35)
+    pm.loft(None, [(-0.3, 0.55, 0.45, 0, 0), (0.15, 0.4, 0.34, 0, 0)], sides=7, paint=dark)  # root in the dust
+    finish(pm, "bn_rib")
+
+
+def bn_skull():
+    """The giant skull: a long cranium, dark sockets, a broken horn, the jaw
+    sunk into the dust; 3.4 m long, 2.1 m tall (box collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bone = pm.paint(HL["bone"], 1, "plate")
+    pale = pm.paint(HL["bone"], 2)
+    dark = pm.paint(BF["bark"], 0)
+    pm.loft(None, [(-1.7, 0.55, 0.5, 0, 0.55), (-0.9, 0.95, 0.85, 0, 0.75), (0.2, 1.05, 0.95, 0, 0.85),
+                   (1.1, 0.8, 0.75, 0, 0.8), (1.7, 0.35, 0.35, 0, 0.6)], sides=8, rot=(0.0, math.pi / 2, 0.0), paint=bone)
+    for side in (-1, 1):
+        pm.loft(None, [(-0.05, 0.26, 0.2, 0, 0), (0.05, 0.24, 0.18, 0, 0)], sides=7,
+                center=(-0.85, side * 0.62, 1.35), rot=(math.pi / 2, 0.0, 0.0), paint=dark)  # sockets
+    pm.loft(None, [(0.0, 0.2, 0.2, 0, 0), (1.1, 0.12, 0.12, 0.25, 0), (1.7, 0.04, 0.04, 0.6, 0)], sides=6,
+            center=(0.2, 0.7, 1.6), rot=(0.9, 0.0, -0.4), paint=pale)                       # the horn left
+    pm.loft(None, [(0.0, 0.2, 0.2, 0, 0), (0.45, 0.16, 0.16, 0.05, 0)], sides=6,
+            center=(0.2, -0.7, 1.6), rot=(-0.9, 0.0, 0.4), paint=pale)                      # the broken one
+    pm.box(None, (1.9, 0.9, 0.3), (-0.6, 0.0, 0.12), rot=(0.0, 0.08, 0.0), paint=bone)     # jaw in the dust
+    for k in range(5):
+        pm.box(None, (0.12, 0.12, 0.3), (-1.45 + k * 0.28, 0.42, 0.42), paint=pale, taper=0.4)
+        pm.box(None, (0.12, 0.12, 0.3), (-1.45 + k * 0.28, -0.42, 0.42), paint=pale, taper=0.4)
+    finish(pm, "bn_skull")
+
+
+def bn_vertebra():
+    """A giant vertebra half sunk in the dust: a disc, a spine and two wings
+    (1.6 m wide, 1.2 m tall; collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bone = pm.paint(HL["bone"], 1, "plate")
+    dark = pm.paint(BN["bone_dark"], 2)
+    pm.loft(None, [(-0.35, 0.5, 0.5, 0, 0), (0.35, 0.52, 0.52, 0, 0)], sides=9, center=(0.0, 0.0, 0.25),
+            rot=(math.pi / 2, 0.0, 0.0), paint=bone)
+    pm.box(None, (0.22, 0.2, 0.75), (0.0, 0.05, 0.95), rot=(0.25, 0.0, 0.0), paint=bone, taper=0.45)
+    for side in (-1, 1):
+        _beam(pm, (side * 0.35, 0.0, 0.45), (side * 0.85, 0.08, 0.62), 0.16, bone, h=0.2)
+    pm.loft(None, [(-0.36, 0.2, 0.2, 0, 0), (0.36, 0.2, 0.2, 0, 0)], sides=8, center=(0.0, 0.0, 0.25),
+            rot=(math.pi / 2, 0.0, 0.0), paint=dark)
+    finish(pm, "bn_vertebra")
+
+
+def vg_fallen():
+    """A fallen soldier of the old guard, lying where he fell: helm, mail,
+    a split shield and the sword beside him. 0.35 m (walk-through)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(RB["iron"], 1, "plate")
+    mail = pm.paint(RB["iron"], 2, "cloth")
+    cloth = pm.paint(CM["hide"], 1, "cloth")
+    wood = pm.paint(VL["timber"], 2, "planks")
+    steel = pm.paint(RB["steel"], 1)
+    pm.box(None, (0.42, 0.62, 0.24), (0.0, 0.0, 0.13), rot=(0.0, 0.0, 0.08), paint=mail)          # torso
+    pm.loft(None, [(0.0, 0.14, 0.15, 0, 0), (0.2, 0.15, 0.16, 0, 0), (0.3, 0.1, 0.11, 0, 0)], sides=7,
+            center=(0.05, 0.42, 0.12), rot=(-1.45, 0.0, 0.2), paint=iron)                            # helm
+    for x in (-0.12, 0.13):
+        pm.box(None, (0.15, 0.7, 0.14), (x, -0.6, 0.08), rot=(0.0, 0.0, x * 0.6), paint=cloth)     # legs
+    pm.box(None, (0.12, 0.55, 0.11), (0.33, 0.05, 0.08), rot=(0.0, 0.0, -0.6), paint=mail)        # arm
+    pm.loft(None, [(-0.03, 0.36, 0.36, 0, 0), (0.03, 0.36, 0.36, 0, 0)], sides=10, center=(-0.6, 0.15, 0.06),
+            rot=(0.1, 0.0, 0.0), paint=wood)                                                         # shield, flat
+    pm.box(None, (0.05, 0.72, 0.05), (-0.6, 0.15, 0.1), paint=iron)                                 # its split
+    pm.box(None, (0.06, 0.95, 0.025), (0.7, 0.35, 0.03), rot=(0.0, 0.0, 0.5), paint=steel)       # sword
+    pm.box(None, (0.24, 0.05, 0.04), (0.47, -0.05, 0.04), rot=(0.0, 0.0, 0.5), paint=iron)
+    finish(pm, "vg_fallen")
+
+
+def vg_tent():
+    """A collapsed raider tent: hides slumped over snapped poles (2.6 x 2.2
+    m, 1.2 m tall; collider in the zone)."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    hide = pm.paint(CM["hide"], 1, "hide")
+    hide2 = pm.paint(CM["hide"], 2, "hide")
+    wood = pm.paint(CM["wood"], 1, "bark")
+    _beam(pm, (-1.2, 0.0, 0.05), (0.2, 0.1, 1.15), 0.09, wood)
+    _beam(pm, (1.2, 0.1, 0.05), (0.15, 0.05, 1.2), 0.09, wood)
+    _beam(pm, (0.2, 0.1, 1.15), (0.9, -0.7, 0.4), 0.08, wood)     # the snapped ridge
+    pm.loft(None, [(0.0, 1.35, 1.1, 0, 0), (0.45, 1.15, 0.95, 0.05, 0), (0.9, 0.55, 0.45, 0.15, 0.05), (1.12, 0.12, 0.1, 0.2, 0.05)],
+            sides=8, paint=hide)
+    pm.box(None, (0.9, 0.7, 0.05), (-0.9, -0.95, 0.06), rot=(0.1, 0.05, 0.4), paint=hide2)
+    finish(pm, "vg_tent")
+
+
+def vg_spears():
+    """The last stand: broken spears driven into the ground in a ring, two
+    shields leaning on them (r 0.9 m, 1.6 m; one collider in the zone)."""
+    rig.reset_scene()
+    rnd = random.Random(151)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 2, "planks")
+    iron = pm.paint(RB["iron"], 1)
+    shield = pm.paint(CM["rust_plate"], 1, "plate")
+    for k in range(7):
+        a = k * math.tau / 7 + rnd.uniform(-0.2, 0.2)
+        r = 0.75 + rnd.uniform(-0.1, 0.1)
+        h = rnd.uniform(0.9, 1.6)
+        lean = rnd.uniform(0.1, 0.35)
+        base = (math.cos(a) * r, math.sin(a) * r, -0.1)
+        tip = (math.cos(a) * (r + lean), math.sin(a) * (r + lean), h)
+        _beam(pm, base, tip, 0.05, wood)
+        if h > 1.25:
+            pm.box(None, (0.07, 0.03, 0.22), tip, rot=(0.0, 0.0, a), paint=iron, taper=0.2)
+    for (a, tilt) in ((0.6, 0.35), (3.3, -0.3)):
+        pm.loft(None, [(-0.03, 0.36, 0.42, 0, 0), (0.03, 0.36, 0.42, 0, 0)], sides=10,
+                center=(math.cos(a) * 0.95, math.sin(a) * 0.95, 0.42), rot=(math.pi / 2 - 0.3, 0.0, a + math.pi / 2), paint=shield)
+    finish(pm, "vg_spears")
+
+
+M12_PROPS = (vl_rafters, vl_fence, vl_well, vl_grave, vl_grave_cross, vl_barricade, vl_cart,
+             bf_snag, bf_log, bf_stump, bn_rib, bn_skull, bn_vertebra, vg_fallen, vg_tent, vg_spears)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,
@@ -803,7 +1134,7 @@ if __name__ == "__main__":
                sp_crystal_pillar, sp_wall_arch, sp_beacon, sp_shard, sp_crystal_cluster, sp_rubble,
                portal_arch, portal_plate, treasure_chest, loot_blade, loot_armor, loot_relic,
                loot_helm, loot_gloves, loot_boots, loot_ring,
-               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine):
+               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS:
         if not only or fn.__name__ in only:
             fn()
     print("props done.")

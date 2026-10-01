@@ -1616,6 +1616,123 @@
    "biome": "bone_field"
   },
   {
+   "id": "vig_fallen_s",
+   "type": "vignette",
+   "kind": "fallen",
+   "pos": [
+    -24,
+    140
+   ],
+   "yaw": 0.6,
+   "pad": 0,
+   "y": 11.055,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_camp_old",
+   "type": "vignette",
+   "kind": "abandoned_camp",
+   "pos": [
+    -80,
+    140
+   ],
+   "yaw": 0.3,
+   "pad": 0,
+   "y": 5.803,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_cart_s",
+   "type": "vignette",
+   "kind": "cart",
+   "pos": [
+    8,
+    128
+   ],
+   "yaw": -0.4,
+   "pad": 0,
+   "y": 8.33,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_barricade_v",
+   "type": "vignette",
+   "kind": "barricade",
+   "pos": [
+    -104,
+    17
+   ],
+   "yaw": 0.25,
+   "pad": 0,
+   "y": 13.748,
+   "biome": "village"
+  },
+  {
+   "id": "vig_last_stand_f",
+   "type": "vignette",
+   "kind": "last_stand",
+   "pos": [
+    -100,
+    -60
+   ],
+   "yaw": 1.1,
+   "pad": 0,
+   "y": 23.081,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_skeleton_b",
+   "type": "vignette",
+   "kind": "skeleton",
+   "pos": [
+    127,
+    -93
+   ],
+   "yaw": 1.33,
+   "pad": 0,
+   "y": 18.472,
+   "biome": "bone_field"
+  },
+  {
+   "id": "vig_ribs_b1",
+   "type": "vignette",
+   "kind": "ribs",
+   "pos": [
+    126,
+    -122
+   ],
+   "yaw": 0.4,
+   "pad": 0,
+   "y": 19.268,
+   "biome": "bone_field"
+  },
+  {
+   "id": "vig_ribs_b2",
+   "type": "vignette",
+   "kind": "ribs",
+   "pos": [
+    152,
+    -100
+   ],
+   "yaw": 2.1,
+   "pad": 0,
+   "y": 19.025,
+   "biome": "bone_field"
+  },
+  {
+   "id": "vig_ribs_b3",
+   "type": "vignette",
+   "kind": "ribs",
+   "pos": [
+    92,
+    -134
+   ],
+   "yaw": -0.8,
+   "pad": 0,
+   "y": 28.688,
+   "biome": "bone_field"
+  },
+  {
    "id": "arena",
    "type": "arena",
    "pos": [
