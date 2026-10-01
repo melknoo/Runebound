@@ -45,6 +45,8 @@ func open() -> void:
 		zone.hero_ui.close()
 	if zone.trainer_ui != null:
 		zone.trainer_ui.close()
+	if zone.lore_ui != null:
+		zone.lore_ui.close()
 	if zone.waypoint_ui != null:
 		zone.waypoint_ui.close()
 	if zone.playtest_ui != null:

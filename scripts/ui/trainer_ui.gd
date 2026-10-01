@@ -107,6 +107,8 @@ func open(npc: Npc, p: Player = null) -> void:
 		zone.map_ui.close()
 	if zone != null and zone.playtest_ui != null:
 		zone.playtest_ui.close()
+	if zone != null and zone.lore_ui != null:  # M12
+		zone.lore_ui.close()
 	visible = true
 	player.input_locked = true
 	_refresh()

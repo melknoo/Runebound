@@ -1,0 +1,11 @@
+{
+	"_note": "M12 text table, UI strings of the new M12 features. Keys are dotted ids; every key needs en + de (written, never machine-translated). Loaded by scripts/systems/texts.gd.",
+	"ui.lore.close": {
+		"en": "[%s] / [Esc] Close",
+		"de": "[%s] / [Esc] Schließen"
+	},
+	"ui.settings.language_hint": {
+		"en": "German covers the new world texts so far (graves, notes, places). Menus follow later.",
+		"de": "Deutsch gibt es bisher für die neuen Texte der Welt (Gräber, Notizen, Orte). Die Menüs folgen später."
+	}
+}

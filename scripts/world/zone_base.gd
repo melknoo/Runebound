@@ -24,6 +24,7 @@ var hero_ui: HeroUI
 var inventory_ui: InventoryUI  # the hero window's inventory tab
 var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
+var lore_ui: LoreUI          # M12 reading window (graves, notes, ghosts)
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
 var map_ui: MapUI            # M08 zone map (M)
 var playtest_ui: PlaytestUI  # the playtest checklist (J)
@@ -166,6 +167,10 @@ func _build_player_ui() -> void:
 	add_child(trainer_ui)
 	trainer_ui.setup(player)
 
+	lore_ui = LoreUI.new()  # M12: graves, notes, ghosts; hidden until one is read
+	add_child(lore_ui)
+	lore_ui.setup(player)
+
 	waypoint_ui = WaypointUI.new()  # M08: hidden until a Waypoint opens it
 	add_child(waypoint_ui)
 	waypoint_ui.setup(player)
@@ -193,7 +198,7 @@ func debug_swap_class(class_id: StringName) -> Player:
 		return player
 	var old := player
 	var pos := old.global_position
-	for ui: Node in [hud, debug_overlay, pause_menu, hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks]:
+	for ui: Node in [hud, debug_overlay, pause_menu, hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks]:
 		if ui != null:
 			remove_child(ui)
 			ui.queue_free()
@@ -1334,10 +1339,10 @@ func travel_to(scene_path: String, arrival: String = "") -> void:
 
 
 ## M17a: closes every open window (hero window, trainer / shop, travel list,
-## map, playtest list); true when one was open.
+## map, playtest list; M12 the lore window); true when one was open.
 func close_windows() -> bool:
 	var closed := false
-	for ui: CanvasLayer in [hero_ui, trainer_ui, waypoint_ui, map_ui, playtest_ui]:
+	for ui: CanvasLayer in [hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui]:
 		if ui != null and ui.visible:
 			ui.call(&"close")
 			closed = true

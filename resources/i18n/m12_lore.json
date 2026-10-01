@@ -1,0 +1,11 @@
+{
+	"_note": "M12 lore texts (graves, notes, ghosts, inscriptions). <id>.title + <id>.body; every key needs en + de. Meta breaks (STORY_DESIGN) stay rare.",
+	"lore.ash.letter_1.title": {
+		"en": "A soldier's last letter",
+		"de": "Der letzte Brief eines Soldaten"
+	},
+	"lore.ash.letter_1.body": {
+		"en": "Edda, the ash has not stopped falling for nine days. The captain says the Rune will hold. He said that about the bridge, too.\n\nIf this reaches you, do not come north. Burn the letter, keep the ring. I kept mine as well, to the end.",
+		"de": "Edda, seit neun Tagen fällt die Asche ohne Pause. Der Hauptmann sagt, die Rune hält. Das hat er von der Brücke auch gesagt.\n\nWenn dich das erreicht, komm nicht nach Norden. Verbrenn den Brief, behalt den Ring. Ich habe meinen auch behalten, bis zum Schluss."
+	}
+}

@@ -42,6 +42,8 @@ func open(from: Waypoint, p: Player = null) -> void:
 			zone.hero_ui.close()
 		if zone.trainer_ui != null:
 			zone.trainer_ui.close()
+		if zone.lore_ui != null:
+			zone.lore_ui.close()
 		if zone.map_ui != null:
 			zone.map_ui.close()
 		if zone.playtest_ui != null:

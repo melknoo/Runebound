@@ -197,6 +197,12 @@ func _build_controls(page: VBoxContainer) -> void:
 
 
 func _build_gameplay(page: VBoxContainer) -> void:
+	# M12: the language of the new texts (the menus stay English until M14)
+	page.add_child(_option_row("Language", "general/language",
+		[["Auto (system language)", "auto"], ["English", "en"], ["Deutsch", "de"]]))
+	var lang_hint := UiTheme.caption("ui.settings.language_hint")
+	lang_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	page.add_child(lang_hint)
 	page.add_child(_slider_row("Screen shake", "gameplay/shake", 0.0, 1.0, 0.1, _percent))
 	page.add_child(_check_row("Red flash when hit", "gameplay/hurt_flash"))
 	page.add_child(_check_row("Damage numbers", "gameplay/damage_numbers"))

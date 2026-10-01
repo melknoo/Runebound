@@ -22,7 +22,12 @@ const DEFAULTS := {
 	"controls/sensitivity": 1.0, "controls/invert_y": false, "controls/zoom_speed": 1.0,
 	"gameplay/shake": 1.0, "gameplay/hurt_flash": true, "gameplay/damage_numbers": true,
 	"gameplay/pause_on_focus_loss": true, "gameplay/dev_tools": false,
+	# M12: the language of the new texts (Texts); "auto" follows the system.
+	# Its own section, so the Gameplay tab's Reset leaves it alone.
+	"general/language": "auto",
 }
+## Test runs read the texts in English whatever the dev PC's language is.
+const TEST_DEFAULTS := {"general/language": "en"}
 ## Volume setting -> the buses it scales (on top of Sfx.BUSES' start levels).
 const AUDIO_BUSES := {"audio/master": ["Master"], "audio/music": ["Music"], "audio/effects": ["SFX", "Telegraph"],
 	"audio/ambience": ["Ambience"], "audio/interface": ["UI"]}
@@ -46,12 +51,12 @@ var _fps_tick: float = 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS  # the FPS counter keeps counting in a paused menu
-	_values = DEFAULTS.duplicate()
 	var args := OS.get_cmdline_user_args()
 	var is_test := DisplayServer.get_name() == "headless" or SaveGame.is_test_run()
 	for arg in args:
 		is_test = is_test or arg.begins_with("--net-test")
 	test_run = is_test
+	_values = _defaults()
 	_dev_forced = is_test or "--dev" in args
 	_persist = not is_test
 	InputSetup.ensure()  # the project's keys, once; then the player's own (KeyBindings)
@@ -66,7 +71,7 @@ func _ready() -> void:
 func use_file(file: String) -> void:
 	path = file
 	_persist = true
-	_values = DEFAULTS.duplicate()
+	_values = _defaults()
 	KeyBindings.reset_all()
 	_read()
 	_read_keys()
@@ -125,9 +130,22 @@ func set_value(key: String, v: Variant) -> void:
 
 ## Every setting of `section` ("audio", "video", ...) back to its default.
 func reset_section(section: String) -> void:
-	for key: String in DEFAULTS:
+	var defaults := _defaults()
+	for key: String in defaults:
 		if key.begins_with(section + "/"):
-			set_value(key, DEFAULTS[key])
+			set_value(key, defaults[key])
+
+
+## The defaults this run starts from (test runs: English texts).
+func _defaults() -> Dictionary:
+	var out := DEFAULTS.duplicate()
+	if test_run:
+		out.merge(TEST_DEFAULTS, true)
+	return out
+
+
+func _exit_tree() -> void:
+	Texts.shutdown()
 
 
 # --- typed getters for the hot paths ---------------------------------------
@@ -175,6 +193,8 @@ func _apply(key: String) -> void:
 		_apply_video(key)
 	elif key == "gameplay/damage_numbers":
 		GameFeel.damage_numbers_enabled = bool(value(key))
+	elif key == "general/language":
+		Texts.set_language(str(value(key)))
 
 
 ## A volume of 1 keeps the bus at its mix level, 0 mutes it.

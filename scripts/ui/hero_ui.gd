@@ -115,6 +115,9 @@ func open_tab(tab: Tab) -> void:
 	if zone != null and zone.trainer_ui != null and zone.trainer_ui.visible:
 		zone.trainer_ui.close()
 		player.input_locked = true
+	if zone != null and zone.lore_ui != null and zone.lore_ui.visible:  # M12
+		zone.lore_ui.close()
+		player.input_locked = true
 	if zone != null and zone.map_ui != null and zone.map_ui.visible:  # M08
 		zone.map_ui.close()
 	if zone != null and zone.playtest_ui != null:

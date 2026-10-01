@@ -1,6 +1,7 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-01 · Milestone: **M17a Menus & settings** (pulled forward
+Updated: 2026-10-01 · Milestone: **M12 Highlands with substance** (in
+progress, below). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
@@ -9,6 +10,30 @@ alongside at the user's wish). M09 Co-op was played by the user and a
 friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## M12 Highlands with substance (in progress, 2026-10-01)
+Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned
+village in Westreach, the burnt forest in the north-west, the bone field on
+Emberfall Ridge; two new enemy types per family; animals as scenery; food
+gathered, a rest heal out of combat; one tome teaching each class a new
+ability; all four outdoor puzzle kinds; trial shrines with rune blessings;
+only the new texts bilingual, the first start follows the system language).
+- **Phase 0 (built): the text table, the language, the lore window.**
+  - `Texts` (`scripts/systems/texts.gd`): JSON tables
+    `resources/i18n/m12_ui.json` / `m12_lore.json` (`{key: {en, de}}`)
+    become one Translation per language in the TranslationServer, so a
+    Label showing a key translates itself; `Texts.t(key, args)` for code. A
+    missing German line falls back to the English one. Keys are dotted ids
+    and never collide with the older English UI text.
+  - Setting `general/language` (auto / en / de; own section, so the
+    Gameplay tab's Reset leaves it alone) in Settings -> Gameplay with a
+    hint that the menus follow later. Test runs read English.
+  - `LoreUI` (`ZoneBase.lore_ui`): title + body of a lore id, follows a
+    language switch while open, Esc / the interact key / X close it, one
+    window at a time (in `close_windows`, closed by the other windows).
+  - Smoke 614 green (every key in both languages, test runs in English, the
+    switch translates a Label, the setting round trip and Reset, the lore
+    window open / switch / close paths).
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

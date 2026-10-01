@@ -36,7 +36,7 @@ func toggle() -> void:
 
 func open() -> void:
 	if zone != null:
-		for other: Variant in [zone.hero_ui, zone.trainer_ui, zone.waypoint_ui, zone.map_ui]:
+		for other: Variant in [zone.hero_ui, zone.trainer_ui, zone.lore_ui, zone.waypoint_ui, zone.map_ui]:
 			if other != null:
 				other.call(&"close")
 	visible = true

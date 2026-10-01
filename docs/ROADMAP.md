@@ -294,7 +294,7 @@ Charakters; online gilt der Charaktername). Phase 4 gebaut (Tastenbelegung: zwei
 Konflikte, Zurücksetzen; HUD und Hinweise zeigen die eigene Belegung). Phase 5 gebaut (Doku,
 Playtest-Gruppe „M17a: Menüs & Einstellungen“, Gate-Walk in PROJECT_STATE).
 
-### M12 — Highlands mit Substanz
+### M12 — Highlands mit Substanz (in Arbeit)
 Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands
 with substance“): **Unter-Biome** mit eigenem Look, **neue POI-Arten** (Mini-Rätsel draußen,
 Prüfungs-Schreine, Nester, verfluchte Orte, kleine Höhlen), **harmlose Tiere und Kreaturen**,
@@ -302,6 +302,25 @@ Prüfungs-Schreine, Nester, verfluchte Orte, kleine Höhlen), **harmlose Tiere u
 Gräber, Notizen, Geister, Sammelkram, Folianten), **erzählende Umgebung**. Mit den ersten
 Lore-Texten kommt die **Text-Tabelle Deutsch/Englisch** mit Sprachwahl; ab da ist jeder neue
 Spielertext zweisprachig.
+**Entscheidungen des Spielers (2026-10-01):**
+- **3 Unter-Biome:** das verlassene Dorf (Westreach, Stufe 2), der verbrannte Wald (Nordwesten,
+  Stufe 3), das Knochenfeld (Emberfall Ridge, Stufe 3). Süden, Mitte und Cinder Flats bleiben
+  Asche mit Raidern.
+- **2 neue Gegnertypen je Familie** (6 Gegner, eigene Rigs, Sounds und Mechaniken).
+- **Tiere sind Kulisse** (fliehen oder schauen zu, nie angreifbar, lokal je Maschine).
+- **Essen wird gesammelt** (Sammelstellen, Camp-Kochtöpfe, Ylva). Es heilt nur außerhalb des
+  Kampfs, etwa 50 % über 8 s; ein Treffer bricht ab; bis zu 10 im Gepäck.
+- **Ein Foliant** lehrt jede Klasse ihre neue Fähigkeit (3 neue).
+- **Alle vier Rätselarten draußen:** Feuerschalen, Felsbrocken, Runensteine, Dodge-Lauf.
+- **Prüfungs-Schreine:** Kampfwelle mit Bedingung, Lohn ein dauerhafter Runensegen plus XP.
+- **Sprache:** nur die neuen Texte zweisprachig (Menüs und HUD bis M14 Englisch), der erste
+  Start folgt der Systemsprache; Settings → Gameplay → Language.
+
+Phasen: 0 Text-Tabelle + Sprachwahl + Lesefenster, 1 Layout + Biom-Look + Props + erzählende
+Szenen, 2 Interaktion + Lore + Geister + Chronik + Splitter + Essen, 3 POI-Zustand im Koop + die
+vier Rätsel + Grotten + Kletterpfade, 4 Gegner Dorf + Wald, 5 Gegner Knochenfeld + Tiere,
+6 Nester + verfluchte Orte + Prüfungs-Schreine, 7 Foliant + 3 Fähigkeiten, 8 Abschluss.
+**Stand:** Phase 0 gebaut (Text-Tabelle als JSON, Sprachwahl, Lesefenster).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons

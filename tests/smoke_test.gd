@@ -3614,6 +3614,59 @@ func _run() -> void:
 		and not keys_cfg.has_section("keys") and str((zone_now.hud._slots[&"slot1"]["key_label"] as Label).text) == "1",
 		"Reset puts every key back (and empties the [keys] section)")
 
+	# --- M12 phase 0: the text table (DE/EN), the language setting, the lore window ---
+	_check(Texts.keys().size() >= 4 and Texts.incomplete().is_empty(),
+		"every text key has English and German (%d keys, missing: %s)" % [Texts.keys().size(), str(Texts.incomplete())])
+	_check(str(GameSettings.value("general/language")) == "en" and Texts.language() == "en"
+		and Texts.t("lore.ash.letter_1.title") == "A soldier's last letter",
+		"a test run reads the texts in English (%s)" % Texts.language())
+	_check(Texts.t("no.such.key") == "no.such.key" and Texts.t("ui.lore.close", ["E"]).begins_with("[E]")
+		and Texts.resolve("de") == "de" and Texts.resolve("auto") in Texts.LANGUAGES,
+		"a missing key shows itself, arguments format, auto resolves to a known language")
+	var lang_label := UiTheme.caption("ui.settings.language_hint")
+	zone_now.hud.add_child(lang_label)
+	var hint_en := lang_label.atr(lang_label.text)
+	GameSettings.set_value("general/language", "de")
+	var hint_de := lang_label.atr(lang_label.text)
+	_check(Texts.language() == "de" and Texts.t("lore.ash.letter_1.title") == "Der letzte Brief eines Soldaten"
+		and hint_en.begins_with("German covers") and hint_de.begins_with("Deutsch gibt es"),
+		"switching to German translates the texts and a Label showing a key")
+	lang_label.queue_free()
+	GameSettings.reset_section("gameplay")
+	var lang_cfg := ConfigFile.new()
+	lang_cfg.load(settings_file)
+	GameSettings.use_file(settings_file)
+	_check(Texts.language() == "de" and str(lang_cfg.get_value("general", "language", "")) == "de",
+		"the language is saved, read back, and the Gameplay tab's Reset leaves it alone")
+	var lore := zone_now.lore_ui
+	lore.open("lore.ash.letter_1", "", zone_now.player)
+	var lore_title_de := str((lore.get(&"_title") as Label).text)
+	_check(lore != null and lore.visible and zone_now.player.input_locked and lore_title_de == "Der letzte Brief eines Soldaten"
+		and str((lore.get(&"_body") as Label).text).begins_with("Edda, seit"),
+		"the lore window shows a text in the current language and locks the hero")
+	GameSettings.set_value("general/language", "en")
+	_check(str((lore.get(&"_title") as Label).text) == "A soldier's last letter"
+		and str((lore.get(&"_footer") as Label).text).begins_with("[E]"),
+		"the open lore window follows a language switch at once")
+	var lore_esc := InputEventAction.new()
+	lore_esc.action = &"toggle_cursor"
+	lore_esc.pressed = true
+	lore._unhandled_input(lore_esc)
+	_check(not lore.visible and not zone_now.player.input_locked and lore.shown_id == "", "Esc closes the lore window and frees the hero")
+	lore.open("lore.ash.letter_1")
+	var lore_e := InputEventAction.new()
+	lore_e.action = &"interact"
+	lore_e.pressed = true
+	lore._unhandled_input(lore_e)
+	var closed_by_e := not lore.visible
+	lore.open("lore.ash.letter_1")
+	zone_now.hero_ui.open_tab(HeroUI.Tab.INVENTORY)
+	var closed_by_window := not lore.visible and zone_now.player.input_locked
+	zone_now.hero_ui.close()
+	lore.open("lore.ash.letter_1")
+	_check(closed_by_e and closed_by_window and zone_now.close_windows() and not lore.visible and not zone_now.player.input_locked,
+		"the interact key closes it too; another window or close_windows() closes it")
+
 	# --- M17a: the Esc menu ---
 	var menu := zone_now.pause_menu
 	var esc_ev := InputEventAction.new()

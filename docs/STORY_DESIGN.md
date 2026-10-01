@@ -73,8 +73,11 @@ NPC in a cave who was never in the plan.
 
 ## Languages
 - **German and English, with a language switch in the menu.** Every
-  player-facing text is a key in a translation table. Whether that is
-  Godot's TranslationServer with CSV or PO files is decided in M12.
+  player-facing text is a key in a translation table. Decided in M12: JSON
+  tables under `resources/i18n/` (`{key: {en, de}}`), loaded at runtime by
+  `Texts` into Godot's TranslationServer (CSV was ruled out because Godot
+  imports CSVs itself and writes generated files next to them). Settings ->
+  Gameplay -> Language (auto = the system language).
 - Both languages are written, never machine-translated. A joke is rewritten
   for each language when a pun does not carry over.
 - From M12 on (the first lore texts) every new text is bilingual. The
