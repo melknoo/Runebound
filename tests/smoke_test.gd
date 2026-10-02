@@ -3175,6 +3175,22 @@ func _run() -> void:
 	_check(CarrionVulture.airborne(vult.ai_state) and not vult.targetable,
 		"after LANDED_TIME on the ground the vulture beats back up into the air")
 	vult.queue_free()
+	# a hero at the edge of its leash: it must still come down (it used to fly
+	# out and home again for ever, out of reach)
+	var edge_home := Vector3(-30.0, 0.0, 150.0)  # open ash in the south (no trunks across its lanes)
+	var edge_vult := highlands.spawn_by_id("carrion_vulture", highlands.ground_point(edge_home, 0.2)) as CarrionVulture
+	edge_vult.home = edge_vult.global_position
+	edge_vult.leash = 22.0
+	hero12.global_position = highlands.ground_point(edge_home + Vector3(19.0, 0, 0), 0.2)
+	var edge_dived := false
+	for e_frame in 900:
+		await _wait_frames(1)
+		if edge_vult.ai_state in [EnemyBase.AIState.ATTACK, EnemyBase.AIState.RECOVER]:
+			edge_dived = true
+			break
+	_check(edge_dived, "a hero at the edge of a vulture's leash still draws its dive")
+	edge_vult.queue_free()
+	hero12.health.current_health = hero12.health.max_health
 	hero12.health.current_health = hero12.health.max_health
 	AshJackal._next_leap_at.clear()
 	var jack_a := highlands.spawn_by_id("ash_jackal", highlands.ground_point(brood_spot + Vector3(-4, 0, 0), 0.2)) as AshJackal

@@ -3,6 +3,28 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m12",
+			"title": "M12: Highlands mit Substanz",
+			"items": [
+				{"id": "m12_biomes", "src": "M12", "title": "Drei Unter-Biome", "hint": "Dorf Ashwick (Westreach), Kohlwald (Nordwesten), Knochenfeld (Emberfall): sehen sie unterschiedlich und stimmig aus? Wo fehlt etwas?"},
+				{"id": "m12_language", "src": "M12", "title": "Sprache umstellen", "hint": "Settings -> Gameplay -> Language: Deutsch / English. Wechseln Lesefenster, Grabtexte und Gegnernamen sofort mit?"},
+				{"id": "m12_lore", "src": "M12", "title": "Lesen und Chronik", "hint": "Ein Grab, eine Notiz und einen Geist lesen ([E]), dann in der Chronik (L) wiederfinden. Lesbar? Zu lang?"},
+				{"id": "m12_food", "src": "M12", "title": "Glutknolle sammeln und essen", "hint": "An einer Sammelstelle eine Glutknolle nehmen und außerhalb des Kampfs essen (Inventar). Heilt sie spürbar, bricht ein Treffer ab?"},
+				{"id": "m12_puzzles", "src": "M12", "title": "Die vier Rätsel", "hint": "Feuerschalen an der Kapelle, Runensteine an der Kreuzung, Felsbrocken auf dem versteckten Felsband, Dodge-Lauf im Knochenfeld: ohne Hilfe lösbar? Zu leicht, zu schwer?"},
+				{"id": "m12_restless", "src": "M12", "title": "Die Ruhelosen", "hint": "Camp 3 im Dorf: Grabgänger brechen aus dem Boden, die Klagende schreit (verlangsamt). Gut zu lesen?"},
+				{"id": "m12_charwood", "src": "M12", "title": "Kohlwald-Gegner", "hint": "Die Glutborke steht als Baum, das Schwelirrlicht blinzelt weg: erkennst du die Glutborke rechtzeitig? Ist Ruine 3 zu hart?"},
+				{"id": "m12_brood", "src": "M12", "title": "Die Aasbrut", "hint": "Camp 7: Schakale kreisen und springen, der Geier stößt auf seiner Bahn herab und landet 2 s. Lesbar? Zu leicht?"},
+				{"id": "m12_animals", "src": "M12", "title": "Tiere", "hint": "Hasen und Krähen fliehen vor dir: wirkt die Welt lebendiger? Stören sie irgendwo?"},
+				{"id": "m12_trials", "src": "M12", "title": "Prüfungs-Schrein", "hint": "[E] am Altar: zwei Wellen, Zeit und Treffer stehen über der Lebensleiste. Fair? Lohnt der Segen?"},
+				{"id": "m12_graveyard", "src": "M12", "title": "Verfluchter Friedhof", "hint": "Westlich von Ashwick: Heilung -30 %, Tote steigen auf. Drei Laternen zerschlagen, dann erzählt der Priester. Spannend genug?"},
+				{"id": "m12_nests", "src": "M12", "title": "Nester", "hint": "Schwelender Stumpf (Kohlwald) und Schakalbau (Knochenfeld): brüten sie zu viel oder zu wenig?"},
+				{"id": "m12_tome", "src": "M12", "title": "Der Foliant", "hint": "Felsbrocken auf dem versteckten Felsband schieben, die Grotte öffnet sich, den Folianten lesen und die neue Fähigkeit im Loadout (K) in einen Platz legen. Findest du den Weg?"},
+				{"id": "m12_tome_ability", "src": "M12", "title": "Die Folianten-Fähigkeit", "hint": "Lockstein-Rune, Raureif-Fächer oder Wurzelgang: fühlt sie sich gut an, ist sie einen Platz wert?"},
+				{"id": "m12_blessings", "src": "M12", "title": "Segen und Splitter", "hint": "Die zwölf Runensplitter und die Segen der Schreine stehen in der Chronik (L): merkst du die Boni?"},
+				{"id": "m12_coop", "src": "M12", "title": "M12 im Koop", "hint": "Nach dem Release (Protokoll 13): Rätsel, Prüfung und Wurzelgang zu zweit. Klappt alles?"}
+			]
+		},
+		{
 			"id": "m17a",
 			"title": "M17a: Menüs & Einstellungen",
 			"items": [

@@ -294,9 +294,9 @@ Charakters; online gilt der Charaktername). Phase 4 gebaut (Tastenbelegung: zwei
 Konflikte, Zurücksetzen; HUD und Hinweise zeigen die eigene Belegung). Phase 5 gebaut (Doku,
 Playtest-Gruppe „M17a: Menüs & Einstellungen“, Gate-Walk in PROJECT_STATE).
 
-### M12 — Highlands mit Substanz (in Arbeit)
-Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „Planned: the Highlands
-with substance“): **Unter-Biome** mit eigenem Look, **neue POI-Arten** (Mini-Rätsel draußen,
+### M12 — Highlands mit Substanz (gebaut 2026-10-02, dein Playtest ist das Gate)
+Die Highlands werden die Vorlage für jede weitere Zone (WORLD_DESIGN „The Highlands with
+substance“): **Unter-Biome** mit eigenem Look, **neue POI-Arten** (Mini-Rätsel draußen,
 Prüfungs-Schreine, Nester, verfluchte Orte, kleine Höhlen), **harmlose Tiere und Kreaturen**,
 **neue Gegnerfamilien je Unter-Biom**, **Geheimnisse + Lore** (versteckte Höhlen, Kletterwege,
 Gräber, Notizen, Geister, Sammelkram, Folianten), **erzählende Umgebung**. Mit den ersten
@@ -327,7 +327,9 @@ Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden 
 (Grabgänger und Klagende im Dorf, Glutborke und Schwelirrlicht im Wald, Gegner-Nahtstellen). Phase 5 gebaut
 (Aschschakal und Aasgeier im Knochenfeld, Hasen und Krähen als Kulisse). Phase 6 gebaut
 (Runensegen, Prüfungs-Schreine, Nester, verfluchter Friedhof mit dem Geist des Priesters). Phase 7 gebaut
-(der Foliant in der versiegelten Grotte: Lockstein-Rune, Raureif-Fächer, Wurzelgang).
+(der Foliant in der versiegelten Grotte: Lockstein-Rune, Raureif-Fächer, Wurzelgang). Phase 8
+gebaut (Solo-Check, Shots, Perf-A/B, Doku, Playtest-Gruppe „M12“ auf J). **PROTOCOL 13:** vor
+dem Koop muss der Server ein Release bekommen (`tools\run_godot.cmd release`).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons

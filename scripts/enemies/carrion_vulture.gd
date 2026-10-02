@@ -144,11 +144,16 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 
 
-## Soaring over its home is not straying from it.
-func _should_return(delta: float) -> bool:
+## Soaring over its home is not straying from it, and its ring around a hero
+## reaches CIRCLE_RADIUS past the leash: with the plain leash a hero standing
+## near its edge kept the vulture flying out and home again, never diving.
+func _should_return(_delta: float) -> bool:
+	var from_home := global_position.distance_to(home)
 	if ai_state == AIState.IDLE:
-		return global_position.distance_to(home) > leash
-	return super(delta)
+		return from_home > leash
+	if from_home > leash + CIRCLE_RADIUS + 4.0:
+		return true
+	return distance_to_player() > AGGRO_RANGE * 1.8 and from_home > RETURN_ARRIVE * 3.0
 
 
 func _ai_process(delta: float) -> void:

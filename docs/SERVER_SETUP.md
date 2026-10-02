@@ -16,7 +16,7 @@ Du (im Tailnet) ──────── dieselbe Adresse, direkt übers Tailnet
 - **Funnel kann nur TCP**, deshalb spricht der Server WebSocket (`RUNEBOUND_TRANSPORT=ws`) auf `127.0.0.1:7780`. tailscaled beendet TLS auf dem Laptop und reicht die Verbindung dorthin weiter.
 - **Einladungscodes:** Wer keinen gültigen Code hat, wird im Handshake abgewiesen, bevor der Server irgendetwas von ihm liest. Details stehen in TECHNICAL_ARCHITECTURE „Access (M09b)“.
 - **Die Adresse** ist dieselbe für alle: der MagicDNS-Name des Laptops. `tailscale funnel status` zeigt ihn an. Aus deinem Tailnet geht die Verbindung direkt, ohne Relais.
-- **Im Spiel** steht sie nicht, man wählt im Dropdown unter „Join co-op“ den Alias **„Acer“** (seit 2026-10-01). Die Liste ist `resources/net/servers.json` im Repo (`id`, `name`, `address`). Ein weiterer Server ist ein weiterer Eintrag, die `id` bleibt fest (das Spiel merkt sich damit die Wahl). „Other address …“ nimmt eine eigene Adresse: ein Name ohne Port bedeutet WebSocket über HTTPS, `host:port` ENet (LAN, `toolsun_godot.cmd server` → `127.0.0.1`).
+- **Im Spiel** steht sie nicht, man wählt im Dropdown unter „Join co-op“ den Alias **„Acer“** (seit 2026-10-01). Die Liste ist `resources/net/servers.json` im Repo (`id`, `name`, `address`). Ein weiterer Server ist ein weiterer Eintrag, die `id` bleibt fest (das Spiel merkt sich damit die Wahl). „Other address …“ nimmt eine eigene Adresse: ein Name ohne Port bedeutet WebSocket über HTTPS, `host:port` ENet (LAN, `tools\run_godot.cmd server` → `127.0.0.1`).
 
 ## Einrichtung (einmalig)
 1. **Tailscale-Admin-Konsole:**
@@ -48,7 +48,7 @@ Ein neuer Commit auf **`release`** geht von selbst live. Niemand muss dafür auf
 - Entwickelt wird auf `main`. Der Server ignoriert `main`.
 - Der Server läuft auf `release` (`RUNEBOUND_BRANCH` in `server.env`). Ändert sich der Eintrag, wechselt der Update-Schritt den Server-Klon beim nächsten Start von selbst.
 - **Ausrollen:** `tools\run_godot.cmd release` schiebt `main` nach `release` (nur Fast-Forward), dann deployt es sofort. Voraussetzung: `main` ist sauber und gepusht. Claude rollt nur auf deinen Wunsch aus.
-- **Koop braucht denselben Stand wie der Server:** Freunde spielen von `release` (siehe „Für Freunde“). Weicht das Protokoll ab, lehnt der Server mit einer lesbaren Meldung ab. Seit 2026-10-01 sagt sie, welche Seite älter ist: „this server runs an older RUNEBOUND …“ heißt, der Server muss nach (`toolsun_godot.cmd release`); „your game is older …“ heißt, das Spiel muss `git pull`.
+- **Koop braucht denselben Stand wie der Server:** Freunde spielen von `release` (siehe „Für Freunde“). Weicht das Protokoll ab, lehnt der Server mit einer lesbaren Meldung ab. Seit 2026-10-01 sagt sie, welche Seite älter ist: „this server runs an older RUNEBOUND …“ heißt, der Server muss nach (`tools\run_godot.cmd release`); „your game is older …“ heißt, das Spiel muss `git pull`.
 - **Wer von `main` spielt** (du), kommt nach einem `Net.PROTOCOL`-Bump erst wieder auf den Server, wenn `release` nachgezogen ist. 2026-09-30 lief der Server noch auf Protokoll 8, `main` war bei 12: die Ablehnung kam, obwohl das Spiel aktuell war.
 
 - **Ablauf:** `runebound-deploy.timer` schaut alle 5 Minuten nach (und 5 Minuten nach dem Boot). Gibt es einen neuen Commit auf dem Server-Branch, startet `runebound-deploy` den Server neu. Dabei holen `runebound-update` und der Import den neuen Stand.

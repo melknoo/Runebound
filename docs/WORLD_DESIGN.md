@@ -123,13 +123,13 @@ combat POI on a flat pad (< 3 deg), route grades <= `grade_max`, camps
 (`players_within`); enemies only through the zone factory. M15's two new
 zones copy this pattern (with the M12 additions below).
 
-## The Highlands' sub-biomes (M12, built so far)
+## The Highlands' sub-biomes (M12)
 Three looks on top of the ash (the south, the middle and Cinder Flats stay
 ash and raiders):
 - **Ashwick, the abandoned village** (Westreach, level 2): grey-olive earth,
   dead grass, cobbled street and lane; seven ruined houses around a square
   with the well, fences, a cart, a barricade at the east entrance; the
-  graveyard south-west (its curse comes later), the trial shrine east of it,
+  cursed graveyard south-west, the trial shrine east of it,
   the chapel spot with the braziers in the west.
 - **The Charwood, the burnt forest** (north-west, level 3): charcoal ground
   with soot drifts and embers, dense charred trunks and snags, fallen logs,
@@ -143,7 +143,7 @@ ash and raiders):
 - Ash places that tell a story: fallen soldiers at the south funnel, an
   abandoned raider camp, an overturned cart.
 
-## Planned: the Highlands with substance (M12)
+## The Highlands with substance (M12, built 2026-10-01/02)
 User decisions of 2026-09-29 (ROADMAP "Spieler-Leitlinien"). The user's
 verdict on today's Highlands: visually uniform (ash and brown everywhere, the
 same rocks and trees), too little to do (between POIs only walking, POIs are
@@ -151,21 +151,27 @@ nearly always a camp or a chest), no life, nothing to discover off the
 trails. The Highlands get this first and become the template for every later
 zone.
 
-Wanted:
-- **Sub-biomes:** every corner with its own look, for example a burnt forest,
-  lava fissures, an abandoned village, a frozen lake, the bone field grown
-  into an area. Palette, props, scatter and ground layers per sub-biome.
-- **More POI types** next to camps and chests: small puzzles outdoors, trial
-  shrines, nests, cursed places, small caves.
-- **Harmless animals and creatures** for life, not for combat: carrion
-  crows, ash hares, neutral things that flee or watch.
-- **New enemy families per sub-biome** instead of the same raiders
-  everywhere.
-- **Secrets and lore:** hidden caves, climbing paths, graves, notes, ghosts,
-  collectibles with a small reward, ability tomes (CLASS_DESIGN "Loadout").
-  Lore objects may carry the rare meta breaks of STORY_DESIGN.
-- **Places that tell a story without text:** fallen warriors, barricades,
-  traces of a fight, abandoned camps.
+Built (the user chose in two rounds on 2026-10-01; details in
+PROJECT_STATE "M12"):
+- **Sub-biomes:** the village, the burnt forest and the bone field above
+  (not the lava fissures); their own ground, rocks, props and scatter, a
+  mask the bake writes, one terrain material.
+- **Enemy families**, two each: the Restless in Ashwick (Grave Shambler
+  rising from the ground, Mourner screaming a slow), the Charwood (the
+  Cinderbark standing as a tree, the blinking Smoulder Wisp), the carrion
+  brood on the bones (Ash Jackals in packs of three, the diving Carrion
+  Vulture). The raiders keep the ash.
+- **New POI types:** four outdoor puzzles (braziers, monoliths, a boulder,
+  a dodge run), two grottos, three trial shrines with rune blessings, two
+  nests, the cursed graveyard; a secret climb to the tome.
+- **Animals** (hares, crows): scenery that flees, never a target, local to
+  every machine.
+- **Secrets and lore:** graves, notes and inscriptions, two ghosts and the
+  priest, twelve shards of the Shattered Rune (a blessing for all), the
+  tome teaching each class its art; food to gather (the Ember Tuber).
+- **Places that tell a story without text:** fallen soldiers, an abandoned
+  camp, a cart, barricades, a last stand, a skeleton in the bones.
+- Every new text is in the DE/EN text table (STORY_DESIGN).
 
 Not chosen for now (don't propose them again without a reason): weather and
 time of day, world events, NPCs in the open world, more music tracks, a

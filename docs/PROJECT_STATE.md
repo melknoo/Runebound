@@ -11,7 +11,7 @@ friend; M09b (friends without Tailscale) is deployed. M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
-## M12 Highlands with substance (in progress, 2026-10-01)
+## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned
 village in Westreach, the burnt forest in the north-west, the bone field on
 Emberfall Ridge; two new enemy types per family; animals as scenery; food
@@ -252,6 +252,54 @@ only the new texts bilingual, the first start follows the system language).
   - Smoke 689 green (the tome per class, the rune's pull and taunt, the
     fan's cone and freeze, the walk and its bloom); net `heal` green with
     the Rootwalk bloom taking a slowed tank's slow across the net.
+- **Phase 8 (built): the wrap-up.**
+  - Solo check L6 through every new camp, lurker and nest: Elementalist
+    16/16, Druid 15/16 (ruin 3 runs out of time), Runebreaker 13-14/16
+    (dies at ruin 3, the Colossus is close; KNOWN_ISSUES). The check now
+    resets every camp before its fight (a neighbour fight could wake one
+    and leave it waiting) and takes `--only=<camp>` for a traced single
+    fight.
+  - Found and fixed there: a vulture whose hero stood near the edge of its
+    leash flew out and home again for ever, never diving (and so out of
+    reach); its leash now counts its ring around the hero. Smoke 690 green
+    with a check for it.
+  - Net suite: everything green except `heal`, `handshake@ws` and
+    `travel@ws`, which crashed with "Out of memory" (the PC had 1 GB of
+    32 free: WSL, Docker and other apps); all three pass on their own.
+  - Perf, interleaved against the pre-M12 build (700e567, warm rounds):
+    `highlands_open` 58 / 58 FPS, `highlands_south` 59 / 57 (noise),
+    `highlands_vista` 70 / 66 (+0.7 ms GPU; draw calls 373 -> 575: the
+    sub-biome props, the forest, the animals). Critters alone: no
+    measurable cost.
+  - Shot list `m12_highlands` (43 shots: every sub-biome near and far, the
+    six enemies, the animals, the puzzles, the trial, the graveyard, the
+    nests, the tome and its abilities).
+  - The playtest log (J) has the group "M12: Highlands mit Substanz" (16
+    points). Docs: WORLD_DESIGN, CLASS_DESIGN, PROGRESSION_DESIGN,
+    ART_BIBLE, TECHNICAL_ARCHITECTURE, ASSET_MANIFEST, KNOWN_ISSUES.
+  - The net suite keeps a failing scenario's logs
+    (`net_test/failed/<scenario>/`).
+- **Net.PROTOCOL 13** (new layout, POI_ACT / POI_STATE): the server needs
+  a release before co-op: `tools\run_godot.cmd release`.
+- **Gate walk (user):**
+  1. `tools\run_godot.cmd play`, then out of Runehold into the Highlands.
+     Walk west into Ashwick (Westreach), north-west into the Charwood, east
+     onto the Ribs of Emberfall: three looks, the ash between them.
+  2. Watch hares and crows flee from you. Gather an Ember Tuber (the glowing
+     plants, the camp pots) and eat it out of a fight (inventory).
+  3. Read a grave in Ashwick, then Settings -> Gameplay -> Language: the
+     lore window and the names switch. The chronicle is on L.
+  4. The four puzzles: the braziers at the chapel west of the village, the
+     monoliths at the crossroads, the boulder on the hidden ledge in the
+     Charwood (the climb has no trail), the dodge run in the bone field.
+  5. A trial shrine ([E] at the altar; time and hits over the health bar),
+     the cursed graveyard south-west of Ashwick (break the three lanterns,
+     listen to the priest), a nest.
+  6. Behind the boulder: the tome. Read it, then put the new ability into a
+     slot (K) and try it.
+  7. One camp of each family: camp 3 (the Restless), camp 8 (the Charwood),
+     camp 7 (the carrion brood).
+  8. The J list, group "M12: Highlands mit Substanz".
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

@@ -349,6 +349,11 @@ func _fail(scenario: String, role: String, why: String) -> void:
 	for i in range(first, log_lines.size()):
 		if log_lines[i].strip_edges() != "":
 			print("      | " + log_lines[i])
+	# M12: keep the failing run's logs - the next scenario overwrites them
+	var keep := ProjectSettings.globalize_path(DIR + "failed/" + scenario + "/")
+	DirAccess.make_dir_recursive_absolute(keep)
+	for log_name: String in [role, "srv"]:
+		DirAccess.copy_absolute(ProjectSettings.globalize_path(DIR + log_name + ".log"), keep + log_name + ".log")
 
 
 func _script_errors(role: String) -> String:
