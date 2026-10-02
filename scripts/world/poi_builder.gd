@@ -58,6 +58,13 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 			return Grotto.build(zone, poi)
 		"lurker":  # M12: a lone enemy standing in wait (a cinderbark among the trunks)
 			return {"spawner": lurker(zone, poi)}
+		"trial":  # M12 phase 6: the trial shrines, the nests, the cursed graveyard
+			return {"puzzle": TrialShrine.build(zone, poi)}
+		"nest":
+			return {"spawner": nest(zone, poi)}
+		"cursed":
+			var ground := CursedGround.build(zone, poi, BiomeDressing.grave_spots(poi))
+			return {"puzzle": ground, "spawner": ground.spawner}
 		_:
 			pass  # spawn (no geometry); M12 types not built yet stay empty
 	return {}
@@ -232,6 +239,23 @@ static func lurker(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 	spawner.camp_id = String(poi.get("id", ""))
 	spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
 	spawner.leash = float(poi.get("leash", 22.0))
+	spawner.set_meta(&"poi_id", String(poi.get("id", "")))
+	zone.world.add_child(spawner)
+	spawner.global_position = pos_of(poi)
+	return spawner
+
+
+## M12 phase 6: a nest - a camp of its own, one immobile breeder on the pad's
+## middle (its composition names the kind: wisp_nest, jackal_den).
+static func nest(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
+	var spawner := EncounterSpawner.new()
+	spawner.name = "Nest_" + String(poi.get("id", ""))
+	spawner.composition = composition_of(poi)
+	spawner.trigger_radius = float(poi.get("radius", 24.0))
+	spawner.camp_id = String(poi.get("id", ""))
+	spawner.respawn_minutes = float(poi.get("respawn_min", 10.0))
+	spawner.leash = 0.0
+	spawner.spots.append(pos_of(poi))
 	spawner.set_meta(&"poi_id", String(poi.get("id", "")))
 	zone.world.add_child(spawner)
 	spawner.global_position = pos_of(poi)

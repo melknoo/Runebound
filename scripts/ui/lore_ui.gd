@@ -144,6 +144,16 @@ func _fill_list() -> void:
 	shards.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
 	shards.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
 	_list_box.add_child(shards)
+	# M12 phase 6: the rune blessings carried
+	var blessed := UiTheme.caption(Texts.t("ui.chronicle.blessings", [player.blessings.size(), Blessings.ORDER.size()]))
+	blessed.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+	blessed.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
+	_list_box.add_child(blessed)
+	for bid: StringName in Blessings.ORDER:
+		if player.blessings.has(String(bid)):
+			var line := UiTheme.caption("%s  %s" % [Blessings.title(bid), Blessings.effect(bid)])
+			line.auto_translate_mode = Node.AUTO_TRANSLATE_MODE_DISABLED
+			_list_box.add_child(line)
 	var read := player.lore_read
 	for i in range(read.size() - 1, -1, -1):
 		var lid := String(read[i])

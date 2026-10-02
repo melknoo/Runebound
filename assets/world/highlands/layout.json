@@ -1551,6 +1551,9 @@
    ],
    "yaw": 0.0,
    "pad": 9,
+   "composition": [
+    "wisp_nest"
+   ],
    "y": 28.315,
    "biome": "burnt_forest"
   },
@@ -1612,6 +1615,9 @@
    ],
    "yaw": 0.0,
    "pad": 9,
+   "composition": [
+    "jackal_den"
+   ],
    "y": 19.718,
    "biome": "bone_field"
   },

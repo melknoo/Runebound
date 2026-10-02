@@ -168,7 +168,11 @@ func _build_zone() -> void:
 				ghosts[id] = made["ghost"]
 			"shard":
 				shards[id] = made["shard"]
-			"puzzle_braziers", "puzzle_monolith":
+			"puzzle_braziers", "puzzle_monolith", "trial":
+				puzzles[id] = made["puzzle"]
+			"nest":  # M12 phase 6: a nest is a camp of its own
+				camps[id] = made["spawner"]
+			"cursed":
 				puzzles[id] = made["puzzle"]
 			"puzzle_dodge":
 				puzzles[id] = made["run"]
@@ -539,6 +543,9 @@ static func marker_icon(poi: Dictionary) -> String:
 		"ghost": return "ghost"
 		"puzzle_braziers", "puzzle_monolith", "puzzle_dodge": return "puzzle"
 		"cave": return "cave"
+		"trial": return "trial"  # M12 phase 6
+		"nest": return "nest"
+		"cursed": return "cursed"
 		_: return ""
 
 
@@ -558,6 +565,9 @@ static func marker_label(poi: Dictionary) -> String:
 		"ghost": return Texts.t("lore.kind.ghost")
 		"puzzle_braziers", "puzzle_monolith", "puzzle_dodge": return Texts.t("map.puzzle")
 		"cave": return Texts.t("map.cave")
+		"trial": return Texts.t("trial." + String(poi.get("id", "")))
+		"nest": return Texts.t("map.nest")
+		"cursed": return Texts.t("map.cursed")
 		_: return ""
 
 
@@ -600,7 +610,7 @@ func compass_markers() -> Array[Dictionary]:
 	var origin := player.global_position if player != null and is_instance_valid(player) else Vector3.ZERO
 	for m in map_markers():
 		var kind := String(m["kind"])
-		if kind in ["chest", "landmark", "ruin", "lore", "ghost", "puzzle", "cave"]:  # M12: only on the map
+		if kind in ["chest", "landmark", "ruin", "lore", "ghost", "puzzle", "cave", "trial", "nest", "cursed"]:  # M12: only on the map
 			continue
 		if kind == "camp":
 			if String(m["icon"]) == "camp_cleared" or (m["pos"] as Vector3).distance_to(origin) > COMPASS_CAMP_RANGE:

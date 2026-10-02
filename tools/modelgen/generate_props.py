@@ -1272,6 +1272,109 @@ def rune_seal():
 M12_PROPS = M12_PROPS + (brazier, bn_spikes, rune_seal)
 
 
+CURSE_GLOW = "#C8D86A"  # the Restless' sickly gold (the shambler's eyes): the graveyard's curse
+
+
+def trial_altar():
+    """M12 trial shrine: a square fieldstone dais with a rune stele; the rune
+    burns in the heroes' accent (the trial is theirs to take); 1.75 m."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(HL["basalt"], 3, "masonry")
+    cap = pm.paint(HL["basalt"], 4)
+    dark = pm.paint(HL["basalt"], 1)
+    pm.box(None, (2.3, 2.3, 0.24), (0.0, 0.0, 0.1), paint=dark)
+    pm.box(None, (1.8, 1.8, 0.2), (0.0, 0.0, 0.32), paint=stone)
+    pm.box(None, (1.84, 1.84, 0.04), (0.0, 0.0, 0.43), paint=cap)
+    pm.loft(None, [(0.44, 0.3, 0.22, 0, 0), (1.45, 0.23, 0.17, 0, 0), (1.62, 0.2, 0.15, 0, 0), (1.75, 0.08, 0.06, 0, 0)],
+            sides=4, phase=math.pi / 4, paint=stone)                                  # the stele
+    for (z, w) in ((1.25, 0.2), (1.0, 0.12), (0.78, 0.16)):
+        pm.box(None, (w, 0.02, 0.05), (0.0, -0.19, z), mat_index=GLOW)               # its rune, facing out
+    pm.box(None, (0.05, 0.02, 0.5), (0.0, -0.19, 1.02), mat_index=GLOW)
+    for x in (-1.0, 1.0):
+        for y in (-1.0, 1.0):
+            pm.box(None, (0.26, 0.26, 0.42), (x * 0.98, y * 0.98, 0.21), rot=(0, 0, 0.3 * x * y), paint=cap, taper=0.7)
+    finish(pm, "trial_altar", ROLES["player_accent"]["body"], 0.7)
+
+
+def curse_lantern():
+    """M12 cursed graveyard: a crooked post with a caged lantern; its flame
+    burns in the Restless' sickly gold - break the three and the curse
+    lifts; 1.9 m."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(VL["timber"], 1, "planks")
+    iron = pm.paint(RB["iron"], 1, "plate")
+    stone = pm.paint(VL["cobble"], 2)
+    pm.loft(None, [(0.0, 0.07, 0.07, 0, 0), (0.9, 0.055, 0.055, 0.03, 0), (1.75, 0.045, 0.045, 0.09, 0)], sides=6, paint=wood)
+    pm.box(None, (0.42, 0.06, 0.06), (0.26, 0.0, 1.72), rot=(0, -0.12, 0), paint=wood)   # the arm
+    pm.box(None, (0.02, 0.02, 0.14), (0.44, 0.0, 1.62), paint=iron)                       # the hook
+    pm.loft(None, [(1.2, 0.12, 0.12, 0.44, 0), (1.24, 0.13, 0.13, 0.44, 0)], sides=6, paint=iron)   # the cage's foot
+    pm.loft(None, [(1.5, 0.13, 0.13, 0.44, 0), (1.56, 0.08, 0.08, 0.44, 0)], sides=6, paint=iron)   # its cap
+    for k in range(4):
+        a = k * math.tau / 4 + math.pi / 4
+        pm.box(None, (0.025, 0.025, 0.28), (0.44 + math.cos(a) * 0.11, math.sin(a) * 0.11, 1.37), paint=iron)
+    pm.box(None, (0.12, 0.12, 0.2), (0.44, 0.0, 1.36), mat_index=GLOW)                  # the flame
+    for k in range(5):
+        a = k * math.tau / 5
+        pm.box(None, (0.2, 0.16, 0.14), (math.cos(a) * 0.16, math.sin(a) * 0.16, 0.05), rot=(0, 0, a), paint=stone)
+    finish(pm, "curse_lantern", CURSE_GLOW, 1.4)
+
+
+def wisp_nest():
+    """M12 burnt forest: the smoulder wisps' nest - a hollow, split stump
+    glowing from the inside, embers in its cracks; 1.3 m, 1.6 m across."""
+    rig.reset_scene()
+    rnd = random.Random(717)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    bark = pm.paint(BF["bark"], 1, "bark")
+    char = pm.paint(BF["char"], 1)
+    pm.loft(None, [(0.0, 0.78, 0.72, 0, 0), (0.22, 0.58, 0.55, 0, 0), (0.85, 0.5, 0.47, 0, 0), (1.22, 0.44, 0.42, 0, 0)],
+            sides=9, paint=bark)
+    pm.loft(None, [(1.12, 0.32, 0.3, 0, 0), (1.26, 0.34, 0.32, 0, 0)], sides=9, paint=char)
+    pm.loft(None, [(1.2, 0.28, 0.26, 0, 0), (1.24, 0.29, 0.27, 0, 0)], sides=9, mat_index=GLOW)   # the glowing hollow
+    for k in range(6):  # jagged rim and roots
+        a = k * math.tau / 6 + rnd.uniform(-0.2, 0.2)
+        h = rnd.uniform(0.25, 0.5)
+        pm.box(None, (0.16, 0.12, h), (math.cos(a) * 0.42, math.sin(a) * 0.4, 1.22 + h * 0.4), rot=(0, 0, a), paint=bark, taper=0.3)
+        pm.box(None, (0.6, 0.18, 0.14), (math.cos(a + 0.5) * 0.8, math.sin(a + 0.5) * 0.76, 0.06), rot=(0, 0.25, a + 0.5), paint=bark)
+    for k in range(5):  # ember cracks
+        a = k * math.tau / 5 + 0.3
+        pm.box(None, (0.05, 0.03, rnd.uniform(0.3, 0.55)), (math.cos(a) * 0.51, math.sin(a) * 0.49, rnd.uniform(0.35, 0.75)),
+               rot=(0, 0, a + math.pi / 2), mat_index=GLOW)
+    pm.box(None, (0.36, 0.06, 0.3), (0.0, -0.5, 0.4), mat_index=GLOW)                  # its mouth
+    finish(pm, "wisp_nest", BF["ember"][2], 1.1)
+
+
+def jackal_den():
+    """M12 bone field: the jackals' den - a low mound of dust and bones over a
+    dark burrow mouth, eyes glinting in it; 1.0 m, 3.2 m across."""
+    rig.reset_scene()
+    rnd = random.Random(353)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    dust = pm.paint(BN["dust"], 2)
+    dust_dark = pm.paint(BN["dust"], 1)
+    bone = pm.paint(HL["bone"], 2, "plate")
+    hole = pm.paint(BN["rock"], 0)
+    pm.loft(None, [(0.0, 1.6, 1.4, 0, 0), (0.4, 1.35, 1.2, 0, 0.05), (0.75, 0.9, 0.8, 0, 0.1), (0.98, 0.35, 0.3, 0, 0.15)],
+            sides=10, paint=dust)
+    pm.loft(None, [(0.0, 0.5, 0.5, 0, -1.2), (0.5, 0.45, 0.4, 0, -1.05)], sides=8, paint=dust_dark)   # the mouth's lip
+    pm.box(None, (0.7, 0.3, 0.55), (0.0, -1.15, 0.3), paint=hole)                         # the dark burrow
+    for x in (-0.12, 0.12):
+        pm.box(None, (0.06, 0.03, 0.035), (x, -1.31, 0.36), mat_index=GLOW)               # eyes in the dark
+    for k in range(9):  # bones in the mound
+        a = rnd.uniform(0, math.tau)
+        r = rnd.uniform(0.6, 1.3)
+        pm.box(None, (0.07, 0.07, rnd.uniform(0.35, 0.7)), (math.cos(a) * r, math.sin(a) * r * 0.9 + 0.1, rnd.uniform(0.3, 0.6)),
+               rot=(rnd.uniform(-0.9, 0.9), rnd.uniform(-0.9, 0.9), a), paint=bone, taper=0.6)
+    for k in range(2):  # ribs arching over it
+        pm.box(None, (0.09, 0.09, 1.1), (0.45 * (2 * k - 1), 0.4, 0.75), rot=(0.9, 0.25 * (2 * k - 1), 0), paint=bone, taper=0.4)
+    finish(pm, "jackal_den", "#FF8A3A", 1.2)
+
+
+M12_PROPS = M12_PROPS + (trial_altar, curse_lantern, wisp_nest, jackal_den)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,

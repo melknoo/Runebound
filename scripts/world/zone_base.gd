@@ -844,10 +844,20 @@ func _warm_up_ids() -> Array[String]:
 	return ["rusher", "caster"]
 
 
+## M12 phase 6: a rune blessing was granted to `hero` - say so (its owner only).
+func blessing_toast(hero: Player, id: StringName) -> void:
+	if hero == null or not hero.is_local or hud == null:
+		return
+	hud.toast(Texts.t("ui.blessing.gained", [Blessings.title(id), Blessings.effect(id)]),
+		ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
+	Sfx.play_ui("level_up", -6.0)
+
+
 ## M12: every enemy a spawn id can name (camps, the net, tests); bosses are
 ## spawned by their zones only. An unknown id is a rusher (and a warning).
 const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "warden", "colossus", "vessel",
-	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture"]
+	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture",
+	"curse_lantern", "wisp_nest", "jackal_den"]
 const BOSS_TYPES: Array[String] = ["colossus", "vessel"]
 
 
@@ -865,6 +875,9 @@ static func _enemy_script(id: String) -> GDScript:
 		"smoulder_wisp": return SmoulderWisp
 		"ash_jackal": return AshJackal
 		"carrion_vulture": return CarrionVulture
+		"curse_lantern": return CurseLantern
+		"wisp_nest": return WispNest
+		"jackal_den": return JackalDen
 	return MeleeRusher
 
 
@@ -1107,6 +1120,8 @@ func _roll_kill_item(enemy: EnemyBase, class_id: StringName) -> ItemData:
 	if enemy.is_elite:
 		if ItemGenerator.kill_drops(&"elite"):
 			item = ItemGenerator.generate(2, class_id)
+	elif enemy.loot_kind == &"none":
+		pass  # M12: objects (a curse lantern) drop nothing
 	elif enemy.loot_kind == &"brute":
 		if ItemGenerator.kill_drops(&"brute"):
 			item = ItemGenerator.generate(1, class_id)

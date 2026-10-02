@@ -91,20 +91,13 @@ static func house(zone: ZoneBase, pos: Vector3, yaw: float, rng: RandomNumberGen
 ## the paths (`gaps`: directions as angles, atan2(z, x)), two dead trees. The
 ## centre stays open.
 static func graveyard(zone: ZoneBase, poi: Dictionary, gaps: Array[float] = []) -> void:
-	var centre := ZoneLayout.pos_of(poi)
 	var yaw := PoiBuilder.yaw_of(poi)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = int(centre.x * 29.0 + centre.z * 37.0)
-	for row in 3:
-		for col in 5:
-			var local := Vector2(-6.0 + col * 3.0 + rng.randf_range(-0.3, 0.3), -5.5 + row * 3.6 + rng.randf_range(-0.3, 0.3))
-			if local.length() < 3.2:
-				continue  # the open middle
-			var w := local.rotated(-yaw)
-			var spot := centre + Vector3(w.x, 0.0, w.y)
-			var cross := rng.randf() < 0.4
-			_solid(zone, "vl_grave_cross" if cross else "vl_grave", spot, yaw + rng.randf_range(-0.15, 0.15),
-				Vector3(0.6, 0.95, 0.35), rng.randf_range(0.9, 1.1))
+	var rows := _grave_rows(poi)
+	var rng: RandomNumberGenerator = rows["rng"]
+	var centre := ZoneLayout.pos_of(poi)
+	for g: Array in rows["graves"]:
+		_solid(zone, "vl_grave_cross" if bool(g[1]) else "vl_grave", g[0], yaw + float(g[2]),
+			Vector3(0.6, 0.95, 0.35), float(g[3]))
 	var radius := float(poi.get("pad", 10.0)) + 0.5
 	var segments := 14
 	for i in segments:
@@ -120,6 +113,35 @@ static func graveyard(zone: ZoneBase, poi: Dictionary, gaps: Array[float] = []) 
 		var spot := centre + Vector3(side * 7.5, 0.0, side * -6.0)
 		PoiBuilder.blocker(zone, Vector3(spot.x, zone.ground_y(spot), spot.z), Vector3(0.6, 3.0, 0.6))
 		PoiBuilder.prop(zone, "bf_snag", spot, rng.randf_range(0.0, TAU), 0.8)
+
+
+## M12 phase 6: where the graveyard's graves stand (the cursed ground raises
+## its dead there) - the same rows graveyard() lays, with or without the art pass.
+static func grave_spots(poi: Dictionary) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for g: Array in _grave_rows(poi)["graves"]:
+		out.append(g[0])
+	return out
+
+
+## The headstone rows ([spot, cross, yaw jitter, scale] each) and the seeded
+## RNG after them (graveyard() goes on with it for the fence).
+static func _grave_rows(poi: Dictionary) -> Dictionary:
+	var centre := ZoneLayout.pos_of(poi)
+	var yaw := PoiBuilder.yaw_of(poi)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(centre.x * 29.0 + centre.z * 37.0)
+	var graves: Array = []
+	for row in 3:
+		for col in 5:
+			var local := Vector2(-6.0 + col * 3.0 + rng.randf_range(-0.3, 0.3), -5.5 + row * 3.6 + rng.randf_range(-0.3, 0.3))
+			if local.length() < 3.2:
+				continue  # the open middle
+			var w := local.rotated(-yaw)
+			var spot := centre + Vector3(w.x, 0.0, w.y)
+			var cross := rng.randf() < 0.4
+			graves.append([spot, cross, rng.randf_range(-0.15, 0.15), rng.randf_range(0.9, 1.1)])
+	return {"graves": graves, "rng": rng}
 
 
 ## Fences along the village lane, a few posts missing; never on a pad

@@ -591,6 +591,22 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
   collision mask and snaps to the heightmap (or the floor under it) each
   tick, while `_process` lifts the visual to its altitude from the state,
   so puppets fly too without any extra net data.
+- **Rune blessings and trials (phase 6):** `Player.stat(key)` = gear +
+  progression + buffs + `Blessings.stat(blessings, key)`; a blessing is
+  granted on the hero's owner (`grant_blessing`, saved per character). A
+  `TrialShrine` is a `PoiPuzzle`: the authority starts it (`act("start")`),
+  runs its waves and the clock (`state` phase / seq / t0 / wave, committed
+  and replayed), and ends it cleared or failed; every machine whose hero
+  was near when a run began counts that hero's `health.damaged` and judges
+  the blessing when `cleared` arrives.
+- **Objects that fight (phase 6):** nests and curse lanterns are
+  `EnemyBase` types with `immobile = true` and a prop body
+  (`_setup_prop_visual`); they ride the camp machinery (`EncounterSpawner`
+  with `spots`) for spawning, persistence and the net. `dismiss()` removes
+  an enemy without a death (`dismissed` fx on every machine, then freed).
+- **Curses (phase 6):** `HealthComponent.heal_mult` scales every heal;
+  `CursedGround` sets it on the local hero inside its radius while the
+  POI is not solved and resets it when the hero leaves or the curse lifts.
 - **Animals (phase 5):** `CritterField` (one per zone with a view, none on
   the server) keeps `Critter` nodes (Node3D, no physics, own
   AnimationPlayer with animation LOD) around the local hero. They read

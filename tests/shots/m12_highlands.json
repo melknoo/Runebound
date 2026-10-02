@@ -738,6 +738,182 @@
      "face": -0.5
     }
    ]
+  },
+  {
+   "name": "trial_altar",
+   "player": {
+    "poi": "trial_v",
+    "offset": [
+     3.2,
+     0.2,
+     4.8
+    ]
+   },
+   "yaw": 1.0,
+   "pitch": -0.18,
+   "zoom": 6.0,
+   "settle": 0.6
+  },
+  {
+   "name": "trial_running",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     1.5,
+     0.2,
+     3.0
+    ]
+   },
+   "yaw": 0.9,
+   "pitch": -0.3,
+   "zoom": 8.0,
+   "settle": 1.2,
+   "actions": [
+    {
+     "poi": "trial_b",
+     "act": "start"
+    },
+    {
+     "wait": 1.0
+    }
+   ]
+  },
+  {
+   "name": "graveyard_cursed",
+   "player": {
+    "poi": "graveyard_v",
+    "offset": [
+     5.5,
+     0.2,
+     9.5
+    ]
+   },
+   "yaw": 0.55,
+   "pitch": -0.3,
+   "zoom": 8.0,
+   "settle": 1.5,
+   "spawn": [
+    {
+     "id": "curse_lantern",
+     "at": {
+      "poi": "graveyard_v",
+      "offset": [
+       5.27,
+       0.05,
+       2.88
+      ]
+     },
+     "freeze": true
+    },
+    {
+     "id": "curse_lantern",
+     "at": {
+      "poi": "graveyard_v",
+      "offset": [
+       -5.12,
+       0.05,
+       3.12
+      ]
+     },
+     "freeze": true
+    },
+    {
+     "id": "curse_lantern",
+     "at": {
+      "poi": "graveyard_v",
+      "offset": [
+       -0.14,
+       0.05,
+       -6.0
+      ]
+     },
+     "freeze": true
+    }
+   ]
+  },
+  {
+   "name": "nest_wisps",
+   "player": {
+    "poi": "nest_f",
+    "offset": [
+     3.0,
+     0.2,
+     5.0
+    ]
+   },
+   "yaw": 1.0,
+   "pitch": -0.2,
+   "zoom": 6.0,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "wisp_nest",
+     "at": {
+      "poi": "nest_f",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true
+    },
+    {
+     "id": "smoulder_wisp",
+     "at": {
+      "poi": "nest_f",
+      "offset": [
+       -2.2,
+       0.2,
+       1.0
+      ]
+     },
+     "freeze": true,
+     "face": 0.8
+    }
+   ]
+  },
+  {
+   "name": "nest_jackals",
+   "player": {
+    "poi": "nest_b",
+    "offset": [
+     3.5,
+     0.2,
+     5.5
+    ]
+   },
+   "yaw": 1.0,
+   "pitch": -0.2,
+   "zoom": 6.5,
+   "settle": 0.8,
+   "spawn": [
+    {
+     "id": "jackal_den",
+     "at": {
+      "poi": "nest_b",
+      "offset": [
+       0,
+       0.2,
+       0
+      ]
+     },
+     "freeze": true
+    },
+    {
+     "id": "ash_jackal",
+     "at": {
+      "poi": "nest_b",
+      "offset": [
+       -2.4,
+       0.2,
+       1.5
+      ]
+     },
+     "freeze": true,
+     "face": 0.9
+    }
+   ]
   }
  ]
 }

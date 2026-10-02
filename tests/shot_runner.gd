@@ -24,6 +24,7 @@ extends Node
 ## placed); {"cast": "<ability id>", "full": true} starts any ability (full =
 ## a full resource bar first); {"slot": [i, "<id>"]} puts an ability into a
 ## loadout slot (e.g. Rune Wall on RMB, then {"hold": "secondary_ability"}).
+## M12: {"poi": id, "act": "start"} acts on a zone puzzle (a trial shrine).
 ## M10b: {"draughts": n} fills the bag, {"hurt": 0.4} sets health to that
 ## fraction, {"do": "drink" | "merchant" | "draught_drops"} drinks one, opens
 ## Ylva's shop, lays three flasks 6 m ahead.
@@ -153,7 +154,12 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 
 func _do(action: Dictionary) -> void:
 	var player := _zone.player
-	if action.has("wait"):
+	if action.has("poi"):  # M12: act on a zone puzzle as the hero would ({"poi": id, "act": "start"})
+		var puzzles: Dictionary = _zone.get(&"puzzles") if &"puzzles" in _zone else {}
+		var pz := puzzles.get(String(action["poi"])) as PoiPuzzle
+		if pz != null:
+			pz.request(String(action.get("act", "")), action.get("arg", 0), player)
+	elif action.has("wait"):
 		await _wait(float(action["wait"]))
 	elif action.has("press"):
 		var input_action := StringName(action["press"])

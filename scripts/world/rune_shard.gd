@@ -62,6 +62,8 @@ func interact(hero: Player) -> void:
 		Texts.t("ui.shard.found", [found, TOTAL]), true)
 	if zone.hud != null:
 		zone.hud.toast(Texts.t("shard.%d" % index), UiTheme.MUTED)
+	if found >= TOTAL and hero.grant_blessing(&"shards"):  # M12 phase 6: all twelve
+		zone.blessing_toast(hero, &"shards")
 	VFX.flash(zone, global_position + Vector3(0, 0.6, 0), ArtKit.color("color_roles.player_accent.hot"), 1.2, 0.25)
 
 

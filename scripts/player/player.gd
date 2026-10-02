@@ -122,6 +122,8 @@ var discovered_zones: PackedStringArray = PackedStringArray()
 ## shards), gather nodes used (key -> unix time; they grow back).
 var lore_read: PackedStringArray = PackedStringArray()
 var collected: PackedStringArray = PackedStringArray()
+## M12 phase 6: the rune blessings this character carries (Blessings ids).
+var blessings: PackedStringArray = PackedStringArray()
 var gathered: Dictionary = {}
 ## action id -> Callable that tries to start it (built in _register_actions).
 var _actions: Dictionary = {}
@@ -506,6 +508,17 @@ func collect(id: String) -> bool:
 ## M12: when this character last used gather node `key` (unix s, 0 = never).
 func gathered_at(key: String) -> float:
 	return float(gathered.get(key, 0.0))
+
+
+## M12: a rune blessing for good (owner side: a trial or the shards judged it).
+func grant_blessing(id: StringName) -> bool:
+	if not Blessings.DEFS.has(id) or blessings.has(String(id)):
+		return false
+	blessings.append(String(id))
+	equipment._recompute()  # maximum health follows at once
+	chronicle_changed.emit()
+	SaveGame.request_save()
+	return true
 
 
 func mark_gathered(key: String) -> void:
@@ -1046,7 +1059,8 @@ func _process_class_state(_delta: float) -> void:
 ## Summed value of a stat key from equipment and progression (level bonuses,
 ## talents). Every ability hook reads stats through here.
 func stat(key: StringName) -> float:
-	return equipment.stat(key) + (progression.stat(key) if progression != null else 0.0) + buff_stat(key)
+	return equipment.stat(key) + (progression.stat(key) if progression != null else 0.0) + buff_stat(key) \
+		+ Blessings.stat(blessings, key)
 
 
 ## Legendary power (equipment) or behavior talent (progression).

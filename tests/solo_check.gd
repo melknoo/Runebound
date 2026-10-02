@@ -19,6 +19,8 @@ var class_id: StringName = &"elementalist"
 var level: int = 6
 ## --trace: log the fight every 5 s (who is where, in which state).
 var trace: bool = false
+## --only=<camp id>[,<id>]: just these fights (no Colossus), e.g. to trace one.
+var only: PackedStringArray = PackedStringArray()
 var zone: AshenHighlands
 var hero: Player
 
@@ -35,6 +37,8 @@ func _ready() -> void:
 			level = clampi(arg.trim_prefix("--level=").to_int(), 1, Progression.LEVEL_CAP)
 		elif arg == "--trace":
 			trace = true
+		elif arg.begins_with("--only="):
+			only = arg.trim_prefix("--only=").split(",")
 	_run.call_deferred()
 
 
@@ -58,9 +62,12 @@ func _run() -> void:
 	print("health %.0f | loadout %s | gear: %s" % [hero.health.max_health, ", ".join(hero.loadout),
 		", ".join(_gear_names())])
 	for id in _camp_ids():
+		if not only.is_empty() and not only.has(id):
+			continue
 		var sp := zone.camps[id] as EncounterSpawner
 		await _fight_camp(id, sp)
-	await _fight_boss()
+	if only.is_empty():
+		await _fight_boss()
 	_report()
 	get_tree().quit(0)
 
@@ -125,9 +132,10 @@ func _fight_camp(id: String, sp: EncounterSpawner) -> void:
 	var cleared := [false]
 	var on_clear := func() -> void: cleared[0] = true
 	sp.cleared.connect(on_clear)
-	if sp.state != EncounterSpawner.State.ACTIVE:
-		sp.reset()
-		sp.trigger(zone, hero)
+	# always afresh: a neighbour fight may have woken this camp (its pack went
+	# with _clear_leftovers, the spawner would wait for it forever)
+	sp.reset()
+	sp.trigger(zone, hero)
 	if id.begins_with("lurker"):
 		await get_tree().create_timer(1.0).timeout
 		var tree_at := home
@@ -176,9 +184,9 @@ func _trace(t: float) -> void:
 	var parts: Array[String] = []
 	for e in EnemyBase.all_enemies:
 		if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
-			parts.append("%s %s %.0fm hp%.0f" % [(e.get_script() as Script).get_global_name(),
+			parts.append("%s %s %.0fm hp%.0f%s" % [(e.get_script() as Script).get_global_name(),
 				EnemyBase.AIState.keys()[e.ai_state], e.global_position.distance_to(hero.global_position),
-				e.health.current_health])
+				e.health.current_health, (" bred %d" % (e as EnemyNest).bred) if e is EnemyNest else ""])
 	print("    t=%4.0f hero %s state %s | %s" % [t, hero.global_position.snapped(Vector3.ONE),
 		Player.State.keys()[hero.state], "; ".join(parts)])
 

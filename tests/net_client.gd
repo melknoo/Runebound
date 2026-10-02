@@ -519,6 +519,59 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(2.0)
 				_finish("ok")
+			"trial":
+				# M12 phase 6: c1 and c2 take the Charwood's trial; c1 starts it (a
+				# POI_ACT), both strike its waves (each hit forwarded), c2 is struck
+				# past the limit on purpose. Cleared: c1 carries the blessing, c2
+				# does not (each owner judged its own hero).
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as AshenHighlands
+				var world := zone.net_world
+				var trial := zone.puzzles["trial_f"] as TrialShrine
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = role == "c1"
+				hero.health.max_health = 5000.0  # c2 must live through the waves while being struck
+				hero.health.current_health = 5000.0
+				hero.global_position = zone.ground_point(trial.global_position + Vector3(2.0 if role == "c1" else -2.0, 0, 3.0), 0.2)
+				hero.velocity = Vector3.ZERO
+				await _seconds(1.5)  # the server's proxy follows us there (it judges the reach)
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				if role == "c1":
+					await _seconds(1.0)
+					trial.switch.use_by(hero)
+				if not await _until(func() -> bool: return trial.phase() == "running" and trial.joined_seq > 0, 30.0, "the trial running"):
+					return
+				if role == "c2":
+					for i in TrialShrine.DEFS["trial_f"]["hits"] + 1:
+						hero.take_hit(HitInfo.create(1.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hero.global_position))
+				var struck_at := {}
+				var cleared := func() -> bool:
+					if trial.phase() == "cleared":
+						return true
+					var now := Time.get_ticks_msec()
+					for id: int in world.enemies:
+						var e := world.enemies[id] as EnemyBase
+						if not is_instance_valid(e) or not e.targetable or e.global_position.distance_to(trial.global_position) > 30.0:
+							continue
+						if now - int(struck_at.get(id, 0)) < 250:
+							continue
+						struck_at[id] = now
+						e.take_hit(hero.roll_ability_hit(hero.ability(&"rune_cleave")))
+					return false
+				if not await _until(cleared, 100.0, "the trial cleared (wave %d)" % int(trial.state.get("wave", 0))):
+					return
+				await _seconds(1.0)
+				if role == "c1" and not hero.blessings.has("charwood"):
+					_finish("fail: c1 cleared the trial unstruck but has no blessing")
+					return
+				if role == "c2" and (hero.blessings.has("charwood") or trial.joined_seq != -1):
+					_finish("fail: c2 was struck %d times and still got the blessing" % trial.hits)
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"rewards":
 				# c1 clears camp_1 and opens chest_south; c2 waits 108 m away.
 				if not await _in_zone():

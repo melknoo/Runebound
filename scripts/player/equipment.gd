@@ -88,6 +88,6 @@ func _apply_max_hp() -> void:
 	if health.max_health > 0.0:
 		fraction = clampf(health.current_health / health.max_health, 0.0, 1.0)
 	var base := player.class_data.base_max_hp if player.class_data != null else BASE_MAX_HP  # M10: per class
-	health.max_health = base + player.stat(&"max_hp")  # gear + levels + talents
+	health.max_health = (base + player.stat(&"max_hp")) * (1.0 + player.stat(&"max_hp_pct") / 100.0)  # gear + levels + talents; M12 blessings
 	health.current_health = health.max_health * fraction
 	health.health_changed.emit(health.current_health, health.max_health)

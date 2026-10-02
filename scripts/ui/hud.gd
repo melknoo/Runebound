@@ -325,6 +325,33 @@ func area_name(text: String) -> void:
 	tw.tween_callback(label.queue_free)
 
 
+## M12 phase 6: a running trial's line over the health bar ("" hides it;
+## the top centre belongs to the toasts and place names).
+var _trial_label: Label = null
+
+
+func trial_status(text: String) -> void:
+	if text == "":
+		if is_instance_valid(_trial_label):
+			_trial_label.visible = false
+		return
+	if not is_instance_valid(_trial_label):
+		_trial_label = Label.new()
+		_trial_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+		_trial_label.offset_left = -320.0
+		_trial_label.offset_right = 320.0
+		_trial_label.offset_top = -218.0
+		_trial_label.offset_bottom = -194.0
+		_trial_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_trial_label.add_theme_constant_override("outline_size", UiTheme.OUTLINE)
+		_trial_label.add_theme_color_override("font_outline_color", UiTheme.INK)
+		_trial_label.add_theme_color_override("font_color", ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
+		_trial_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		get_child(0).add_child(_trial_label)
+	_trial_label.text = text
+	_trial_label.visible = true
+
+
 func toast(text: String, color: Color = Color.WHITE) -> void:
 	var label := Label.new()
 	label.text = text

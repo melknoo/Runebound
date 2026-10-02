@@ -123,5 +123,13 @@
 	"shard.9": {"en": "Soot covers it, but under the soot the rune is unbroken.", "de": "Ruß bedeckt ihn, aber unter dem Ruß ist die Rune unversehrt."},
 	"shard.10": {"en": "It lay between two bones as if the beast had held it.", "de": "Er lag zwischen zwei Knochen, als hätte das Tier ihn gehalten."},
 	"shard.11": {"en": "Two shards fit together here, almost. Almost.", "de": "Zwei Splitter passen hier zusammen, fast. Fast."},
-	"shard.12": {"en": "Facing north it trembles. The Spire is close.", "de": "Nach Norden gerichtet zittert er. Die Spitze im Norden ist nah."}
+	"shard.12": {"en": "Facing north it trembles. The Spire is close.", "de": "Nach Norden gerichtet zittert er. Die Spitze im Norden ist nah."},
+	"lore.ghost.priest.title": {
+		"en": "The priest of Ashwick",
+		"de": "Der Priester von Ashwick"
+	},
+	"lore.ghost.priest.body": {
+		"en": "You broke my lanterns. Good. I lit them to keep the dead in their graves, and for a while they did. Then the light learned what it was for, and kept them from resting instead.\n\nThe bell? I cut the rope myself. Had it rung, they would have run east into the ash, at night. I thought the lanterns would buy them the morning.\n\nGo on. Ring nothing. Let Ashwick sleep.",
+		"de": "Du hast meine Laternen zerschlagen. Gut. Ich habe sie entzündet, damit die Toten in ihren Gräbern bleiben, und eine Weile taten sie das. Dann lernte das Licht, wofür es da war, und hielt sie stattdessen von der Ruhe ab.\n\nDie Glocke? Das Seil habe ich selbst durchgeschnitten. Hätte sie geläutet, wären sie nach Osten gelaufen, in die Asche, in der Nacht. Ich dachte, die Laternen erkaufen ihnen den Morgen.\n\nGeh nur. Läute nichts. Lass Ashwick schlafen."
+	}
 }

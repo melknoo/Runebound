@@ -86,6 +86,9 @@ var targetable: bool = true
 ## M12: its loot tier (`trash` / `brute`; elites and bosses are recognised on
 ## their own) - replaces the class checks in the drop tables.
 var loot_kind: StringName = &"trash"
+## M12 phase 6: an object that fights (a nest, a curse lantern) is never moved:
+## no knockback, no shove from its neighbours (and stagger_resist: no pull).
+var immobile: bool = false
 var _hurtbox: Hurtbox
 ## M07: set by the zone before the enemy enters the tree (1 = base balance).
 var level: int = 1
@@ -247,7 +250,11 @@ func _physics_process(delta: float) -> void:
 		_ai_process(delta)
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
-	var separation := _separation_push() * 5.0
+	if immobile:
+		_knockback_velocity = Vector3.ZERO
+		velocity.x = 0.0
+		velocity.z = 0.0
+	var separation := _separation_push() * 5.0 if not immobile else Vector3.ZERO
 	velocity += _knockback_velocity + separation
 	move_and_slide()
 	velocity -= _knockback_velocity + separation
@@ -380,6 +387,18 @@ func _present_common_fx(fx: StringName) -> void:
 		&"frozen":  # M10 Absolute Zero
 			VFX.frost_burst(get_tree().current_scene, global_position, 1.2)
 			Sfx.play("frost_nova", global_position, -6.0, 0.1, 1.4)
+		&"dismissed":  # M12: gone without a death (see dismiss)
+			VFX.death_burst(get_tree().current_scene, global_position + Vector3(0, 0.9, 0), body_color)
+			visual.visible = false
+
+
+## M12 phase 6: gone without a death - a failed trial's wave, the risen when
+## a curse lifts: a puff on every machine, no reward, no drop.
+func dismiss() -> void:
+	if ai_state == AIState.DEAD or is_queued_for_deletion():
+		return
+	play_fx(&"dismissed")
+	queue_free()
 
 
 ## The elite affix presents its own actions (nova) through the same channel.
@@ -865,6 +884,33 @@ static func _apply_enemy_shadows(on: bool) -> void:
 			m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if on else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			live.append(ref)
 	_rig_meshes = live
+
+
+## M12 phase 6: an object that fights (a nest, a curse lantern) wears a kit
+## prop as its body - its atlas material per instance, with the characters'
+## outline (it can be attacked) and in the hit flash; glow parts stay lit.
+func _setup_prop_visual(prop_name: String) -> bool:
+	if not Net.has_view():
+		return false  # the dedicated server keeps the primitive fallback
+	var inst := SetPieces.prop(visual, prop_name, visual.global_position)
+	if inst == null:
+		return false
+	for child in inst.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+		for s in mi.mesh.get_surface_count():
+			var mat := mi.get_surface_override_material(s) as StandardMaterial3D
+			if mat == null or mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
+				continue  # glow parts: lit, never flashed
+			var dup := mat.duplicate() as StandardMaterial3D
+			dup.emission_enabled = true  # the flash drives only the energy (no new shader variant on a first hit)
+			dup.emission = Color.WHITE
+			dup.emission_energy_multiplier = 0.0
+			dup.set_meta(ArtKit.KEEP_EMISSION, true)
+			ArtKit._apply_outline(dup)
+			mi.set_surface_override_material(s, dup)
+			_flash_mats.append(dup)
+	return true
 
 
 func _setup_rigged_visual(path: String, atlas_id: String, clip_profile: Dictionary, glow: Color) -> MeshInstance3D:

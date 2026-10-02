@@ -341,6 +341,10 @@
   class only 14-28 damage (the jackals' leap is telegraphed and short, the
   vulture strikes once per dive). Tune after the playtest (bite 9, dive 14,
   the pack gap 0.9 s).
+- **Trials and nests want a playtest:** a trial's time (70-75 s for two
+  waves) and its 4 allowed hits, the nests' eight brood each (XP per
+  brood), the graveyard's risen (one every 6 s, up to three) are first
+  numbers.
 - **Net suite `travel` under load:** in the full net suite the late joiner
   sometimes misses its window (c3 sees no puppets, c1/c2 time out); the
   scenario passes alone (2 of 2). Check again at the M12 wrap-up, with the

@@ -13,6 +13,8 @@ signal dot_damaged(amount: float, type: HitInfo.DamageType)
 
 var current_health: float
 var invulnerable: bool = false
+## M12: every heal received is scaled by this (the cursed graveyard: 0.7).
+var heal_mult: float = 1.0
 var is_dead: bool = false
 
 
@@ -60,6 +62,7 @@ func heal_full() -> void:
 func heal(amount: float) -> float:
 	if is_dead or amount <= 0.0:
 		return 0.0
+	amount *= heal_mult
 	var before := current_health
 	current_health = minf(current_health + amount, max_health)
 	if current_health > before:

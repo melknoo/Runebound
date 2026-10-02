@@ -93,6 +93,12 @@ const SCENARIOS := {
 			{"role": "c3", "delay": 20.0}],
 		"timeout": 150.0,
 	},
+	"trial": {
+		# M12 phase 6: two heroes take the Charwood's trial; one is struck too often
+		"server": ["--zone=res://scenes/ashen_highlands.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
+		"timeout": 180.0,
+	},
 	"travel": {
 		"server": [],
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]},

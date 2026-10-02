@@ -6,7 +6,7 @@ extends Node
 ## reads it after the clients are done and then stops the server.
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
-const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles",
+const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -343,6 +343,22 @@ func _update() -> void:
 					verdict = "fail: the server's world did not keep the solved braziers"
 				elif pz.world.get_node_or_null("PuzzleChest_braziers_v") == null:
 					verdict = "fail: no crypt chest on the server"
+				else:
+					verdict = "ok"
+		"trial":  # M12 phase 6: the server ran the trial to its end and kept it in its world
+			var tz := get_tree().current_scene as AshenHighlands
+			if tz == null:
+				verdict = "fail: the server is not in the Highlands"
+			else:
+				var trial := tz.puzzles.get("trial_f") as TrialShrine
+				if trial == null or int(trial.state.get("seq", 0)) < 1:
+					verdict = "fail: the trial never ran on the server"
+				elif trial.phase() == "running":
+					verdict = "fail: the trial is still running"
+				elif trial.phase() == "failed":
+					verdict = "fail: the trial failed on the server"
+				elif int(SaveGame.poi_state("trial_f").get("seq", 0)) < 1:
+					verdict = "fail: the server's world did not keep the trial"
 				else:
 					verdict = "ok"
 		"rewards":

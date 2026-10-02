@@ -44,7 +44,7 @@ func _process(_delta: float) -> void:
 		_prompt.update(false, "")
 		return
 	var d := global_position.distance_to(hero.global_position)
-	if d > TICK_RANGE:
+	if d > TICK_RANGE or not is_visible_in_tree():  # M12: a hidden one (the priest before the curse lifts) waits
 		if _prompt.visible:
 			_prompt.update(false, "")
 		return

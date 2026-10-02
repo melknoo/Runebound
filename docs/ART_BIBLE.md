@@ -231,7 +231,8 @@ posterize moves values in bands of about 7 L*, and fog lifts distant ground.
 Every character body gets a stencil outline (0.012 thickness, #0B0810).
 Props and environment never get one: the outline marks "this can act".
 The M12 ghosts and animals (hares, crows) are characters without it: they
-never act. Animals also get no glowing eyes, and are drawn 1.35-1.4x life
+never act. The other way round, objects that fight (the nests, the curse
+lanterns) are props that get the outline: they can be attacked. Animals also get no glowing eyes, and are drawn 1.35-1.4x life
 size so they read at the camera's distance.
 
 ### Gameplay envelope and validation

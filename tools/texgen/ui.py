@@ -868,6 +868,38 @@ def mk_cave() -> Image.Image:
     return outlined(img)
 
 
+def mk_trial() -> Image.Image:
+    """M12 map: a trial shrine (a stele with a rune in the accent)."""
+    img, d = canvas12()
+    stone = rgb("#8A8290")
+    d.rectangle([1, 10, 10, 11], fill=stone)
+    d.rectangle([4, 2, 7, 9], fill=stone)
+    d.line([5, 4, 5, 8], fill=ACCENT_HOT)
+    d.line([6, 4, 6, 8], fill=ACCENT_HOT)
+    d.point((4, 5), fill=ACCENT_HOT)
+    d.point((7, 6), fill=ACCENT_HOT)
+    return outlined(img)
+
+
+def mk_nest() -> Image.Image:
+    """M12 map: a nest (a mound with a burning mouth)."""
+    img, d = canvas12()
+    d.pieslice([0, 3, 11, 16], 180, 360, fill=rgb("#7A6A58"))
+    d.ellipse([4, 6, 7, 10], fill=rgb("#FF8A3A"))
+    d.point((5, 8), fill=rgb("#FFE2A8"))
+    return outlined(img)
+
+
+def mk_cursed() -> Image.Image:
+    """M12 map: a cursed place (a grave cross under a sickly glow)."""
+    img, d = canvas12()
+    glow = rgb("#C8D86A")
+    d.ellipse([1, 1, 10, 7], outline=glow)
+    d.rectangle([5, 3, 6, 11], fill=rgb("#B8AE9C"))
+    d.rectangle([3, 5, 8, 6], fill=rgb("#B8AE9C"))
+    return outlined(img)
+
+
 def knob(fill, rim, rim_hi) -> Image.Image:
     """M17a settings: a slider grabber, 8x12 art (bevelled like frame())."""
     w, h = 8, 12
@@ -899,7 +931,8 @@ def main() -> None:
     for name, fn in (("player", mk_player), ("waypoint", mk_waypoint), ("portal", mk_portal), ("camp", mk_camp),
                      ("camp_cleared", mk_camp_cleared), ("chest", mk_chest), ("ruin", mk_ruin),
                      ("landmark", mk_landmark), ("boss", mk_boss), ("dungeon", mk_dungeon),
-                     ("lore", mk_lore), ("ghost", mk_ghost), ("puzzle", mk_puzzle), ("cave", mk_cave)):
+                     ("lore", mk_lore), ("ghost", mk_ghost), ("puzzle", mk_puzzle), ("cave", mk_cave),
+                     ("trial", mk_trial), ("nest", mk_nest), ("cursed", mk_cursed)):
         save(fn(), "map", name + ".png")
     save(frame(24, PANEL, ACCENT_DIM, ACCENT), "frame.png")
     save(frame(22, rgb("#100C18", 235), rgb("#2E2A3A"), rgb("#4A4458")), "slot.png")

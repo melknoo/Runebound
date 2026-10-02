@@ -3221,6 +3221,144 @@ func _run() -> void:
 	if is_instance_valid(hare):
 		hare.queue_free()
 	await _wait_frames(2)
+	# --- M12 phase 6: blessings, the cursed graveyard, the nests, the trial shrines ---
+	var kill_all := func(foes: Array) -> void:
+		for foe in foes:
+			if is_instance_valid(foe) and (foe as EnemyBase).ai_state != EnemyBase.AIState.DEAD:
+				(foe as EnemyBase).take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT,
+					(foe as EnemyBase).global_position))
+	var bless_hp := hero12.health.max_health
+	hero12.blessings = PackedStringArray()
+	var bless_ok := is_equal_approx(Blessings.stat(PackedStringArray(["ashwick", "shards"]), &"max_hp_pct"), 6.0) \
+		and hero12.grant_blessing(&"ashwick") and not hero12.grant_blessing(&"ashwick") \
+		and absf(hero12.health.max_health - bless_hp * 1.03) < 0.6 \
+		and hero12.grant_blessing(&"charwood") and is_equal_approx(Blessings.stat(hero12.blessings, &"damage_pct"), 2.0) \
+		and (SaveGame.character_dict(hero12)["blessings"] as Array).has("charwood")
+	hero12.blessings = PackedStringArray()
+	hero12.equipment._recompute()
+	var probe_health := HealthComponent.new()
+	add_child(probe_health)
+	probe_health.max_health = 100.0
+	probe_health.current_health = 50.0
+	probe_health.heal_mult = 0.7
+	var healed_cut := probe_health.heal(10.0)
+	probe_health.queue_free()
+	_check(bless_ok and is_equal_approx(healed_cut, 7.0) and is_equal_approx(hero12.health.max_health, bless_hp),
+		"rune blessings add their stat (+3 %% health: %.0f -> %.0f) once, are saved; a heal_mult cuts heals" % [bless_hp, bless_hp * 1.03])
+	var lantern_probe := ZoneBase.make_enemy("curse_lantern")
+	var objects_ok := lantern_probe is CurseLantern and lantern_probe.immobile and lantern_probe.loot_kind == &"none" \
+		and Consumables.roll_kill(lantern_probe) == 0 and highlands._roll_kill_item(lantern_probe, &"runebreaker") == null \
+		and ZoneBase.make_enemy("wisp_nest") is WispNest and ZoneBase.make_enemy("jackal_den") is JackalDen
+	lantern_probe.free()
+	_check(objects_ok and AshenHighlands.marker_icon(hl_layout.find("trial_v")) == "trial"
+		and AshenHighlands.marker_icon(hl_layout.find("nest_b")) == "nest" and AshenHighlands.marker_icon(hl_layout.find("graveyard_v")) == "cursed"
+		and highlands.camps.has("nest_f") and highlands.puzzles.get("trial_b") is TrialShrine,
+		"the registry knows the lanterns and nests (objects drop nothing); trials, nests and the graveyard have map marks")
+	var grave := highlands.puzzles["graveyard_v"] as CursedGround
+	var grave_centre := grave.global_position
+	hero12.global_position = highlands.ground_point(grave_centre + Vector3(1.0, 0, 1.0), 0.2)
+	hero12.god_mode = true
+	await _wait_frames(4)
+	await get_tree().process_frame
+	var cursed_ok := not grave.is_solved() and is_equal_approx(hero12.health.heal_mult, CursedGround.HEAL_MULT) \
+		and not grave.ghost.visible and grave.graves.size() >= 8
+	grave.spawner.trigger(highlands, hero12)
+	await _wait_frames(6)
+	var lanterns := grave.spawner.pack()
+	var lantern_ring_ok := lanterns.size() == 3
+	for l in lanterns:
+		lantern_ring_ok = lantern_ring_ok and absf(Vector2(l.global_position.x - grave_centre.x, l.global_position.z - grave_centre.z).length()
+			- CursedGround.LANTERN_RING) < 0.6
+	var lantern_at := lanterns[0].global_position
+	var shove := HitInfo.create(5.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, lantern_at + Vector3(1, 0, 0))
+	shove.knockback = 8.0
+	lanterns[0].take_hit(shove)
+	await _wait_frames(150)  # the first of the dead rises
+	var risen_count := grave.risen.size()
+	var still := lanterns[0].global_position.distance_to(lantern_at) < 0.05
+	kill_all.call(lanterns)
+	await _wait_frames(10)
+	await get_tree().process_frame
+	_check(cursed_ok and lantern_ring_ok and still and risen_count >= 1 and grave.is_solved() and grave.risen.is_empty()
+		and is_equal_approx(hero12.health.heal_mult, 1.0) and grave.ghost.visible,
+		"the cursed graveyard: heals cut on its ground, three unmoving lanterns, the dead rise (%d); broken, the curse lifts and the priest appears" % risen_count)
+	var forest_spot := hl_layout.poi_pos("trial_f")
+	hero12.global_position = highlands.ground_point(forest_spot + Vector3(3.0, 0, 6.0), 0.2)
+	var nest := highlands.spawn_by_id("wisp_nest", highlands.ground_point(forest_spot + Vector3(0, 0, 9.0), 0.2)) as WispNest
+	await _wait_frames(int((EnemyNest.FIRST_BREED + EnemyNest.PULSE_TIME) * 60.0) + 20)
+	var bred_first := nest.bred
+	var brood_wisp := nest.brood.size() == 1 and nest.brood[0] is SmoulderWisp
+	kill_all.call([nest])
+	await _wait_frames(4)
+	var brood_left: Array = nest.brood.duplicate() if is_instance_valid(nest) else []
+	kill_all.call(brood_left)
+	_check(bred_first == 1 and brood_wisp, "a wisp nest swells, then lets out a smoulder wisp; it breaks like any foe")
+	await _wait_frames(4)
+	var trial := highlands.puzzles["trial_f"] as TrialShrine
+	hero12.global_position = highlands.ground_point(trial.global_position + Vector3(0, 0, 2.5), 0.2)
+	await _wait_frames(2)
+	trial.switch.use_by(hero12)
+	await _wait_frames(2)
+	var trial_started := trial.phase() == "running" and trial.wave_alive.size() == 3 and trial.joined_seq == int(trial.state["seq"])
+	for t_frame in 400:
+		if trial.phase() != "running":
+			break
+		kill_all.call(trial.wave_alive)
+		await _wait_frames(1)
+	await get_tree().process_frame
+	_check(trial_started and trial.phase() == "cleared" and hero12.blessings.has("charwood")
+		and is_equal_approx(hero12.stat(&"damage_pct") - hero12.equipment.stat(&"damage_pct") - hero12.progression.stat(&"damage_pct") - hero12.buff_stat(&"damage_pct"), 2.0),
+		"a trial: two waves around the altar, cleared in time without too many hits - the Charwood's blessing")
+	hero12.blessings = PackedStringArray()
+	trial.state = {"phase": "idle", "seq": int(trial.state["seq"])}
+	trial.commit()
+	trial.switch.use_by(hero12)
+	await _wait_frames(2)
+	trial.hits = TrialShrine.DEFS["trial_f"]["hits"] + 1
+	for t_frame in 400:
+		if trial.phase() != "running":
+			break
+		kill_all.call(trial.wave_alive)
+		await _wait_frames(1)
+	var struck_ok := trial.phase() == "cleared" and not hero12.blessings.has("charwood")
+	trial.state = {"phase": "idle", "seq": int(trial.state["seq"])}
+	trial.commit()
+	trial.switch.use_by(hero12)
+	await _wait_frames(2)
+	var doomed := trial.wave_alive.duplicate()
+	trial.state["t0"] = Time.get_ticks_msec() - int(trial.time_limit() * 1000.0) - 100
+	await _wait_frames(3)
+	var gone := true
+	for d in doomed:
+		gone = gone and (not is_instance_valid(d) or d.is_queued_for_deletion())
+	_check(struck_ok and trial.phase() == "failed" and gone and trial.wave_alive.is_empty(),
+		"struck too often: no blessing; out of time: the trial fails and its wave is gone")
+	trial.state = {"phase": "idle", "seq": int(trial.state["seq"])}
+	trial.commit()
+	var shard_ids: Array[String] = []
+	for sid: String in highlands.shards.keys():
+		shard_ids.append(sid)
+	shard_ids.sort()
+	hero12.collected = PackedStringArray()
+	for i in shard_ids.size() - 1:
+		hero12.collected.append(shard_ids[i])
+	(highlands.shards[shard_ids[shard_ids.size() - 1]] as RuneShard).use_by(hero12)
+	_check(shard_ids.size() == RuneShard.TOTAL and hero12.blessings.has("shards"),
+		"the twelfth shard of the Shattered Rune brings its blessing")
+	var fmt_bad := ""
+	for tkey: String in Texts._table.keys():
+		var tentry: Dictionary = Texts._table[tkey]
+		var t_en := str(tentry.get("en", ""))
+		var t_de := str(tentry.get("de", t_en))
+		if t_en.contains("{0}") or t_de.contains("{0}") or t_en.count("%") != t_de.count("%"):
+			fmt_bad = tkey
+	_check(fmt_bad == "", "every text-table entry formats with %% alike in both languages (%s)" % fmt_bad)
+	hero12.blessings = PackedStringArray()
+	hero12.collected = PackedStringArray()
+	hero12.equipment._recompute()
+	hero12.god_mode = false
+	hero12.health.current_health = hero12.health.max_health
+	await _wait_frames(2)
 	hero12.global_position = hero_home
 
 	# --- M06 audio: mix buses, music layers, looping ambience ---

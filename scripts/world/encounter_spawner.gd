@@ -27,6 +27,9 @@ var camp_id: String = ""
 var respawn_minutes: float = 10.0
 ## No re-arm while a hero is this close to the home spot.
 var rearm_radius: float = 45.0
+## M12 phase 6: fixed places for the composition (a graveyard's lanterns, a
+## nest on its mound), one per member; members past the list use the ring.
+var spots: Array[Vector3] = []
 ## Ambush: spawn on a ring around the hero who triggered it, not around home.
 var around_players: bool = false
 var ambush_ring: Vector2 = Vector2(6.0, 9.0)
@@ -135,6 +138,8 @@ func _spawn_pack(zone: ZoneBase, centre: Vector3, ring: Vector2) -> void:
 		var angle := TAU * float(i) / float(composition.size()) + randf() * 0.5
 		var pos := zone.ground_point(centre + Vector3(cos(angle) * randf_range(ring.x, ring.y), 0.0,
 			sin(angle) * randf_range(ring.x, ring.y)), 0.2)
+		if i < spots.size():
+			pos = zone.ground_point(spots[i], 0.05)
 		var enemy: EnemyBase
 		if composition[i] == "elite":
 			enemy = zone.spawn_elite(elite_kind, pos)

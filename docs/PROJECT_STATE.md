@@ -196,6 +196,45 @@ only the new texts bilingual, the first start follows the system language).
     and landed, the pack's turns and the leap, the animals' biomes, a hare
     bolting, a crow flying off); net `enemy_types` green with all 15 types
     as puppets.
+- **Phase 6 (built): rune blessings, trial shrines, nests, the cursed graveyard.**
+  - **Rune blessings** (`Blessings`, per character, saved as `blessings`):
+    Ashwick +3 % maximum health, the Charwood +2 % damage, Emberfall +2 %
+    movement speed (one per trial shrine), and +3 % maximum health for all
+    twelve shards of the Shattered Rune. `Player.stat()` adds them like gear
+    (`max_hp_pct` is new); the chronicle lists them.
+  - **Trial shrines** (`TrialShrine`, trial_v / trial_f / trial_b): [E] at
+    the altar wakes two waves of the sub-biome's family around it; clear
+    them in 70-75 s, struck at most 4 times, and the shrine's blessing is
+    yours. The server runs the waves and the clock (POI state, replayed to
+    late joiners); every owner counts its own hero's hits and grants itself
+    the blessing, so in co-op the one who took the hits misses out. Every
+    hero near gets the clear's XP. Out of time (or nobody near for 6 s) the
+    wave is dismissed; an ended trial rests 20 s, then anyone may take it
+    again. The HUD shows the time left and the hits under the compass.
+  - **Nests** (nest_f: the Charwood's smouldering stump, nest_b: the jackal
+    den): immobile objects that breed - while a hero is near and fewer than
+    three of their brood live they swell (smoke and glow, 1.2 s) and let
+    one out, eight in all. A nest is a camp of its own (it comes back after
+    the camp respawn time) and drops like a brute.
+  - **The cursed graveyard** (`CursedGround`, graveyard_v): while its three
+    curse lanterns burn (a camp of three that never comes back), every heal
+    a hero receives on its ground heals 30 % less, a sickly mist hangs over
+    it and the dead rise from the graves near the heroes (up to three
+    buried shamblers). Break the lanterns: the curse lifts for good, the
+    risen fall, the priest's ghost appears and tells why he cut the bell
+    rope (DE/EN).
+  - Seams: `HealthComponent.heal_mult`, `EnemyBase.immobile` (no knockback,
+    no shove) and `_setup_prop_visual` (an object that fights wears a kit
+    prop with the character outline), `EnemyBase.dismiss()` (gone without a
+    death on every machine), `EncounterSpawner.spots` (fixed places),
+    `loot_kind` `none`, hidden interactables show no prompt.
+  - Four props (trial altar, curse lantern, wisp nest, jackal den), three
+    map icons (trial, nest, cursed) and their legend rows.
+  - Smoke 684 green (blessings and the save, the heal cut, the graveyard
+    from curse to priest, a nest breeding, a trial passed, struck and out
+    of time, the shard set, every text formats alike in DE and EN); net
+    scenario `trial` green (c1 passes, c2 is
+    struck past the limit and gets nothing, the server keeps the shrine).
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

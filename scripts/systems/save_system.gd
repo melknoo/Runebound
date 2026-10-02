@@ -260,7 +260,7 @@ static func new_character(class_id: StringName, char_name: String) -> Dictionary
 	return {"name": char_name, "class_id": String(class_id), "known_abilities": [], "loadout": [], "gold": 0,
 		"inventory": [], "equipped": {}, "progression": {"level": 1, "xp": 0, "talents": {}},
 		"waypoints": [], "map_discovered": [], "discovered": [],
-		"lore_read": [], "collected": [], "gathered": {},
+		"lore_read": [], "collected": [], "gathered": {}, "blessings": [],
 		"world": {"zone": HUB_SCENE, "flags": {}, "camps": {}}}
 
 
@@ -432,6 +432,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 	player.map_discovered = PackedStringArray(ch.get("map_discovered", []))
 	player.lore_read = PackedStringArray(ch.get("lore_read", []))  # M12, optional
 	player.collected = PackedStringArray(ch.get("collected", []))
+	player.blessings = PackedStringArray(ch.get("blessings", []))  # M12 phase 6, optional
 	var picked: Variant = ch.get("gathered", {})
 	player.gathered = (picked as Dictionary).duplicate() if picked is Dictionary else {}
 	player.chronicle_changed.emit()
@@ -446,7 +447,8 @@ static func character_dict(player: Player) -> Dictionary:
 		"inventory": [], "equipped": {}, "progression": player.progression.to_dict(),
 		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered),
 		"discovered": Array(player.discovered_zones),
-		"lore_read": Array(player.lore_read), "collected": Array(player.collected), "gathered": player.gathered.duplicate()}
+		"lore_read": Array(player.lore_read), "collected": Array(player.collected), "gathered": player.gathered.duplicate(),
+		"blessings": Array(player.blessings)}
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:

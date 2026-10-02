@@ -159,5 +159,117 @@
 	"map.camp.bone_field": {
 		"en": "Carrion den",
 		"de": "Aasbau"
+	},
+	"blessing.ashwick": {
+		"en": "Blessing of Ashwick",
+		"de": "Segen von Ashwick"
+	},
+	"blessing.ashwick.effect": {
+		"en": "+3 % maximum health",
+		"de": "+3 % maximales Leben"
+	},
+	"blessing.charwood": {
+		"en": "Blessing of the Charwood",
+		"de": "Segen des Kohlwalds"
+	},
+	"blessing.charwood.effect": {
+		"en": "+2 % damage",
+		"de": "+2 % Schaden"
+	},
+	"blessing.emberfall": {
+		"en": "Blessing of Emberfall",
+		"de": "Segen von Emberfall"
+	},
+	"blessing.emberfall.effect": {
+		"en": "+2 % movement speed",
+		"de": "+2 % Bewegungstempo"
+	},
+	"blessing.shards": {
+		"en": "Blessing of the Shattered Rune",
+		"de": "Segen der Zerbrochenen Rune"
+	},
+	"blessing.shards.effect": {
+		"en": "+3 % maximum health",
+		"de": "+3 % maximales Leben"
+	},
+	"ui.blessing.gained": {
+		"en": "A rune blessing: %s (%s)",
+		"de": "Ein Runensegen: %s (%s)"
+	},
+	"ui.chronicle.blessings": {
+		"en": "Rune blessings: %d / %d",
+		"de": "Runensegen: %d / %d"
+	},
+	"ui.prompt.trial": {
+		"en": "Begin the trial",
+		"de": "Prüfung beginnen"
+	},
+	"ui.trial.rule": {
+		"en": "Clear the waves in %d s, struck at most %d times",
+		"de": "Besiege die Wellen in %d s, höchstens %d-mal getroffen"
+	},
+	"ui.trial.status": {
+		"en": "%s  ·  %d s  ·  struck %d / %d",
+		"de": "%s  ·  %d s  ·  getroffen %d / %d"
+	},
+	"ui.trial.passed": {
+		"en": "Trial passed",
+		"de": "Prüfung bestanden"
+	},
+	"ui.trial.struck": {
+		"en": "Trial cleared - but you were struck too often for the blessing",
+		"de": "Prüfung geschafft - doch du wurdest für den Segen zu oft getroffen"
+	},
+	"ui.trial.failed": {
+		"en": "The trial failed: the time ran out",
+		"de": "Die Prüfung ist gescheitert: Die Zeit ist um"
+	},
+	"ui.trial.carried": {
+		"en": "%s: you carry it already",
+		"de": "%s: Du trägst ihn bereits"
+	},
+	"trial.trial_v": {
+		"en": "Trial of the Restless",
+		"de": "Prüfung der Ruhelosen"
+	},
+	"trial.trial_f": {
+		"en": "Trial of the Charwood",
+		"de": "Prüfung des Kohlwalds"
+	},
+	"trial.trial_b": {
+		"en": "Trial of the Carrion",
+		"de": "Prüfung der Aasbrut"
+	},
+	"ui.cursed.enter": {
+		"en": "Cursed ground: healing -30 %",
+		"de": "Verfluchter Boden: Heilung -30 %"
+	},
+	"ui.cursed.lifted": {
+		"en": "The curse lifts",
+		"de": "Der Fluch weicht"
+	},
+	"enemy.curse_lantern": {
+		"en": "Curse Lantern",
+		"de": "Fluchlaterne"
+	},
+	"enemy.wisp_nest": {
+		"en": "Smouldering Stump",
+		"de": "Schwelender Stumpf"
+	},
+	"enemy.jackal_den": {
+		"en": "Jackal Den",
+		"de": "Schakalbau"
+	},
+	"map.trial": {
+		"en": "Trial shrine",
+		"de": "Prüfungs-Schrein"
+	},
+	"map.nest": {
+		"en": "Nest",
+		"de": "Nest"
+	},
+	"map.cursed": {
+		"en": "Cursed graveyard",
+		"de": "Verfluchter Friedhof"
 	}
 }
