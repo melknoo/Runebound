@@ -1375,6 +1375,29 @@ def jackal_den():
 M12_PROPS = M12_PROPS + (trial_altar, curse_lantern, wisp_nest, jackal_den)
 
 
+def tome_lectern():
+    """M12 the tome grotto: a stone lectern with an open tome; runes on its
+    pages in the heroes' accent (it teaches each class its art); 1.2 m."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(HL["basalt"], 3, "masonry")
+    cap = pm.paint(HL["basalt"], 4)
+    leather = pm.paint(HL["rust_hide"], 1)
+    page = pm.paint(HL["bone"], 3)
+    pm.loft(None, [(0.0, 0.32, 0.32, 0, 0), (0.12, 0.24, 0.24, 0, 0), (0.85, 0.15, 0.15, 0, 0), (0.95, 0.22, 0.2, 0, 0)],
+            sides=6, paint=stone)
+    pm.box(None, (0.62, 0.46, 0.06), (0.0, 0.02, 1.0), rot=(0.42, 0, 0), paint=cap)        # the slanted top
+    pm.box(None, (0.56, 0.4, 0.05), (0.0, 0.0, 1.05), rot=(0.42, 0, 0), paint=leather)     # the tome's covers
+    for x in (-0.13, 0.13):
+        pm.box(None, (0.24, 0.34, 0.03), (x, -0.01, 1.085), rot=(0.42, 0, 0.06 * (1 if x > 0 else -1)), paint=page)
+        for k in range(3):
+            pm.box(None, (0.14, 0.02, 0.012), (x, -0.06 + k * 0.07, 1.075 + k * 0.03), rot=(0.42, 0, 0), mat_index=GLOW)
+    finish(pm, "tome_lectern", ROLES["player_accent"]["body"], 0.9)
+
+
+M12_PROPS = M12_PROPS + (tome_lectern,)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,

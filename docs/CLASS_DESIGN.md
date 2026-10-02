@@ -87,6 +87,10 @@ threatens double (ClassData `threat_mult` 2).
 - **Talents** (`Bulwark`, `Earthshaker`, `Runic Warden`, 24 nodes, PROGRESSION_DESIGN).
 - **Gave away** the elemental spells (Ember Lance, Chain Spark, Fracture Rune,
   Storm Step) to the Elementalist.
+- **Tome (M12): Lodestone Rune** - a gold rune at the aim (12 m) arms for
+  0.5 s, then drags every enemy within 6 m 3 m toward its middle (the heavy
+  ones keep their footing), strikes them (12) and taunts them for 2 s; 30
+  Resonance, 15 s. Gathers a scattered pack for the party's area spells.
 
 ### Elementalist, the damage dealer (M10)
 Ranged caster of fire, lightning and frost; Rune Bolts and spell hits build
@@ -114,6 +118,11 @@ tank). Burn, Shock and Chill and their interactions moved with the spells.
   right hand (material slot 2, so a legendary weapon like Cindermaw swaps its
   look). A clip for every spell; Rune Bolt and the aimed spells play on the
   upper body, so casting never roots the legs.
+
+- **Tome (M12): Hoarfrost Fan** - a 60-degree fan of rime 7 m ahead, 20
+  Frost and Chill; enemies already Chilled take half again as much and freeze
+  in place for 1 s; 20 Aether, 8 s. The third frost spell, the answer to the
+  bone field's jackals at close range.
 
 ### Root druid, the healer (M11)
 Plants breaking out of burnt earth, totems, thorns. User decisions of
@@ -146,6 +155,10 @@ level 1.
 - **Legendaries:** Heartwood Idol (the grove roots enemies stepping in),
   Ashbloom Seed (Mending Bloom doubles below 35 %), Thornmother's Crown
   (two more thorns).
+- **Tome (M12): Rootwalk** - down into the roots and up to 12 m on in 0.4 s
+  (untouchable like a dodge, never through a wall or over a drop); both ends
+  bloom: allies within 3 m heal 15 and lose their slows (the first debuffs on
+  heroes came with M12); 18 Sap, 12 s. The druid's only movement ability.
 - **Travel no longer heals** (user 2026-09-30, for every class): health (and
   Sap) are kept across zones and in the save; the Runehold hearth heals out
   of combat.

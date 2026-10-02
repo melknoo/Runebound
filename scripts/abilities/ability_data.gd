@@ -30,8 +30,9 @@ extends Resource
 
 ## M07b: how a character comes to know this ability (docs/PROGRESSION_DESIGN.md).
 ## START: known from creation. TRAINER: bought at the hub trainer (level +
-## gold). TALENT: granted while the talent `unlock_power` is learned.
-enum Unlock { START, TRAINER, TALENT }
+## gold). TALENT: granted while the talent `unlock_power` is learned. M12 TOME:
+## taught by the tome in the Charwood's sealed grotto (one per class).
+enum Unlock { START, TRAINER, TALENT, TOME }
 ## M10: holding its key keeps firing it (the Elementalist's Rune Bolt).
 @export var repeat_while_held: bool = false
 ## M10 threat: enemies take this ability's damage x this as threat (tank
@@ -44,6 +45,20 @@ enum Unlock { START, TRAINER, TALENT }
 @export var learn_price: int = 0
 ## TALENT unlocks: the power id Player.has_power() must report.
 @export var unlock_power: StringName = &""
+
+
+## M12: the name players read - the text table's "ability.<id>" (DE/EN) where
+## there is one (the abilities from M12 on), else display_name.
+func title() -> String:
+	var key := "ability.%s" % id
+	var text := Texts.t(key)
+	return display_name if text == key else text
+
+
+func summary() -> String:
+	var key := "ability.%s.desc" % id
+	var text := Texts.t(key)
+	return description if text == key else text
 
 
 func roll_hit(source_pos: Vector3, damage_mult: float = 1.0, bonus_crit: float = 0.0) -> HitInfo:

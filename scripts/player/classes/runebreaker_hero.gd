@@ -47,8 +47,12 @@ var _leap_to: Vector3 = Vector3.ZERO
 var _ward: MeshInstance3D = null
 
 
+var lodestone_rune: AbilityData   # M12: the tome's rune that drags a pack together
+
+
 func _load_abilities() -> void:
 	super()
+	lodestone_rune = ability(&"lodestone_rune")
 	cleave = ability(&"rune_cleave")
 	earthbreaker = ability(&"earthbreaker")
 	runic_guard = ability(&"runic_guard")
@@ -72,6 +76,7 @@ func _register_actions() -> void:
 		&"rune_chain": try_rune_chain,
 		&"warden_leap": try_warden_leap,
 		&"warding_rune": try_warding_rune,
+		&"lodestone_rune": try_lodestone_rune,
 	})
 
 
@@ -80,7 +85,8 @@ func _anim_profile() -> Dictionary:
 	(profile["actions"] as Dictionary).merge({&"cleave_l": &"cleave_l", &"cleave_r": &"cleave_r",
 		&"earthbreaker": &"earthbreaker_rise", &"earthbreaker_impact": &"earthbreaker_impact",
 		&"resonance_burst": &"resonance_burst", &"rune_challenge": &"challenge",
-		&"warden_leap": &"earthbreaker_rise", &"warden_leap_land": &"earthbreaker_impact", &"rune_chain": &"ember"})
+		&"warden_leap": &"earthbreaker_rise", &"warden_leap_land": &"earthbreaker_impact", &"rune_chain": &"ember",
+		&"lodestone_rune": &"ember"})
 	# instant casts keep the legs running: upper-body layer only
 	(profile["upper"] as Dictionary).merge({&"runic_guard": &"runic_guard", &"rune_wall": &"block",
 		&"warding_rune": &"fracture_rune"})
@@ -583,6 +589,57 @@ func _land_leap() -> void:
 			gain_resonance(warden_leap.resonance_gain_per_hit)
 	if not hits.is_empty():
 		GameFeel.hitstop(hits, 0.05)
+
+
+# ---------------------------------------------------------------------------
+# M12 tome: Lodestone Rune (a rune at the aim drags a pack together, taunts it)
+# ---------------------------------------------------------------------------
+
+func try_lodestone_rune() -> bool:
+	if not knows(&"lodestone_rune") or state != State.MOVE or _on_cooldown(&"lodestone_rune"):
+		return false
+	var cost := resource_cost(&"lodestone_rune")
+	if resonance < cost:
+		ui_denied()
+		return false
+	spend_resonance(cost)
+	_set_cooldown(&"lodestone_rune", lodestone_rune.cooldown)
+	var at := _rune_aim(lodestone_rune.projectile_speed)
+	var rune := LodestoneRune.new()
+	rune.setup(lodestone_rune, self)
+	rune.position = at  # before add_child: the ring is drawn from there
+	get_tree().current_scene.add_child(rune)
+	hero_fx(&"lodestone_rune", [at, rune.radius, rune.arm_time])  # puppets lay a visual copy
+	var to := at - global_position
+	to.y = 0.0
+	if to.length() > 0.2:
+		_visual.rotation.y = atan2(-to.x, -to.z)
+		_aim_hold_until = Time.get_ticks_msec() + AIM_HOLD_MSEC
+	cooldowns_changed.emit()
+	action_started.emit(&"lodestone_rune")
+	return true
+
+
+## The ground under the aim, at most `reach` away; without a camera (a bot)
+## the middle of the enemies along the aim, else `reach` ahead.
+func _rune_aim(reach: float) -> Vector3:
+	var offset := Vector3.ZERO
+	if camera_rig != null:
+		var exclude: Array[RID] = [get_rid()]
+		var aim_point := camera_rig.get_aim_point(exclude)
+		offset = Vector3(aim_point.x - global_position.x, 0.0, aim_point.z - global_position.z)
+	else:
+		var near := _enemies_near(global_position, reach)
+		if near.is_empty():
+			offset = aim_direction() * reach
+		else:
+			for e in near:
+				offset += e.global_position - global_position
+			offset /= float(near.size())
+		offset.y = 0.0
+	if offset.length() > reach:
+		offset = offset.normalized() * reach
+	return ZoneBase.ground_under(self, global_position + offset, 0.02)
 
 
 # ---------------------------------------------------------------------------

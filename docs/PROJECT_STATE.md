@@ -235,6 +235,23 @@ only the new texts bilingual, the first start follows the system language).
     of time, the shard set, every text formats alike in DE and EN); net
     scenario `trial` green (c1 passes, c2 is
     struck past the limit and gets nothing, the server keeps the shrine).
+- **Phase 7 (built): the tome and its three abilities.**
+  - **The tome** (`Tome`) lies on a stone lectern at the back of the
+    Charwood's sealed grotto (cave_tome; the boulder puzzle on the hidden
+    ledge opens it). [E] opens its text (DE/EN) and teaches the reader the
+    tome ability of their own class (`AbilityData.Unlock.TOME`, one per
+    class, +150 XP, per character); it then waits in the loadout (K).
+  - **Lodestone Rune** (Runebreaker), **Hoarfrost Fan** (Elementalist),
+    **Rootwalk** (Druid) - see CLASS_DESIGN. Rootwalk is a hero state of its
+    own (`Player.State.ROOTWALK`); its blooms heal like the druid's other
+    heals and clear slows through a new ally effect (`ally_cleanse`, applied
+    by the ally's owner).
+  - New ability names and descriptions come from the text table
+    (`AbilityData.title()` / `summary()`, DE/EN); `debug_learn_all` knows the
+    tome abilities too. Three icons (ui.py), the lectern prop.
+  - Smoke 689 green (the tome per class, the rune's pull and taunt, the
+    fan's cone and freeze, the walk and its bloom); net `heal` green with
+    the Rootwalk bloom taking a slowed tank's slow across the net.
 
 ## M17a Menus & settings (pulled forward from M17, built 2026-10-01, the user's playtest is the gate)
 The user found that picking a character on the title went straight into a

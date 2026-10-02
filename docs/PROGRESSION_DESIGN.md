@@ -189,7 +189,10 @@ combat (the Abilities tab, K; the sprint's 3 s rule). A newly learned ability
 takes the first free slot; a forgotten one (a respec) leaves its slot. M10
 builds 8 pool abilities per class; abilities join the pool through the class
 trainer, the talent tree and, from M12-M14, quests, bosses and tomes. See
-CLASS_DESIGN "Three roles".
+CLASS_DESIGN "Three roles". M12 adds the first tome (`AbilityData.Unlock.TOME`):
+in the Charwood's sealed grotto (the boulder on the hidden ledge opens it) it
+teaches every reader the tome ability of their own class, once per
+character (+150 XP); the trainer never sells it.
 
 ## Save format
 SaveGame **v6** (M10): `{version, characters: [{name, class_id,

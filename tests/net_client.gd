@@ -378,7 +378,8 @@ class Driver extends Node:
 			"heal":
 				# M11: c2 (a hurt Runebreaker) keeps the server's dummy busy; c1 (a
 				# Druid) heals it with Mending Bloom and wraps it in a shield - both
-				# cross the server as HERO_FX and land on c2's own hero.
+				# cross the server as HERO_FX and land on c2's own hero. M12: then c2
+				# is slowed, and c1's Rootwalk bloom beside it takes the slow away.
 				if not await _in_zone():
 					return
 				var hz := get_tree().current_scene as ZoneBase
@@ -398,7 +399,11 @@ class Driver extends Node:
 						return
 					if not await _until(func() -> bool: return hero.barrier > 0.0, 20.0, "the druid's shield arriving"):
 						return
-					await _seconds(3.0)  # stay while the druid sees the shield in the party frames
+					hero.apply_slow(0.4, 60.0)
+					if not await _until(func() -> bool: return is_zero_approx(hero.slow_pct), 40.0,
+							"the druid's Rootwalk taking the slow (%.0f %%)" % (hero.slow_pct * 100.0)):
+						return
+					await _seconds(2.0)  # stay while the druid finishes
 					_finish("ok")
 				else:
 					var druid := hz.player as DruidHero
@@ -426,6 +431,17 @@ class Driver extends Node:
 					if not await _until(func() -> bool: return tank.barrier > 0.0, 20.0, "the tank's shield in its state"):
 						return
 					await _seconds(1.0)
+					# M12: beside the tank, then down into the roots: the bloom where it starts
+					druid.global_position = hz.ground_point(tank.global_position + Vector3(1.5, 0, 0), 0.2)
+					druid.velocity = Vector3.ZERO
+					await _seconds(1.0)
+					druid.learn_ability(&"rootwalk")
+					druid.reset_cooldowns()
+					druid.resonance = druid.class_data.max_resource
+					if not druid.try_rootwalk():
+						_finish("fail: Rootwalk refused")
+						return
+					await _seconds(3.0)
 					_finish("ok")
 			"enemy_types":
 				# The server spawns every enemy type (low health) once both heroes are in.

@@ -62,8 +62,11 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 		light.shadow_enabled = false
 		zone.dressing().add_child(light)
 		light.global_position = Vector3(centre.x, floor_y + 2.6, centre.z) - fwd * 0.8
-	var out := {"walls": walls, "roof": roof, "centre": centre, "chest": null, "door": null, "puzzle": null}
-	if not bool(poi.get("tome", false)):
+	var out := {"walls": walls, "roof": roof, "centre": centre, "chest": null, "door": null, "puzzle": null, "tome": null}
+	if bool(poi.get("tome", false)):  # M12 phase 7: the tome on its lectern at the back
+		var tp: Vector3 = at.call(0.0, -hd + 1.2)
+		out["tome"] = Tome.build(zone, tp, yaw)
+	else:
 		var cp: Vector3 = at.call(0.0, -hd + 1.2)
 		out["chest"] = PoiBuilder.chest(zone, {"id": String(poi.get("id", "")) + "_chest", "rarity_bias": 1,
 			"pos": [cp.x, cp.z], "yaw": yaw}, Vector3(cp.x, 0.0, cp.z))

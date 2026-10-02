@@ -32,6 +32,10 @@ const TOTEM_ROOT_TIME := 1.5
 ## Heart of the Grove: grove and totem last this much longer.
 const HEART_OF_THE_GROVE := 1.5
 
+## M12 Rootwalk: it never ends nearer than this to a wall or a drop.
+const ROOTWALK_STEP := 0.8
+const ROOTWALK_DROP := 1.6
+
 ## Abilities that go to the heal target (Player.pick_heal_target).
 const TARGETED_HEALS: Array[StringName] = [&"mending_bloom", &"barkskin", &"regrowth"]
 
@@ -45,6 +49,9 @@ var renewal_grove: AbilityData
 var thornfield: AbilityData
 var growth_totem: AbilityData
 var wild_bloom: AbilityData
+var rootwalk: AbilityData   # M12 tome: through the roots, a bloom at both ends
+var _walk_from := Vector3.ZERO
+var _walk_to := Vector3.ZERO
 
 
 func _load_abilities() -> void:
@@ -58,6 +65,7 @@ func _load_abilities() -> void:
 	thornfield = ability(&"thornfield")
 	growth_totem = ability(&"growth_totem")
 	wild_bloom = ability(&"wild_bloom")
+	rootwalk = ability(&"rootwalk")
 
 
 func _register_actions() -> void:
@@ -72,6 +80,7 @@ func _register_actions() -> void:
 		&"thornfield": try_thornfield,
 		&"growth_totem": try_growth_totem,
 		&"wild_bloom": try_wild_bloom,
+		&"rootwalk": try_rootwalk,
 	})
 
 
@@ -81,10 +90,22 @@ func _register_actions() -> void:
 func _anim_profile() -> Dictionary:
 	var profile := super()
 	(profile["actions"] as Dictionary).merge({&"root_grasp": &"root_grasp", &"renewal_grove": &"grove",
-		&"growth_totem": &"totem", &"wild_bloom": &"bloom"})
+		&"growth_totem": &"totem", &"wild_bloom": &"bloom", &"rootwalk": &"root_grasp"})
 	(profile["upper"] as Dictionary).merge({&"thorn_volley": &"thorn", &"mending_bloom": &"mend",
 		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield"})
 	return profile
+
+
+func _process_class_state(delta: float) -> void:
+	if state == State.ROOTWALK:
+		_process_rootwalk(delta)
+	else:
+		super(delta)
+
+
+## Rootwalk is committed: no dodge out of the roots halfway.
+func _dodge_allowed() -> bool:
+	return state != State.ROOTWALK
 
 
 func shows_heal_target() -> bool:
@@ -438,3 +459,76 @@ func try_wild_bloom() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"wild_bloom")
 	return true
+
+
+# ---------------------------------------------------------------------------
+# M12 tome: Rootwalk (down into the roots, up to 12 m on; both ends bloom)
+# ---------------------------------------------------------------------------
+
+func try_rootwalk() -> bool:
+	if not _ready_for(&"rootwalk") or not _pay(&"rootwalk"):
+		return false
+	_set_cooldown(&"rootwalk", rootwalk.cooldown)
+	var dir := _move_input_dir()
+	if dir == Vector3.ZERO:
+		dir = aim_direction()
+		dir.y = 0.0
+	dir = dir.normalized() if dir.length() > 0.01 else facing()
+	_walk_from = global_position
+	_walk_to = _rootwalk_end(dir, rootwalk.projectile_speed)
+	state = State.ROOTWALK
+	_state_timer = 0.0
+	health.invulnerable = true  # untouchable in the roots, like a dodge
+	collision_mask = 0b1000001  # under the enemies, not into them (world + foliage)
+	_visual.rotation.y = atan2(-dir.x, -dir.z)
+	hero_fx(&"rootwalk", [_walk_from, _walk_to, rootwalk.active, rootwalk.aoe_radius])
+	_bloom_at(_walk_from)
+	cooldowns_changed.emit()
+	action_started.emit(&"rootwalk")
+	return true
+
+
+## The far end along `dir`: open ground, no wall or trunk on the way, no
+## drop or climb of more than ROOTWALK_DROP between steps.
+func _rootwalk_end(dir: Vector3, reach: float) -> Vector3:
+	var space := get_world_3d().direct_space_state
+	var last := global_position
+	var travelled := 0.0
+	while travelled + ROOTWALK_STEP <= reach:
+		var next := ZoneBase.ground_under(self, last + dir * ROOTWALK_STEP, 0.0)
+		if absf(next.y - last.y) > ROOTWALK_DROP:
+			break
+		var ray := PhysicsRayQueryParameters3D.create(last + Vector3(0, 0.9, 0), next + Vector3(0, 0.9, 0), 0b1 | Grove.FOLIAGE_LAYER)
+		ray.exclude = [get_rid()]
+		if not space.intersect_ray(ray).is_empty():
+			break
+		last = next
+		travelled += ROOTWALK_STEP
+	return last
+
+
+func _process_rootwalk(delta: float) -> void:
+	_state_timer += delta
+	var k := clampf(_state_timer / maxf(rootwalk.active, 0.05), 0.0, 1.0)
+	var want := _walk_from.lerp(_walk_to, k)
+	velocity = (want - global_position) / maxf(delta, 0.001)
+	velocity.y = 0.0
+	if k >= 1.0:
+		velocity = Vector3.ZERO
+		collision_mask = 0b1000101
+		health.invulnerable = god_mode
+		_bloom_at(global_position)
+		state = State.MOVE
+		_consume_buffer()
+
+
+## A bloom: every ally within the radius (the druid too) heals and loses its
+## slows - the heal goes like the druid's others (HeroFx ally_heal), the
+## cleanse to the ally's owner (ally_cleanse).
+func _bloom_at(at: Vector3) -> void:
+	var zone := ZoneBase.zone_of(self)
+	if zone == null:
+		return
+	for ally in zone.players_within(at, rootwalk.aoe_radius):
+		heal_ally(ally, heal_amount(rootwalk.heal, ally))
+		hero_fx(&"ally_cleanse", [zone.hero_ref(ally)])

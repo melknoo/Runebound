@@ -914,6 +914,120 @@
      "face": 0.9
     }
    ]
+  },
+  {
+   "name": "tome",
+   "player": {
+    "poi": "cave_tome",
+    "offset": [
+     3.0,
+     0.2,
+     -1.57
+    ]
+   },
+   "yaw": 0.41,
+   "pitch": -0.3,
+   "zoom": 1.8,
+   "settle": 0.6
+  },
+  {
+   "name": "tome_lodestone",
+   "class": "runebreaker",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     0,
+     0.2,
+     6
+    ]
+   },
+   "yaw": 0.0,
+   "pitch": -0.4,
+   "zoom": 8.0,
+   "settle": 0.3,
+   "spawn": [
+    {
+     "id": "rusher",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       3.5,
+       0.2,
+       -1.0
+      ]
+     }
+    },
+    {
+     "id": "rusher",
+     "at": {
+      "poi": "trial_b",
+      "offset": [
+       -3.0,
+       0.2,
+       -2.0
+      ]
+     }
+    }
+   ],
+   "actions": [
+    {
+     "learn_abilities": "all"
+    },
+    {
+     "cast": "lodestone_rune",
+     "full": true
+    }
+   ]
+  },
+  {
+   "name": "tome_hoarfrost",
+   "class": "elementalist",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     0,
+     0.2,
+     6
+    ]
+   },
+   "yaw": 0.0,
+   "pitch": -0.35,
+   "zoom": 7.0,
+   "settle": 0.12,
+   "actions": [
+    {
+     "learn_abilities": "all"
+    },
+    {
+     "cast": "hoarfrost_fan",
+     "full": true
+    }
+   ]
+  },
+  {
+   "name": "tome_rootwalk",
+   "class": "druid",
+   "player": {
+    "poi": "trial_b",
+    "offset": [
+     0,
+     0.2,
+     6
+    ]
+   },
+   "yaw": 0.0,
+   "pitch": -0.35,
+   "zoom": 8.0,
+   "settle": 0.2,
+   "actions": [
+    {
+     "learn_abilities": "all"
+    },
+    {
+     "cast": "rootwalk",
+     "full": true
+    }
+   ]
   }
  ]
 }

@@ -271,5 +271,45 @@
 	"map.cursed": {
 		"en": "Cursed graveyard",
 		"de": "Verfluchter Friedhof"
+	},
+	"ability.lodestone_rune": {
+		"en": "Lodestone Rune",
+		"de": "Lockstein-Rune"
+	},
+	"ability.lodestone_rune.desc": {
+		"en": "A rune on the ground ahead (up to 12 m) arms for 0.5 s, then drags every enemy within 6 m 3 m toward it, strikes them and taunts them for 2 s. Costs 30 Resonance.",
+		"de": "Eine Rune vor dir (bis 12 m) lädt sich 0,5 s auf, dann reißt sie jeden Gegner im Umkreis von 6 m 3 m zu sich, trifft ihn und verspottet ihn 2 s. Kostet 30 Resonanz."
+	},
+	"ability.hoarfrost_fan": {
+		"en": "Hoarfrost Fan",
+		"de": "Raureif-Fächer"
+	},
+	"ability.hoarfrost_fan.desc": {
+		"en": "A fan of rime 7 m ahead: Frost damage and Chill. Enemies already Chilled take half again as much and freeze in place for 1 s. Costs 20 Aether.",
+		"de": "Ein Fächer aus Raureif, 7 m weit vor dir: Frostschaden und Kälte. Schon unterkühlte Gegner nehmen die Hälfte mehr und erstarren 1 s. Kostet 20 Äther."
+	},
+	"ability.rootwalk": {
+		"en": "Rootwalk",
+		"de": "Wurzelgang"
+	},
+	"ability.rootwalk.desc": {
+		"en": "Sink into the roots and rise up to 12 m on (untouchable on the way). Both ends bloom: allies within 3 m heal and lose their slows. Costs 18 Sap.",
+		"de": "Tauch in die Wurzeln und komm bis zu 12 m weiter wieder hoch (unterwegs unantastbar). An beiden Enden blüht es: Verbündete im Umkreis von 3 m heilen und verlieren Verlangsamungen. Kostet 18 Saft."
+	},
+	"ui.prompt.read_tome": {
+		"en": "Read the tome",
+		"de": "Den Folianten lesen"
+	},
+	"ui.tome.learned": {
+		"en": "The tome teaches you: %s - put it in a slot in the loadout (%s)",
+		"de": "Der Foliant lehrt dich: %s - leg sie im Loadout (%s) in einen Platz"
+	},
+	"ui.loadout.tome": {
+		"en": "tome: a sealed grotto in the Charwood",
+		"de": "Foliant: eine versiegelte Grotte im Kohlwald"
+	},
+	"lore.kind.tome": {
+		"en": "Tome",
+		"de": "Foliant"
 	}
 }

@@ -447,8 +447,8 @@ func _assign(entry: Dictionary, id: StringName) -> void:
 	(entry["icon"] as TextureRect).texture = Hud.icon(id) if id != &"" else null
 	(entry["key_label"] as Label).modulate = Color.WHITE if id != &"" else Color(0.55, 0.55, 0.6, 0.8)
 	if data != null:
-		entry["name"] = data.display_name
-		entry["desc"] = data.description
+		entry["name"] = data.title()
+		entry["desc"] = data.summary()
 		entry["type"] = data.damage_type
 	elif id == &"dodge":  # Dodge has no AbilityData.
 		entry["name"] = "Dodge"

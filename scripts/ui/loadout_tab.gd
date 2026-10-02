@@ -180,7 +180,7 @@ func refresh() -> void:
 		var id: StringName = player.loadout[i] if i < player.loadout.size() else &""
 		var data := player.ability(id)
 		btn.icon = Hud.icon(id) if id != &"" else null
-		btn.text = "%s   %s" % [InputSetup.slot_label(i), data.display_name if data != null else "(empty)"]
+		btn.text = "%s   %s" % [InputSetup.slot_label(i), data.title() if data != null else "(empty)"]
 		btn.set_pressed_no_signal(i == _selected)
 		btn.add_theme_color_override("font_color", UiTheme.TEXT if data != null else UiTheme.MUTED)
 	for child in _fixed_row.get_children():
@@ -188,7 +188,7 @@ func refresh() -> void:
 	for fixed: Array in [["LMB", player.basic_attack()], ["SPC", &"dodge"]]:
 		var label := Label.new()
 		var fixed_data := player.ability(fixed[1])
-		label.text = "%s  %s  (fixed)" % [fixed[0], fixed_data.display_name if fixed_data != null else "Dodge"]
+		label.text = "%s  %s  (fixed)" % [fixed[0], fixed_data.title() if fixed_data != null else "Dodge"]
 		label.add_theme_color_override("font_color", UiTheme.MUTED)
 		_fixed_row.add_child(label)
 	for child in _pool_box.get_children():
@@ -211,9 +211,11 @@ func _pool_entry(data: AbilityData) -> Button:
 		where = "learned"
 	elif data.unlock == AbilityData.Unlock.TALENT:
 		where = "talent"
+	elif data.unlock == AbilityData.Unlock.TOME:
+		where = Texts.t("ui.loadout.tome")  # M12
 	else:
 		where = "trainer: level %d, %d gold" % [data.learn_level, data.learn_price]
-	btn.text = "%s   -   %s" % [data.display_name, where]
+	btn.text = "%s   -   %s" % [data.title(), where]
 	btn.disabled = not known
 	var color := HitInfo.type_color(data.damage_type) if known else UiTheme.MUTED
 	btn.add_theme_color_override("font_color", color)
@@ -246,8 +248,8 @@ func _render_detail() -> void:
 		_detail_title.text = ""
 		_detail_text.text = "Hover an ability for details. New abilities come from the trainer and the talent tree."
 		return
-	_detail_title.text = data.display_name
-	var parts: PackedStringArray = [data.description]
+	_detail_title.text = data.title()
+	var parts: PackedStringArray = [data.summary()]
 	var dmg := StatSheet.damage_text(player, data)
 	if dmg != "":
 		parts.append(dmg)

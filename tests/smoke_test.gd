@@ -419,12 +419,13 @@ func _run() -> void:
 		"target name plate shows the enemy name")
 	# --- M07b / M10: one ability at the start, the rest are learned; two classes ---
 	var cls := ClassData.load_by_id(&"runebreaker")
-	_check(cls != null and cls.abilities.size() == 9 and cls.basic_attack == &"rune_cleave"
+	_check(cls != null and cls.abilities.size() == 10 and cls.basic_attack == &"rune_cleave"
 		and cls.starting_abilities.size() == 1 and cls.starting_abilities[0] == &"rune_cleave"
 		and cls.trainer_abilities().size() == 6 and cls.trainer_abilities()[0].id == &"earthbreaker"
 		and cls.trainer_abilities()[5].id == &"warding_rune" and cls.ability(&"ember_lance") == null
-		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0),
-		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 8, 6 of them from the trainer")
+		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0)
+		and cls.ability(&"lodestone_rune").unlock == AbilityData.Unlock.TOME,
+		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 9: 6 from the trainer, 1 from the tome")
 	var mage_cls := ClassData.load_by_id(&"elementalist")
 	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 8
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
@@ -602,7 +603,7 @@ func _run() -> void:
 		"I opens the hero window on the inventory tab")
 	lab.hero_ui.close()
 	var sheet_rows := StatSheet.ability_rows(player)
-	_check(sheet_rows.size() == 7 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
+	_check(sheet_rows.size() == 8 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
 		and sheet_rows[1]["id"] == &"earthbreaker" and sheet_rows[1]["key"] == "RMB" and sheet_rows[6]["key"] == "-",
 		"character sheet lists the known abilities in class order with their slot keys")
 	var d_pct := player.stat(&"damage_pct")
@@ -2408,7 +2409,7 @@ func _run() -> void:
 	player.restore_loadout([])
 	SaveGame.reload_from_disk()
 	SaveGame.restore_player(player)
-	_check(player.gold == 123 and player.known_abilities.size() == 7 and player.knows(&"warding_rune")
+	_check(player.gold == 123 and player.known_abilities.size() == 8 and player.knows(&"warding_rune")
 		and player.loadout == ([&"rune_challenge", &"rune_wall", &"earthbreaker", &"warden_leap"] as Array[StringName]),
 		"save restores gold, the learned abilities and the loadout (%s)" % str(player.loadout))
 	var restored_names: Array[String] = []
@@ -3207,8 +3208,10 @@ func _run() -> void:
 		"the animals: hares in the ash, crows on the bones, none in the burnt forest; %d around the hero, no bodies, no enemies" % crit_count)
 	var hare := Critter.create(highlands, Critter.Kind.HARE, hero12.global_position + Vector3(5.0, 0, 0))
 	var crow := Critter.create(highlands, Critter.Kind.CROW, hero12.global_position + Vector3(-5.0, 0, 0))
-	for i in 40:
+	var flee_t := 0.0
+	while flee_t < 0.8:  # by time: headless process frames come faster than 60 a second
 		await get_tree().process_frame
+		flee_t += get_process_delta_time()
 	var hare_d := hare.global_position.distance_to(hero12.global_position) if is_instance_valid(hare) else 0.0
 	var crow_up := is_instance_valid(crow) and crow.state == Critter.State.FLEE and crow.height > 0.2
 	_check(is_instance_valid(hare) and hare.state == Critter.State.FLEE and hare_d > 6.0 and crow_up,
@@ -3357,6 +3360,109 @@ func _run() -> void:
 	hero12.collected = PackedStringArray()
 	hero12.equipment._recompute()
 	hero12.god_mode = false
+	hero12.health.current_health = hero12.health.max_health
+	await _wait_frames(2)
+	# --- M12 phase 7: the tome and its three abilities ---
+	var tome_ids: Array[String] = []
+	var tome_ok := true
+	for cid: StringName in [&"runebreaker", &"elementalist", &"druid"]:
+		var cdata := ClassData.load_by_id(cid)
+		var tomes := 0
+		for adata in cdata.abilities:
+			if adata != null and adata.unlock == AbilityData.Unlock.TOME:
+				tomes += 1
+				tome_ids.append(String(adata.id))
+		for tdata in cdata.trainer_abilities():
+			tome_ok = tome_ok and tdata.unlock != AbilityData.Unlock.TOME
+		tome_ok = tome_ok and tomes == 1
+	var grotto_tome := highlands.grottos["cave_tome"]["tome"] as Tome
+	var my_tome := Tome.ability_for(hero12)
+	if my_tome != null:
+		hero12.known_abilities.erase(my_tome.id)
+	grotto_tome.use_by(hero12)
+	if highlands.lore_ui != null:
+		highlands.lore_ui.close()
+	_check(tome_ok and ",".join(tome_ids) == "lodestone_rune,hoarfrost_fan,rootwalk" and my_tome != null
+		and hero12.knows(my_tome.id) and hero12.lore_read.has(Tome.LORE_ID)
+		and my_tome.title() == Texts.t("ability." + String(my_tome.id)),
+		"the tome in the sealed grotto teaches each class its own art (%s); the trainer never sells them" % ", ".join(tome_ids))
+	var tome_spot := hl_layout.poi_pos("trial_f")
+	var lode_at := highlands.ground_point(tome_spot + Vector3(-4.0, 0, -8.0), 0.1)
+	var rb7 := Player.create(ClassData.load_by_id(&"runebreaker")) as RunebreakerHero
+	rb7.is_local = false
+	rb7.input_source = InputSource.new()
+	highlands.add_player(rb7)
+	rb7.global_position = highlands.ground_point(tome_spot + Vector3(-4.0, 0, 20.0), 0.2)  # out of their aggro
+	hero12.global_position = highlands.ground_point(tome_spot + Vector3(18.0, 0, 18.0), 0.2)
+	await _wait_frames(3)
+	var pulled_a := highlands.spawn_by_id("rusher", highlands.ground_point(lode_at + Vector3(5.0, 0, 0), 0.2))
+	var pulled_b := highlands.spawn_by_id("caster", highlands.ground_point(lode_at + Vector3(-1.0, 0, -4.6), 0.2))
+	await _wait_frames(2)
+	var flat_d := func(e: Node3D, p: Vector3) -> float: return Vector2(e.global_position.x - p.x, e.global_position.z - p.z).length()
+	var da0: float = flat_d.call(pulled_a, lode_at)
+	var db0: float = flat_d.call(pulled_b, lode_at)
+	var lode := LodestoneRune.new()
+	lode.setup(rb7.lodestone_rune, rb7)
+	lode.position = lode_at
+	highlands.add_child(lode)
+	await _wait_frames(int(rb7.lodestone_rune.startup * 60.0) + 24)
+	var da1: float = flat_d.call(pulled_a, lode_at)
+	var db1: float = flat_d.call(pulled_b, lode_at)
+	_check(da1 < da0 - 2.0 and db1 < db0 - 2.0 and pulled_a.taunted_by() == rb7 and pulled_b.taunted_by() == rb7
+		and pulled_a.health.current_health < pulled_a.health.max_health,
+		"Lodestone Rune: arms, drags the pack in (%.1f -> %.1f m, %.1f -> %.1f m), strikes and taunts it" % [da0, da1, db0, db1])
+	rb7.learn_ability(&"lodestone_rune")
+	rb7.resonance = 100.0
+	var lode_cast := rb7.try_lodestone_rune()
+	_check(lode_cast and is_equal_approx(rb7.resonance, 70.0) and rb7._on_cooldown(&"lodestone_rune") and not rb7.try_lodestone_rune(),
+		"Lodestone Rune costs 30 Resonance and its cooldown")
+	pulled_a.queue_free()
+	pulled_b.queue_free()
+	var el7 := Player.create(ClassData.load_by_id(&"elementalist")) as ElementalistHero
+	el7.is_local = false
+	el7.input_source = InputSource.new()
+	highlands.add_player(el7)
+	el7.global_position = highlands.ground_point(tome_spot + Vector3(6.0, 0, 6.0), 0.2)
+	el7._visual.rotation.y = 0.0
+	el7.intent.aim_dir = Vector3(0, 0, -1)
+	await _wait_frames(3)
+	var cold := highlands.spawn_by_id("rusher", highlands.ground_point(el7.global_position + Vector3(0.3, 0, -4.0), 0.2))
+	var warm := highlands.spawn_by_id("rusher", highlands.ground_point(el7.global_position + Vector3(-1.2, 0, -5.0), 0.2))
+	var aside := highlands.spawn_by_id("rusher", highlands.ground_point(el7.global_position + Vector3(4.5, 0, 1.0), 0.2))
+	await _wait_frames(2)
+	cold.status.apply_chill()
+	el7.learn_ability(&"hoarfrost_fan")
+	el7.resonance = 100.0
+	var fan_cast := el7.try_hoarfrost_fan()
+	_check(fan_cast and cold.status.is_rooted() and not warm.status.is_rooted() and warm.status.has_chill()
+		and warm.health.current_health < warm.health.max_health and is_equal_approx(aside.health.current_health, aside.health.max_health)
+		and is_equal_approx(el7.resonance, 80.0),
+		"Hoarfrost Fan: rime in a cone ahead (Chill), the already Chilled freeze in place; nothing aside is touched")
+	for foe in [cold, warm, aside]:
+		foe.queue_free()
+	var dr7 := Player.create(ClassData.load_by_id(&"druid")) as DruidHero
+	dr7.is_local = false
+	dr7.input_source = InputSource.new()
+	highlands.add_player(dr7)
+	dr7.global_position = highlands.ground_point(tome_spot + Vector3(-7.0, 0, 8.0), 0.2)
+	dr7.intent.aim_dir = Vector3(0, 0, -1)
+	await _wait_frames(3)
+	hero12.global_position = highlands.ground_point(dr7.global_position + Vector3(1.5, 0, 0), 0.2)
+	hero12.apply_slow(0.4, 5.0)
+	hero12.health.current_health = hero12.health.max_health * 0.5
+	var hp_walk := hero12.health.current_health
+	dr7.learn_ability(&"rootwalk")
+	var walk_from := dr7.global_position
+	var walked := dr7.try_rootwalk()
+	var walking := dr7.state == Player.State.ROOTWALK and dr7.health.invulnerable
+	await _wait_frames(int(dr7.rootwalk.active * 60.0) + 8)
+	var walk_len := Vector2(dr7.global_position.x - walk_from.x, dr7.global_position.z - walk_from.z).length()
+	_check(walked and walking and dr7.state == Player.State.MOVE and not dr7.health.invulnerable and walk_len >= 6.0
+		and is_zero_approx(hero12.slow_pct) and hero12.health.current_health > hp_walk,
+		"Rootwalk: through the roots (%.1f m, untouchable), the bloom heals an ally and takes its slow" % walk_len)
+	for h7: Player in [rb7, el7, dr7]:
+		highlands.remove_player(h7)
+		h7.queue_free()
 	hero12.health.current_health = hero12.health.max_health
 	await _wait_frames(2)
 	hero12.global_position = hero_home

@@ -607,6 +607,13 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
 - **Curses (phase 6):** `HealthComponent.heal_mult` scales every heal;
   `CursedGround` sets it on the local hero inside its radius while the
   POI is not solved and resets it when the hero leaves or the curse lifts.
+- **Tome abilities (phase 7):** `AbilityData.Unlock.TOME` (appended);
+  `Tome.ability_for(hero)` picks the class's one. `AbilityData.title()` and
+  `summary()` read `ability.<id>` / `ability.<id>.desc` from the text table
+  and fall back to the .tres text (UI uses them). Rootwalk adds
+  `Player.State.ROOTWALK` (appended) and HeroFx `ally_cleanse` (the ally's
+  owner calls `clear_slow`); Lodestone Rune is a node like Fracture Rune
+  (`visual_only` copies on puppets).
 - **Animals (phase 5):** `CritterField` (one per zone with a view, none on
   the server) keeps `Critter` nodes (Node3D, no physics, own
   AnimationPlayer with animation LOD) around the local hero. They read

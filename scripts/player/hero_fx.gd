@@ -180,6 +180,44 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			Sfx.play("barkskin", target.global_position, -3.0, 0.08)
 			if target.net_role == Player.NetRole.OWNER:
 				target.grant_barrier(float(a[1]), float(a[2]))
+		&"ally_cleanse":  # [ref] - M12 Rootwalk: the target's owner drops its slows
+			var target := _ally(hero, a[0])
+			if target != null and target.net_role == Player.NetRole.OWNER:
+				target.clear_slow()
+		&"lodestone_rune":  # [pos, radius, arm] - M12 tome; puppets lay a visual copy
+			var lode_data := hero.ability(&"lodestone_rune")
+			if hero.net_role == Player.NetRole.PUPPET and lode_data != null:
+				var lode := LodestoneRune.new()
+				lode.visual_only = true
+				lode.setup(lode_data, hero)
+				lode.radius = float(a[1])
+				lode.arm_time = float(a[2])
+				lode.position = a[0] as Vector3
+				scene.add_child(lode)
+		&"hoarfrost_fan":  # [pos, dir, reach] - M12 tome: rime bursts along the cone
+			var from := a[0] as Vector3
+			var fan_dir := a[1] as Vector3
+			var reach := float(a[2])
+			for k in 3:
+				var along := reach * (0.3 + 0.3 * float(k))
+				VFX.frost_burst(scene, from + fan_dir * along, 0.7 + 0.5 * float(k))
+			Sfx.play("frost_nova", from, -3.0, 0.08, 1.25)
+		&"rootwalk":  # [from, to, time, radius] - M12 tome: down at one end, up at the other
+			var walk_from := a[0] as Vector3
+			var walk_to := a[1] as Vector3
+			var green := ArtKit.color("color_roles.nature.body", Color("#7ED957"))
+			VFX.ground_ring(scene, walk_from, green, float(a[3]), 0.4)
+			VFX.dodge_dust(scene, walk_from, Vector3.UP)
+			Sfx.play("root_grasp", walk_from, -4.0, 0.08, 1.2)
+			hero._visual.visible = false
+			hero.get_tree().create_timer(float(a[2])).timeout.connect(func() -> void:
+				if not is_instance_valid(hero) or not hero.is_inside_tree():
+					return
+				hero._visual.visible = true
+				VFX.ground_ring(hero.get_tree().current_scene, walk_to, green, float(a[3]), 0.4)
+				VFX.dodge_dust(hero.get_tree().current_scene, walk_to, Vector3.UP)
+				VFX.heal_motes(hero, 0.4)
+				Sfx.play("mend", walk_to, -4.0, 0.08))
 		&"ally_buff":  # [pos, radius, key, value, duration]
 			var zone := ZoneBase.zone_of(hero)
 			if zone != null:

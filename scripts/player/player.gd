@@ -30,7 +30,7 @@ signal loadout_changed
 signal consumables_changed
 
 ## One enum for every class: the network sends the state as an int.
-enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP, BLOCK, LEAP }
+enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP, BLOCK, LEAP, ROOTWALK }
 
 const MAX_SPEED := 6.8
 const ACCEL := 60.0
@@ -302,7 +302,11 @@ func learn_ability(id: StringName) -> bool:
 ## Tests, captures and the debug overlay: know the whole trainer kit at once.
 func debug_learn_all() -> void:
 	var changed := false
-	for data in class_data.trainer_abilities():
+	var kit := class_data.trainer_abilities()
+	for data in class_data.abilities:  # M12: the tome's ability too
+		if data != null and data.unlock == AbilityData.Unlock.TOME:
+			kit.append(data)
+	for data in kit:
 		if not known_abilities.has(data.id):
 			known_abilities.append(data.id)
 			changed = true

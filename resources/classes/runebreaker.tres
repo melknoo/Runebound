@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ClassData" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="ClassData" load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/class_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/player/classes/runebreaker_hero.gd" id="10"]
@@ -11,6 +11,7 @@
 [ext_resource type="Resource" path="res://resources/abilities/warding_rune.tres" id="15"]
 [ext_resource type="Resource" path="res://resources/abilities/runic_guard.tres" id="8"]
 [ext_resource type="Resource" path="res://resources/abilities/resonance_burst.tres" id="9"]
+[ext_resource type="Resource" path="res://resources/abilities/lodestone_rune.tres" id="20"]
 
 [resource]
 script = ExtResource("1")
@@ -19,7 +20,7 @@ display_name = "Runebreaker"
 role = "Tank"
 description = "Armored rune warrior. Melee builds Resonance; heavy rune abilities spend it. Taunts, a rune wall and wards hold the enemies' attention and keep the party alive."
 hero_script = ExtResource("10")
-abilities = [ExtResource("2"), ExtResource("4"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("8"), ExtResource("9")]
+abilities = [ExtResource("2"), ExtResource("4"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("15"), ExtResource("8"), ExtResource("9"), ExtResource("20")]
 basic_attack = &"rune_cleave"
 starting_abilities = Array[StringName]([&"rune_cleave"])
 talent_branches = Array[String](["Bulwark", "Earthshaker", "Runic Warden"])

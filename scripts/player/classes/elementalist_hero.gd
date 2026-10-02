@@ -13,6 +13,11 @@ const OVERLOAD_RADIUS := 2.5
 const THUNDERCLAP_RADIUS := 2.0
 ## Deep Freeze roots what Frost Nova chills this long.
 const DEEP_FREEZE_ROOT := 1.0
+## M12 Hoarfrost Fan: half its spread (degrees); what it finds Chilled takes
+## this much more and freezes in place this long.
+const FAN_HALF_ANGLE := 30.0
+const FAN_CHILLED_MULT := 1.5
+const FAN_ROOT := 1.0
 
 # Ability tuning: derived caches of `abilities` (the tests read them by name).
 var rune_bolt: AbilityData
@@ -24,6 +29,7 @@ var frost_nova: AbilityData       # M10: ring of ice, spends Aether
 var flame_wall: AbilityData       # M10: burning line at the aim
 var ball_lightning: AbilityData   # M10: a slow zapping orb
 var ember_fall: AbilityData       # M10: the meteor, spends Aether
+var hoarfrost_fan: AbilityData    # M12 tome: a cone of rime, spends Aether
 
 ## The spell State.CAST is winding up (Ember Lance, Ember Fall).
 var _cast_id: StringName = &""
@@ -45,6 +51,7 @@ func _load_abilities() -> void:
 	flame_wall = ability(&"flame_wall")
 	ball_lightning = ability(&"ball_lightning")
 	ember_fall = ability(&"ember_fall")
+	hoarfrost_fan = ability(&"hoarfrost_fan")
 
 
 func _register_actions() -> void:
@@ -59,6 +66,7 @@ func _register_actions() -> void:
 		&"flame_wall": try_flame_wall,
 		&"ball_lightning": try_ball_lightning,
 		&"ember_fall": try_ember_fall,
+		&"hoarfrost_fan": try_hoarfrost_fan,
 	})
 
 
@@ -69,7 +77,8 @@ func _anim_profile() -> Dictionary:
 	(profile["actions"] as Dictionary).merge({&"ember": &"ember", &"storm_step": &"storm_step",
 		&"frost_nova": &"frost_nova", &"ember_fall": &"ember_fall"})
 	(profile["upper"] as Dictionary).merge({&"rune_bolt": &"bolt", &"chain_spark": &"chain_spark",
-		&"fracture_rune": &"fracture_rune", &"flame_wall": &"flame_wall", &"ball_lightning": &"ball_lightning"})
+		&"fracture_rune": &"fracture_rune", &"flame_wall": &"flame_wall", &"ball_lightning": &"ball_lightning",
+		&"hoarfrost_fan": &"flame_wall"})
 	return profile
 
 
@@ -394,6 +403,51 @@ func try_frost_nova() -> bool:
 		GameFeel.hitstop(hits, 0.05)
 	cooldowns_changed.emit()
 	action_started.emit(&"frost_nova")
+	return true
+
+
+# ---------------------------------------------------------------------------
+# M12 tome: Hoarfrost Fan (a cone of rime; the Chilled freeze in place)
+# ---------------------------------------------------------------------------
+
+func try_hoarfrost_fan() -> bool:
+	if not knows(&"hoarfrost_fan") or state != State.MOVE or _on_cooldown(&"hoarfrost_fan"):
+		return false
+	if resonance < hoarfrost_fan.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(hoarfrost_fan.resonance_cost)
+	_set_cooldown(&"hoarfrost_fan", hoarfrost_fan.cooldown)
+	var dir := aim_direction()
+	dir.y = 0.0
+	dir = dir.normalized() if dir.length() > 0.01 else facing()
+	_visual.rotation.y = atan2(-dir.x, -dir.z)
+	_aim_hold_until = Time.get_ticks_msec() + AIM_HOLD_MSEC
+	var pos := global_position
+	hero_fx(&"hoarfrost_fan", [pos, dir, hoarfrost_fan.aoe_radius])
+	feel_shake(0.15)
+	var struck: Array[Node] = []
+	for node: Node in _query_hurtboxes(pos + Vector3(0, 0.8, 0), hoarfrost_fan.aoe_radius):
+		var e := node as EnemyBase
+		if e == null:
+			continue
+		var to := e.global_position - pos
+		to.y = 0.0
+		if to.length() > 0.8 and rad_to_deg(dir.angle_to(to.normalized())) > FAN_HALF_ANGLE:
+			continue
+		var chilled := e.status.has_chill()
+		var hit := roll_ability_hit(hoarfrost_fan)
+		hit.source_position = pos
+		if chilled:
+			hit.damage *= FAN_CHILLED_MULT
+		if e.take_hit(hit):
+			struck.append(e)
+			if chilled:
+				e.status.apply_root(FAN_ROOT)
+	if not struck.is_empty():
+		GameFeel.hitstop(struck, 0.04)
+	cooldowns_changed.emit()
+	action_started.emit(&"hoarfrost_fan")
 	return true
 
 

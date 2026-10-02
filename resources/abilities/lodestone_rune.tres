@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lodestone_rune"
+display_name = "Lodestone Rune"
+description = "A rune on the ground ahead (up to 12 m) arms for 0.5 s, then drags every enemy within 6 m 3 m toward it, strikes them and taunts them for 2 s. Costs 30 Resonance."
+cooldown = 15.0
+resonance_cost = 30.0
+resonance_gain_per_hit = 0.0
+startup = 0.5
+active = 2.0
+recovery = 0.0
+damage = 12.0
+damage_type = 0
+weight = 1
+knockback = 0.0
+projectile_speed = 12.0
+aoe_radius = 6.0
+applies_burn = false
+applies_chill = false
+applies_shock = false
+crit_chance = 0.08
+crit_multiplier = 1.6
+heal = 0.0
+repeat_while_held = false
+threat_mult = 2.0
+unlock = 3
+learn_level = 1
+learn_price = 0
+unlock_power = &""

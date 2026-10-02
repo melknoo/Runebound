@@ -326,7 +326,8 @@ Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden 
 (Feuerschalen, Runensteine, Felsbrocken, Dodge-Lauf, zwei Grotten, Kletterpfad, POI-Zustand im Koop). Phase 4 gebaut
 (Grabgänger und Klagende im Dorf, Glutborke und Schwelirrlicht im Wald, Gegner-Nahtstellen). Phase 5 gebaut
 (Aschschakal und Aasgeier im Knochenfeld, Hasen und Krähen als Kulisse). Phase 6 gebaut
-(Runensegen, Prüfungs-Schreine, Nester, verfluchter Friedhof mit dem Geist des Priesters).
+(Runensegen, Prüfungs-Schreine, Nester, verfluchter Friedhof mit dem Geist des Priesters). Phase 7 gebaut
+(der Foliant in der versiegelten Grotte: Lockstein-Rune, Raureif-Fächer, Wurzelgang).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons

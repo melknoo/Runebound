@@ -868,6 +868,58 @@ def mk_cave() -> Image.Image:
     return outlined(img)
 
 
+# --- M12 phase 7: the tome's three abilities -----------------------------
+
+def icon_lodestone_rune() -> Image.Image:
+    """A gold rune on the ground with arrows drawn in toward it."""
+    img, d = canvas()
+    hot = rgb(ROLES["resonance"]["hot"])
+    d.ellipse([5, 9, 14, 15], outline=GOLD)                          # the rune ring, seen low
+    d.line([9, 10, 10, 14], fill=hot)
+    d.line([7, 12, 12, 12], fill=hot)
+    for (x0, y0, x1, y1) in ((0, 6, 5, 10), (19, 6, 14, 10), (1, 18, 6, 14), (18, 18, 13, 14)):
+        d.line([x0, y0, x1, y1], fill=GOLD)                          # pulled in
+        d.point((x1, y1), fill=hot)
+    d.polygon([(9, 2), (12, 5), (9, 8), (6, 5)], fill=GOLD)          # the lodestone above it
+    d.point((9, 4), fill=hot)
+    return outlined(img)
+
+
+def icon_hoarfrost_fan() -> Image.Image:
+    """A fan of frost shards spreading from one point."""
+    img, d = canvas()
+    fr = ROLES["frost"]
+    edge, body, core = rgb(fr["edge"]), rgb(fr["body"]), rgb(fr["core"])
+    ox, oy = 9.5, 17.0
+    for k in range(5):
+        a = -math.pi / 2 + (k - 2) * 0.32
+        r = 15.5 if k % 2 == 0 else 12.5
+        tip = (ox + math.cos(a) * r, oy + math.sin(a) * r)
+        side = a + math.pi / 2
+        base = (ox + math.cos(a) * 4.0, oy + math.sin(a) * 4.0)
+        w = 1.6
+        d.polygon([(base[0] + math.cos(side) * w, base[1] + math.sin(side) * w), tip, base], fill=body)
+        d.polygon([base, tip, (base[0] - math.cos(side) * w, base[1] - math.sin(side) * w)], fill=edge)
+        d.point((int(tip[0]), int(tip[1])), fill=core)
+    d.ellipse([7, 15, 12, 19], fill=core)                            # the cold hand it came from
+    return outlined(img)
+
+
+def icon_rootwalk() -> Image.Image:
+    """A root arching under the ground from one bloom to the next."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    b_edge, b_body, b_core = _bark()
+    d.rectangle([0, 9, 19, 10], fill=b_edge)                         # the ground line
+    d.arc([2, 3, 17, 19], 0, 180, fill=b_body, width=2)              # the root under it
+    d.arc([3, 4, 16, 18], 20, 160, fill=b_core)
+    for x in (3, 16):                                                # a bloom at each end
+        d.ellipse([x - 3, 3, x + 2, 8], fill=n_body)
+        img.putpixel((x, 5), n_core)
+        d.point((x - 1, 6), fill=n_edge)
+    return outlined(img)
+
+
 def mk_trial() -> Image.Image:
     """M12 map: a trial shrine (a stele with a rune in the accent)."""
     img, d = canvas12()
@@ -955,7 +1007,9 @@ def main() -> None:
                      ("thorn_volley", icon_thorn_volley), ("mending_bloom", icon_mending_bloom),
                      ("barkskin", icon_barkskin), ("regrowth", icon_regrowth), ("root_grasp", icon_root_grasp),
                      ("renewal_grove", icon_healing_zone), ("thornfield", icon_thornfield),
-                     ("growth_totem", icon_growth_totem), ("wild_bloom", icon_wild_bloom)):
+                     ("growth_totem", icon_growth_totem), ("wild_bloom", icon_wild_bloom),
+                     ("lodestone_rune", icon_lodestone_rune), ("hoarfrost_fan", icon_hoarfrost_fan),
+                     ("rootwalk", icon_rootwalk)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),
