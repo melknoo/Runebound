@@ -160,6 +160,6 @@ func _on_solved() -> void:
 	if zone == null:
 		return
 	var at := _local(SEAL)
-	PoiBuilder.chest(zone, {"id": id + "_chest", "rarity_bias": 1, "pos": [at.x, at.z], "yaw": rotation.y}, Vector3(at.x, 0.0, at.z))
+	PoiBuilder.chest(zone, {"id": id + "_chest", "rarity_bias": 1, "pos": [at.x, at.z], "yaw": rotation.y}, Vector3(at.x, 0.0, at.z), true)  # M13: opens once
 	if PoiBuilder.has_art(zone):
 		VFX.light_pop(zone, at + Vector3(0, 0.6, 0), ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")), 3.0, 7.0, 0.6)

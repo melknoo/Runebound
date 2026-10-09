@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phase 0
-built, below). Latest built milestone: **M12 Highlands with substance**
+Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phases
+0-1 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -56,6 +56,43 @@ abilities, 9 the wrap-up.
     slope up to the gallery, a camp wakes, is saved and comes back only
     with nobody near, the map hides the vault, room names; out through the
     exit in front of the gate, whose seal breaks).
+- **Phase 1 (built): the dungeon rules.**
+  - **Runes** (`DungeonRune`, a PoiPuzzle): a hero within 3 m wakes it for
+    the party (kept in the world); a hero who falls in a dungeon wakes,
+    healed, at the nearest lit rune, else the entrance
+    (`DungeonZone._on_player_died` on the hero's own machine). The Cistern
+    has one before the mid-boss and one before the end boss.
+  - **Boss arenas** (`BossArena` + `DungeonBoss`): a living hero near the
+    middle of the room wakes the boss (level from the registry, the bar on
+    every machine); the boss never leaves its room; once no living hero has
+    stood in the room for 6 s the fight resets (the boss is dismissed, the
+    next try meets it fresh and scaled to the party then); the kill sets the
+    arena's world flag, opens what waits on it and gives every hero a rare
+    (mid-boss) or a class legendary and a rare (end boss). Both Cistern
+    arenas field the placeholder "Arena Warden" until phase 5.
+  - **Gates** (`DungeonGate`): bars in a doorway that open when their inputs
+    hold (world flags, puzzles by id); derived on every machine, never
+    closing on a hero. The basin's gate waits on the mid-boss; the heart's
+    way out on the end boss.
+  - **Chests that open once:** dungeon chests and the Highlands' puzzle,
+    grotto and dodge-run chests keep `chest:<id>` opened in the world; an
+    opened one stands open on the next visit (quietly; online the server's
+    replay tells clients, CHEST_OPENED now carries a `quiet` flag). Free
+    Highlands chests stay per session.
+  - Seams: `EnemyBase.gold_piles` and `loot_kind` `boss` (the Colossus, the
+    Vessel and the dungeon bosses; replaces type checks in the kill reward
+    and the draught roll); `PoiPuzzle.state_applied` / `is_active()`.
+  - **Fix:** the Spire's exit was sealed for a co-op client that loaded it
+    after the Vessel fell (the unlock ran on the server only); it now opens
+    at build from the flag.
+  - Smoke 734 green (the rune and a death beside it, the arena: wake, bar,
+    reset with nobody inside, fresh on the next try, the boss held in its
+    room, the kill: flag, gate, loot; the end boss: legendary, the way out;
+    a chest that stays open, a fallen boss that stays dead, a puzzle chest
+    that keeps its state). Net scenarios `dungeon` (a shared rune, a death,
+    a chest that opens once, a late joiner) and `dungeon_boss` (scaled for
+    two, reset when both leave, felled: the flag and the gate on both)
+    green; `rewards`, `puzzles`, `travel` still green.
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

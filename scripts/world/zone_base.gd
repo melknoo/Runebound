@@ -863,8 +863,8 @@ func blessing_toast(hero: Player, id: StringName) -> void:
 ## spawned by their zones only. An unknown id is a rusher (and a warning).
 const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "warden", "colossus", "vessel",
 	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture",
-	"curse_lantern", "wisp_nest", "jackal_den"]
-const BOSS_TYPES: Array[String] = ["colossus", "vessel"]
+	"curse_lantern", "wisp_nest", "jackal_den", "dungeon_boss"]
+const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss"]
 
 
 static func _enemy_script(id: String) -> GDScript:
@@ -884,6 +884,7 @@ static func _enemy_script(id: String) -> GDScript:
 		"curse_lantern": return CurseLantern
 		"wisp_nest": return WispNest
 		"jackal_den": return JackalDen
+		"dungeon_boss": return DungeonBoss  # M13: the arena placeholder (phase 1)
 	return MeleeRusher
 
 
@@ -1110,8 +1111,8 @@ func _on_enemy_died(enemy: EnemyBase) -> void:
 			killer = player
 		if killer != null:
 			heroes.append(killer)
-	# M07b: every kill pays gold; bosses scatter theirs into several piles.
-	var piles := 4 if enemy is ShatteredVessel else (3 if enemy is AshveinColossus else 1)
+	# M07b: every kill pays gold; bosses scatter theirs into several piles (M13: data).
+	var piles := enemy.gold_piles
 	for hero in heroes:
 		var items: Array[ItemData] = []
 		var item := _roll_kill_item(enemy, hero.class_data.id)  # M07b: drops fit the hero's class

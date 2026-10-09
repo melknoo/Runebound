@@ -71,5 +71,21 @@
 	"area.ci_heart": {
 		"en": "Heart of the Cistern",
 		"de": "Herz der Zisterne"
+	},
+	"ui.dungeon.rune_lit": {
+		"en": "The rune wakes. Fall in here and you rise beside it.",
+		"de": "Die Rune erwacht. Wer hier fällt, erhebt sich neben ihr."
+	},
+	"ui.dungeon.boss_down": {
+		"en": "%s has fallen",
+		"de": "%s ist gefallen"
+	},
+	"map.dungeon.rune": {
+		"en": "Rune stone",
+		"de": "Runenstein"
+	},
+	"enemy.dungeon_boss": {
+		"en": "Arena Warden",
+		"de": "Arenawächter"
 	}
 }

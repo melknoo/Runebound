@@ -7,6 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
+	"dungeon", "dungeon_boss",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -343,6 +344,30 @@ func _update() -> void:
 					verdict = "fail: the server's world did not keep the solved braziers"
 				elif pz.world.get_node_or_null("PuzzleChest_braziers_v") == null:
 					verdict = "fail: no crypt chest on the server"
+				else:
+					verdict = "ok"
+		"dungeon":  # M13: the server's world keeps the lit rune and the opened chest
+			var dz := get_tree().current_scene as CisternZone
+			if dz == null:
+				verdict = "fail: the server is not in the Hollow Cistern"
+			elif not bool(SaveGame.poi_state("ci_rune_ante").get("solved", false)):
+				verdict = "fail: the server's world has no lit rune"
+			elif not bool(SaveGame.poi_state("chest:ci_chest_pump").get("opened", false)):
+				verdict = "fail: the server's world does not keep the opened chest"
+			else:
+				verdict = "ok"
+		"dungeon_boss":  # M13: the arena reset once, started twice, its boss fell (the flag)
+			var bz := get_tree().current_scene as CisternZone
+			if bz == null:
+				verdict = "fail: the server is not in the Hollow Cistern"
+			else:
+				var arena := bz.arenas["ci_arena_keeper"] as BossArena
+				if arena.resets < 1:
+					verdict = "fail: the arena never reset"
+				elif arena.starts < 2:
+					verdict = "fail: the boss woke %d times (2 expected)" % arena.starts
+				elif not SaveGame.has_flag(&"ci_keeper_down"):
+					verdict = "fail: the mid-boss's flag is not set on the server"
 				else:
 					verdict = "ok"
 		"trial":  # M12 phase 6: the server ran the trial to its end and kept it in its world

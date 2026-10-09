@@ -18,6 +18,12 @@ var info: Dictionary = {}
 var camps: Dictionary = {}
 var chests: Dictionary = {}
 var portals: Dictionary = {}
+## M13 phase 1: every shared puzzle (runes included), the runes, the boss
+## arenas by POI id; the gates by door id.
+var puzzles: Dictionary = {}
+var runes: Dictionary = {}
+var arenas: Dictionary = {}
+var gates: Dictionary = {}
 var _map_texture: Texture2D
 var _discover_left: float = 0.0
 var _room_seen: Dictionary = {}
@@ -79,7 +85,7 @@ func _build_zone() -> void:
 		_material_from_texture("res://assets/textures/spire_wall.png", Color(0.22, 0.18, 0.32), 2.5)
 	builder = DungeonBuilder.build(self, layout, floor_mat, wall_mat, _light_color())
 	for poi in layout.pois.pois:
-		var made := DungeonBuilder.build_poi(self, poi)
+		var made := DungeonBuilder.build_poi(self, layout, poi)
 		var id := String(poi.get("id", ""))
 		if made.has("spawner"):
 			camps[id] = made["spawner"]
@@ -87,6 +93,13 @@ func _build_zone() -> void:
 			chests[id] = made["chest"]
 		if made.has("portal"):
 			portals[id] = made["portal"]
+		if made.has("puzzle"):
+			puzzles[id] = made["puzzle"]
+		if made.has("rune"):
+			runes[id] = made["rune"]
+		if made.has("arena"):
+			arenas[id] = made["arena"]
+	_build_gates()
 	var map_path := String(info.get("layout", "")).path_join("map.png")
 	if ResourceLoader.exists(map_path):
 		_map_texture = load(map_path) as Texture2D
@@ -96,6 +109,72 @@ func _build_zone() -> void:
 ## Subclass content after the shell (dressing, ambience, set pieces).
 func _build_dungeon() -> void:
 	pass
+
+
+# ---------------------------------------------------------------------------
+# Gates, flags, death
+# ---------------------------------------------------------------------------
+
+## Bars in every `gate` doorway that waits on something; they follow their
+## inputs (puzzles here, flags in apply_world_flag) and start as they are.
+func _build_gates() -> void:
+	for d in layout.doors:
+		var inputs: Array = d.get("inputs", [])
+		if String(d.get("kind", "")) != "gate" or inputs.is_empty():
+			continue
+		var g := DungeonGate.build(self, d)
+		gates[String(d["id"])] = g
+		for input in inputs:
+			var p := puzzles.get(String(input)) as PoiPuzzle
+			if p != null and not p.state_applied.is_connected(refresh_gates):
+				p.state_applied.connect(refresh_gates)
+	refresh_gates(true)
+
+
+func refresh_gates(instant: bool = false) -> void:
+	for id: String in gates:
+		(gates[id] as DungeonGate).refresh(puzzles, instant)
+
+
+## A world flag was set (a boss fell; co-op: the server's FLAG): gates and
+## exits that wait on it open, the fallen boss's name is told.
+func apply_world_flag(flag: StringName) -> void:
+	refresh_gates()
+	for id: String in portals:
+		var poi := layout.pois.find(id)
+		if String(poi.get("unlock_flag", "")) == String(flag):
+			(portals[id] as Portal).set_locked(false)
+	for id: String in arenas:
+		var a := arenas[id] as BossArena
+		if a.flag != flag:
+			continue
+		if hud != null:
+			hud.hide_boss_bar()
+			hud.toast(Texts.t("ui.dungeon.boss_down", [Texts.t("enemy." + a.boss_id)]), Color(0.55, 0.95, 0.95))
+		if MusicDirector.instance != null:
+			MusicDirector.instance.stinger("victory")
+
+
+## Death: back at the nearest lit rune (else the entrance), healed. Runs on
+## the hero's own machine; the runes' lit state is shared.
+func _on_player_died(p: Player) -> void:
+	p.health.heal_full()
+	p.global_position = respawn_point(p.global_position)
+	p.velocity = Vector3.ZERO
+	p.feel_shake(0.4)
+
+
+func respawn_point(died_at: Vector3) -> Vector3:
+	var best := _player_spawn_point()
+	var best_d := INF
+	for id: String in runes:
+		var r := runes[id] as DungeonRune
+		if r.is_solved():
+			var d := r.global_position.distance_to(died_at)
+			if d < best_d:
+				best_d = d
+				best = r.respawn_point()
+	return best
 
 
 # ---------------------------------------------------------------------------
@@ -146,6 +225,8 @@ static func marker_icon(poi: Dictionary) -> String:
 		"camp": return "camp"
 		"chest": return "chest"
 		"lore": return "lore"
+		"rune": return "waypoint"
+		"arena": return "boss"
 		_: return ""
 
 
@@ -155,6 +236,8 @@ static func marker_label(poi: Dictionary) -> String:
 		"camp": return Texts.t("map.dungeon.enemies")
 		"chest": return "Treasure"
 		"lore": return Texts.t(String(poi.get("text", "")) + ".title")
+		"rune": return Texts.t("map.dungeon.rune")
+		"arena": return Texts.t("enemy." + String(poi.get("boss", "dungeon_boss")))
 		_: return ""
 
 

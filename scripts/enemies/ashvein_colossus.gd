@@ -35,6 +35,8 @@ func _init() -> void:
 	move_speed = 2.6
 	body_color = Color(0.55, 0.3, 0.2)
 	stagger_resist = true
+	loot_kind = &"boss"  # M13: the drop tables and draughts read the tier
+	gold_piles = 3
 
 
 func _ready() -> void:

@@ -245,7 +245,8 @@
    "floor": 0.0,
    "wall_h": 9.0,
    "tags": [
-    "arena"
+    "arena",
+    "combat"
    ],
    "name_key": "area.ci_heart"
   }
@@ -429,7 +430,9 @@
    ],
    "width": 5.0,
    "kind": "gate",
-   "inputs": [],
+   "inputs": [
+    "flag:ci_keeper_down"
+   ],
    "rect": [
     26,
     -42.5,
@@ -1423,39 +1426,69 @@
    ]
   },
   {
-   "id": "ci_camp_basin",
-   "type": "camp",
+   "id": "ci_arena_keeper",
+   "type": "arena",
    "pos": [
     10,
     -40
    ],
-   "radius": 12.0,
-   "composition": [
-    "elite",
-    "rusher",
-    "rusher"
-   ],
-   "spots": [
-    [
-     10,
-     -42
-    ],
-    [
-     6,
-     -37
-    ],
-    [
-     14,
-     -37
-    ]
-   ],
+   "boss": "dungeon_boss",
+   "flag": "ci_keeper_down",
+   "trigger": 9.0,
+   "reward": "mid",
    "room": "ci_basin",
-   "y": 2.0,
-   "spots_y": [
-    2.0,
-    2.0,
-    2.0
-   ]
+   "y": 2.0
+  },
+  {
+   "id": "ci_rune_ante",
+   "type": "rune",
+   "pos": [
+    -16,
+    -42
+   ],
+   "yaw": 0.0,
+   "room": "ci_ante",
+   "y": 2.0
+  },
+  {
+   "id": "ci_rune_threshold",
+   "type": "rune",
+   "pos": [
+    47,
+    21
+   ],
+   "yaw": 0.0,
+   "room": "ci_threshold",
+   "y": 0.0
+  },
+  {
+   "id": "ci_arena_deepmaw",
+   "type": "arena",
+   "pos": [
+    83,
+    28
+   ],
+   "boss": "dungeon_boss",
+   "flag": "ci_deepmaw_down",
+   "trigger": 10.0,
+   "reward": "end",
+   "room": "ci_heart",
+   "y": 0.0
+  },
+  {
+   "id": "ci_exit_heart",
+   "type": "portal",
+   "pos": [
+    96,
+    28
+   ],
+   "yaw": -1.5708,
+   "dest": "highlands",
+   "arrival": "dungeon_e",
+   "label": "ASHEN HIGHLANDS",
+   "unlock_flag": "ci_deepmaw_down",
+   "room": "ci_heart",
+   "y": 0.0
   },
   {
    "id": "ci_camp_threshold",

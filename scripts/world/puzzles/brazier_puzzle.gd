@@ -160,7 +160,7 @@ func _on_solved() -> void:
 		return
 	var at := _local(CHEST_SPOT)
 	var chest := PoiBuilder.chest(zone, {"id": id + "_chest", "rarity_bias": 1, "pos": [at.x, at.z], "yaw": rotation.y + PI},
-		Vector3(at.x, 0.0, at.z))
+		Vector3(at.x, 0.0, at.z), true)  # M13: opens once
 	if chest != null:
 		chest.name = "PuzzleChest_" + id
 	if PoiBuilder.has_art(zone):

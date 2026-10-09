@@ -35,7 +35,7 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 	zone.world.add_child(run)
 	run.global_position = Vector3(a.x, zone.ground_y(a), a.z)
 	run._build(zone)
-	var chest := PoiBuilder.chest(zone, poi)  # the reward at the far end
+	var chest := PoiBuilder.chest(zone, poi, Vector3.INF, true)  # the reward at the far end (M13: opens once)
 	return {"run": run, "chest": chest}
 
 

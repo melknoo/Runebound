@@ -3045,6 +3045,8 @@ func _run() -> void:
 	_check(braz.is_solved() and highlands.world.get_node_or_null("PuzzleChest_braziers_v") != null
 		and bool(SaveGame.poi_state("braziers_v").get("solved", false)),
 		"all three alight at once: solved, the crypt chest is there, the world remembers")
+	_check((highlands.world.get_node_or_null("PuzzleChest_braziers_v") as TreasureChest).persist_key == "chest:braziers_v_chest",
+		"M13: a puzzle's chest opens once (it keeps its state in the world)")
 	var mono := highlands.puzzles["monoliths_x"] as MonolithPuzzle
 	hero12.global_position = mono.global_position + Vector3(0, 0.3, 0)
 	var reach0 := mono.beam_reach()
@@ -4038,6 +4040,77 @@ func _run() -> void:
 			"M13: the Cistern map shows what was found, never the hidden vault (%s)" % ", ".join(known))
 		_check(cistern._room_seen.has("ci_sluice") and Texts.t("area.ci_sluice") != "area.ci_sluice",
 			"M13: rooms announce their names")
+		# --- phase 1: runes, death, the boss arenas, gates, chests that open once ---
+		var rune_ante := cistern.runes["ci_rune_ante"] as DungeonRune
+		_check(not rune_ante.is_solved() and cistern.respawn_point(Vector3(10, 2, -40)).distance_to(cistern._player_spawn_point()) < 0.1,
+			"M13: without a lit rune a fallen hero wakes at the entrance")
+		ch13.global_position = rune_ante.global_position + Vector3(0, 0.2, 1.5)
+		await _wait_frames(3)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		_check(rune_ante.is_solved() and bool(SaveGame.poi_state("ci_rune_ante").get("solved", false)),
+			"M13: a hero beside a rune wakes it (the world keeps it)")
+		ch13.god_mode = false
+		ch13.global_position = Vector3(-4, 2.2, -50)  # in the basin, by its west wall
+		await _wait_frames(2)
+		ch13.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+		await _wait_frames(2)
+		_check(not ch13.health.is_dead and ch13.health.current_health >= ch13.health.max_health - 0.1
+			and ch13.global_position.distance_to(rune_ante.respawn_point()) < 0.6,
+			"M13: a hero who falls wakes healed at the nearest lit rune")
+		ch13.god_mode = true
+		var keeper := cistern.arenas["ci_arena_keeper"] as BossArena
+		var basin_gate := cistern.gates["ci_d_basin_run"] as DungeonGate
+		_check(not keeper.fighting() and not keeper.is_done() and basin_gate != null and not basin_gate.is_open,
+			"M13: the mid-boss sleeps, its gate is shut")
+		ch13.global_position = Vector3(10, 2.2, -36)
+		await _wait_frames(20)
+		_check(keeper.fighting() and keeper.boss.level == 4 and cistern.hud._boss_root != null and cistern.hud._boss_root.visible,
+			"M13: a hero in the basin wakes the mid-boss (level 4, the boss bar)")
+		var first_boss := keeper.boss
+		if first_boss != null:
+			first_boss.take_hit(HitInfo.create(200.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+		ch13.global_position = rune_ante.respawn_point()  # out of the room: nobody left in the fight
+		await _wait_frames(int(BossArena.RESET_GRACE * 60.0) + 40)
+		_check(keeper.resets == 1 and not keeper.fighting() and not is_instance_valid(first_boss) and not cistern.hud._boss_root.visible,
+			"M13: with nobody left in the arena the fight resets (the boss goes, the bar too)")
+		ch13.global_position = Vector3(10, 2.2, -36)
+		await _wait_frames(20)
+		_check(keeper.fighting() and keeper.starts == 2 and is_equal_approx(keeper.boss.health.current_health, keeper.boss.health.max_health),
+			"M13: the next try meets the boss at full health")
+		var keeper_boss := keeper.boss
+		if keeper_boss != null:
+			keeper_boss.global_position = Vector3(40, 2.2, -40)  # pushed out of the room...
+			await _wait_frames(2)
+			_check(DungeonLayout.rect_of(cistern.layout.room("ci_basin")).has_point(Vector2(keeper_boss.global_position.x, keeper_boss.global_position.z)),
+				"M13: a boss never leaves its room")
+			keeper_boss.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+		await _wait_frames(30)
+		var boss_drops := 0
+		for child in cistern.world.get_children():
+			if child is ItemDrop:
+				boss_drops += 1
+		_check(SaveGame.has_flag(&"ci_keeper_down") and keeper.is_done() and basin_gate.is_open and boss_drops >= 1,
+			"M13: the mid-boss falls: its flag, the gate opens, loot (%d drops)" % boss_drops)
+		var maw := cistern.arenas["ci_arena_deepmaw"] as BossArena
+		var heart_exit := cistern.portals["ci_exit_heart"] as Portal
+		_check(heart_exit.locked, "M13: the way out of the heart is sealed while its boss lives")
+		ch13.global_position = Vector3(83, 0.2, 33)
+		await _wait_frames(20)
+		_check(maw.fighting(), "M13: the end boss wakes in the heart")
+		if maw.fighting():
+			maw.boss.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+		await _wait_frames(10)
+		var legendary_from_maw := false
+		for child in cistern.world.get_children():
+			if child is ItemDrop and (child as ItemDrop).item.rarity == ItemData.Rarity.LEGENDARY:
+				legendary_from_maw = true
+		_check(SaveGame.has_flag(&"ci_deepmaw_down") and not heart_exit.locked and legendary_from_maw,
+			"M13: the end boss falls: a legendary, the way out opens")
+		var pump_chest := cistern.chests["ci_chest_pump"] as TreasureChest
+		pump_chest.open(cistern)
+		_check(pump_chest.opened and bool(SaveGame.poi_state("chest:ci_chest_pump").get("opened", false)),
+			"M13: a dungeon chest remembers it was opened")
 		# out through the exit: back at the Cistern gate, whose seal breaks
 		cistern.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_e")
 		for i in 90:
@@ -4066,6 +4139,27 @@ func _run() -> void:
 			_check(seal_gate != null and not seal_gate.locked and back_hl.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_e")),
 				"M13: standing at the gate breaks its seal (remembered by the character)")
 			_check(warren_gate != null and warren_gate.locked, "M13: the Ember Warrens' gate stays sealed")
+			# back in: what was done stays done
+			back_hl.travel_to("res://scenes/hollow_cistern.tscn", "ci_exit")
+			for i in 60:
+				await get_tree().process_frame
+				if get_tree().current_scene is CisternZone:
+					break
+			var cistern2 := get_tree().current_scene as CisternZone
+			_check(cistern2 != null, "M13: into the Cistern again")
+			if cistern2 != null:
+				leave_zone = cistern2
+				await _wait_frames(6)
+				cistern2.player.god_mode = true
+				_check((cistern2.chests["ci_chest_pump"] as TreasureChest).opened, "M13: the opened chest stays open")
+				_check((cistern2.runes["ci_rune_ante"] as DungeonRune).is_solved()
+					and (cistern2.gates["ci_d_basin_run"] as DungeonGate).is_open
+					and not (cistern2.portals["ci_exit_heart"] as Portal).locked,
+					"M13: the lit rune, the open gate and the open way out stay")
+				cistern2.player.global_position = Vector3(10, 2.2, -36)
+				await _wait_frames(30)
+				_check(not (cistern2.arenas["ci_arena_keeper"] as BossArena).fighting() and cistern2.enemy_count() == 0,
+					"M13: a fallen boss stays dead")
 
 	# --- hub shows the spire shortcut once the colossus flag is set ---
 	leave_zone.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate

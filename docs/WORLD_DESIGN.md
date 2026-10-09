@@ -223,8 +223,10 @@ gallery (a light beam) -> the antechamber (a rune) -> the settling basin
 big puzzle and the tome room) -> the Maw's threshold (its lever opens the
 shortcut to the inlet) -> the heart of the cistern (the end boss, the
 Deepmaw). Family: the Drowned (a bloated thrall that bursts into a slowing
-puddle; a channel lurker that strikes from the water). Phase 0 built the
-shell with placeholder camps.
+puddle; a channel lurker that strikes from the water). Phases 0-1 built
+the shell with placeholder camps, two rune stones, both boss arenas (a
+placeholder boss), the gate behind the mid-boss and the way out behind
+the end boss.
 
 ### The Ember Warrens (west gate, the Charwood; planned)
 Ember mines and smelting kilns, black and orange; enemies level 4, the

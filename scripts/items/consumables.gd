@@ -77,7 +77,7 @@ static func price(id: StringName) -> int:
 
 ## Draughts a kill leaves for one hero (its personal roll).
 static func roll_kill(enemy: EnemyBase) -> int:
-	if enemy is AshveinColossus or enemy is ShatteredVessel:
+	if enemy.loot_kind == &"boss":  # M13: every boss (the Colossus, the Vessel, the dungeons')
 		return BOSS_DRAUGHTS
 	if enemy.loot_kind == &"none":
 		return 0  # M12: objects drop nothing

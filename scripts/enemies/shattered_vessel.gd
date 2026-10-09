@@ -40,6 +40,8 @@ func _init() -> void:
 	move_speed = 2.4
 	body_color = Color(0.5, 0.35, 0.75)
 	stagger_resist = true
+	loot_kind = &"boss"  # M13: the drop tables and draughts read the tier
+	gold_piles = 4
 
 
 ## Floating crystal body is far taller than its scale suggests.

@@ -8,6 +8,11 @@ const CHEST_GOLD := Vector2i(40, 60)  # M07b, scaled by item level
 
 var min_rarity_bias: int = 0
 var opened: bool = false
+## M13: "" = a chest of the session (free Highlands chests); otherwise its
+## opened state lives in the world (SaveGame.pois) under this key and it
+## never fills again (dungeon chests, puzzle and grotto chests). Set before
+## add_child.
+var persist_key: String = ""
 ## M09: in co-op every hero this close gets its own purse when the chest opens.
 const PARTY_RANGE := 12.0
 var _requested: bool = false
@@ -30,6 +35,19 @@ func _ready() -> void:
 	col_body.add_child(col)
 	add_child(col_body)
 	_prompt = InteractPrompt.create(self, 1.3)
+	if persist_key != "" and not Net.is_client():
+		_restore_opened.call_deferred()  # deferred: zones set the position after add_child (net_key)
+
+
+## M13 authority: a chest opened in an earlier visit stands open (quietly);
+## online the server's list tells every client (the CHEST_OPENED replay).
+func _restore_opened() -> void:
+	if not bool(SaveGame.poi_state(persist_key).get("opened", false)):
+		return
+	present_open(true)
+	var zone := ZoneBase.zone_of(self)
+	if zone != null and zone.net_world != null:
+		zone.net_world.chest_opened(self, true)
 
 
 ## M06 C5: the common-kit chest (banded body, rune lock, lid hinged at its
@@ -113,6 +131,8 @@ func open(zone: ZoneBase) -> void:
 	if opened:
 		return
 	present_open()
+	if persist_key != "":
+		SaveGame.set_poi_state(persist_key, {"opened": true})
 	var heroes: Array[Player] = []
 	if Net.is_online():
 		heroes = zone.heroes_near(global_position, PARTY_RANGE)
@@ -135,12 +155,16 @@ func open(zone: ZoneBase) -> void:
 
 ## The lid swings open (the authority, and every co-op client when the
 ## server says so).
-func present_open() -> void:
+## `quiet` (M13): already open on arrival - no sound, no flash, no swing.
+func present_open(quiet: bool = false) -> void:
 	if opened:
 		return
 	opened = true
+	_glow_mat.emission_energy_multiplier = 0.2
+	if quiet:
+		_lid.rotation_degrees.x = -70.0
+		return
 	Sfx.play("chest_open", global_position, -2.0)
 	var tw := _lid.create_tween()
 	tw.tween_property(_lid, "rotation_degrees:x", -70.0, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_glow_mat.emission_energy_multiplier = 0.2
 	VFX.flash(get_tree().current_scene, global_position + Vector3(0, 0.8, 0), Color(1.0, 0.9, 0.6), 1.2, 0.15)

@@ -9,6 +9,9 @@ extends Node3D
 ## Subclasses override `act` and `_present`, and `_on_solved` for what
 ## opens. Late joiners get the state when they arrive (NetWorld).
 
+## M13: after every state change on this machine (dungeon gates listen).
+signal state_applied
+
 ## How far beyond its own reach a client's claim may come from (latency).
 const NET_MARGIN := 4.0
 
@@ -33,6 +36,12 @@ func _ready() -> void:
 
 func is_solved() -> bool:
 	return bool(state.get("solved", false))
+
+
+## M13: does this puzzle hold its gates open right now? (Solved, unless a
+## subclass knows better: a plate only while something stands on it.)
+func is_active() -> bool:
+	return is_solved()
 
 
 func in_reach(hero: Player, margin: float = 0.0) -> bool:
@@ -70,6 +79,7 @@ func apply_state(new_state: Dictionary) -> void:
 	if is_solved() and not _solved_shown:
 		_solved_shown = true
 		_on_solved()
+	state_applied.emit()
 
 
 ## Show the state (fire on the braziers, the boulder's place...).

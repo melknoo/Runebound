@@ -162,7 +162,9 @@ func _build_zone() -> void:
 	boss_portal = Portal.new()
 	boss_portal.destination_scene = "res://scenes/hub.tscn"
 	boss_portal.label_text = "RUNEHOLD"
-	boss_portal.locked = true
+	# M13 fix: open at build when the Vessel already fell - also on a co-op
+	# client, which never runs the server's unlock below
+	boss_portal.locked = not SaveGame.has_flag(&"spire_cleansed")
 	world.add_child(boss_portal)
 	boss_portal.global_position = Vector3(0, 0, -33.5)
 

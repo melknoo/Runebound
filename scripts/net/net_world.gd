@@ -170,8 +170,8 @@ func _on_peer_ready(peer: int) -> void:
 		if other != peer:
 			Net.send_to_peer(peer, NetMsg.HERO_SPAWN, _spawn_payload(other))
 	Net.broadcast_zone(NetMsg.HERO_SPAWN, _spawn_payload(peer), Net.CH_EVENTS, peer)
-	for key in _opened_chests:  # and the chests already opened this session
-		Net.send_to_peer(peer, NetMsg.CHEST_OPENED, [key])
+	for key in _opened_chests:  # and the chests already opened (M13: quietly, they were open before)
+		Net.send_to_peer(peer, NetMsg.CHEST_OPENED, [key, true])
 	for poi_id: String in poi_nodes:  # M12: every shared puzzle's state
 		var puzzle := poi_nodes[poi_id] as PoiPuzzle
 		if is_instance_valid(puzzle) and not puzzle.state.is_empty():
@@ -895,13 +895,14 @@ func request_chest(chest: TreasureChest) -> void:
 
 
 ## Server: a chest opened (TreasureChest.open): every client swings its lid.
-func chest_opened(chest: TreasureChest) -> void:
+## `quiet` (M13): one the world kept open from an earlier visit.
+func chest_opened(chest: TreasureChest, quiet: bool = false) -> void:
 	if not Net.is_dedicated():
 		return
 	var key := chest.net_key()
 	if not _opened_chests.has(key):
 		_opened_chests.append(key)
-	Net.broadcast_zone(NetMsg.CHEST_OPENED, [key])
+	Net.broadcast_zone(NetMsg.CHEST_OPENED, [key, quiet])
 
 
 func _find_chest(key: String) -> TreasureChest:
@@ -929,7 +930,7 @@ func _on_chest_opened_msg(_from: int, payload: Array) -> void:
 		return
 	var chest := _find_chest(str(payload[0]))
 	if chest != null:
-		chest.present_open()
+		chest.present_open(payload.size() > 1 and bool(payload[1]))
 
 
 # ---------------------------------------------------------------------------

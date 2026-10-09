@@ -366,7 +366,9 @@ Phasen (jede endet mit Smoke grün, Doku, Commit + Push): 0 Dungeon-Technik + Gr
 **Stand:** Phase 0 gebaut (Dungeon-Bake aus Layout-Daten, Dungeon-Zone mit Boden-Naht, Karte,
 Raumnamen, Camps in ihren Räumen; die Cistern als begehbare Graubox mit Platzhalter-Camps; das
 Cistern-Tor bricht sein Siegel und führt hinein, der Ausgang zurück vor das Tor; die Tore schauen
-jetzt zu ihren Pfaden). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+jetzt zu ihren Pfaden). Phase 1 gebaut (Runen + Tod, Boss-Arenen mit Reset, Gitter-Tore,
+Truhen öffnen sich nur einmal – auch die Rätsel- und Grotten-Truhen der Highlands; Fix: der
+Spire-Ausgang blieb für einen Koop-Client nach dem Vessel zu). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

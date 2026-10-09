@@ -65,7 +65,8 @@ const ENEMY_SCALE := 24
 const GRANT := 25
 ## client -> server: [chest key] - our hero opens this chest
 const CHEST_OPEN := 26
-## server -> client: [chest key] - that chest is open (the lid; purses come as GRANTs)
+## server -> client: [chest key, quiet] - that chest is open (the lid; purses come as GRANTs;
+## M13 quiet: it was open before, no swing)
 const CHEST_OPENED := 27
 ## server -> client: [flag] - a world flag was set (bosses): zones react
 const FLAG := 28

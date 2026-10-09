@@ -588,6 +588,124 @@ class Driver extends Node:
 					return
 				await _seconds(2.0)
 				_finish("ok")
+			"dungeon":
+				# M13 phase 1: in the Hollow Cistern c1 wakes a rune (POI_ACT) and
+				# opens a chest that opens once; c2 sees the rune lit, falls and
+				# wakes beside it; c3 joins late and gets the rune and the open
+				# chest (POI_STATE / CHEST_OPENED replays).
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as CisternZone
+				if zone == null:
+					_finish("fail: not in the Hollow Cistern")
+					return
+				var rune := zone.runes["ci_rune_ante"] as DungeonRune
+				var chest := zone.chests["ci_chest_pump"] as TreasureChest
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				if role == "c3":
+					if not await _until(func() -> bool: return rune.is_solved() and chest.opened, 30.0,
+							"the lit rune and the open chest for a late joiner"):
+						return
+					_finish("ok")
+					return
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				if role == "c1":
+					hero.global_position = rune.global_position + Vector3(0, 0.2, 1.5)
+					hero.velocity = Vector3.ZERO
+					if not await _until(func() -> bool: return rune.is_solved(), 20.0, "the rune lit by c1"):
+						return
+					hero.global_position = chest.global_position + Vector3(1.5, 0.2, 0)
+					hero.velocity = Vector3.ZERO
+					await _seconds(1.5)  # the server's proxy follows (it judges the reach)
+					zone.net_world.request_chest(chest)
+					if not await _until(func() -> bool: return chest.opened, 20.0, "the pump chamber's chest open"):
+						return
+				else:
+					if not await _until(func() -> bool: return rune.is_solved(), 30.0, "c1's rune lit here"):
+						return
+					hero.god_mode = false
+					hero.global_position = Vector3(-4, 2.2, -50)  # the basin, far from the boss's trigger
+					hero.velocity = Vector3.ZERO
+					await _seconds(0.5)
+					hero.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hero.global_position))
+					await _seconds(0.3)
+					if hero.health.is_dead or hero.global_position.distance_to(rune.respawn_point()) > 1.0:
+						_finish("fail: c2 did not wake at the lit rune (at %s)" % hero.global_position)
+						return
+				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
+				await _seconds(3.0)
+				_finish("ok")
+			"dungeon_boss":
+				# M13 phase 1: c1 and c2 wake the Cistern's mid-boss (scaled for two),
+				# both walk out (the arena resets: the boss is gone on both), c1
+				# wakes it again, both strike it down: the flag reaches both and
+				# the gate behind it opens.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as CisternZone
+				if zone == null:
+					_finish("fail: not in the Hollow Cistern")
+					return
+				var world := zone.net_world
+				var gate := zone.gates["ci_d_basin_run"] as DungeonGate
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				var outside := Vector3(-16, 2.2, -38) if role == "c1" else Vector3(-14, 2.2, -38)
+				var inside := Vector3(10, 2.2, -35) if role == "c1" else Vector3(12, 2.2, -35)
+				hero.global_position = outside
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				await _seconds(2.0)
+				var find_boss := func() -> EnemyBase:
+					for id: int in world.enemies:
+						var e := world.enemies[id] as EnemyBase
+						if e != null and is_instance_valid(e) and e.type_id == "dungeon_boss" and e.ai_state != EnemyBase.AIState.DEAD:
+							return e
+					return null
+				hero.global_position = inside
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return find_boss.call() != null, 20.0, "the mid-boss"):
+					return
+				var first := find_boss.call() as EnemyBase
+				if not await _until(func() -> bool: return is_instance_valid(first) and first.health.max_health > 1500.0, 10.0,
+						"the boss scaled for two heroes"):
+					return
+				if zone.hud._boss_root == null or not zone.hud._boss_root.visible:
+					_finish("fail: no boss bar")
+					return
+				await _seconds(2.0)
+				hero.global_position = outside  # both leave: the fight resets
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return find_boss.call() == null, 20.0, "the boss gone after the reset"):
+					return
+				if not await _until(func() -> bool: return not zone.hud._boss_root.visible, 5.0, "the boss bar gone after the reset"):
+					return  # the puppet fades out first, the bar goes with it
+				await _seconds(2.0)
+				hero.global_position = inside
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return find_boss.call() != null, 20.0, "the mid-boss again"):
+					return
+				var struck_at := {"t": 0}
+				var felled := func() -> bool:
+					if SaveGame.has_flag(&"ci_keeper_down"):
+						return true
+					var b := find_boss.call() as EnemyBase
+					if b != null and Time.get_ticks_msec() - int(struck_at["t"]) > 300:
+						struck_at["t"] = Time.get_ticks_msec()
+						var hit := hero.roll_ability_hit(hero.ability(&"rune_cleave"))
+						hit.damage = 250.0
+						b.take_hit(hit)
+					return false
+				if not await _until(felled, 60.0, "the mid-boss felled (the flag)"):
+					return
+				if not await _until(func() -> bool: return gate.is_open, 10.0, "the gate behind the boss open"):
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"rewards":
 				# c1 clears camp_1 and opens chest_south; c2 waits 108 m away.
 				if not await _in_zone():

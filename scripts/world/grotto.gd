@@ -69,7 +69,7 @@ static func build(zone: ZoneBase, poi: Dictionary) -> Dictionary:
 	else:
 		var cp: Vector3 = at.call(0.0, -hd + 1.2)
 		out["chest"] = PoiBuilder.chest(zone, {"id": String(poi.get("id", "")) + "_chest", "rarity_bias": 1,
-			"pos": [cp.x, cp.z], "yaw": yaw}, Vector3(cp.x, 0.0, cp.z))
+			"pos": [cp.x, cp.z], "yaw": yaw}, Vector3(cp.x, 0.0, cp.z), true)  # M13: opens once
 	if String(poi.get("lock", "")) == "boulder":
 		var door_at: Vector3 = at.call(0.0, hd + WALL * 0.5)
 		var door := PoiBuilder.rock(zone, door_at, Vector3(3.2, HEIGHT - 0.2, WALL * 0.9), yaw)

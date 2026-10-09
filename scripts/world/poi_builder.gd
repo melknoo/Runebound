@@ -304,9 +304,12 @@ static func patrol(zone: ZoneBase, poi: Dictionary) -> EncounterSpawner:
 	return spawner
 
 
-static func chest(zone: ZoneBase, poi: Dictionary, at: Vector3 = Vector3.INF) -> TreasureChest:
+## `persist` (M13): it opens once per world (puzzle, grotto and dungeon chests).
+static func chest(zone: ZoneBase, poi: Dictionary, at: Vector3 = Vector3.INF, persist: bool = false) -> TreasureChest:
 	var c := TreasureChest.new()
 	c.min_rarity_bias = int(poi.get("rarity_bias", 0))
+	if persist:
+		c.persist_key = "chest:" + String(poi.get("id", ""))
 	c.set_meta(&"poi_id", String(poi.get("id", "")))
 	zone.world.add_child(c)
 	var pos := pos_of(poi) if at == Vector3.INF else at

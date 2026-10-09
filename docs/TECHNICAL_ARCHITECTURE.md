@@ -676,7 +676,33 @@ Plan with the user's answers: ROADMAP M13.
   `arrival` = the dungeon's exit. The label shows the name and level
   (Texts). The Highlands layout's gate yaws were turned to face their spurs
   in M13 (an arrival 2.2 m in front of a gate landed behind it before).
-- **Net:** protocol 14 (new zones, the turned gates); no new message.
+- **Runes + death (phase 1):** `DungeonRune` (a PoiPuzzle: `solved` = lit,
+  woken by the local hero within 3 m through `request`); `DungeonZone
+  ._on_player_died` (the owner's machine) heals and moves the hero to the
+  nearest lit rune's `respawn_point`, else the spawn.
+- **Boss arenas (phase 1):** `BossArena` (authority): wakes `boss_id`
+  (`ZoneBase.make_enemy`, so boss types spawn) when a living hero inside the
+  room is within `trigger_radius`; resets after `RESET_GRACE` (6 s) with no
+  living hero in the room - by position, since the server never sees a dead
+  proxy - via `EnemyBase.dismiss()` (ENEMY_DESPAWN; the puppet's bar goes
+  with it); the kill sets `flag` (FLAG), calls `zone.apply_world_flag` and
+  gives each hero in `party()` its loot. `DungeonBoss` (EnemyBase): the
+  `boss_health_changed` signal (bars everywhere), `loot_kind` `boss`,
+  `gold_piles`, clamped into `arena_rect` on the authority; as
+  "dungeon_boss" it is the placeholder (one telegraphed slam).
+- **Gates (phase 1):** `DungeonGate` (a door with `inputs`: `flag:<name>`
+  or PoiPuzzle ids, `is_active()`) - bars on the foliage layer, open when
+  all hold, derived on every machine (no state; `refresh_gates` on
+  `state_applied` and in `apply_world_flag`), never closing on a hero in the
+  doorway. Portal POIs with `unlock_flag` open with their flag.
+- **Chests that open once (phase 1):** `TreasureChest.persist_key`
+  (`chest:<id>`, `PoiBuilder.chest(..., persist)`): `open()` saves
+  `{opened}` in `SaveGame.pois`; the authority restores it deferred (the
+  position, and so `net_key`, is set after add_child) with
+  `present_open(quiet)` and `NetWorld.chest_opened(chest, quiet)`; the
+  CHEST_OPENED payload is `[key, quiet]`.
+- **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
+  quiet flag); no new message.
 
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**

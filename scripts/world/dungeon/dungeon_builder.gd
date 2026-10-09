@@ -209,17 +209,42 @@ func _room_lights(r: Dictionary, color: Color) -> void:
 # ---------------------------------------------------------------------------
 
 ## Returns what the zone wants to remember for a POI ({} for most).
-static func build_poi(z: ZoneBase, poi: Dictionary) -> Dictionary:
+static func build_poi(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> Dictionary:
 	match String(poi.get("type", "")):
 		"portal":
-			return {"portal": PoiBuilder.portal(z, poi)}
+			var p := PoiBuilder.portal(z, poi)
+			if poi.has("unlock_flag"):  # M13: the way out behind the end boss
+				p.set_locked(not SaveGame.has_flag(StringName(String(poi["unlock_flag"]))))
+			return {"portal": p}
 		"chest":
-			return {"chest": PoiBuilder.chest(z, poi)}
+			return {"chest": PoiBuilder.chest(z, poi, Vector3.INF, true)}  # dungeon chests open once
 		"camp":
 			return {"spawner": camp(z, poi)}
 		"lore":
 			return {"lore": LoreObject.build(z, poi)}
+		"rune":
+			var r := DungeonRune.build(z, poi)
+			return {"rune": r, "puzzle": r}
+		"arena":
+			return {"arena": arena(z, l, poi)}
 	return {}
+
+
+## A boss's room: the BossArena in its middle, the room's rect as the fight's
+## bounds (the boss stays in, the reset counts who is in).
+static func arena(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> BossArena:
+	var a := BossArena.new()
+	a.arena_id = String(poi.get("id", ""))
+	a.name = "Arena_" + a.arena_id
+	a.boss_id = String(poi.get("boss", "dungeon_boss"))
+	a.flag = StringName(String(poi.get("flag", "")))
+	a.trigger_radius = float(poi.get("trigger", 9.0))
+	a.reward = String(poi.get("reward", "mid"))
+	a.rect = DungeonLayout.rect_of(l.room(String(poi.get("room", ""))))
+	a.set_meta(&"poi_id", a.arena_id)
+	z.world.add_child(a)
+	a.global_position = ZoneLayout.pos_of(poi)
+	return a
 
 
 ## A camp inside a room: fixed spots (the default ring could land in a wall),

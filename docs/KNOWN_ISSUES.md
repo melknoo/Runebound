@@ -228,7 +228,8 @@
   screens); equipment looks (Cindermaw's molten blade) are not either.
 - The Vessel's expanding ring hits by band, not by sphere: a forwarded ring
   hit carries no area, so only i-frames refuse it on the owner's side.
-- Chests reset with the server's session (like singleplayer, not saved).
+- Free chests reset with the server's session (like singleplayer, not
+  saved); since M13 dungeon, puzzle and grotto chests open once per world.
 - Party travel is one-way per request: walking back through the gate right
   after arriving starts a new countdown for everybody.
 - A server killed hard (power, crash) is noticed by clients only after the
@@ -365,8 +366,11 @@
 - **Phase 0 is a greybox:** the Cistern's camps are raiders and wardens,
   the walls and floors wear the Spire's materials, the lights are bare
   omnis; water, puzzles, the Drowned, the bosses and the look come in
-  phases 1-5. Gates (`gate` doors) stand open until the puzzle kit wires
-  them; the secret wall and the shortcut are solid plugs.
+  phases 2-5. Gates (`gate` doors) without inputs stand open until the
+  puzzle kit wires them; the secret wall and the shortcut are solid plugs.
+  Both arenas field the placeholder "Arena Warden" (one slam).
+- Boss reset: 6 s with nobody alive in the room. A hero who kites the boss
+  to a door and steps out resets it too - by design for now.
 - **Protocol 14:** ship a release before the next co-op session.
 - The gate labels are built once: a language switch shows on the next zone
   load.

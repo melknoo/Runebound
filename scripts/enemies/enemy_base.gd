@@ -86,6 +86,8 @@ var targetable: bool = true
 ## M12: its loot tier (`trash` / `brute`; elites and bosses are recognised on
 ## their own) - replaces the class checks in the drop tables.
 var loot_kind: StringName = &"trash"
+## M13: gold piles a kill scatters (bosses 3-4; was a type check in ZoneBase).
+var gold_piles: int = 1
 ## M12 phase 6: an object that fights (a nest, a curse lantern) is never moved:
 ## no knockback, no shove from its neighbours (and stagger_resist: no pull).
 var immobile: bool = false
