@@ -610,7 +610,7 @@ func _spawn_player() -> void:
 	SaveGame.pending_arrival = ""
 	player.global_position = _arrival_point(arrival) if arrival != "" else _player_spawn_point()
 	if Net.pending_spawn != Vector3.INF:  # M09: a late joiner appears next to the party
-		player.global_position = ground_point(Net.pending_spawn, 0.2)
+		player.global_position = ground_point(safe_spawn(Net.pending_spawn), 0.2)
 		Net.pending_spawn = Vector3.INF
 
 	camera_rig = CameraRig.new()
@@ -627,6 +627,12 @@ func _spawn_player() -> void:
 	targeting.player = player
 	targeting.camera_rig = camera_rig
 	player.targeting = targeting
+
+
+## M13: a spot the server picked beside a hero (a late joiner's) made safe:
+## dungeons move it out of walls into the nearest room.
+func safe_spawn(pos: Vector3) -> Vector3:
+	return pos
 
 
 ## Puts a hero into the zone's registry and world (the local one at boot;
@@ -1437,7 +1443,8 @@ func fast_travel(key: String) -> void:
 
 ## M09: display names for the party travel banner.
 const ZONE_LABELS := {"hub": "Runehold", "ashen_highlands": "the Ashen Highlands",
-	"shattered_spire": "the Shattered Spire", "combat_lab": "the Combat Lab"}
+	"shattered_spire": "the Shattered Spire", "combat_lab": "the Combat Lab",
+	"hollow_cistern": "the Hollow Cistern"}
 
 
 static func zone_label(scene_path: String) -> String:

@@ -1,8 +1,8 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-09 · Latest built milestone: **M12 Highlands with substance**
-(built 2026-10-02, below; the user's playtest is the gate; next: M13, see
-ROADMAP). **M17a Menus & settings** (pulled forward
+Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phase 0
+built, below). Latest built milestone: **M12 Highlands with substance**
+(built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
@@ -13,6 +13,49 @@ joins). M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+
+## M13 Dungeons with puzzles (in progress)
+Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the
+Hollow Cistern (water) and the Ember Warrens (embers) now, the co-op dungeon
+as M13b; ~15 min each with short puzzles, one big secret puzzle (a tome per
+dungeon: one new ability per class each), a hidden room, a mid-boss and an
+end boss, a shortcut; a family of two new enemies per dungeon; enemies come
+back, puzzles and bosses stay done; death back to a rune in the dungeon;
+gates open at once with a recommended level; the Spire's music; dungeon
+chests (and the Highlands' puzzle and grotto chests) open once. Phases:
+0 dungeon tech + a greybox Cistern, 1 dungeon rules, 2 puzzle kit
+(mechanics) + puzzle lab, 3 puzzle kit (elements, traps), 4-5 the Cistern
+(content, look, lore; enemies, bosses), 6-7 the Warrens, 8 the tomes and six
+abilities, 9 the wrap-up.
+- **Phase 0 (built): dungeon tech, the greybox Cistern, the gates.**
+  - `tools/worldgen/dungeon_bake.py` + `cistern_layout.py` ->
+    `assets/world/hollow_cistern/` (layout.json, map.png): rooms with floors
+    or slopes, doorways through 2 m wall gaps, merged wall boxes, the rules
+    asserted (TECHNICAL_ARCHITECTURE "Dungeons (M13)"). 16 rooms (corridors
+    included), 16 doors, 83 wall boxes, a 192 m map square.
+  - `DungeonZone` / `DungeonBuilder` / `DungeonLayout` / `DungeonRegistry`
+    (scripts/world/dungeon/), `CisternZone` + `scenes/hollow_cistern.tscn`:
+    floors, slopes, walls, roofs over the secret rooms, plugs in the secret
+    wall and the shortcut, room lights, the exit, four placeholder camps
+    (raiders and wardens until the Drowned come in phase 5) and two chests;
+    the ground seam from the layout, the map (POIs found room by room, the
+    hidden vault never shown), room names (DE/EN), a late joiner's spot moved
+    out of walls (`ZoneBase.safe_spawn`).
+  - Gates: `DungeonGatePortal` - the seal breaks when a hero comes within
+    4.5 m (remembered per character), the label and the map name the
+    dungeon and its recommended level (DE/EN). The Highlands layout's two
+    gates now face their spurs (arrivals landed behind them). The Ember
+    Warrens' gate stays sealed until they are built.
+  - **Protocol 14** (new zones, the turned gates): the server needs a
+    release before co-op.
+  - Smoke 716 green (the gates face their spurs and name their level; the
+    Cistern loads with the Spire's music, the hero lands in the inlet,
+    every POI on its floor, camp spots clear in their rooms, nothing wakes
+    on arrival, the secret wall and the shortcut closed, a spot in a wall
+    moves into a room, the camera keeps its distance in a corridor, the
+    slope up to the gallery, a camp wakes, is saved and comes back only
+    with nobody near, the map hides the vault, room names; out through the
+    exit in front of the gate, whose seal breaks).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

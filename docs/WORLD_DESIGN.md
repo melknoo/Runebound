@@ -55,7 +55,7 @@ combat POI stands on a baked flat pad):
 | Chests | 4 free (+3 in ruins) | detours and dead ends; rare bias in the north |
 | Waypoint shrines | 5 | Ashford, Crossroads Cairn, Eastwatch, Northreach, Colossus Gate |
 | Landmarks | 5 | two rune monoliths, two charred groves, a bone field |
-| Sealed gates | 2 | Hollow Cistern (east), Ember Warrens (west): placeholders for the M13 dungeons |
+| Dungeon gates | 2 | Hollow Cistern (east), Ember Warrens (west): M13 dungeons; the seal breaks when a hero comes close (the Warrens stay sealed until built) |
 | Arena | 1 | the Colossus plateau in the north with its rock ring and the gates to Runehold and the Spire |
 | Gates | 3 | south gate (Runehold), arena gates (Runehold, Spire) |
 
@@ -177,26 +177,65 @@ Not chosen for now (don't propose them again without a reason): weather and
 time of day, world events, NPCs in the open world, more music tracks, a
 richer soundscape, light and sky changes. The music is liked as it is.
 
-## Planned: dungeons (M13)
-User decisions of 2026-09-29. Dungeons should be more varied.
+## Dungeons (M13)
+User decisions of 2026-09-29 and, for M13, of 2026-10-09 (three rounds;
+ROADMAP M13). Dungeons should be more varied.
 - **Puzzle types:** ability puzzles (light braziers with fire, freeze water
   with frost, lead lightning to a gate), mechanical puzzles (pressure plates,
   levers, pushable blocks, light beams and mirrors), traps and skill (blade
   corridors, collapsing floors, timing runs with Dodge). Not chosen: memory
   and logic puzzles (rune sequences, symbol riddles).
-- **Size, mixed:** mostly short (under 2 min) as a break from combat; per
-  dungeon one bigger puzzle that opens a secret.
-- **Secret rooms and branches:** hidden walls, optional paths, bonus chests,
-  shortcuts back to the entrance.
-- **Mid-bosses**, each with its own idea (for example using the room against
-  it).
+- **Every puzzle is solvable alone by every class** with the basic attack,
+  Dodge, [E] and walking: an ability puzzle takes its element from a source
+  in the room (an ember bowl, a frost crystal, a storm coil charge the hero
+  for a few seconds); the Elementalist's own fire, frost and lightning are a
+  shortcut.
+- **Size:** about 15 minutes for a first run - 6-8 rooms, 4-5 short puzzles
+  (under 2 min), one bigger puzzle per dungeon that opens a secret (its
+  tome), 1-2 branches, a secret room behind a hidden wall, a mid-boss with
+  its own idea (the room used against it), an end boss and a shortcut back
+  to the entrance.
+- **Afterwards:** normal enemies come back like camps (~10 min, never while
+  a hero is near); puzzles, shortcuts and secrets stay solved; bosses stay
+  dead (world flags). Dungeon chests open once.
+- **Death:** back at the entrance or the last rune touched in the dungeon;
+  the dungeon keeps its progress; a boss resets (full health) once nobody
+  alive is left in its arena.
+- **Gates** open at once (the seal breaks when a hero comes close) and name
+  a recommended level; free order. Music: the Spire's tracks (no new ones),
+  an ambience loop each.
+- **Enemies:** per dungeon a family of two new types, a mid-boss and an end
+  boss. **Reward of the big secret:** a tome per dungeon, every class learns
+  one new ability from each (role gaps, the dungeon's flavour).
 - Not chosen: in-dungeon events (waves, escapes, escorts), room modifiers.
-- **Normal dungeons** (first: the Hollow Cistern and the Ember Warrens behind
-  the Highlands' sealed gates) are solvable alone and with every class, so
-  an ability puzzle needs a way for each class (derived from the co-op
-  answer, not asked directly).
+- **Interiors** are open-topped like the Spire (walls 6-9 m, the camera may
+  look over them); secret rooms are roofed (they read as rock from outside).
+  Corridors are at least 5 m wide, doors 4 m, combat rooms 16 x 16 m.
 
-**Co-op dungeons** (the user: "there should be extra dungeons for co-op"):
+### The Hollow Cistern (east gate, the Ribs of Emberfall; built from M13 phase 0)
+An old, half-flooded cistern, cold blue-green stone; enemies level 3, the
+bosses 4 (recommended level 4). A ring: the inlet -> the sluice hall (water
+level) with the pump chamber as a branch (plates and a block, a bonus
+chest) -> the frost channel (an ice bridge) -> a slope up to the mirror
+gallery (a light beam) -> the antechamber (a rune) -> the settling basin
+(the mid-boss, the Bloated Keeper: drain the basin with its sluice levers)
+-> the undertow run (sluice blades; a cracked wall hides the vault with the
+big puzzle and the tome room) -> the Maw's threshold (its lever opens the
+shortcut to the inlet) -> the heart of the cistern (the end boss, the
+Deepmaw). Family: the Drowned (a bloated thrall that bursts into a slowing
+puddle; a channel lurker that strikes from the water). Phase 0 built the
+shell with placeholder camps.
+
+### The Ember Warrens (west gate, the Charwood; planned)
+Ember mines and smelting kilns, black and orange; enemies level 4, the
+bosses 5. Ore carts on rails onto plates, kilns to light at once, lightning
+along copper posts to a lift gate, a collapsing floor over lava, fire jets;
+the mid-boss (the Slag Overseer, cooled by a quench trough) and the end
+boss (the Ember Broodmother); the big puzzle is a foundry (crucibles,
+levers, chutes). Family: the Emberbrood (a burrowing cinder beetle, a
+small kiln imp that throws embers). The gate stays sealed until it is built.
+
+**Co-op dungeons** (M13b, the user: "there should be extra dungeons for co-op"):
 - for **3–5 players**, locked for fewer; extra content with their own loot,
   the story is complete without them;
 - built for the roles (CLASS_DESIGN "Three roles"): without a tank or a

@@ -480,7 +480,7 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
   (monolith / charred grove / bone field), `ruin` (`_add_box` walls with
   `masonry_wall` trim, rubble rocks, chest, optional ambush), `arena`
   (rock ring, boss trigger, gates), `dungeon` (locked Portal between rocks),
-  `waypoint`. Shared pieces: `blocker` (invisible collider under tall
+  `waypoint` (M13: `dungeon` is a `DungeonGatePortal`). Shared pieces: `blocker` (invisible collider under tall
   props), `rock` (hull box sunk to the lowest ground of its footprint,
   grown to clear the highest; `RockHull.foot_sink`), `prop` (kit prop on
   the ground with a 110 m visibility range), `apply_range`. Ridge rocks
@@ -622,6 +622,61 @@ The Ashen Highlands are a 384 m heightmap zone built from data; later zones
 - **Areas:** areas may overlap; of those entered at once only the smallest
   names itself, and `Hud.area_name` replaces the name on show and waits for
   the zone's title card. New areas carry a text-table `name_key`.
+
+## Dungeons (M13)
+The dungeons behind the Highlands' gates (WORLD_DESIGN "Dungeons (M13)").
+Plan with the user's answers: ROADMAP M13.
+- **Layout + bake** (`tools/worldgen/<dungeon>_layout.py` ->
+  `dungeon_bake.py`, `python tools/worldgen/dungeon_bake.py [cistern]`):
+  rooms (axis-aligned rectangles, a `floor` or a `slope` {axis, span, y},
+  `wall_h`, tags `entry` / `secret` / `roofed` / `arena` / `combat`, an
+  optional text-table `name_key`), connectors (a doorway through the 2 m
+  wall gap between two rooms: `at`, `width`, kind `open` / `gate` /
+  `secret` / `shortcut`, `inputs`) and POIs in the Highlands' format. The
+  bake rasterises on a 0.5 m grid, grows 2 m of wall around the walkable
+  cells (top = the highest floor + `wall_h` within reach), merges them into
+  boxes and writes `assets/world/<id>/layout.json` (rooms, doors with their
+  rect / axis / floor, walls, POIs with `y` and `room`, square `size_m` /
+  `origin`, `base_y`) and `map.png` (3 px/m; secret rooms and their doors
+  drawn as background). Asserted: ids with the dungeon's prefix and unique
+  across the Highlands and every dungeon (SaveGame keeps POI states and
+  camps flat), rooms >= 5 m wide (the camera's spring arm), doors >= 4 m
+  over a gap <= 3 m with one floor on both sides, everything reachable from
+  the entry with gates open, secret rooms only through a `secret` door, a
+  shortcut from a far room (>= 3 steps) to the entry's neighbourhood,
+  combat rooms >= 16 x 16 m, features 1.5 m clear of walls, camp triggers
+  inside their room and one clear spot per enemy. Byte-identical on rerun.
+- **`DungeonLayout`** (`scripts/world/dungeon/`): rooms, doors, walls,
+  `floor_at(x, z)` (rooms and doorways; slopes interpolate), `room_at`,
+  `is_walkable`, `clamp_inside`; the POIs as a `ZoneLayout`.
+- **`DungeonZone`** (extends ZoneBase): the registry entry, `ground_y` from
+  the layout (the build-time ground seam; `ground_point` still raycasts),
+  `poi_position`, the spawn a step in front of the exit, `safe_spawn` (a late
+  joiner's spot moves into the nearest room), enemy levels from the
+  registry (bosses by `boss_health_changed`), warm-up ids from the camps,
+  the Spire's music. Map: the baked image, POIs found room by room (every
+  hero), the exit always known; compass: the exit and armed camps within
+  60 m. Rooms with a `name_key` show their name once per visit.
+- **`DungeonBuilder`:** floors (a slope = flat ends + a tilted slab whose
+  top runs exactly between them), doorway floors, wall boxes from `base_y`
+  to their top, roofs over `roofed` rooms (the camera stays under them;
+  from outside the room reads as rock), plugs in `secret` / `shortcut`
+  doorways, up to four shadowless lights per room (faded at 38 m, none in
+  secret rooms). Colliders: one StaticBody per kind with a shape per piece;
+  visuals merged per material into 32 m chunks. POIs: `portal`, `chest`,
+  `camp` (EncounterSpawner with `camp_id`, fixed `spots`, `leash`,
+  `rearm_radius` 30), `lore`.
+- **`DungeonRegistry`:** scene, layout dir, gate POI, exit POI, enemy and
+  boss levels, recommended level, name key, `min_party` (the M13b seam). A
+  dungeon without a scene keeps its gate sealed.
+- **Gates:** `PoiBuilder.dungeon` builds a `DungeonGatePortal` (a Portal):
+  sealed until this character's hero comes within 4.5 m, then the seal
+  breaks (burst, toast with the recommended level; remembered as
+  `seal:<gate>` in `map_discovered`) and it is an ordinary gate with
+  `arrival` = the dungeon's exit. The label shows the name and level
+  (Texts). The Highlands layout's gate yaws were turned to face their spurs
+  in M13 (an arrival 2.2 m in front of a gate landed behind it before).
+- **Net:** protocol 14 (new zones, the turned gates); no new message.
 
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**

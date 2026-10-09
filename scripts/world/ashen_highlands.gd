@@ -560,7 +560,9 @@ static func marker_label(poi: Dictionary) -> String:
 		"ruin": return "Ruin"
 		"landmark": return "Landmark"
 		"arena": return "Colossus arena"
-		"dungeon": return "Sealed gate: " + String(poi.get("label", "")).capitalize()
+		"dungeon":  # M13: the dungeon's name and recommended level (DE/EN)
+			var dinfo := DungeonRegistry.info(String(poi.get("dungeon", "")))
+			return Texts.t("map.dungeon", [DungeonRegistry.title(String(poi.get("dungeon", ""))), int(dinfo.get("recommended", 1))])
 		"lore": return Texts.t(String(poi.get("text", "")) + ".title")  # M12: DE/EN
 		"ghost": return Texts.t("lore.kind.ghost")
 		"puzzle_braziers", "puzzle_monolith", "puzzle_dodge": return Texts.t("map.puzzle")
@@ -631,7 +633,7 @@ func _discover_tick() -> void:
 		var reach := float(poi.get("pad", 0.0)) + (DISCOVER_SMALL if small else DISCOVER_MARGIN)
 		for p in players_within(ZoneLayout.pos_of(poi), reach):
 			if p.discover_poi(id) and p.is_local and String(poi.get("type", "")) == "dungeon" and hud != null:
-				hud.toast("A sealed gate: %s" % String(poi.get("label", "")), Color(0.7, 0.55, 1.0))
+				hud.toast(Texts.t("ui.dungeon.found", [marker_label(poi)]), Color(0.7, 0.55, 1.0))
 	if player == null or not is_instance_valid(player):
 		return
 	# M12: areas overlap now (Ashwick lies in Westreach): of the ones entered

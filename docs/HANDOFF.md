@@ -3,7 +3,7 @@
 Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat danach nur Doku-Commits, darunter diesen Handoff. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
-**Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). Letzter Smoke-Lauf: 690 Checks grün (2026-10-09, auf dem RTX-2070-PC mit Godot 4.6.3).
+**Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). **In Arbeit: M13 Dungeons** (Phase 0 gebaut: Dungeon-Technik, die Cistern als Graubox, das Tor öffnet sich). Letzter Smoke-Lauf: 716 Checks grün (2026-10-09, auf dem RTX-2070-PC mit Godot 4.6.3).
 
 **Gates (liegen bei dir, alle offen):** Playtest M10 + M10b, M11, M12, M17a. Je ein „Gate walk“ in `docs/PROJECT_STATE.md`, im Spiel die Liste auf Taste **J**. Dazu das M09b-Gate: ein Freund spielt ohne Tailscale.
 
@@ -17,7 +17,7 @@ Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat dan
 **Wie es weitergeht:**
 1. Playtest-Feedback einsammeln (die J-Liste liegt als `playtest.json` auf deinem Spiel-PC) und fixen.
 2. RTX-2070-PC: dein Online-Lauf ohne Editor (der automatische Retest lief am 09.10. sauber).
-3. **M13 Dungeons mit Rätseln:** Hollow Cistern und Ember Warrens, danach der erste Koop-Dungeon (3–5 Spieler, solo gesperrt). Wie jeder Meilenstein: erst Plan mit Rückfragen an dich.
+3. **M13 Dungeons mit Rätseln** (in Arbeit, Plan und deine Antworten in `docs/ROADMAP.md` M13): Hollow Cistern und Ember Warrens in zehn Phasen, danach M13b der Koop-Dungeon (3–5 Spieler, solo gesperrt). **PROTOCOL 14:** vor dem nächsten Koop braucht der Server ein Release.
 4. M14 Story & RPG (Dialoge, Quests, Meta-Würze, UI zweisprachig), M15 zwei weitere Zonen, M16 Endgame, M17 Politur.
 
 Reihenfolge, Leitlinien und deine Entscheidungen: `docs/ROADMAP.md`.

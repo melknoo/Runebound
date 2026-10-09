@@ -55,7 +55,9 @@ enum Transport { ENET, WS }
 ## 13 (M12): a new Highlands layout (terrain, pads, POIs) - both sides must
 ## stand on the same ground; later M12 messages ride on it until a release:
 ## POI_ACT / POI_STATE (shared puzzles and secrets).
-const PROTOCOL := 13
+## 14 (M13): the dungeons - new zones, the Highlands gates turned to face
+## their spurs, new enemy ids; all of M13 rides on it until a release.
+const PROTOCOL := 14
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

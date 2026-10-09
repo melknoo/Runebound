@@ -202,8 +202,9 @@
 - No navmesh: enemies steer straight; the leash (return home + heal) covers
   stuck enemies and long chases. A navmesh is an M12 candidate (the Highlands
   with substance) if pads and passes are not enough.
-- The map shows what the character has seen (no fog-of-war layer); the two
-  sealed gates are placeholders until M13 gives them dungeons.
+- The map shows what the character has seen (no fog-of-war layer). M13:
+  the east gate leads into the Hollow Cistern; the Ember Warrens' gate stays
+  sealed until they are built.
 - Portal labels of the two arena gates overlap from a distance (the gates
   are 8 m apart). The boss bar hides the compass; that is intended.
 - Camp clear time is wall-clock (`Time.get_unix_time_from_system`): a clock
@@ -359,6 +360,16 @@
   smoke test when convenient (debug_ember went with M10).
 - Capture run asserts nothing automatically — it relies on eyeball review of
   captures/.
+
+## M13 open items (in progress)
+- **Phase 0 is a greybox:** the Cistern's camps are raiders and wardens,
+  the walls and floors wear the Spire's materials, the lights are bare
+  omnis; water, puzzles, the Drowned, the bosses and the look come in
+  phases 1-5. Gates (`gate` doors) stand open until the puzzle kit wires
+  them; the secret wall and the shortcut are solid plugs.
+- **Protocol 14:** ship a release before the next co-op session.
+- The gate labels are built once: a language switch shows on the next zone
+  load.
 
 ## M12 open items
 - **Forest balance:** the Runebreaker solo-check bot (no healing between

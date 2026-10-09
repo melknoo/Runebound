@@ -10,6 +10,7 @@ const DESTINATIONS := {
 	"hub": "res://scenes/hub.tscn",
 	"spire": "res://scenes/shattered_spire.tscn",
 	"highlands": "res://scenes/ashen_highlands.tscn",
+	"cistern": "res://scenes/hollow_cistern.tscn",
 }
 const PROP_RANGE := 110.0     # visibility_range_end for kit props (m)
 const ROCK_RANGE := 200.0     # hull-dressed rocks
@@ -180,13 +181,13 @@ static func waypoint(zone: ZoneBase, poi: Dictionary) -> Waypoint:
 	return w
 
 
-## Sealed entrance of a later dungeon (M13): a locked gate the map and
-## compass can point at. The rock notch around it is baked into the terrain.
+## A dungeon's gate (M13): sealed until a hero comes close, then the way into
+## the dungeon the POI names (DungeonRegistry); a dungeon not built yet stays
+## sealed. The map and compass point at it.
 static func dungeon(zone: ZoneBase, poi: Dictionary) -> Portal:
-	var p := Portal.new()
-	p.destination_scene = ""
-	p.label_text = String(poi.get("label", "SEALED GATE"))
-	p.locked = true
+	var p := DungeonGatePortal.new()
+	p.dungeon_id = String(poi.get("dungeon", ""))
+	p.gate_id = String(poi.get("id", ""))
 	p.face_yaw = yaw_of(poi)
 	p.set_meta(&"poi_id", String(poi.get("id", "")))
 	zone.world.add_child(p)

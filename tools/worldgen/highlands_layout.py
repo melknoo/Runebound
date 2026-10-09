@@ -175,8 +175,8 @@ LAYOUT = {
         {"id": "camp_6", "type": "camp", "pos": [66, -6], "yaw": 0.0, "pad": 11, "radius": 12.0,
          "composition": ["elite", "rusher", "rusher"], "banners": 3},
         {"id": "monolith_e", "type": "landmark", "pos": [46, -30], "yaw": -0.35, "pad": 3, "prop": "rune_monolith"},
-        {"id": "dungeon_e", "type": "dungeon", "pos": [148, -62], "yaw": 1.5708, "pad": 7,
-         "label": "HOLLOW CISTERN", "pad_from": [126, -56]},
+        {"id": "dungeon_e", "type": "dungeon", "pos": [148, -62], "yaw": -1.5708, "pad": 7,
+         "label": "HOLLOW CISTERN", "pad_from": [126, -56], "dungeon": "cistern"},  # M13: faces its spur (west)
         {"id": "patrol_east", "type": "elite_patrol", "pos": [104, -22], "yaw": 0.0, "pad": 0,
          "patrol": [[104, -22], [126, -56], [108, -96], [70, -118]],
          "composition": ["elite", "rusher", "rusher"], "wake_radius": 55.0},
@@ -190,8 +190,8 @@ LAYOUT = {
         {"id": "chest_hidden", "type": "chest", "pos": [-52, -100], "yaw": 1.0, "pad": 3, "rarity_bias": 1},
         {"id": "ruin_3", "type": "ruin", "pos": [-138, -76], "yaw": 2.0, "pad": 11, "walls": 6,
          "chest": True, "rarity_bias": 1, "ambush": ["smoulder_wisp", "smoulder_wisp", "cinderbark"]},  # M12
-        {"id": "dungeon_w", "type": "dungeon", "pos": [-152, -28], "yaw": -1.5708, "pad": 7,
-         "label": "EMBER WARRENS", "pad_from": [-132, -30]},
+        {"id": "dungeon_w", "type": "dungeon", "pos": [-152, -28], "yaw": 1.5708, "pad": 7,
+         "label": "EMBER WARRENS", "pad_from": [-132, -30], "dungeon": "warrens"},  # M13: faces its spur (east)
         {"id": "camp_8", "type": "camp", "pos": [-70, -136], "yaw": 0.0, "pad": 11, "radius": 12.0,
          "composition": ["cinderbark", "smoulder_wisp", "smoulder_wisp", "smoulder_wisp"], "banners": 3},  # M12: the Charwood
         {"id": "wp_gate", "type": "waypoint", "pos": [22, -110], "yaw": 0.0, "pad": 5,

@@ -2717,11 +2717,33 @@ func _run() -> void:
 	_check(highlands.camera_rig.camera.far > 500.0, "highlands: camera far plane opened for the 384 m zone")
 	_check(highlands.boss_portal != null and highlands.spire_portal != null and highlands.boss_portal.locked,
 		"highlands: arena gates built from the layout, sealed while the Colossus lives")
-	var sealed_dungeons := 0
+	# M13: the two dungeon gates - sealed until a hero comes close, facing
+	# their spurs (the arrival lands on the path side), named with a level
+	var dungeon_gates: Dictionary = {}
 	for child in highlands.world.get_children():
-		if child is Portal and (child as Portal).locked and (child as Portal).destination_scene == "":
-			sealed_dungeons += 1
-	_check(sealed_dungeons == 2, "highlands: two sealed dungeon gates stand as landmarks")
+		if child is DungeonGatePortal:
+			dungeon_gates[(child as DungeonGatePortal).gate_id] = child
+	_check(dungeon_gates.size() == 2 and (dungeon_gates.get("dungeon_e") as DungeonGatePortal).locked
+		and (dungeon_gates.get("dungeon_w") as DungeonGatePortal).locked,
+		"M13: two dungeon gates stand sealed in the Highlands")
+	var gate_e := dungeon_gates.get("dungeon_e") as DungeonGatePortal
+	var gate_w := dungeon_gates.get("dungeon_w") as DungeonGatePortal
+	if gate_e != null and gate_w != null:
+		_check(gate_e.destination_scene == "res://scenes/hollow_cistern.tscn" and gate_e.arrival == "ci_exit"
+			and gate_e.is_open() and not gate_w.is_open(),
+			"M13: the east gate leads into the Hollow Cistern, the Ember Warrens stay sealed until built")
+		var gates_face_spurs := true
+		for pair: Array in [[gate_e, Vector3(126, 0, -56)], [gate_w, Vector3(-132, 0, -30)]]:
+			var g := pair[0] as DungeonGatePortal
+			var spur := pair[1] as Vector3
+			var to_spur := Vector3(spur.x - g.global_position.x, 0.0, spur.z - g.global_position.z).normalized()
+			var gate_front := Vector3(sin(g.facing_yaw()), 0.0, cos(g.facing_yaw()))
+			var arrive := highlands._arrival_point(g.gate_id)
+			if gate_front.dot(to_spur) < 0.7 or arrive.distance_to(spur) >= g.global_position.distance_to(spur):
+				gates_face_spurs = false
+		_check(gates_face_spurs, "M13: the dungeon gates face their spurs; arrivals land on the path side")
+		_check(gate_e._label.text.contains("4") and gate_w._label.text.contains("5"),
+			"M13: the gate labels name the recommended level (%s / %s)" % [gate_e._label.text, gate_w._label.text])
 
 	# --- M06 look: data-driven environment + dressing never touches collision ---
 	_check(highlands.look != null and highlands.look.art_pass, "highlands uses its ZoneLook (art pass)")
@@ -3912,8 +3934,141 @@ func _run() -> void:
 					legendaries += 1
 		_check(legendaries >= 1 and total_drops >= 3, "vessel drops legendary + rares (%d drops)" % total_drops)
 
+	# =========================== M13: DUNGEONS ===========================
+	# The Hollow Cistern's shell: travel in, the layout's floors and walls,
+	# camps in their rooms, the map, a late joiner's spot, the camera in a
+	# corridor, a slope; then out through the exit to the Highlands gate,
+	# whose seal breaks with the hero standing at it.
+	spire.travel_to("res://scenes/hollow_cistern.tscn", "ci_exit")
+	for i in 60:
+		await get_tree().process_frame
+		if get_tree().current_scene is CisternZone:
+			break
+	var cistern := get_tree().current_scene as CisternZone
+	_check(cistern != null, "M13: the Hollow Cistern loads")
+	var leave_zone: ZoneBase = spire
+	if cistern != null:
+		await _wait_frames(8)
+		leave_zone = cistern
+		var ch13 := cistern.player
+		ch13.god_mode = true
+		_check(cistern.look != null and cistern.look.interior and MusicDirector.instance.zone_key() == "spire",
+			"M13: the Cistern is an interior with the Spire's music")
+		_check(ch13.global_position.distance_to(cistern._player_spawn_point()) < 3.0 and cistern.room_id_at(ch13.global_position) == "ci_inlet",
+			"M13: the hero arrives in the inlet, in front of the exit (%s)" % ch13.global_position)
+		_check(ch13.is_on_floor() and absf(ch13.global_position.y - cistern.ground_y(ch13.global_position)) < 0.6,
+			"M13: the hero stands on the inlet's floor")
+		_check(ch13.discovered_zones.has("hollow_cistern"), "M13: the first visit is a discovery")
+		var poi_floor_ok := true
+		var poi_prefix_ok := true
+		for poi in cistern.layout.pois.pois:
+			var pp13 := ZoneLayout.pos_of(poi)
+			var poi_beside := pp13 + Vector3(1.2, 0.5, 0)  # beside the POI: its own collider (a chest) is no floor
+			var gp13 := cistern.ground_point(poi_beside)
+			var floor_beside := cistern.layout.floor_at(poi_beside.x, poi_beside.z, -99.0)
+			if absf(pp13.y - cistern.layout.floor_at(pp13.x, pp13.z, -99.0)) > 0.05 or absf(gp13.y - floor_beside) > 0.1:
+				poi_floor_ok = false
+			if not String(poi["id"]).begins_with("ci_"):
+				poi_prefix_ok = false
+		_check(poi_floor_ok, "M13: every Cistern POI stands on its room's floor (layout and colliders agree)")
+		_check(poi_prefix_ok, "M13: every Cistern id carries the ci_ prefix")
+		var spot_probe := PhysicsShapeQueryParameters3D.new()
+		var spot_ball := SphereShape3D.new()
+		spot_ball.radius = 0.5
+		spot_probe.shape = spot_ball
+		spot_probe.collision_mask = 1
+		var spots_clear := true
+		var spot_count := 0
+		for camp_key: String in cistern.camps:
+			var csp := cistern.camps[camp_key] as EncounterSpawner
+			for spot: Vector3 in csp.spots:
+				spot_count += 1
+				spot_probe.transform = Transform3D(Basis(), spot + Vector3(0, 1.0, 0))
+				if not cistern.world.get_world_3d().direct_space_state.intersect_shape(spot_probe, 4).is_empty():
+					spots_clear = false
+				if cistern.room_id_at(spot) != cistern.room_id_at(csp.global_position):
+					spots_clear = false
+		_check(spot_count >= 8 and spots_clear, "M13: %d camp spots stand clear inside their rooms" % spot_count)
+		_check(cistern.enemy_count() == 0, "M13: no Cistern camp wakes on arrival")
+		_check(cistern.builder.plugs.has("ci_d_run_vault") and cistern.builder.plugs.has("ci_d_c4_threshold"),
+			"M13: the secret wall and the shortcut start closed")
+		var in_wall := Vector3(-11.0, 0.0, 33.0)
+		var made_safe := cistern.safe_spawn(in_wall)
+		_check(not cistern.layout.is_walkable(in_wall.x, in_wall.z) and cistern.layout.is_walkable(made_safe.x, made_safe.z),
+			"M13: a late joiner's spot in a wall moves into the nearest room")
+		# the camera across a 6 m corridor keeps its distance
+		ch13.global_position = Vector3(-20, 0.2, 40)
+		ch13.velocity = Vector3.ZERO
+		cistern.camera_rig._yaw = 0.0
+		await _wait_frames(6)
+		await get_tree().process_frame
+		var arm := cistern.camera_rig.spring.get_hit_length()
+		_check(arm >= CameraRig.ZOOM_MIN, "M13: in a corridor the camera keeps %.1f m (>= %.1f)" % [arm, CameraRig.ZOOM_MIN])
+		# up the slope from the frost channel to the mirror gallery
+		ch13.global_position = Vector3(-45, 0.2, -4)
+		ch13.velocity = Vector3.ZERO
+		cistern.camera_rig._yaw = 0.0  # camera-forward = -Z (north, up the slope)
+		await _wait_frames(3)
+		Input.action_press(&"move_forward")
+		await _wait_frames(200)
+		Input.action_release(&"move_forward")
+		var up_top := ch13.global_position
+		_check(up_top.y > 1.6 and up_top.z < -19.0, "M13: the hero walks up the slope to the gallery (at %s)" % up_top)
+		# a camp wakes in its room; cleared it stays down, comes back once nobody is near
+		var sluice := cistern.camps["ci_camp_sluice"] as EncounterSpawner
+		ch13.global_position = Vector3(-45, 0.2, 40)
+		await _wait_frames(40)
+		_check(sluice.state != EncounterSpawner.State.ARMED and cistern.enemy_count() >= 3, "M13: the sluice hall's camp wakes")
+		cistern.kill_all_enemies()
+		await _wait_frames(20)
+		_check(sluice.state == EncounterSpawner.State.CLEARED and SaveGame.camp_cleared_at("ci_camp_sluice") > 0.0,
+			"M13: a cleared dungeon camp is saved")
+		sluice.check_rearm(Time.get_unix_time_from_system() + 601.0)
+		_check(sluice.state == EncounterSpawner.State.CLEARED, "M13: no respawn while a hero stands in the room")
+		ch13.global_position = cistern._player_spawn_point()
+		await _wait_frames(3)
+		sluice.check_rearm(Time.get_unix_time_from_system() + 601.0)
+		_check(sluice.state == EncounterSpawner.State.ARMED, "M13: the camp comes back after its minutes with nobody near")
+		# map and names
+		var known: Array[String] = []
+		for m in cistern.map_markers():
+			known.append(String(m["id"]))
+		_check(cistern.map_texture() != null and is_equal_approx(cistern.map_bounds().size.x, cistern.map_bounds().size.y)
+			and known.has("ci_exit") and known.has("ci_camp_sluice") and not known.has("ci_chest_vault"),
+			"M13: the Cistern map shows what was found, never the hidden vault (%s)" % ", ".join(known))
+		_check(cistern._room_seen.has("ci_sluice") and Texts.t("area.ci_sluice") != "area.ci_sluice",
+			"M13: rooms announce their names")
+		# out through the exit: back at the Cistern gate, whose seal breaks
+		cistern.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_e")
+		for i in 90:
+			await get_tree().process_frame
+			if get_tree().current_scene is AshenHighlands:
+				break
+		var back_hl := get_tree().current_scene as AshenHighlands
+		_check(back_hl != null, "M13: the Cistern's exit leads back to the Highlands")
+		if back_hl != null:
+			leave_zone = back_hl
+			await _wait_frames(8)
+			await get_tree().process_frame
+			var gate_at := back_hl.poi_position("dungeon_e")
+			_check(back_hl.player.global_position.distance_to(back_hl._arrival_point("dungeon_e")) < 3.0
+				and Vector2(back_hl.player.global_position.x - 126, back_hl.player.global_position.z + 56).length()
+					< Vector2(gate_at.x - 126, gate_at.z + 56).length(),
+				"M13: the hero comes out in front of the Cistern gate, on the path side")
+			var seal_gate: DungeonGatePortal = null
+			var warren_gate: DungeonGatePortal = null
+			for child in back_hl.world.get_children():
+				if child is DungeonGatePortal:
+					if (child as DungeonGatePortal).gate_id == "dungeon_e":
+						seal_gate = child
+					else:
+						warren_gate = child
+			_check(seal_gate != null and not seal_gate.locked and back_hl.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_e")),
+				"M13: standing at the gate breaks its seal (remembered by the character)")
+			_check(warren_gate != null and warren_gate.locked, "M13: the Ember Warrens' gate stays sealed")
+
 	# --- hub shows the spire shortcut once the colossus flag is set ---
-	spire.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate
+	leave_zone.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate
 	for i in 60:
 		await get_tree().process_frame
 		if get_tree().current_scene is HubZone:

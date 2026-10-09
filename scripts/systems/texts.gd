@@ -12,7 +12,8 @@ extends Object
 ## falls back to the English one; a missing key shows the key (the smoke test
 ## checks every key has both).
 
-const FILES: Array[String] = ["res://resources/i18n/m12_ui.json", "res://resources/i18n/m12_lore.json"]
+const FILES: Array[String] = ["res://resources/i18n/m12_ui.json", "res://resources/i18n/m12_lore.json",
+	"res://resources/i18n/m13_ui.json"]
 const LANGUAGES: Array[String] = ["en", "de"]
 
 ## key -> {"en": text, "de": text}

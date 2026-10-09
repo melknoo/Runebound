@@ -1,0 +1,75 @@
+{
+	"_note": "M13 text table: the dungeons (names, gates, rooms, map). Keys are dotted ids; every key needs en + de (written, never machine-translated). Loaded by scripts/systems/texts.gd.",
+	"zone.hollow_cistern": {
+		"en": "The Hollow Cistern",
+		"de": "Die Hohle Zisterne"
+	},
+	"zone.ember_warrens": {
+		"en": "The Ember Warrens",
+		"de": "Die Glutstollen"
+	},
+	"ui.dungeon.gate": {
+		"en": "%s - Level %d",
+		"de": "%s - Stufe %d"
+	},
+	"ui.dungeon.sealed": {
+		"en": "Sealed",
+		"de": "Versiegelt"
+	},
+	"ui.dungeon.seal_broken": {
+		"en": "The seal of %s breaks. Recommended level: %d",
+		"de": "Das Siegel von %s bricht. Empfohlene Stufe: %d"
+	},
+	"ui.dungeon.found": {
+		"en": "Found: %s",
+		"de": "Gefunden: %s"
+	},
+	"map.dungeon": {
+		"en": "%s (level %d)",
+		"de": "%s (Stufe %d)"
+	},
+	"map.dungeon.enemies": {
+		"en": "Enemies",
+		"de": "Gegner"
+	},
+	"area.ci_inlet": {
+		"en": "The Inlet",
+		"de": "Der Einlass"
+	},
+	"area.ci_sluice": {
+		"en": "Sluice Hall",
+		"de": "Schleusenhalle"
+	},
+	"area.ci_pump": {
+		"en": "Pump Chamber",
+		"de": "Pumpenkammer"
+	},
+	"area.ci_frost": {
+		"en": "Frost Channel",
+		"de": "Frostkanal"
+	},
+	"area.ci_mirror": {
+		"en": "Mirror Gallery",
+		"de": "Spiegelgalerie"
+	},
+	"area.ci_basin": {
+		"en": "Settling Basin",
+		"de": "Klärbecken"
+	},
+	"area.ci_run": {
+		"en": "Undertow Run",
+		"de": "Strömungsgang"
+	},
+	"area.ci_vault": {
+		"en": "Hidden Vault",
+		"de": "Verborgene Kammer"
+	},
+	"area.ci_threshold": {
+		"en": "The Maw's Threshold",
+		"de": "Vorhof des Schlunds"
+	},
+	"area.ci_heart": {
+		"en": "Heart of the Cistern",
+		"de": "Herz der Zisterne"
+	}
+}

@@ -334,12 +334,39 @@ Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden 
 gebaut (Solo-Check, Shots, Perf-A/B, Doku, Playtest-Gruppe „M12“ auf J). **PROTOCOL 13:** vor
 dem Koop braucht der Server ein Release (`tools\run_godot.cmd release`); Stand 2026-10-09 steht `release` auf dem letzten Code-Commit (f2da9a6; `main` hat danach nur Doku), der Deploy am Laptop ist ungeprüft (ssh-Timeout).
 
-### M13 — Dungeons mit Rätseln
-- **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons
-  mit Fähigkeiten-, Mechanik- und Fallen-Rätseln (meist unter 2 min, pro Dungeon ein größeres für
-  ein Geheimnis), Geheimräumen, Abzweigen und Zwischenbossen. Allein und mit jeder Klasse lösbar.
-- **Der erste Koop-Dungeon:** für 3–5 Spieler, solo gesperrt, eigener Loot, Rollen zählen (ohne
-  Tank oder Heiler wird es deutlich schwerer).
+### M13 — Dungeons mit Rätseln (in Arbeit)
+**Entscheidungen des Spielers (2026-10-09, drei Runden):**
+- **Umfang:** Hollow Cistern und Ember Warrens jetzt; der Koop-Dungeon (3–5 Spieler, solo
+  gesperrt) kommt als **M13b** mit eigenem Plan.
+- **Thema:** Cistern = Wasser (halb geflutete Zisterne, kalt blaugrün, Schleusen, Wasserstand,
+  Eis); Warrens = Glut (Stollen + Schmelzöfen, schwarz-orange, Lavarinnen, Einsturz, Feuerdüsen).
+- **Länge ~15 min:** 6–8 Räume, 4–5 kurze Rätsel, ein großes Geheimnis-Rätsel, 1–2 Abzweige,
+  ein Geheimraum, Zwischenboss, Endboss, Abkürzung zum Eingang.
+- **Gegner:** je Dungeon eine Familie mit 2 neuen Typen, dazu Zwischen- und Endboss.
+- **Danach:** normale Gegner kommen wieder (~10 min, wie Camps); Rätsel, Abkürzungen und
+  Geheimnisse bleiben; Bosse bleiben tot.
+- **Lohn des großen Geheimnisses:** je Dungeon ein Foliant, jede Klasse lernt eine neue Fähigkeit
+  (Rollen-Lücken mit Dungeon-Flair: Wellenbrecher, Raureif-Schild, Quellwasser; Schmiedemal,
+  Glutsaat, Aschenblüte).
+- **Tod:** zurück an den Eingang oder eine aktivierte Rune im Dungeon, der Fortschritt bleibt;
+  ein Boss setzt sich zurück, wenn niemand mehr lebend in seiner Arena ist.
+- **Tore:** sofort offen (das Siegel bricht beim Herankommen), Schild und Karte nennen die
+  empfohlene Stufe (Cistern 4, Warrens 5), Reihenfolge frei.
+- **Musik:** die Spire-Spuren für beide (keine neuen Stücke), je ein Ambience-Loop.
+- **Truhen:** Dungeon-Truhen öffnen sich nur einmal; auch die Rätsel- und Grotten-Truhen der
+  Highlands (heute nach einem Neuladen wieder zu).
+- Jedes Rätsel geht allein mit jeder Klasse (Grundangriff, Dodge, [E], Laufen); keine
+  Gedächtnis-/Logikrätsel, keine Events oder Raum-Modifikatoren.
+
+Phasen (jede endet mit Smoke grün, Doku, Commit + Push): 0 Dungeon-Technik + Graubox-Cistern,
+1 Dungeon-Regeln (Runen, Tod, Boss-Arena, Truhen einmalig), 2 Rätsel-Kit Mechanik + Puzzle Lab,
+3 Rätsel-Kit Elemente + Fallen, 4 Cistern Inhalt + Look + Lore, 5 Cistern Gegner + Bosse,
+6 Warrens Inhalt + Look + Lore, 7 Warrens Gegner + Bosse, 8 Folianten + 6 Fähigkeiten,
+9 Abschluss.
+**Stand:** Phase 0 gebaut (Dungeon-Bake aus Layout-Daten, Dungeon-Zone mit Boden-Naht, Karte,
+Raumnamen, Camps in ihren Räumen; die Cistern als begehbare Graubox mit Platzhalter-Camps; das
+Cistern-Tor bricht sein Siegel und führt hinein, der Ausgang zurück vor das Tor; die Tore schauen
+jetzt zu ihren Pfaden). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

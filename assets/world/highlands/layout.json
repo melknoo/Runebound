@@ -1260,13 +1260,14 @@
     148,
     -62
    ],
-   "yaw": 1.5708,
+   "yaw": -1.5708,
    "pad": 7,
    "label": "HOLLOW CISTERN",
    "pad_from": [
     126,
     -56
    ],
+   "dungeon": "cistern",
    "y": 19.784,
    "biome": "bone_field"
   },
@@ -1415,13 +1416,14 @@
     -152,
     -28
    ],
-   "yaw": -1.5708,
+   "yaw": 1.5708,
    "pad": 7,
    "label": "EMBER WARRENS",
    "pad_from": [
     -132,
     -30
    ],
+   "dungeon": "warrens",
    "y": 19.107,
    "biome": "burnt_forest"
   },
