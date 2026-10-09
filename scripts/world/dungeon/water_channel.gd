@@ -24,6 +24,10 @@ var _water: MeshInstance3D
 var _walkway_bodies: Array[StaticBody3D] = []
 var _fence: StaticBody3D
 var _built: bool = false
+## Phase 3: ice anchors in this channel (IceBridge) and their floes.
+var ice_bridges: Array[IceBridge] = []
+var _ice_bodies: Array[StaticBody3D] = []
+var _ice_on: Array[bool] = []
 
 
 static func build(zone: ZoneBase, layout: DungeonLayout, poi: Dictionary) -> WaterChannel:
@@ -134,6 +138,63 @@ func _apply(instant: bool) -> void:
 func _process(_delta: float) -> void:
 	if _wants_drained != drained:
 		_apply(false)
+	var changed := false
+	for i in ice_bridges.size():
+		var want := not drained and is_instance_valid(ice_bridges[i]) and ice_bridges[i].is_active()
+		if not want and _ice_on[i] and _someone_on(ice_bridges[i].strip):
+			want = true  # never melts under a hero: it holds until the strip is clear
+		if want != _ice_on[i]:
+			_ice_on[i] = want
+			_set_floe(i, want)
+			changed = true
+	if changed:
+		_rebuild_fence()
+
+
+## Phase 3: a frozen strip for this anchor - a floe level with the floor.
+func link_ice(bridge: IceBridge) -> void:
+	ice_bridges.append(bridge)
+	_ice_on.append(false)
+	var body := StaticBody3D.new()
+	body.name = "Floe"
+	body.collision_layer = 0
+	body.collision_mask = 0
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(bridge.strip.size.x, 0.5, bridge.strip.size.y)
+	col.shape = shape
+	body.add_child(col)
+	var mesh := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = shape.size + Vector3(0.0, 0.06, 0.0)
+	box.material = EnemyBase.flat_material(Color(0.78, 0.92, 1.0), true, 0.35)
+	mesh.mesh = box
+	mesh.position = Vector3(0, 0.06, 0)  # its face just over the water's
+	body.add_child(mesh)
+	body.visible = false
+	add_child(body)
+	body.global_position = Vector3(bridge.strip.get_center().x, floor_y - 0.25, bridge.strip.get_center().y)
+	_ice_bodies.append(body)
+
+
+func _set_floe(i: int, on: bool) -> void:
+	var body := _ice_bodies[i]
+	body.collision_layer = 1 if on else 0  # a floor while it holds
+	body.visible = on
+
+
+func ice_active(i: int) -> bool:
+	return i < _ice_on.size() and _ice_on[i]
+
+
+func _someone_on(strip: Rect2) -> bool:
+	var zone := ZoneBase.zone_of(self)
+	if zone == null:
+		return false
+	for p in zone.players:
+		if p != null and is_instance_valid(p) and strip.grow(0.3).has_point(Vector2(p.global_position.x, p.global_position.z)):
+			return true
+	return false
 
 
 ## The fence covers the channel except where a causeway carries heroes.
@@ -143,6 +204,9 @@ func _rebuild_fence() -> void:
 	var holes: Array[Rect2] = []
 	if drained:
 		holes.append_array(walkways)
+	for i in ice_bridges.size():
+		if _ice_on[i]:
+			holes.append(ice_bridges[i].strip)
 	for part in DungeonBuilder.subtract(rect, holes):
 		var col := CollisionShape3D.new()
 		var shape := BoxShape3D.new()

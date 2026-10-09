@@ -727,9 +727,13 @@ class Driver extends Node:
 				var block := zone.puzzles["lab_block"] as PushBlock
 				var beam := zone.puzzles["lab_light"] as BeamPuzzle
 				var water := zone.waters["lab_water_ch"] as WaterChannel
+				var kilns := zone.puzzles["lab_kilns"] as ElementPuzzle
+				var posts := zone.puzzles["lab_posts"] as ElementPuzzle
+				var ice := zone.puzzles["lab_ice"] as IceBridge
 				var all_done := func() -> bool:
 					return lever.is_on() and plate_b.is_down() and plate_a.is_down() and block.cell_of() == Vector2i(0, -5) \
-						and beam.is_solved() and water.drained and (zone.gates["lab_d_plates_beam"] as DungeonGate).is_open
+						and beam.is_solved() and water.drained and (zone.gates["lab_d_plates_beam"] as DungeonGate).is_open \
+						and kilns.is_solved() and posts.is_solved()
 				if role == "c3":
 					if not await _until(all_done, 30.0, "the lab as the others left it (a late joiner)"):
 						return
@@ -779,9 +783,49 @@ class Driver extends Node:
 					go.call(Vector3(24, 0, -25))
 					await _seconds(1.0)
 					(zone.puzzles["lab_valve_b"] as PuzzleLever).request("pull", 0, hero)
+				# phase 3: c1 takes fire from the bowl (its aura reaches c2) and
+				# lights the kilns, then freezes the frost channel (c2 sees the
+				# ice); c2 leads the spark along the posts
+				var other_aura := func() -> bool:
+					for p in zone.players:
+						if p != hero and is_instance_valid(p) and p.get_node_or_null("ElementAura") != null:
+							return true
+					return false
+				var plain := HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO)
+				if role == "c1":
+					go.call(Vector3(-39, 0, 25))
+					await _seconds(1.0)
+					(zone.carriers["lab_bowl"] as ElementCarrier).take_hit(plain)
+					if ElementCharge.carried(hero) != HitInfo.DamageType.FIRE:
+						_finish("fail: no fire from the bowl")
+						return
+					for ki in 3:
+						kilns._sockets[ki].take_hit(plain)
+						await _seconds(0.3)
+					if not await _until(func() -> bool: return kilns.is_solved(), 15.0, "the kilns lit"):
+						return
+					go.call(Vector3(-62, 0, 34))
+					await _seconds(1.0)
+					(zone.carriers["lab_frost_crystal"] as ElementCarrier).take_hit(plain)
+					ice.socket.take_hit(plain)
+					if not await _until(func() -> bool: return ice.is_active(), 10.0, "the ice frozen"):
+						return
+				else:
+					if not await _until(other_aura, 30.0, "c1's fire aura on its puppet"):
+						return
+					go.call(Vector3(-36, 0, 52))
+					await _seconds(1.0)
+					for post_i in 4:
+						posts.struck(post_i, HitInfo.DamageType.LIGHTNING, hero)
+						await _until(func() -> bool: return posts.lit_count() > post_i or posts.is_solved(), 5.0, "a post to take the spark")
+					if not await _until(func() -> bool: return posts.is_solved(), 15.0, "the posts solved"):
+						return
+					if not await _until(func() -> bool: return (zone.waters["lab_frost_water"] as WaterChannel).ice_active(0), 30.0,
+							"c1's ice on the frost channel here"):
+						return
 				if not await _until(all_done, 40.0, "the whole lab solved here"):
 					return
-				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
+				await _until(func() -> bool: return Net.roster.size() >= 3, 50.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
 			"rewards":

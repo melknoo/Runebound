@@ -83,6 +83,8 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			Sfx.play("resonance_burst", a[0] as Vector3, 0.0, 0.05)
 		&"sfx":
 			Sfx.play(str(a[0]), a[1] as Vector3, float(a[2]), 0.1)
+		&"element_charge":  # M13: [element, seconds] - an element carried from a dungeon source
+			ElementCharge.aura(hero, int(a[0]), float(a[1]))
 		# --- M10 Elementalist ---
 		&"frost_nova":  # [pos, radius]
 			VFX.frost_burst(scene, a[0] as Vector3, float(a[1]))

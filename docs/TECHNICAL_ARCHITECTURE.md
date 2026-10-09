@@ -723,6 +723,27 @@ Plan with the user's answers: ROADMAP M13.
   floor and a fence over the whole channel; drained = the surface low, the
   causeways' colliders on (layer 1, a floor) and the fence only around
   them. It refills only with nobody in the channel.
+- **Elements (phase 3):** `ElementCharge` (static: `of_hit` = the hit's
+  FIRE / FROST / LIGHTNING type or Burn / Chill / Shock, `carried(hero)`
+  from the hero's meta with an expiry, `give` = meta + HeroFx
+  `element_charge` [element, seconds] for the aura). `ElementCarrier` and
+  `ElementSocket` are hurtbox nodes on the enemy-hurtbox layer whose
+  `take_hit` answers false (no resource gain); a socket reports the strike's
+  element (`of_strike`: the hit's own, else the carried one) to its puzzle's
+  `struck(index, element, hero)`. `ElementPuzzle` (`lit` per target; the
+  authority stamps local times and burns them out after `window`;
+  `ordered` accepts only the next target). `IceBridge` (`until` in server
+  msec, reset on load; `is_active` compares with `NetWorld.server_msec()`),
+  linked to its WaterChannel by the water POI's `ice` list: the floe is a
+  layer-1 slab level with the floor, the fence opens there, and it melts
+  only with the strip clear (each machine checks its heroes).
+- **Traps (phase 3):** `ClockTrap` (strips along a lane, `strip_phase` on
+  the server's clock, a telegraph lane `WARN` before each burst, `burst(k,
+  hero)` strikes the local hero on strip k with `min(damage, hp - 1)`).
+  `CollapsingFloor` (rows over a layout channel used as a pit; `row_down`
+  by clock - even rows, then odd rows half a period later - toggles each
+  row's layer-1 collider identically on every machine; the local hero below
+  `floor - 0.8` in the pit is hurt and set back at `back`, `teleports`++).
 - **Puzzle lab:** `PuzzleLabZone` (registry id `lab`, no title, never
   reachable) for the smoke test and the net scenarios.
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED

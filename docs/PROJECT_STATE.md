@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phases
-0-2 built, below). Latest built milestone: **M12 Highlands with substance**
+0-3 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -126,6 +126,41 @@ abilities, 9 the wrap-up.
     proxy, block pushes checked against the pusher's proxy under netsim,
     the crystals, a valve each; a late joiner finds the lab as it was
     left); `dungeon`, `dungeon_boss` still green.
+- **Phase 3 (built): elements and traps.**
+  - **Element sources** (`ElementCarrier`: an ember bowl, a frost crystal, a
+    storm coil): any strike gives the striking hero the element for 8 s
+    (`ElementCharge`, kept on the hero on its own machine; an aura on every
+    machine through HeroFx `element_charge`; a toast in DE/EN). So every
+    class lights a kiln, feeds a copper post or freezes water with its basic
+    attack; the Elementalist's fire, frost and lightning count without a
+    charge (the hit's type or its Burn / Chill / Shock).
+  - `ElementPuzzle` (sockets on the enemy-hurtbox layer): kilns lit with
+    fire stay lit `window` s - all at once solves it; `ordered` posts take
+    lightning one after the other, each within the window of the one before,
+    else the chain goes dark. `IceBridge`: an anchor in a full channel,
+    struck with frost, freezes a strip for 12 s on the server's clock; the
+    WaterChannel lays a floe there and opens its fence - it never melts
+    under a hero.
+  - **Traps:** `ClockTrap` (blades or fire jets in strips across a corridor,
+    a rolling wave on the server's clock, telegraphed; each machine judges
+    its own hero, never the last point, Dodge's i-frames carry through),
+    `CollapsingFloor` (rows over a dry pit that drop even, then odd, with a
+    red warning; a fall hurts - never the last point - and sets the hero
+    back at the pit's edge).
+  - Puzzle lab: a fire room (bowl + three kilns, their gate), a storm room
+    (coil + four posts), a frost room (crystal + anchor over a channel, a
+    chest beyond), a trap corridor (blades, then the collapsing floor).
+  - Smoke 773 green (each of the three classes takes fire from the bowl with
+    its basic attack and lights a kiln; no charge, no light; the
+    Elementalist's own fire; a charge runs out; three kilns open the gate;
+    posts out of turn, the wrong element, a chain too slow, then in order;
+    the frost strike freezes the strip, a hero walks across, it holds under
+    a hero and melts once the strip is clear; a blade burst, never the last
+    point, dodged through; the rows' rhythm; a fall into the pit).
+  - Net scenario `puzzle_kit` extended and green (c1's fire aura on its
+    puppet at c2, c1 lights the kilns through requests, c2 leads the spark
+    along the posts, c1's ice shows at c2; the late joiner finds kilns and
+    posts solved).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

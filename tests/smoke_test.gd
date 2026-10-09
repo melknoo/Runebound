@@ -67,6 +67,26 @@ func _play_as(class_id: StringName, learn_all: bool = true) -> void:
 	await _wait_frames(2)
 
 
+## M13: `hero` stands south of `target_pos` facing it (north) and holds its
+## basic attack for `frames` (melee, bolts and thorns alike).
+func _swing_at(zone: ZoneBase, hero: Player, target_pos: Vector3, frames: int) -> void:
+	hero.global_position = target_pos + Vector3(0, 0.2, 1.7)
+	hero.velocity = Vector3.ZERO
+	zone.camera_rig._yaw = 0.0
+	hero._visual.rotation.y = 0.0
+	await _wait_frames(3)
+	var held_probe := ScriptedInput.new()
+	var keep := hero.input_source
+	hero.input_source = held_probe
+	held_probe.held.append(hero.basic_attack())  # bolts and thorns repeat while held
+	for press_i in frames / 10:
+		held_probe.queue.append(hero.basic_attack())  # a melee swing wants a press
+		await _wait_frames(10)
+	held_probe.held.clear()
+	hero.input_source = keep
+	await _wait_frames(4)
+
+
 func _run() -> void:
 	print("== RUNEBOUND smoke test ==")
 	# Hermetic save: never touch the real user save from tests.
@@ -4285,6 +4305,111 @@ func _run() -> void:
 					await _wait_frames(12)
 					_check(reset_sw != null and block.cell_of() == Vector2i.ZERO and not plate_a.is_down() and not gate_beam.is_open,
 						"M13 kit: the reset slab sends the block home; its plate rises and the gate shuts")
+					# --- phase 3: elements (every class with its basic attack) and traps ---
+					var kilns := lab13.puzzles["lab_kilns"] as ElementPuzzle
+					var bowl := lab13.carriers["lab_bowl"] as ElementCarrier
+					var classes_lit: Array[String] = []
+					for cid: StringName in [&"runebreaker", &"elementalist", &"druid"]:
+						var eh := lab13.debug_swap_class(cid)
+						eh.god_mode = true
+						eh.debug_learn_all()
+						await _wait_frames(3)
+						(kilns.state["lit"] as Array).fill(false)
+						kilns.commit()
+						if eh.has_meta(ElementCharge.META):
+							eh.remove_meta(ElementCharge.META)
+						await _swing_at(lab13, eh, bowl.global_position, 30)
+						var charged := ElementCharge.carried(eh) == HitInfo.DamageType.FIRE
+						await _swing_at(lab13, eh, kilns.targets[0], 30)
+						if charged and kilns.is_lit(0):
+							classes_lit.append(String(cid))
+					_check(classes_lit.size() == 3, "M13 elements: every class's basic attack takes fire from the bowl and lights a kiln (%s)" % ", ".join(classes_lit))
+					var eh2 := lab13.player
+					if eh2.has_meta(ElementCharge.META):
+						eh2.remove_meta(ElementCharge.META)
+					(kilns.state["lit"] as Array).fill(false)
+					kilns.commit()
+					var kiln_socket := kilns._sockets[1]
+					kiln_socket.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, kilns.targets[1]))
+					_check(not kilns.is_lit(1), "M13 elements: a plain strike without a charge lights nothing")
+					kiln_socket.take_hit(HitInfo.create(10.0, HitInfo.DamageType.FIRE, HitInfo.Weight.LIGHT, kilns.targets[1]))
+					_check(kilns.is_lit(1), "M13 elements: the Elementalist's own fire lights a kiln directly")
+					eh2.set_meta(ElementCharge.META, {"element": HitInfo.DamageType.FIRE, "until": Time.get_ticks_msec() - 1})
+					_check(ElementCharge.carried(eh2) == ElementCharge.NONE, "M13 elements: a charge runs out")
+					var fire_gate := lab13.gates["lab_d_fire_frost"] as DungeonGate
+					ElementCharge.give(eh2, HitInfo.DamageType.FIRE)
+					for ki in 3:
+						kilns._sockets[ki].take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, kilns.targets[ki]))
+					await _wait_frames(2)
+					_check(kilns.is_solved() and fire_gate.is_open, "M13 elements: three kilns alight at once open the gate")
+					# the copper posts: in order, each within the window of the one before
+					var posts := lab13.puzzles["lab_posts"] as ElementPuzzle
+					posts.struck(1, HitInfo.DamageType.LIGHTNING, eh2)
+					_check(posts.lit_count() == 0, "M13 elements: a post out of turn takes no spark")
+					posts.struck(0, HitInfo.DamageType.LIGHTNING, eh2)
+					posts.struck(1, HitInfo.DamageType.FIRE, eh2)
+					_check(posts.lit_count() == 1, "M13 elements: the spark wants lightning, not fire")
+					posts._lit_at[0] -= int(posts.window * 1000.0) + 100
+					posts._process(0.0)
+					_check(posts.lit_count() == 0, "M13 elements: too slow, the chain goes dark")
+					for post_i in 4:
+						posts.struck(post_i, HitInfo.DamageType.LIGHTNING, eh2)
+					_check(posts.is_solved(), "M13 elements: the spark led post to post solves it")
+					# the ice anchor: frost from the crystal freezes a strip for a while
+					var ice := lab13.puzzles["lab_ice"] as IceBridge
+					var frost_water := lab13.waters["lab_frost_water"] as WaterChannel
+					_check(not frost_water.ice_active(0) and frost_water.ice_bridges.size() == 1, "M13 elements: the frost channel starts open water")
+					ElementCharge.give(eh2, HitInfo.DamageType.FROST)
+					ice.socket.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ice.global_position))
+					await _wait_frames(2)
+					await get_tree().process_frame
+					_check(ice.is_active() and frost_water.ice_active(0), "M13 elements: a frost-charged strike freezes the strip")
+					eh2.global_position = Vector3(-64, 0.2, 31)
+					eh2.velocity = Vector3.ZERO
+					lab13.camera_rig._yaw = 0.0
+					await _wait_frames(3)
+					Input.action_press(&"move_forward")
+					await _wait_frames(80)
+					Input.action_release(&"move_forward")
+					_check(eh2.global_position.z < 23.5 and eh2.global_position.y > -0.5,
+						"M13 elements: a hero walks across the ice (at %s)" % eh2.global_position)
+					eh2.global_position = Vector3(-64, 0.2, 26)
+					await _wait_frames(2)
+					ice.state["until"] = IceBridge.now_msec(ice) - 1
+					await get_tree().process_frame
+					await get_tree().process_frame
+					_check(frost_water.ice_active(0), "M13 elements: the ice never melts under a hero")
+					eh2.global_position = Vector3(-64, 0.2, 34)
+					await get_tree().process_frame
+					await get_tree().process_frame
+					_check(not frost_water.ice_active(0), "M13 elements: off the strip, it melts")
+					# the traps: a burst on the hero's strip, never the last point, dodged through
+					var blades := lab13.traps["lab_blades"] as ClockTrap
+					eh2.god_mode = false
+					eh2.health.heal_full()
+					eh2.global_position = blades.strip_centre(1) + Vector3(0, 0.2, 0)
+					await _wait_frames(2)
+					var hp_before_blade := eh2.health.current_health
+					blades.burst(1, eh2)
+					_check(eh2.health.current_health < hp_before_blade and blades.hits_dealt == 1, "M13 traps: a blade strip strikes the hero on it")
+					eh2.health.current_health = 1.0
+					blades.burst(1, eh2)
+					_check(eh2.health.current_health >= 1.0 and not eh2.health.is_dead, "M13 traps: a trap never takes the last point")
+					eh2.health.heal_full()
+					eh2.health.invulnerable = true
+					var hp_dodging := eh2.health.current_health
+					blades.burst(1, eh2)
+					eh2.health.invulnerable = false
+					_check(is_equal_approx(eh2.health.current_health, hp_dodging), "M13 traps: a dodge's i-frames carry a hero through")
+					var collapse := lab13.traps["lab_collapse"] as CollapsingFloor
+					_check(collapse.row_down(0, 0.1) and not collapse.row_down(1, 0.1) and collapse.row_down(1, collapse.period * 0.5 + 0.1),
+						"M13 traps: the floor's rows fall in turn (even, then odd)")
+					var hp_before_fall := eh2.health.current_health
+					eh2.global_position = Vector3(48, -2.6, 30)  # down in the pit
+					await _wait_frames(3)
+					_check(collapse.falls >= 1 and eh2.global_position.distance_to(collapse.back) < 1.0 and eh2.health.current_health < hp_before_fall,
+						"M13 traps: a fall into the pit hurts and sets the hero back at its edge")
+					eh2.god_mode = true
 
 	# --- hub shows the spire shortcut once the colossus flag is set ---
 	leave_zone.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate

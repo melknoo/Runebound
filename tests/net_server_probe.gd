@@ -368,6 +368,10 @@ func _update() -> void:
 				verdict = "fail: the beam is not solved on the server"
 			elif not (lz.waters["lab_water_ch"] as WaterChannel).drained:
 				verdict = "fail: the channel is not drained on the server"
+			elif not bool(SaveGame.poi_state("lab_kilns").get("solved", false)) or not bool(SaveGame.poi_state("lab_posts").get("solved", false)):
+				verdict = "fail: the kilns or the posts are not solved in the server's world"
+			elif int(SaveGame.poi_state("lab_ice").get("seq", 0)) < 1:
+				verdict = "fail: the ice was never frozen on the server"
 			else:
 				verdict = "ok"
 		"dungeon_boss":  # M13: the arena reset once, started twice, its boss fell (the flag)

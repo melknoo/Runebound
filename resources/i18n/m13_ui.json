@@ -103,5 +103,17 @@
 	"ui.dungeon.secret_found": {
 		"en": "The wall gives way: a hidden room.",
 		"de": "Die Wand gibt nach: ein verborgener Raum."
+	},
+	"ui.element.fire": {
+		"en": "Embers cling to your strikes",
+		"de": "Glut haftet an deinen Schlägen"
+	},
+	"ui.element.frost": {
+		"en": "Frost clings to your strikes",
+		"de": "Frost haftet an deinen Schlägen"
+	},
+	"ui.element.storm": {
+		"en": "Lightning crackles in your strikes",
+		"de": "Blitze knistern in deinen Schlägen"
 	}
 }

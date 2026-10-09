@@ -280,6 +280,16 @@ static func build_poi(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> Diction
 			return {"water": WaterChannel.build(z, l, poi)}
 		"reset":
 			return {"switch": reset_switch(z, poi)}
+		"carrier":  # M13 phase 3: elements and traps
+			return {"carrier": ElementCarrier.build(z, poi)}
+		"element":
+			return {"puzzle": ElementPuzzle.build(z, poi)}
+		"ice":
+			return {"puzzle": IceBridge.build(z, poi)}
+		"trap":
+			return {"trap": ClockTrap.build(z, poi)}
+		"collapse":
+			return {"trap": CollapsingFloor.build(z, l, poi)}
 	return {}
 
 

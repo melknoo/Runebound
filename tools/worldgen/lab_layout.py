@@ -26,6 +26,15 @@ LAYOUT = {
         {"id": "lab_water", "rect": [6, -46, 30, -22], "floor": 0.0,
          "channels": [{"id": "lab_ch", "rect": [6, -38, 30, -34], "depth": 2.0}]},
         {"id": "lab_c3", "rect": [-2, -46, 4, -18], "floor": 0.0},
+        # phase 3: the elements west of the entry, the traps east of it
+        {"id": "lab_el_c", "rect": [-26, 27, -12, 33], "floor": 0.0},
+        {"id": "lab_fire", "rect": [-50, 18, -28, 42], "floor": 0.0},
+        {"id": "lab_frost", "rect": [-76, 18, -52, 42], "floor": 0.0,
+         "channels": [{"id": "lab_ch_frost", "rect": [-76, 24, -52, 28], "depth": 2.0}]},
+        {"id": "lab_storm", "rect": [-50, 44, -28, 66], "floor": 0.0},
+        {"id": "lab_trap_c", "rect": [12, 27, 60, 33], "floor": 0.0,
+         "channels": [{"id": "lab_pit", "rect": [40, 27, 56, 33], "depth": 3.0}]},
+        {"id": "lab_trap_end", "rect": [62, 20, 76, 40], "floor": 0.0},
     ],
     "connectors": [
         {"id": "lab_d_entry_c1", "a": "lab_entry", "b": "lab_c1", "at": [0, 19], "width": 5.0},
@@ -42,6 +51,13 @@ LAYOUT = {
         {"id": "lab_d_water_c3", "a": "lab_water", "b": "lab_c3", "at": [5, -42], "width": 4.0},
         {"id": "lab_d_c3_hub", "a": "lab_c3", "b": "lab_hub", "at": [1, -17], "width": 4.0,
          "kind": "shortcut", "inputs": ["lab_lever_short"]},
+        {"id": "lab_d_entry_el", "a": "lab_entry", "b": "lab_el_c", "at": [-11, 30], "width": 5.0},
+        {"id": "lab_d_el_fire", "a": "lab_el_c", "b": "lab_fire", "at": [-27, 30], "width": 5.0},
+        {"id": "lab_d_fire_frost", "a": "lab_fire", "b": "lab_frost", "at": [-51, 36], "width": 5.0,
+         "kind": "gate", "inputs": ["lab_kilns"]},
+        {"id": "lab_d_fire_storm", "a": "lab_fire", "b": "lab_storm", "at": [-39, 43], "width": 5.0},
+        {"id": "lab_d_entry_trap", "a": "lab_entry", "b": "lab_trap_c", "at": [11, 30], "width": 5.0},
+        {"id": "lab_d_trap_end", "a": "lab_trap_c", "b": "lab_trap_end", "at": [61, 30], "width": 5.0},
     ],
     "pois": [
         {"id": "lab_exit", "type": "portal", "pos": [0, 37], "yaw": 3.14159, "dest": "hub", "label": "RUNEHOLD"},
@@ -60,5 +76,25 @@ LAYOUT = {
         {"id": "lab_water_ch", "type": "water", "pos": [18, -36], "channel": "lab_ch",
          "inputs": ["lab_valve_a", "lab_valve_b"], "walkways": [[16, -38, 20, -34]]},
         {"id": "lab_lever_short", "type": "lever", "pos": [1, -22], "yaw": 0.0},
+        # phase 3: an ember bowl and three kilns (lit within 10 s of each other)
+        {"id": "lab_bowl", "type": "carrier", "pos": [-39, 22], "element": "fire"},
+        {"id": "lab_kilns", "type": "element", "pos": [-39, 31], "element": "fire", "window": 10.0,
+         "targets": [[-46, 38], [-32, 38], [-32, 24]]},
+        # a storm coil and four copper posts struck in order (6 s from one to the next)
+        {"id": "lab_coil", "type": "carrier", "pos": [-46, 48], "element": "storm"},
+        {"id": "lab_posts", "type": "element", "pos": [-36, 54], "element": "storm", "window": 6.0,
+         "ordered": True, "targets": [[-42, 54], [-36, 60], [-30, 54], [-36, 48]]},
+        # a frost crystal and an ice anchor in the channel: a bridge for 12 s
+        {"id": "lab_frost_crystal", "type": "carrier", "pos": [-58, 38], "element": "frost"},
+        {"id": "lab_ice", "type": "ice", "pos": [-64, 26], "channel": "lab_ch_frost",
+         "strip": [-66, 24, -62, 28], "seconds": 12.0},
+        {"id": "lab_frost_water", "type": "water", "pos": [-70, 26], "channel": "lab_ch_frost",
+         "inputs": [], "walkways": [], "ice": ["lab_ice"]},
+        {"id": "lab_chest_ice", "type": "chest", "pos": [-64, 20], "yaw": 0.0, "rarity_bias": 1},
+        # blades across the corridor, then a floor that falls away row by row
+        {"id": "lab_blades", "type": "trap", "pos": [26, 30], "look": "blades",
+         "lane": [[16, 30], [36, 30]], "strips": 5, "period": 3.0, "damage": 14.0},
+        {"id": "lab_collapse", "type": "collapse", "pos": [48, 30], "channel": "lab_pit",
+         "rows": 4, "period": 4.0, "down": 1.5, "back": [38, 30], "damage": 14.0},
     ],
 }

@@ -54,8 +54,12 @@ FEATURE_CLEAR = 1.5
 SPOT_CLEAR = 1.0
 DOOR_KINDS = {"open", "gate", "secret", "shortcut"}
 KNOWN_TYPES = {"portal", "camp", "chest", "lore", "rune", "arena", "tome", "light",
-               "lever", "plate", "block", "reset", "beam", "water"}
-FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "plate", "block", "reset", "beam"}
+               "lever", "plate", "block", "reset", "beam", "water",
+               "carrier", "element", "ice", "trap", "collapse"}
+FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "plate", "block", "reset", "beam",
+                 "carrier", "element"}
+## POIs that belong in a channel (the water itself, an ice socket, a pit's tiles)
+IN_CHANNEL_TYPES = {"water", "ice", "collapse"}
 WATER_COLOR = "#1C4652"
 COMBAT_TYPES = {"camp", "arena"}
 
@@ -356,10 +360,28 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
         if p["type"] in FEATURE_TYPES and not ras.clear_around(x, z, FEATURE_CLEAR):
             problems.append("%s: closer than %.1f m to a wall" % (p["id"], FEATURE_CLEAR))
         spots = [p["pos"]] + [s[:2] for s in p.get("spots", [])] + [m[:2] for m in p.get("mirrors", [])]
+        spots += [t[:2] for t in p.get("targets", []) if isinstance(t, list)]
         if p.get("receiver"):
             spots.append(p["receiver"])
-        if p["type"] != "water" and any(ras.water[ras.cell(s[0], s[1])] for s in spots):
+        if p["type"] not in IN_CHANNEL_TYPES and any(ras.water[ras.cell(s[0], s[1])] for s in spots):
             problems.append("%s: stands in a channel" % p["id"])
+        if p["type"] == "element":
+            for t in p.get("targets", []):
+                if not ras.clear_around(t[0], t[1], FEATURE_CLEAR):
+                    problems.append("%s: a target closer than %.1f m to a wall" % (p["id"], FEATURE_CLEAR))
+        if p["type"] in ("ice", "collapse"):
+            ch = channels.get(p.get("channel", ""))
+            if ch is None:
+                problems.append("%s: unknown channel" % p["id"])
+            elif p["type"] == "ice":
+                cx0, cz0, cx1, cz1 = ch[0]["rect"]
+                s = p.get("strip", [0, 0, 0, 0])
+                if not inside(ch[0]["rect"], x, z) or s[0] < cx0 or s[1] < cz0 or s[2] > cx1 or s[3] > cz1:
+                    problems.append("%s: its socket or strip lies outside its channel" % p["id"])
+        if p["type"] == "trap":
+            for q in p.get("lane", []):
+                if not inside(room["rect"], q[0], q[1]):
+                    problems.append("%s: its lane runs past its room" % p["id"])
         for m in p.get("mirrors", []) + ([p["receiver"]] if p.get("receiver") else []):
             if not ras.clear_around(m[0], m[1], FEATURE_CLEAR):
                 problems.append("%s: a mirror / receiver closer than %.1f m to a wall" % (p["id"], FEATURE_CLEAR))

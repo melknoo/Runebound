@@ -26,6 +26,9 @@ var arenas: Dictionary = {}
 var gates: Dictionary = {}
 ## M13 phase 2: water channels by POI id.
 var waters: Dictionary = {}
+## M13 phase 3: element sources and traps by POI id.
+var carriers: Dictionary = {}
+var traps: Dictionary = {}
 var _map_texture: Texture2D
 var _discover_left: float = 0.0
 var _room_seen: Dictionary = {}
@@ -103,6 +106,15 @@ func _build_zone() -> void:
 			arenas[id] = made["arena"]
 		if made.has("water"):
 			waters[id] = made["water"]
+		if made.has("carrier"):
+			carriers[id] = made["carrier"]
+		if made.has("trap"):
+			traps[id] = made["trap"]
+	for id: String in waters:  # M13 phase 3: the ice anchors freeze their water
+		for ice_id in layout.pois.find(id).get("ice", []):
+			var bridge := puzzles.get(String(ice_id)) as IceBridge
+			if bridge != null:
+				(waters[id] as WaterChannel).link_ice(bridge)
 	for door_id: String in builder.secret_walls:  # M13 phase 2: the cracked walls are shared puzzles too
 		puzzles[door_id] = builder.secret_walls[door_id]
 	_build_gates()

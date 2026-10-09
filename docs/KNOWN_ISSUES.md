@@ -369,6 +369,12 @@
   phases 2-5. Gates (`gate` doors) without inputs stand open until the
   puzzle kit wires them; the secret wall and the shortcut are solid plugs.
   Both arenas field the placeholder "Arena Warden" (one slam).
+- Element charges are personal and local: a druid charged with fire lights
+  a kiln, but the charge does not change its hits on enemies (puzzles
+  only, by design for now). The Elementalist needs a fire / frost /
+  lightning spell slotted to skip the sources.
+- Trap numbers to feel: blades 14 per hit, 5 strips over 3 s; the
+  collapsing floor's rows down 1.5 s of every 4 s (even, then odd).
 - Boss reset: 6 s with nobody alive in the room. A hero who kites the boss
   to a door and steps out resets it too - by design for now.
 - **Protocol 14:** ship a release before the next co-op session.

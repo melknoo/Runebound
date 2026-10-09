@@ -370,7 +370,10 @@ jetzt zu ihren Pfaden). Phase 1 gebaut (Runen + Tod, Boss-Arenen mit Reset, Gitt
 Truhen öffnen sich nur einmal – auch die Rätsel- und Grotten-Truhen der Highlands; Fix: der
 Spire-Ausgang blieb für einen Koop-Client nach dem Vessel zu). Phase 2 gebaut (Mechanik-Rätsel:
 Hebel und Ventile, Druckplatten, Schiebeblöcke, Lichtstrahl mit drehbaren Kristallen, brüchige
-Wände, Wasserkanäle mit Damm-Steg; das Puzzle Lab als Testraum). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+Wände, Wasserkanäle mit Damm-Steg; das Puzzle Lab als Testraum). Phase 3 gebaut (Element-Rätsel:
+Glutschale, Frostkristall und Sturmspule geben jedem Helden das Element für 8 s, so löst jede Klasse
+Öfen, Kupferpfosten und Eisbrücken mit dem Grundangriff, der Magier auch direkt; Fallen: Klingen
+und Feuerdüsen im Takt, einstürzender Boden über einer Grube – nie der letzte Lebenspunkt). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein
