@@ -34,7 +34,7 @@ Lesehilfe: In ROADMAP, PROJECT_STATE und KNOWN_ISSUES tragen einzelne ältere Ab
 
 **Stufe B, spielen und testen:**
 1. Godot **4.6.3-stable** (Windows 64, nicht 4.6.1) von `https://github.com/godotengine/godot/releases/tag/4.6.3-stable` entpacken.
-2. Umgebungsvariable `GODOT` auf die volle Pfadangabe der `Godot_v4.6.3-stable_win64_console.exe` setzen (`setx GODOT "<Pfad>"`, danach ein neues Terminal).
+2. Umgebungsvariable `GODOT` auf die volle Pfadangabe der `Godot_v4.6.3-stable_win64_console.exe` setzen (`setx GODOT "<Pfad>"`; `run_godot` liest den Wert auch in einem Terminal, das älter ist als das `setx`).
 3. Im Klon: `tools\run_godot.cmd import`, dann `tools\run_godot.cmd smoke` (muss grün enden, dauert einige Minuten), dann `tools\run_godot.cmd play` (startet mit `--dev`: F1 und die Playtest-Liste J gehen; sonst unter Settings -> Gameplay -> Developer tools einschalten).
 4. Spielen immer ohne Editor (`tools\run_godot.cmd play` / `coop`): ein im Editor eingebettetes Spiel ist ein zweiter Vulkan-Prozess auf der GPU, auf dem RTX-2070-PC endete das im Treiber-Reset. Nach einem Wechsel der Godot-Version vorher `.godot\` im Klon löschen. Kommt ein Crash: Windows-Ereignisanzeige (System, `nvlddmkm`) zur Crash-Zeit ansehen, dann `--rendering-driver d3d12` probieren.
 

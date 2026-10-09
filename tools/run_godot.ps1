@@ -20,6 +20,10 @@
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
 
 $godot = $env:GODOT
+# setx stores GODOT for new processes only: a terminal (or VS Code) started
+# before it still lacks the variable, so read the stored value directly.
+if (-not $godot) { $godot = [Environment]::GetEnvironmentVariable("GODOT", "User") }
+if (-not $godot) { $godot = [Environment]::GetEnvironmentVariable("GODOT", "Machine") }
 if (-not $godot) {
 	$godot = "C:\Users\mknop\Downloads\Godot_v4.6.3-stable_win64.exe\Godot_v4.6.3-stable_win64_console.exe"
 }
