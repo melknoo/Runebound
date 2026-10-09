@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss",
+	"dungeon", "dungeon_boss", "puzzle_kit",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -354,6 +354,20 @@ func _update() -> void:
 				verdict = "fail: the server's world has no lit rune"
 			elif not bool(SaveGame.poi_state("chest:ci_chest_pump").get("opened", false)):
 				verdict = "fail: the server's world does not keep the opened chest"
+			else:
+				verdict = "ok"
+		"puzzle_kit":  # M13: the server's world keeps every mechanism as the clients left it
+			var lz := get_tree().current_scene as PuzzleLabZone
+			if lz == null:
+				verdict = "fail: the server is not in the puzzle lab"
+			elif not bool(SaveGame.poi_state("lab_lever").get("on", false)):
+				verdict = "fail: the lever is not pulled on the server"
+			elif (lz.puzzles["lab_block"] as PushBlock).cell_of() != Vector2i(0, -5):
+				verdict = "fail: the block is not on its plate on the server"
+			elif not (lz.puzzles["lab_light"] as BeamPuzzle).is_solved():
+				verdict = "fail: the beam is not solved on the server"
+			elif not (lz.waters["lab_water_ch"] as WaterChannel).drained:
+				verdict = "fail: the channel is not drained on the server"
 			else:
 				verdict = "ok"
 		"dungeon_boss":  # M13: the arena reset once, started twice, its boss fell (the flag)

@@ -368,7 +368,9 @@ Raumnamen, Camps in ihren Räumen; die Cistern als begehbare Graubox mit Platzha
 Cistern-Tor bricht sein Siegel und führt hinein, der Ausgang zurück vor das Tor; die Tore schauen
 jetzt zu ihren Pfaden). Phase 1 gebaut (Runen + Tod, Boss-Arenen mit Reset, Gitter-Tore,
 Truhen öffnen sich nur einmal – auch die Rätsel- und Grotten-Truhen der Highlands; Fix: der
-Spire-Ausgang blieb für einen Koop-Client nach dem Vessel zu). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+Spire-Ausgang blieb für einen Koop-Client nach dem Vessel zu). Phase 2 gebaut (Mechanik-Rätsel:
+Hebel und Ventile, Druckplatten, Schiebeblöcke, Lichtstrahl mit drehbaren Kristallen, brüchige
+Wände, Wasserkanäle mit Damm-Steg; das Puzzle Lab als Testraum). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

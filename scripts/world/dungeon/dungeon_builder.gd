@@ -25,8 +25,10 @@ var zone: ZoneBase
 var layout: DungeonLayout
 var floor_body: StaticBody3D
 var wall_body: StaticBody3D
-## Doorways closed by a solid plug (secret walls, shortcut bars) by door id.
+## Doorways closed by a solid plug (a shortcut without a lever) by door id.
 var plugs: Dictionary = {}
+## M13 phase 2: the secret doorways' cracked walls by door id.
+var secret_walls: Dictionary = {}
 var lights: Array[OmniLight3D] = []
 
 
@@ -47,8 +49,11 @@ static func build(z: ZoneBase, l: DungeonLayout, floor_mat: Material, wall_mat: 
 		var y := float(d.get("floor", 0.0))
 		b._piece(b.floor_body, floor_mat, Vector3(rect.get_center().x, y - FLOOR_THICK * 0.5, rect.get_center().y),
 			Vector3(rect.size.x, FLOOR_THICK, rect.size.y))
-		if String(d.get("kind", "open")) in ["secret", "shortcut"]:
-			b.plugs[String(d["id"])] = b._plug(d, wall_mat)
+		var kind := String(d.get("kind", "open"))
+		if kind == "secret":  # M13 phase 2: a cracked wall that breaks
+			b.secret_walls[String(d["id"])] = SecretWall.build(z, d, wall_mat)
+		elif kind == "shortcut" and (d.get("inputs", []) as Array).is_empty():
+			b.plugs[String(d["id"])] = b._plug(d, wall_mat)  # bars with a lever come as a gate
 	for w in l.walls:
 		var rect := DungeonLayout.rect_of(w)
 		var top := float(w.get("top", 7.0))
@@ -111,9 +116,23 @@ func _room_floor(r: Dictionary, mat: Material) -> void:
 	var rect := DungeonLayout.rect_of(r)
 	var slope: Dictionary = r.get("slope", {})
 	if slope.is_empty():
+		# M13 phase 2: a room with channels stands on columns down to base_y,
+		# the channels' beds lower (their sides are the columns' faces)
 		var y := float(r.get("floor", 0.0))
-		_piece(floor_body, mat, Vector3(rect.get_center().x, y - FLOOR_THICK * 0.5, rect.get_center().y),
-			Vector3(rect.size.x, FLOOR_THICK, rect.size.y))
+		var holes: Array[Rect2] = []
+		for c in layout.channels_of(String(r.get("id", ""))):
+			var hole := DungeonLayout.rect_of(c)
+			holes.append(hole)
+			var bed := y - float(c.get("depth", 0.0))
+			_piece(floor_body, mat, Vector3(hole.get_center().x, (layout.base_y + bed) * 0.5, hole.get_center().y),
+				Vector3(hole.size.x, bed - layout.base_y, hole.size.y))
+		if holes.is_empty():
+			_piece(floor_body, mat, Vector3(rect.get_center().x, y - FLOOR_THICK * 0.5, rect.get_center().y),
+				Vector3(rect.size.x, FLOOR_THICK, rect.size.y))
+			return
+		for part in subtract(rect, holes):
+			_piece(floor_body, mat, Vector3(part.get_center().x, (layout.base_y + y) * 0.5, part.get_center().y),
+				Vector3(part.size.x, y - layout.base_y, part.size.y))
 		return
 	var along_x := String(slope.get("axis", "z")) == "x"
 	var span: Array = slope["span"]
@@ -146,6 +165,28 @@ func _room_floor(r: Dictionary, mat: Material) -> void:
 	var basis := Basis(dir, normal, dir.cross(normal))
 	var top_mid := Vector3((a + b) * 0.5, (y0 + y1) * 0.5, across) if along_x else Vector3(across, (y0 + y1) * 0.5, (a + b) * 0.5)
 	_piece(floor_body, mat, top_mid - normal * RAMP_THICK * 0.5, Vector3(length, RAMP_THICK, width), basis)
+
+
+## `rect` minus `holes` as non-overlapping rectangles (guillotine cuts).
+static func subtract(rect: Rect2, holes: Array[Rect2]) -> Array[Rect2]:
+	var parts: Array[Rect2] = [rect]
+	for hole in holes:
+		var next: Array[Rect2] = []
+		for p in parts:
+			var cut := p.intersection(hole)
+			if not cut.has_area():
+				next.append(p)
+				continue
+			if cut.position.y > p.position.y:  # north strip
+				next.append(Rect2(p.position.x, p.position.y, p.size.x, cut.position.y - p.position.y))
+			if cut.end.y < p.end.y:  # south strip
+				next.append(Rect2(p.position.x, cut.end.y, p.size.x, p.end.y - cut.end.y))
+			if cut.position.x > p.position.x:  # west, between the strips
+				next.append(Rect2(p.position.x, cut.position.y, cut.position.x - p.position.x, cut.size.y))
+			if cut.end.x < p.end.x:  # east
+				next.append(Rect2(cut.end.x, cut.position.y, p.end.x - cut.end.x, cut.size.y))
+		parts = next
+	return parts
 
 
 ## A lid over a roofed room (the secret vault, the tome room): the camera's
@@ -227,7 +268,48 @@ static func build_poi(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> Diction
 			return {"rune": r, "puzzle": r}
 		"arena":
 			return {"arena": arena(z, l, poi)}
+		"lever":  # M13 phase 2: the mechanical puzzle kit
+			return {"puzzle": PuzzleLever.build(z, poi)}
+		"plate":
+			return {"puzzle": PressurePlate.build(z, poi)}
+		"block":
+			return {"puzzle": PushBlock.build(z, poi)}
+		"beam":
+			return {"puzzle": BeamPuzzle.build(z, poi)}
+		"water":
+			return {"water": WaterChannel.build(z, l, poi)}
+		"reset":
+			return {"switch": reset_switch(z, poi)}
 	return {}
+
+
+## A rune slab that sends a puzzle's blocks home ([E]): a stuck block never
+## locks a puzzle for good.
+static func reset_switch(z: ZoneBase, poi: Dictionary) -> PuzzleSwitch:
+	var sw := PuzzleSwitch.new()
+	sw.name = "Reset_" + String(poi.get("id", ""))
+	sw.id = String(poi.get("id", ""))
+	sw.text_key = "ui.prompt.reset"
+	sw.reach = 2.0
+	var targets: Array = poi.get("targets", [])
+	sw.on_use = func(hero: Player) -> void:
+		var dz := z as DungeonZone
+		if dz == null:
+			return
+		for t in targets:
+			var block := dz.puzzles.get(String(t)) as PushBlock
+			if block != null:
+				block.request("reset", 0, hero)
+	var slab := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.9, 0.3, 0.9)
+	mesh.material = EnemyBase.flat_material(Color(0.3, 0.6, 0.65), true, 0.5)
+	slab.mesh = mesh
+	slab.position = Vector3(0, 0.15, 0)
+	sw.add_child(slab)
+	z.world.add_child(sw)
+	sw.global_position = ZoneLayout.pos_of(poi)
+	return sw
 
 
 ## A boss's room: the BossArena in its middle, the room's rect as the fight's

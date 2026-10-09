@@ -101,6 +101,13 @@ const SCENARIOS := {
 			{"role": "c3", "delay": 20.0}],
 		"timeout": 150.0,
 	},
+	# M13 phase 2: the puzzle lab's mechanics for two and a late joiner.
+	"puzzle_kit": {
+		"server": ["--zone=res://scenes/puzzle_lab.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]},
+			{"role": "c3", "delay": 35.0}],
+		"timeout": 180.0,
+	},
 	# M13 phase 1: a boss arena for two - scaled, reset when both leave, felled.
 	"dungeon_boss": {
 		"server": ["--zone=res://scenes/hollow_cistern.tscn"],

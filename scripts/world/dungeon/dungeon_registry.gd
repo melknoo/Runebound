@@ -18,6 +18,18 @@ const DUNGEONS := {
 		"name_key": "zone.hollow_cistern",
 		"min_party": 1,
 	},
+	# the puzzle kit's test dungeon (tests only; no gate leads here)
+	"lab": {
+		"scene": "res://scenes/puzzle_lab.tscn",
+		"layout": "res://assets/world/puzzle_lab",
+		"gate": "",
+		"exit": "lab_exit",
+		"level": 1,
+		"boss_level": 2,
+		"recommended": 1,
+		"name_key": "",
+		"min_party": 1,
+	},
 	"warrens": {
 		"scene": "",
 		"layout": "",

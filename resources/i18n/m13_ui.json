@@ -87,5 +87,21 @@
 	"enemy.dungeon_boss": {
 		"en": "Arena Warden",
 		"de": "Arenawächter"
+	},
+	"ui.prompt.pull": {
+		"en": "Pull",
+		"de": "Ziehen"
+	},
+	"ui.prompt.valve": {
+		"en": "Turn the valve",
+		"de": "Ventil drehen"
+	},
+	"ui.prompt.reset": {
+		"en": "Reset the stones",
+		"de": "Steine zurücksetzen"
+	},
+	"ui.dungeon.secret_found": {
+		"en": "The wall gives way: a hidden room.",
+		"de": "Die Wand gibt nach: ein verborgener Raum."
 	}
 }

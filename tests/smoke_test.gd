@@ -5,7 +5,7 @@ extends Node
 
 ## A hung run must fail instead of lingering: stale headless runs once kept
 ## burning CPU for a day, which also slowed the iGPU (shared power budget).
-const WATCHDOG_SEC := 300.0
+const WATCHDOG_SEC := 420.0  # M13: the dungeons added zone loads (the wrapper's hard limit is 8 min)
 
 var _failures: Array[String] = []
 var lab: CombatLab
@@ -3992,7 +3992,7 @@ func _run() -> void:
 					spots_clear = false
 		_check(spot_count >= 8 and spots_clear, "M13: %d camp spots stand clear inside their rooms" % spot_count)
 		_check(cistern.enemy_count() == 0, "M13: no Cistern camp wakes on arrival")
-		_check(cistern.builder.plugs.has("ci_d_run_vault") and cistern.builder.plugs.has("ci_d_c4_threshold"),
+		_check(cistern.builder.secret_walls.has("ci_d_run_vault") and cistern.builder.plugs.has("ci_d_c4_threshold"),
 			"M13: the secret wall and the shortcut start closed")
 		var in_wall := Vector3(-11.0, 0.0, 33.0)
 		var made_safe := cistern.safe_spawn(in_wall)
@@ -4160,6 +4160,131 @@ func _run() -> void:
 				await _wait_frames(30)
 				_check(not (cistern2.arenas["ci_arena_keeper"] as BossArena).fighting() and cistern2.enemy_count() == 0,
 					"M13: a fallen boss stays dead")
+				# --- phase 2: the puzzle kit in its lab ---
+				cistern2.travel_to("res://scenes/puzzle_lab.tscn", "lab_exit")
+				for i in 60:
+					await get_tree().process_frame
+					if get_tree().current_scene is PuzzleLabZone:
+						break
+				var lab13 := get_tree().current_scene as PuzzleLabZone
+				_check(lab13 != null and lab13.zone_title() == "", "M13: the puzzle lab loads (no title, no discovery)")
+				if lab13 != null:
+					leave_zone = lab13
+					await _wait_frames(6)
+					var lh := lab13.player
+					lh.god_mode = true
+					# a lever opens its gate (and the world keeps it)
+					var gate_c2 := lab13.gates["lab_d_hub_c2"] as DungeonGate
+					var lever := lab13.puzzles["lab_lever"] as PuzzleLever
+					_check(not gate_c2.is_open and gate_c2._body.collision_layer != 0, "M13 kit: a gate waits shut on its lever")
+					lever._switch.use_by(lh)
+					await _wait_frames(2)
+					_check(lever.is_on() and gate_c2.is_open and gate_c2._body.collision_layer == 0
+						and bool(SaveGame.poi_state("lab_lever").get("on", false)), "M13 kit: the lever pulled, the gate opens")
+					# plates: one latches under a hero, one wants the block
+					var plate_a := lab13.puzzles["lab_plate_a"] as PressurePlate
+					var plate_b := lab13.puzzles["lab_plate_b"] as PressurePlate
+					var gate_beam := lab13.gates["lab_d_plates_beam"] as DungeonGate
+					lh.global_position = plate_b.global_position + Vector3(0, 0.2, 0)
+					await _wait_frames(12)
+					lh.global_position = Vector3(48, 0.2, -8)
+					await _wait_frames(12)
+					_check(plate_b.is_down() and not plate_a.is_down() and not gate_beam.is_open,
+						"M13 kit: a latching plate stays down after the hero steps off; one plate is not enough")
+					var block := lab13.puzzles["lab_block"] as PushBlock
+					_check(not block.cell_free(Vector2i(-4, 0)) and not block.cell_free(Vector2i(0, -8)) and block.cell_free(Vector2i(0, -1)),
+						"M13 kit: a block never leaves its grid or the room")
+					# walking into the block pushes it
+					lh.global_position = block.rest_position() + Vector3(0, 0.2, 2.6)
+					lh.velocity = Vector3.ZERO
+					lab13.camera_rig._yaw = 0.0  # camera-forward = -Z (north)
+					await _wait_frames(3)
+					Input.action_press(&"move_forward")
+					await _wait_frames(70)
+					Input.action_release(&"move_forward")
+					await _wait_frames(3)
+					_check(block.cell_of().y <= -1, "M13 kit: walking into the block pushes it along the grid (cell %s)" % block.cell_of())
+					for push_i in 6:
+						if block.cell_of().y <= -5:
+							break
+						lh.global_position = block.rest_position() + Vector3(0, 0.2, 2.2)
+						await _wait_frames(2)
+						block.request("push", [0, -1], lh)
+					lh.global_position = Vector3(48, 0.2, -8)
+					await _wait_frames(12)
+					_check(block.cell_of() == Vector2i(0, -5) and plate_a.is_down() and gate_beam.is_open,
+						"M13 kit: the block on its plate and a latched plate open the gate")
+					lh.global_position = block.rest_position() + Vector3(2.4, 0.2, 0)
+					block.request("push", [-1, 0], lh)  # the hero stands east of it: into the next cell west
+					block.request("push", [0, 1], lh)   # not behind it: refused
+					_check(block.cell_of() == Vector2i(-1, -5), "M13 kit: a push only from behind (cell %s)" % block.cell_of())
+					lh.global_position = block.rest_position() + Vector3(-2.4, 0.2, 0)
+					block.request("push", [1, 0], lh)
+					await _wait_frames(12)
+					_check(block.cell_of() == Vector2i(0, -5) and plate_a.is_down(), "M13 kit: pushed back onto the plate")
+					# the beam: two crystals turned until the light reaches the receiver
+					var beam := lab13.puzzles["lab_light"] as BeamPuzzle
+					var gate_water := lab13.gates["lab_d_beam_water"] as DungeonGate
+					_check(not bool(beam.trace()["reached"]) and not gate_water.is_open, "M13 kit: the light starts off its mark")
+					for turn_i in 5:
+						beam.request("turn", 0, lh)
+					_check(not beam.is_solved() and (beam.trace()["points"] as Array).size() >= 3,
+						"M13 kit: the first crystal sends the light on (%d legs)" % ((beam.trace()["points"] as Array).size() - 1))
+					for turn_i in 5:
+						beam.request("turn", 1, lh)
+					await _wait_frames(2)
+					_check(beam.is_solved() and gate_water.is_open, "M13 kit: the light reaches its receiver, the gate opens")
+					# the water: two valves drain it, the causeway carries a hero, the rest stays fenced
+					var water := lab13.waters["lab_water_ch"] as WaterChannel
+					(lab13.puzzles["lab_valve_a"] as PuzzleLever).request("pull", 0, lh)
+					await _wait_frames(2)
+					_check(not water.drained, "M13 kit: one valve of two leaves the channel full")
+					(lab13.puzzles["lab_valve_b"] as PuzzleLever).request("pull", 0, lh)
+					await _wait_frames(2)
+					_check(water.drained and water.crossable_at(18, -36) and not water.crossable_at(10, -36),
+						"M13 kit: both valves drain the channel; the causeway shows")
+					lh.global_position = Vector3(10, 0.2, -31)
+					lh.velocity = Vector3.ZERO
+					lab13.camera_rig._yaw = 0.0
+					await _wait_frames(3)
+					Input.action_press(&"move_forward")
+					await _wait_frames(90)
+					Input.action_release(&"move_forward")
+					var fenced_at := lh.global_position
+					lh.global_position = Vector3(18, 0.2, -31)
+					lh.velocity = Vector3.ZERO
+					await _wait_frames(3)
+					Input.action_press(&"move_forward")
+					await _wait_frames(110)
+					Input.action_release(&"move_forward")
+					var crossed_at := lh.global_position
+					_check(fenced_at.z > -34.3 and crossed_at.z < -38.5 and absf(crossed_at.y) < 0.6,
+						"M13 kit: deep water stops a hero, the causeway carries one across (%s / %s)" % [fenced_at, crossed_at])
+					# the cracked wall: found by a melee query, broken by three strikes
+					var wall := lab13.builder.secret_walls["lab_d_hub_hidden"] as SecretWall
+					var probe_at := Vector3(-13.0, 1.2, -7.0)  # where a sword swung at the wall's face reaches
+					_check(lh._query_hurtboxes(probe_at, 1.5).has(wall), "M13 kit: a swing at the cracked wall finds it")
+					for strike_i in 3:
+						wall.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, probe_at))
+						await get_tree().create_timer(SecretWall.STRIKE_GAP + 0.05).timeout
+					await _wait_frames(2)
+					_check(wall.is_solved() and wall._body.collision_layer == 0 and int(wall.state.get("hits", 0)) == 3,
+						"M13 kit: three strikes break the cracked wall")
+					# the shortcut: its lever stands on the far side
+					var short_gate := lab13.gates["lab_d_c3_hub"] as DungeonGate
+					_check(not short_gate.is_open, "M13 kit: the shortcut is barred")
+					(lab13.puzzles["lab_lever_short"] as PuzzleLever)._switch.use_by(lh)
+					await _wait_frames(2)
+					_check(short_gate.is_open, "M13 kit: its lever opens the shortcut")
+					# a stuck block goes home; the plate rises and its gate shuts again
+					lh.global_position = Vector3(36, 0.2, 2)
+					var reset_sw := lab13.world.get_node_or_null("Reset_lab_block_reset") as PuzzleSwitch
+					if reset_sw != null:
+						reset_sw.use_by(lh)
+					lh.global_position = Vector3(48, 0.2, -8)
+					await _wait_frames(12)
+					_check(reset_sw != null and block.cell_of() == Vector2i.ZERO and not plate_a.is_down() and not gate_beam.is_open,
+						"M13 kit: the reset slab sends the block home; its plate rises and the gate shuts")
 
 	# --- hub shows the spire shortcut once the colossus flag is set ---
 	leave_zone.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate

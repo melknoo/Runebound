@@ -706,6 +706,84 @@ class Driver extends Node:
 					return
 				await _seconds(2.0)
 				_finish("ok")
+			"puzzle_kit":
+				# M13 phase 2: the puzzle lab for two - c1 pulls the lever, c2 holds
+				# the latching plate (judged from its proxy on the server), c1
+				# pushes the block onto the other plate (requests checked against
+				# its proxy), c2 turns the crystals, each pulls a valve; c3 joins
+				# late and finds it all as it was left.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as PuzzleLabZone
+				if zone == null:
+					_finish("fail: not in the puzzle lab")
+					return
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				var lever := zone.puzzles["lab_lever"] as PuzzleLever
+				var plate_a := zone.puzzles["lab_plate_a"] as PressurePlate
+				var plate_b := zone.puzzles["lab_plate_b"] as PressurePlate
+				var block := zone.puzzles["lab_block"] as PushBlock
+				var beam := zone.puzzles["lab_light"] as BeamPuzzle
+				var water := zone.waters["lab_water_ch"] as WaterChannel
+				var all_done := func() -> bool:
+					return lever.is_on() and plate_b.is_down() and plate_a.is_down() and block.cell_of() == Vector2i(0, -5) \
+						and beam.is_solved() and water.drained and (zone.gates["lab_d_plates_beam"] as DungeonGate).is_open
+				if role == "c3":
+					if not await _until(all_done, 30.0, "the lab as the others left it (a late joiner)"):
+						return
+					_finish("ok")
+					return
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				var go := func(at: Vector3) -> void:
+					hero.global_position = at + Vector3(0, 0.2, 0)
+					hero.velocity = Vector3.ZERO
+				if role == "c1":
+					go.call(lever.global_position + Vector3(-1.5, 0, 0))
+					await _seconds(1.0)  # the proxy follows (the server judges the reach)
+					lever.request("pull", 0, hero)
+					if not await _until(func() -> bool: return lever.is_on() and (zone.gates["lab_d_hub_c2"] as DungeonGate).is_open,
+							15.0, "the lever pulled, its gate open"):
+						return
+					for push_i in 8:
+						if block.cell_of().y <= -5:
+							break
+						go.call(block.rest_position() + Vector3(0, 0, 2.2))
+						await _seconds(0.8)
+						var before := block.cell_of()
+						block.request("push", [0, -1], hero)
+						await _until(func() -> bool: return block.cell_of() != before, 3.0, "a push to land")
+					if not await _until(func() -> bool: return plate_a.is_down(), 15.0, "the block on plate a"):
+						return
+					go.call(Vector3(12, 0, -27))
+					await _seconds(1.0)
+					(zone.puzzles["lab_valve_a"] as PuzzleLever).request("pull", 0, hero)
+				else:
+					go.call(plate_b.global_position)
+					if not await _until(func() -> bool: return plate_b.is_down(), 15.0, "plate b down under c2's proxy"):
+						return
+					go.call(Vector3(48, 0, -30))
+					await _seconds(1.0)
+					if not await _until(func() -> bool: return plate_a.is_down(), 60.0, "c1's block on plate a"):
+						return
+					for turn_i in 5:
+						beam.request("turn", 0, hero)
+						await _seconds(0.25)
+					for turn_i in 5:
+						beam.request("turn", 1, hero)
+						await _seconds(0.25)
+					if not await _until(func() -> bool: return beam.is_solved(), 15.0, "the beam solved"):
+						return
+					go.call(Vector3(24, 0, -25))
+					await _seconds(1.0)
+					(zone.puzzles["lab_valve_b"] as PuzzleLever).request("pull", 0, hero)
+				if not await _until(all_done, 40.0, "the whole lab solved here"):
+					return
+				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
+				await _seconds(3.0)
+				_finish("ok")
 			"rewards":
 				# c1 clears camp_1 and opens chest_south; c2 waits 108 m away.
 				if not await _in_zone():

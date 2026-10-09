@@ -39,8 +39,9 @@ from bake import BAYER4, hex_rgb  # noqa: E402
 from highlands_layout import LAYOUT as HIGHLANDS  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
-## dungeon id -> layout module (tools/worldgen/<module>.py, LAYOUT dict)
-DUNGEONS = {"cistern": "cistern_layout"}
+## dungeon id -> layout module (tools/worldgen/<module>.py, LAYOUT dict); "lab"
+## is the test room of the puzzle kit (scenes/puzzle_lab.tscn, never reachable)
+DUNGEONS = {"cistern": "cistern_layout", "lab": "lab_layout"}
 GRID = 0.5            # m per raster cell
 MAP_PX_PER_M = 3
 WALL_REACH = 2.0      # m of wall grown around every walkable cell
@@ -52,8 +53,10 @@ MIN_COMBAT = 16.0
 FEATURE_CLEAR = 1.5
 SPOT_CLEAR = 1.0
 DOOR_KINDS = {"open", "gate", "secret", "shortcut"}
-KNOWN_TYPES = {"portal", "camp", "chest", "lore", "rune", "arena", "tome", "light"}
-FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal"}
+KNOWN_TYPES = {"portal", "camp", "chest", "lore", "rune", "arena", "tome", "light",
+               "lever", "plate", "block", "reset", "beam", "water"}
+FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "plate", "block", "reset", "beam"}
+WATER_COLOR = "#1C4652"
 COMBAT_TYPES = {"camp", "arena"}
 
 
@@ -140,6 +143,7 @@ class Raster:
         self.room = np.full((self.res, self.res), -1, dtype=np.int32)
         self.door = np.full((self.res, self.res), -1, dtype=np.int32)
         self.floor = np.zeros((self.res, self.res), dtype=np.float64)
+        self.water = np.zeros((self.res, self.res), dtype=bool)
         for k, r in enumerate(rooms):
             x0, z0, x1, z1 = r["rect"]
             sel = (self.X > x0) & (self.X < x1) & (self.Z > z0) & (self.Z < z1)
@@ -155,6 +159,11 @@ class Raster:
                 self.floor[sel] = (s["y"][0] + (s["y"][1] - s["y"][0]) * t)[sel]
             else:
                 self.floor[sel] = float(r["floor"])
+            for ch in r.get("channels", []):
+                cx0, cz0, cx1, cz1 = ch["rect"]
+                csel = sel & (self.X > cx0) & (self.X < cx1) & (self.Z > cz0) & (self.Z < cz1)
+                self.floor[csel] = float(r.get("floor", 0.0)) - float(ch["depth"])
+                self.water[csel] = True
         for k, d in enumerate(doors):
             x0, z0, x1, z1 = d["rect"]
             sel = (self.X > x0) & (self.X < x1) & (self.Z > z0) & (self.Z < z1)
@@ -309,8 +318,21 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
         problems.append("no shortcut back to the entry")
     for d in shortcuts:
         da, db = long_way.get(d["a"], 99), long_way.get(d["b"], 99)
-        if min(da, db) > 1 or max(da, db) < 3:
+        if min(da, db) > 2 or abs(da - db) < 3:
             problems.append("%s: not a shortcut (rooms %d and %d steps from the entry)" % (d["id"], da, db))
+    # channels: inside their (flat) room, prefixed; nothing stands in them
+    channels = {}
+    for r in rooms:
+        for ch in r.get("channels", []):
+            channels[ch["id"]] = (ch, r)
+            if not ch["id"].startswith(prefix):
+                problems.append("%s: id without the prefix %s" % (ch["id"], prefix))
+            if r.get("slope"):
+                problems.append("%s: a channel in a sloped room" % ch["id"])
+            cx0, cz0, cx1, cz1 = ch["rect"]
+            x0, z0, x1, z1 = r["rect"]
+            if cx0 < x0 or cz0 < z0 or cx1 > x1 or cz1 > z1:
+                problems.append("%s: runs past its room %s" % (ch["id"], r["id"]))
     # rooms that fight
     for p in lay["pois"]:
         if p["type"] in COMBAT_TYPES:
@@ -333,6 +355,29 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
         x, z = p["pos"]
         if p["type"] in FEATURE_TYPES and not ras.clear_around(x, z, FEATURE_CLEAR):
             problems.append("%s: closer than %.1f m to a wall" % (p["id"], FEATURE_CLEAR))
+        spots = [p["pos"]] + [s[:2] for s in p.get("spots", [])] + [m[:2] for m in p.get("mirrors", [])]
+        if p.get("receiver"):
+            spots.append(p["receiver"])
+        if p["type"] != "water" and any(ras.water[ras.cell(s[0], s[1])] for s in spots):
+            problems.append("%s: stands in a channel" % p["id"])
+        for m in p.get("mirrors", []) + ([p["receiver"]] if p.get("receiver") else []):
+            if not ras.clear_around(m[0], m[1], FEATURE_CLEAR):
+                problems.append("%s: a mirror / receiver closer than %.1f m to a wall" % (p["id"], FEATURE_CLEAR))
+        if p["type"] == "water":
+            ch = channels.get(p.get("channel", ""))
+            if ch is None:
+                problems.append("%s: unknown channel" % p["id"])
+            else:
+                cx0, cz0, cx1, cz1 = ch[0]["rect"]
+                for w in p.get("walkways", []):
+                    if w[0] < cx0 or w[1] < cz0 or w[2] > cx1 or w[3] > cz1:
+                        problems.append("%s: a walkway outside its channel" % p["id"])
+        if p["type"] == "block":
+            gx0, gz0, gx1, gz1 = p["grid"]
+            if not inside(room["rect"], gx0, gz0) or not inside(room["rect"], gx1, gz1):
+                problems.append("%s: its grid runs past the room" % p["id"])
+            if not inside(p["grid"], x, z):
+                problems.append("%s: its home lies outside its grid" % p["id"])
         if p["type"] == "camp":
             x0, z0, x1, z1 = room["rect"]
             edge = min(x - x0, x1 - x, z - z0, z1 - z)
@@ -373,6 +418,9 @@ def write_map(lay: dict, ras: Raster, public_walk: np.ndarray, out_dir: str) -> 
     idx = np.clip(np.floor(1.0 + t * 2.0 + 0.5 + bayer * 0.9).astype(int), 0, len(floor_ramp) - 1)
     rgb = np.tile(bg, (res, res, 1))
     rgb[walk] = floor_ramp[idx[walk]]
+    wet = walk & ras.water[iz, ix]
+    water = hex_rgb(pal.get("water", WATER_COLOR))
+    rgb[wet] = water[None, :] * (0.92 + 0.16 * (bayer[wet] + 0.5))[:, None]
     # walls: the face next to a floor lighter than the mass behind it
     near = dilate_max(public_walk.astype(np.float64), 1)[iz, ix] > 0.5
     rgb[wall] = wall_ramp[1]
@@ -444,6 +492,7 @@ def bake(key: str, others: set) -> int:
         "rooms": rooms,
         "doors": doors,
         "walls": walls,
+        "channels": [dict(ch, room=r["id"], floor=float(r.get("floor", 0.0))) for r in rooms for ch in r.get("channels", [])],
         "pois": pois,
         "areas": [],
         "baked": {"map_px_per_m": MAP_PX_PER_M, "grid_m": GRID, "wall_reach_m": WALL_REACH},

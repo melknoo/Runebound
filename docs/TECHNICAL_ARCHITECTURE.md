@@ -701,6 +701,30 @@ Plan with the user's answers: ROADMAP M13.
   position, and so `net_key`, is set after add_child) with
   `present_open(quiet)` and `NetWorld.chest_opened(chest, quiet)`; the
   CHEST_OPENED payload is `[key, quiet]`.
+- **Mechanical kit (phase 2, `scripts/world/puzzles/`):** `PuzzleLever`
+  (`on`; one-way sets `solved`), `PressurePlate` (`down`, the authority
+  checks `zone.players` and the zone's `PushBlock.rest_position()`s every
+  0.1 s; `latch`), `PushBlock` (`cell` [i, j] from its home; `push` [dx, dz]
+  checked against the pusher's position and `cell_free`; `reset`),
+  `BeamPuzzle` (`rot` per crystal in 45-degree steps; `trace()` walks the
+  beam crystal to crystal within 0.6 m of the ray, stops at layer-1 walls;
+  every machine traces for the look, the authority to judge a turn),
+  `SecretWall` (built for every `secret` door: a layer-1 wall with a
+  hurtbox poking out of both faces; `strike` counted on the authority, one
+  per hero every 0.35 s, three break it). Their small solid parts (posts,
+  pedestals, blocks, gate bars, the water fence) stand on the foliage layer
+  7: heroes and enemies bump them, the camera spring and `ground_point`
+  ignore them.
+- **Water (phase 2):** a room's `channels` ({id, rect, depth}) lower the
+  floor in the bake (the map draws water) and in `DungeonLayout.floor_at`;
+  the builder raises the rest of the room on columns from `base_y`
+  (`DungeonBuilder.subtract`). `WaterChannel` (POI `water`: channel,
+  `inputs`, `walkways`) is derived like a gate: full = the surface at the
+  floor and a fence over the whole channel; drained = the surface low, the
+  causeways' colliders on (layer 1, a floor) and the fence only around
+  them. It refills only with nobody in the channel.
+- **Puzzle lab:** `PuzzleLabZone` (registry id `lab`, no title, never
+  reachable) for the smoke test and the net scenarios.
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 
@@ -995,7 +1019,7 @@ resonance cost/gain, crit. Behavior lives in Player; numbers live in data.
   (`tools\run_godot.cmd <mode>` does the same where the PowerShell execution
   policy blocks .ps1 files). Windowed modes warn when another game instance
   is running (GPU contention on the iGPU). Smoke quits with code 2 after a
-  300 s watchdog.
+  420 s watchdog (300 s until M13).
 - Debug a copied save without touching the real one:
   `-- --save=user://<file>.json` (no wipe, no fixed seed).
 - `tools\run_godot.ps1 shots <list>` — data-driven screenshots from

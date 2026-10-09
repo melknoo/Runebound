@@ -24,6 +24,8 @@ var puzzles: Dictionary = {}
 var runes: Dictionary = {}
 var arenas: Dictionary = {}
 var gates: Dictionary = {}
+## M13 phase 2: water channels by POI id.
+var waters: Dictionary = {}
 var _map_texture: Texture2D
 var _discover_left: float = 0.0
 var _room_seen: Dictionary = {}
@@ -99,6 +101,10 @@ func _build_zone() -> void:
 			runes[id] = made["rune"]
 		if made.has("arena"):
 			arenas[id] = made["arena"]
+		if made.has("water"):
+			waters[id] = made["water"]
+	for door_id: String in builder.secret_walls:  # M13 phase 2: the cracked walls are shared puzzles too
+		puzzles[door_id] = builder.secret_walls[door_id]
 	_build_gates()
 	var map_path := String(info.get("layout", "")).path_join("map.png")
 	if ResourceLoader.exists(map_path):
@@ -115,25 +121,35 @@ func _build_dungeon() -> void:
 # Gates, flags, death
 # ---------------------------------------------------------------------------
 
-## Bars in every `gate` doorway that waits on something; they follow their
-## inputs (puzzles here, flags in apply_world_flag) and start as they are.
+## Bars in every `gate` (and leveled `shortcut`) doorway that waits on
+## something; they and the water channels follow their inputs (puzzles here,
+## flags in apply_world_flag) and start as they are.
 func _build_gates() -> void:
 	for d in layout.doors:
 		var inputs: Array = d.get("inputs", [])
-		if String(d.get("kind", "")) != "gate" or inputs.is_empty():
+		if not String(d.get("kind", "")) in ["gate", "shortcut"] or inputs.is_empty():
 			continue
 		var g := DungeonGate.build(self, d)
 		gates[String(d["id"])] = g
-		for input in inputs:
-			var p := puzzles.get(String(input)) as PoiPuzzle
-			if p != null and not p.state_applied.is_connected(refresh_gates):
-				p.state_applied.connect(refresh_gates)
+		_listen(inputs)
+	for id: String in waters:
+		_listen((waters[id] as WaterChannel).inputs)
 	refresh_gates(true)
 
 
+func _listen(inputs: Array) -> void:
+	for input in inputs:
+		var p := puzzles.get(String(input)) as PoiPuzzle
+		if p != null and not p.state_applied.is_connected(refresh_gates):
+			p.state_applied.connect(refresh_gates)
+
+
+## Gates and water follow their inputs (`instant` while the zone builds).
 func refresh_gates(instant: bool = false) -> void:
 	for id: String in gates:
 		(gates[id] as DungeonGate).refresh(puzzles, instant)
+	for id: String in waters:
+		(waters[id] as WaterChannel).refresh(puzzles, instant)
 
 
 ## A world flag was set (a boss fell; co-op: the server's FLAG): gates and

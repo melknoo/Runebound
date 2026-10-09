@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phases
-0-1 built, below). Latest built milestone: **M12 Highlands with substance**
+0-2 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -93,6 +93,39 @@ abilities, 9 the wrap-up.
     a chest that opens once, a late joiner) and `dungeon_boss` (scaled for
     two, reset when both leave, felled: the flag and the gate on both)
     green; `rewards`, `puzzles`, `travel` still green.
+- **Phase 2 (built): the mechanical puzzle kit and its lab.**
+  - `PuzzleLever` (a lever or a sluice valve; one-way by default),
+    `PressurePlate` (a living hero or a push block weighs it down, judged by
+    the authority - online from the hero proxies; a latching plate stays
+    down), `PushBlock` (one grid cell per push: walk into it along an axis
+    or [E]; the authority checks the pusher stands behind it and the cell is
+    free - grid, floor, other blocks, heroes; a reset slab sends blocks
+    home), `BeamPuzzle` (a source and crystals that send the light on in
+    eight directions, [E] turns one; walls stop it; reaching the receiver
+    solves it), `SecretWall` (the secret doorways: a wall with fine glowing
+    cracks; three strikes of any attack break it for the party, +60 XP), all
+    shared PoiPuzzles kept in the world.
+  - **Water channels:** rooms may hold sunken channels (layout `channels`,
+    the floor stands on columns around them); `WaterChannel` keeps the water
+    level with the floor and fences it (deep water) until its valves are
+    pulled, then the water sinks and the causeways in it carry heroes;
+    never refilled over a hero.
+  - Gates and shortcuts with a lever use the same `DungeonGate`; the water
+    follows its inputs like a gate.
+  - **The puzzle lab** (`scenes/puzzle_lab.tscn`, `tools/worldgen/
+    lab_layout.py`): one room per mechanism, chained (lever -> plates and
+    block -> beam -> valves and causeway -> the shortcut's lever), a cracked
+    wall to a hidden room. No gate leads there; tests use it.
+  - Smoke 754 green (the lever and its gate, a latching plate, the block's
+    grid and walls, pushing by walking, the block on its plate opening the
+    gate, pushes only from behind, the beam stage by stage, one valve of
+    two, the drained channel: fenced water stops a hero, the causeway
+    carries one; a swing finds the cracked wall, three strikes break it; the
+    shortcut's lever; the reset slab). The smoke watchdog is 420 s now.
+  - Net scenario `puzzle_kit` green (the lever, the latching plate under a
+    proxy, block pushes checked against the pusher's proxy under netsim,
+    the crystals, a valve each; a late joiner finds the lab as it was
+    left); `dungeon`, `dungeon_boss` still green.
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

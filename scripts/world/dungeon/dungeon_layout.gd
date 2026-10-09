@@ -10,6 +10,8 @@ var pois: ZoneLayout
 var rooms: Array[Dictionary] = []
 var doors: Array[Dictionary] = []
 var walls: Array[Dictionary] = []
+## M13 phase 2: sunken water channels in rooms ({id, room, rect, floor, depth}).
+var channels: Array[Dictionary] = []
 var base_y: float = -1.0
 var entry: String = ""
 var _rooms_by_id: Dictionary = {}
@@ -30,7 +32,25 @@ static func load_from(dir: String) -> DungeonLayout:
 		l._doors_by_id[String(d["id"])] = d
 	for w in raw.get("walls", []):
 		l.walls.append(w as Dictionary)
+	for c in raw.get("channels", []):
+		l.channels.append(c as Dictionary)
 	return l
+
+
+func channel(id: String) -> Dictionary:
+	for c in channels:
+		if String(c.get("id", "")) == id:
+			return c
+	return {}
+
+
+## The channels inside a room.
+func channels_of(room_id: String) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for c in channels:
+		if String(c.get("room", "")) == room_id:
+			out.append(c)
+	return out
 
 
 static func rect_of(entry: Dictionary) -> Rect2:
@@ -81,6 +101,9 @@ static func room_floor(r: Dictionary, x: float, z: float) -> float:
 func floor_at(x: float, z: float, fallback: float = 0.0) -> float:
 	var r := room_at(x, z)
 	if not r.is_empty():
+		for c in channels:  # a channel's bed lies below its room's floor
+			if String(c.get("room", "")) == String(r.get("id", "")) and _inside(rect_of(c), x, z):
+				return float(c.get("floor", 0.0)) - float(c.get("depth", 0.0))
 		return room_floor(r, x, z)
 	var d := door_at(x, z)
 	if not d.is_empty():
