@@ -1,6 +1,6 @@
 # RUNEBOUND — Handoff: von einem anderen Rechner weiterarbeiten
 
-Stand: 2026-10-09 · Commit `f2da9a6` (`main` = `release` = GitHub). Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
+Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat danach nur Doku-Commits, darunter diesen Handoff. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
 **Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). Letzter Smoke-Lauf: 690 Checks grün (2026-10-02).
@@ -12,7 +12,7 @@ Stand: 2026-10-09 · Commit `f2da9a6` (`main` = `release` = GitHub). Für dich u
 - Solo-Check L6 nach M12: Runebreaker 13–14 von 16 Kämpfen (stirbt an Ruine 3, Colossus knapp), Druide 15/16, Elementar-Magier 16/16.
 - Net-Suite: `heal`, `handshake@ws`, `travel@ws` stürzen bei wenig freiem RAM ab, einzeln laufen sie grün.
 
-**Server:** `release` steht auf `main` (Protokoll 13). Das Server-Journal vom 2026-10-02 zeigt Join und Zonenwechsel sauber. Heutiger Stand ungeprüft (ssh vom Haupt-PC lief am 2026-10-09 in ein Timeout: Tailscale aus oder Laptop aus).
+**Server:** `release` steht auf dem letzten Code-Commit `f2da9a6` (Protokoll 13); `main` ist nur um Doku-Commits weiter, die brauchen kein Release. Das Server-Journal vom 2026-10-02 zeigt Join und Zonenwechsel sauber. Heutiger Stand ungeprüft (ssh vom Haupt-PC lief am 2026-10-09 in ein Timeout: Tailscale aus oder Laptop aus).
 
 **Wie es weitergeht:**
 1. Playtest-Feedback einsammeln (die J-Liste liegt als `playtest.json` auf deinem Spiel-PC) und fixen.

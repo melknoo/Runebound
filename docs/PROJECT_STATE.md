@@ -284,8 +284,9 @@ only the new texts bilingual, the first start follows the system language).
     (`net_test/failed/<scenario>/`).
 - **Net.PROTOCOL 13** (new layout, POI_ACT / POI_STATE): the server needs
   a release before co-op (`tools\run_godot.cmd release`). As of
-  2026-10-09 `release` == `main` (f2da9a6); the laptop's deploy state is
-  unchecked (ssh from the main PC timed out).
+  2026-10-09 `release` is at f2da9a6, the last code commit (`main` has only
+  docs commits after it); the laptop's deploy state is unchecked (ssh from
+  the main PC timed out).
 - **Gate walk (user):**
   1. `tools\run_godot.cmd play`, then out of Runehold into the Highlands.
      Walk west into Ashwick (Westreach), north-west into the Charwood, east

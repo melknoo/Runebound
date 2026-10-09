@@ -332,7 +332,7 @@ Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden 
 (Runensegen, Prüfungs-Schreine, Nester, verfluchter Friedhof mit dem Geist des Priesters). Phase 7 gebaut
 (der Foliant in der versiegelten Grotte: Lockstein-Rune, Raureif-Fächer, Wurzelgang). Phase 8
 gebaut (Solo-Check, Shots, Perf-A/B, Doku, Playtest-Gruppe „M12“ auf J). **PROTOCOL 13:** vor
-dem Koop braucht der Server ein Release (`tools\run_godot.cmd release`); Stand 2026-10-09 steht `release` auf `main` (f2da9a6), der Deploy am Laptop ist ungeprüft (ssh-Timeout).
+dem Koop braucht der Server ein Release (`tools\run_godot.cmd release`); Stand 2026-10-09 steht `release` auf dem letzten Code-Commit (f2da9a6; `main` hat danach nur Doku), der Deploy am Laptop ist ungeprüft (ssh-Timeout).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons
