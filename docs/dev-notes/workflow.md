@@ -3,7 +3,7 @@
 Dev-environment and agent know-how that the architecture docs do not carry. Facts are dated where they can age. Architecture: TECHNICAL_ARCHITECTURE. Server: [server-ops.md](server-ops.md). Engine and GDScript pitfalls: [gotchas.md](gotchas.md).
 
 ## Toolchain
-- **Godot 4.6.3-stable, exactly.** Windows: the `_console` exe (the plain exe prints no stdout), found through the `GODOT` env var (`tools/run_godot.ps1` has a fallback path of the owner's main PC). Linux: `~/godot/godot` or `GODOT`; never Godot from apt/flatpak/snap. A 4.6.1 client crashed on an RTX 2070 (KNOWN_ISSUES). `Net.godot_minor` compares only major.minor, so a 4.6.1 client can still join a 4.6.3 server: do not rely on that.
+- **Godot 4.6.3-stable, exactly.** Windows: the `_console` exe (the plain exe prints no stdout), found through the `GODOT` env var (`tools/run_godot.ps1` has a fallback path of the owner's main PC). Linux: `~/godot/godot` or `GODOT`; never Godot from apt/flatpak/snap. A 4.6.1 client crashed on an RTX 2070 (a GPU TDR with the game embedded in the editor; 4.6.3 standalone ran clean, KNOWN_ISSUES). `Net.godot_minor` compares only major.minor, so a 4.6.1 client can still join a 4.6.3 server: do not rely on that.
 - **Blender 5.2** (`C:\Program Files\Blender Foundation\Blender 5.2\blender.exe`) runs headless: `--background --python tools/modelgen/<script>.py` (`generate_characters_v2.py`, `generate_props.py -- <prop>`). The live loop and its MCP server are in ASSET_MANIFEST "Live Blender".
 - **Python 3** + `numpy`, `Pillow`, `fontTools` for the generators. Generated assets are committed (about 830 files): regenerate only what you change, then `run_godot import`.
   - `tools/texgen/generate.py`, `biome.py`, `ui.py`: pixel textures, biome textures, UI and ability icons.
@@ -36,6 +36,7 @@ Dev-environment and agent know-how that the architecture docs do not carry. Fact
 ## Process hygiene
 - Before perf runs, or when crashes look random, list Godot processes: `Get-CimInstance Win32_Process -Filter "Name like 'Godot%'"`. Hung headless runs (once four, up to 22 h old) burn CPU, which throttles the iGPU (shared power budget). A second windowed game made the first die with "Vulkan device was lost" (Windows GPU resets).
 - The user often has the Godot editor open (`--editor`) and plays via `run_godot play` (a `_console.exe --path` + `.exe --path` pair without `--editor`). Leave both alone and start no windowed test run then.
+- Playing from the editor (F5, game embedded in the editor window) means two Vulkan processes on one GPU. On the RTX 2070 PC that ended in a GPU TDR that took both down (2026-10-02, KNOWN_ISSUES). Play and test standalone (`run_godot play` / `coop`). Crash triage on Windows: `Get-WinEvent` System log, provider `nvlddmkm` (153 = TDR), and Application log "Application Error" (the faulting module).
 - The harness blocked PowerShell commands containing `rm` / `Remove-Item` on the repo root: use `-LiteralPath` on the single file, and Bash for ssh strings that contain `rm`.
 
 ## Shell, git and editing quirks (Windows)
@@ -43,6 +44,8 @@ Dev-environment and agent know-how that the architecture docs do not carry. Fact
 - Line endings: `docs/*.md` are LF. Some repo files are CRLF (`zone_look.gd`, `terrain_pixel.gdshader`, `generate_props.py`, `biome.py`, the sfxgen files, the working copy of `art_spec.json`): patch scripts read with `newline=""`, normalise, write back with the file's own ending. Python `Path.write_text` writes CRLF on Windows: use `open(p, "w", newline="\n")` or bytes. Never re-dump `art_spec.json` (inline arrays expand).
 - PowerShell 5.1: `Set-Content -Encoding utf8` writes a BOM (bad for `.gd`); `git commit -F -` here-strings with quotes get mangled, so write the message to a file.
 - Git for Windows (`core.autocrlf=true`) prints "LF will be replaced by CRLF": harmless; commit with `git -c core.safecrlf=false`.
+- After an import on a Windows clone `git status` may list every `*.import` file and `project.godot` as modified while `git diff` is empty: the checkout wrote CRLF, Godot rewrote them with LF, git sees a new size. `git add -u` refreshes the index and stages nothing (check `git diff --cached`).
+- Test runs (`worldcapture`, `shots`, `perf`) overwrite tracked files in `captures_world/`, `captures_shots/<list>/` and `captures_perf/`. Results from a second PC: `git checkout --` them unless they are meant to be committed.
 - Git Bash sometimes leaves a `bash.exe.stackdump` in the repo root (ignored by `.gitignore`).
 - Blender: convert colours sRGB -> linear before Base Color, else models render too light. GLB fronts land at Godot +Z (`rotation.y = PI`).
 

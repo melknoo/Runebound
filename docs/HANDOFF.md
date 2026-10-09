@@ -3,12 +3,12 @@
 Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat danach nur Doku-Commits, darunter diesen Handoff. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
-**Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). Letzter Smoke-Lauf: 690 Checks grün (2026-10-02).
+**Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). Letzter Smoke-Lauf: 690 Checks grün (2026-10-09, auf dem RTX-2070-PC mit Godot 4.6.3).
 
 **Gates (liegen bei dir, alle offen):** Playtest M10 + M10b, M11, M12, M17a. Je ein „Gate walk“ in `docs/PROJECT_STATE.md`, im Spiel die Liste auf Taste **J**. Dazu das M09b-Gate: ein Freund spielt ohne Tailscale.
 
 **Offene Probleme** (Details `docs/KNOWN_ISSUES.md`):
-- Client-Crash nach Zonenwechsel in die Highlands auf dem RTX-2070-PC (Godot 4.6.1, Black Screen, Signal 11). Retest mit exakt 4.6.3 und frischem `.godot/` steht aus.
+- Client-Crash nach Zonenwechsel in die Highlands auf dem RTX-2070-PC (02.10., Godot 4.6.1): laut Ereignisanzeige ein GPU-Treiber-Reset (TDR), Editor und eingebettetes Spiel stürzten zusammen ab. Retest am 09.10. mit 4.6.3, frischem `.godot/` und dem Spiel ohne Editor: Smoke, 3× Reise in die Highlands, 43 M12-Shots, Perf: alles sauber. Offen nur dein eigener Online-Lauf dort (`tools\run_godot.cmd coop`, dann der Laptop), **nicht aus dem Editor starten**.
 - Solo-Check L6 nach M12: Runebreaker 13–14 von 16 Kämpfen (stirbt an Ruine 3, Colossus knapp), Druide 15/16, Elementar-Magier 16/16.
 - Net-Suite: `heal`, `handshake@ws`, `travel@ws` stürzen bei wenig freiem RAM ab, einzeln laufen sie grün.
 
@@ -16,7 +16,7 @@ Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat dan
 
 **Wie es weitergeht:**
 1. Playtest-Feedback einsammeln (die J-Liste liegt als `playtest.json` auf deinem Spiel-PC) und fixen.
-2. RTX-2070-Retest (siehe Stufe B unten).
+2. RTX-2070-PC: dein Online-Lauf ohne Editor (der automatische Retest lief am 09.10. sauber).
 3. **M13 Dungeons mit Rätseln:** Hollow Cistern und Ember Warrens, danach der erste Koop-Dungeon (3–5 Spieler, solo gesperrt). Wie jeder Meilenstein: erst Plan mit Rückfragen an dich.
 4. M14 Story & RPG (Dialoge, Quests, Meta-Würze, UI zweisprachig), M15 zwei weitere Zonen, M16 Endgame, M17 Politur.
 
@@ -36,7 +36,7 @@ Lesehilfe: In ROADMAP, PROJECT_STATE und KNOWN_ISSUES tragen einzelne ältere Ab
 1. Godot **4.6.3-stable** (Windows 64, nicht 4.6.1) von `https://github.com/godotengine/godot/releases/tag/4.6.3-stable` entpacken.
 2. Umgebungsvariable `GODOT` auf die volle Pfadangabe der `Godot_v4.6.3-stable_win64_console.exe` setzen (`setx GODOT "<Pfad>"`, danach ein neues Terminal).
 3. Im Klon: `tools\run_godot.cmd import`, dann `tools\run_godot.cmd smoke` (muss grün enden, dauert einige Minuten), dann `tools\run_godot.cmd play` (startet mit `--dev`: F1 und die Playtest-Liste J gehen; sonst unter Settings -> Gameplay -> Developer tools einschalten).
-4. Crash-Retest: vorher `.godot\` im Klon löschen (der Import-Cache aus 4.6.1 ist veraltet), ins Spiel, aus Runehold in die Highlands reisen. Bleibt der Crash: Windows-Ereignisanzeige (System, `nvlddmkm`) zur Crash-Zeit ansehen, dann `--rendering-driver d3d12` probieren.
+4. Spielen immer ohne Editor (`tools\run_godot.cmd play` / `coop`): ein im Editor eingebettetes Spiel ist ein zweiter Vulkan-Prozess auf der GPU, auf dem RTX-2070-PC endete das im Treiber-Reset. Nach einem Wechsel der Godot-Version vorher `.godot\` im Klon löschen. Kommt ein Crash: Windows-Ereignisanzeige (System, `nvlddmkm`) zur Crash-Zeit ansehen, dann `--rendering-driver d3d12` probieren.
 
 **Stufe C, mit Claude entwickeln:**
 - Claude Code (CLI oder VS-Code-Erweiterung) im Klon starten, zuerst `git pull --rebase`.

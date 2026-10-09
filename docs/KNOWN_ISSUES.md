@@ -5,7 +5,7 @@
 > there (passt / Problem + note, saved in user://playtest.json). When a point
 > is added or resolved here, update the checklist too (keep ids stable).
 
-## Open: client crash after zone travel (reported 2026-10-02)
+## Probably resolved: client crash after zone travel (reported 2026-10-02, retested 2026-10-09)
 - **Symptom:** a client on a second PC (NVIDIA GeForce RTX 2070, Windows,
   Vulkan 1.4 Forward+, **Godot 4.6.1**) joined the laptop server, travelled
   from Runehold into the Ashen Highlands, went to a black screen and exited
@@ -15,17 +15,27 @@
 - **The server side is clean:** the journal shows the zone loaded, the hero
   spawned, then the client simply left; ticks stayed normal. So the crash is
   client-side.
-- **Not tried yet:** exactly 4.6.3-stable on that PC with a fresh `.godot/`
-  (the import cache came from 4.6.1; the 4.6.3 release notes list no Vulkan
-  or scene-change fix, so a pass is not guaranteed); then the Windows Event
-  Viewer (System log, `nvlddmkm`) for the crash time; then
-  `--rendering-driver d3d12` to separate Vulkan from the rest; a `--verbose`
-  log to name the failing call.
-- **Suspects, unverified:** a GPU memory / pipeline-compile spike in the zone
-  warm-up (`VFX.warm_up`, the scatter MultiMeshes, set pieces) during the
-  0.35 s fade while the old zone is still being freed; the known "Vulkan
-  device was lost" family (see the M06 notes below: two game instances on one
-  GPU).
+- **Cause (Windows Event Viewer, 2026-10-09):** at the crash time the System
+  log has 21 `nvlddmkm` events 153 "Restarting TDR occurred" within 35 s: the
+  GPU hung for over 2 s and Windows reset the driver. In the same second
+  **two** Godot 4.6.1 processes crashed with 0xc0000005, one in
+  `nvoglv64.dll` (NVIDIA's Vulkan driver), one in `nvwgf2umx.dll`. The game
+  had been started from the Godot editor with its game embedded ("Embedded
+  window only supports Windowed mode" in the log), so editor and game were
+  two Vulkan processes on one GPU - the same family as the iGPU's "Vulkan
+  device was lost" (Technical, below). Not the game's code.
+- **Retest 2026-10-09 on that PC** (Godot 4.6.3, fresh `.godot/`, driver
+  591.86, game started standalone, no editor): smoke 690 green; three
+  windowed `worldcapture` runs (Runehold -> Highlands -> Spire through the
+  real `travel_to`), the 43 `m12_highlands` shots and `perf highlands_vista`
+  (median 235 FPS, GPU 1.2 ms, 573 draw calls) all ended cleanly with no new
+  `nvlddmkm` event and no crash. The first perf round had one 147 ms hitch
+  (105 pipeline compiles, CPU side).
+- **Left:** the user's own online run on that PC (`run_godot coop`, then the
+  laptop server), started standalone (J list point `c_second_pc`). If a TDR comes back: the same run with
+  `--rendering-driver d3d12`, a `--verbose` log, then the zone warm-up
+  (`VFX.warm_up`, the scatter MultiMeshes, the biome texture arrays during the
+  0.35 s fade).
 
 ## Feel (needs human playtest)
 - Camera sensitivity/zoom defaults unvalidated with a real mouse.
