@@ -5,6 +5,9 @@
 # Python bytecode (Blender and the tools/*gen scripts write it on import).
 __pycache__/
 
+# Git Bash crash dumps.
+*.stackdump
+
 # Local secrets (API keys such as PIXELLAB_API_KEY). The repo is public.
 .env
 .env.*

@@ -1,15 +1,18 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-01 · Milestone: **M12 Highlands with substance** (in
-progress, below). **M17a Menus & settings** (pulled forward
+Updated: 2026-10-09 · Latest built milestone: **M12 Highlands with substance**
+(built 2026-10-02, below; the user's playtest is the gate; next: M13, see
+ROADMAP). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
 Draughts**; the user's playtest is the gate for both (still open, M11 started
 alongside at the user's wish). M09 Co-op was played by the user and a
-friend; M09b (friends without Tailscale) is deployed. M08 was played by the
+friend; M09b (friends without Tailscale) is deployed (gate left: a friend
+joins). M08 was played by the
 user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
-accepted on 2026-09-24. Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
+accepted on 2026-09-24. Status snapshot and second-machine setup:
+[HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned
@@ -280,7 +283,9 @@ only the new texts bilingual, the first start follows the system language).
   - The net suite keeps a failing scenario's logs
     (`net_test/failed/<scenario>/`).
 - **Net.PROTOCOL 13** (new layout, POI_ACT / POI_STATE): the server needs
-  a release before co-op: `tools\run_godot.cmd release`.
+  a release before co-op (`tools\run_godot.cmd release`). As of
+  2026-10-09 `release` == `main` (f2da9a6); the laptop's deploy state is
+  unchecked (ssh from the main PC timed out).
 - **Gate walk (user):**
   1. `tools\run_godot.cmd play`, then out of Runehold into the Highlands.
      Walk west into Ashwick (Westreach), north-west into the Charwood, east
@@ -394,20 +399,17 @@ rig; English; the character's name online; developer tools off by default).
   server-dropdown point now starts from "Play online"). Smoke 605 green,
   the whole net suite green (24 scenarios incl. the WebSocket ones).
 - **No protocol change:** the server needs no new release for M17a (the
-  user may still ship it so friends get the menus: `tools
-un_godot.cmd
-  release`).
+  user may still ship it so friends get the menus:
+  `tools\run_godot.cmd release`).
 - **Gate walk (user):**
-  1. `tools
-un_godot.cmd play`: the campfire scene. Continue (the line
+  1. `tools\run_godot.cmd play`: the campfire scene. Continue (the line
      under it says how), or Characters -> pick one (the figure by the fire
      changes) -> Play solo.
   2. In Runehold press Esc: the world stops, the music plays on. Settings:
      a volume, the mouse sensitivity, Controls -> rebind a key (e.g.
      Interact) and look at the [E] prompt; Gameplay -> screen shake.
      "Save and return to title".
-  3. Characters -> Play online -> Acer (or `tools
-un_godot.cmd coop`):
+  3. Characters -> Play online -> Acer (or `tools\run_godot.cmd coop`):
      Esc online - the world keeps moving -> "Leave the server".
   4. Settings from the title: window mode / FPS limit, then restart: is
      everything kept?
@@ -419,8 +421,7 @@ un_godot.cmd coop`):
   `release` branch, which was still at the M09b state (protocol 8) while
   `main` was at 12 (M10, M10b, M11). The refusal told the (newer) game to
   `git pull`. Now `Net.version_reason` names the side that is behind, and
-  `release` was shipped (`tools
-un_godot.cmd release`).
+  `release` was shipped (`tools\run_godot.cmd release`).
 - **Server dropdown** (user: pick the Acer by an alias, room for more
   servers): `resources/net/servers.json` + `ServerList`, the Join page shows
   names only, "Other address ..." for LAN / local servers
@@ -535,7 +536,7 @@ seconds**; from **drops, chests and a merchant**.
   right-click the draught. Watch for dropped flasks after kills and in
   chests. The J list, group "M10: Klassen & Heiltränke" (the draught points).
 
-## M10 Three roles I (in progress, 2026-09-29)
+## M10 Three roles I (built 2026-09-29, the user's playtest is open)
 Plan with the user's answers (8 abilities per class now, the rest from M12-M14
 sources; block = hold + parry; the Elementalist builds and spends **Aether**;
 **one world per character**): CLASS_DESIGN "Three roles", ROADMAP M10.
@@ -736,7 +737,7 @@ but out of combat only; drops "deutlich" fewer):
   14 m).
 - Smoke 424 green.
 
-## M09b Friends without Tailscale (in progress, 2026-09-25)
+## M09b Friends without Tailscale (deployed 2026-09-28, gate: a friend joins)
 The user wants friends to join without installing Tailscale, the laptop to
 stay the server, no paid relay (Hetzner) and no tunnel service (playit.gg).
 Starlink lets nothing in (CGNAT for IPv4, the router blocks inbound IPv6), so
@@ -1443,7 +1444,7 @@ spender, AoE slam), melee Rusher + ranged Caster enemies with telegraphs and
 3-tier hit reactions, full VFX/SFX feedback stack, HUD, damage numbers,
 debug overlay (F1: spawn/heal/god/reset/stress/style keys), instant respawn.
 
-## Verification status
+## Verification status (M01-era, historical)
 - `tools\run_godot.ps1 smoke` — 35 headless functional checks, all green.
 - `tools\run_godot.ps1 capture` — automated playtest writes 18 screenshots to
   captures/ (movement, dodge, each ability, telegraphs, stress, 3 art styles).
@@ -1475,7 +1476,7 @@ debug overlay (F1: spawn/heal/god/reset/stress/style keys), instant respawn.
 - Blender→Godot orientation: model front lands at Godot +Z; visuals apply
   `rotation.y = PI` on the instanced model.
 
-## Art style status (M01 Step 15)
+## Art style status (M01 Step 15, historical: the Style Gate passed in M06)
 Three switchable render styles (debug key V), captured for comparison:
 - A low-res (1/4 SubViewport, nearest): most cohesive stills, motion shimmer
   and aim precision risk — judge in live play.
@@ -1485,13 +1486,13 @@ Three switchable render styles (debug key V), captured for comparison:
   combat readability, pixel identity carried by textures/VFX.
 Final lock needs the human motion test; record verdict in ART_BIBLE.md.
 
-## Known weaknesses / next priorities
+## Known weaknesses / next priorities (M01-era, historical; current list: KNOWN_ISSUES)
 See KNOWN_ISSUES.md. Biggest feel unknowns that need a human hand on the
 mouse: camera sensitivity defaults, dodge distance/cooldown trust, melee
 range vs. enemy approach speed, whether Ember Lance cast lock (0.14s
 stationary) feels bad while kiting.
 
-## M02 recommendation (after M01 gate passes)
+## M02 recommendation (after M01 gate passes; historical)
 Combat depth: ability framework generalization (4 more abilities incl. a
 mobility skill), elemental status interactions (Chill/Shock), 1–2 more enemy
 archetypes (assassin/support), elite modifier prototype, first pass on

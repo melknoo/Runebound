@@ -5,6 +5,28 @@
 > there (passt / Problem + note, saved in user://playtest.json). When a point
 > is added or resolved here, update the checklist too (keep ids stable).
 
+## Open: client crash after zone travel (reported 2026-10-02)
+- **Symptom:** a client on a second PC (NVIDIA GeForce RTX 2070, Windows,
+  Vulkan 1.4 Forward+, **Godot 4.6.1**) joined the laptop server, travelled
+  from Runehold into the Ashen Highlands, went to a black screen and exited
+  with signal 11 5-10 s after arriving; a second run died ~55 s after joining
+  while standing still. The Godot backtrace has no symbols ("no debug info in
+  PE/COFF executable").
+- **The server side is clean:** the journal shows the zone loaded, the hero
+  spawned, then the client simply left; ticks stayed normal. So the crash is
+  client-side.
+- **Not tried yet:** exactly 4.6.3-stable on that PC with a fresh `.godot/`
+  (the import cache came from 4.6.1; the 4.6.3 release notes list no Vulkan
+  or scene-change fix, so a pass is not guaranteed); then the Windows Event
+  Viewer (System log, `nvlddmkm`) for the crash time; then
+  `--rendering-driver d3d12` to separate Vulkan from the rest; a `--verbose`
+  log to name the failing call.
+- **Suspects, unverified:** a GPU memory / pipeline-compile spike in the zone
+  warm-up (`VFX.warm_up`, the scatter MultiMeshes, set pieces) during the
+  0.35 s fade while the old zone is still being freed; the known "Vulkan
+  device was lost" family (see the M06 notes below: two game instances on one
+  GPU).
+
 ## Feel (needs human playtest)
 - Camera sensitivity/zoom defaults unvalidated with a real mouse.
 - Ember Lance roots the player for its 0.14s startup — may feel sticky while
@@ -150,7 +172,7 @@
 - Sigrun borrows the Runebreaker rig (bronze tint); a real NPC model and her
   story come with M14.
 
-## M08 open items (played by the user; notes follow after M09)
+## M08 open items (played by the user; the notes were built 2026-09-28, see below)
 - The user played M08 and has a few small notes; they are scheduled right
   after M09 (2026-09-25) and get listed here when they arrive.
 - Camp respawn is 10 minutes (`respawn_min` per POI, default in
@@ -207,7 +229,7 @@
 - The laptop server shows single tick spikes up to ~60 ms under full load
   (p95 stays near 10 ms); watch the journal's minute lines in real sessions.
 
-## M17a open items (menus & settings, in progress)
+## M17a open items (menus & settings, built 2026-10-01, needs the user's playtest)
 - The title scene (campfire at night) is a first composition: camera
   framing, how dark the night reads, the fire's strength and the music
   (Runehold's track) want the user's eye.
@@ -247,7 +269,7 @@
   CPU particles; the lab run was not repeated).
 
 ## M10 open items (phases 1-4 built, needs the user's playtest)
-- **No healing between fights yet:** a hero's health comes back only by
+- **No healing between fights yet (superseded: draughts M10b, druid M11, food M12):** a hero's health comes back only by
   dying (shrine respawn) or changing zones. In the solo check (bots, level
   4-6, rolled gear) the tank takes about 2.4 health bars over every
   Highlands camp plus the Colossus, the Elementalist about 0.7 (a kiting bot
@@ -255,7 +277,7 @@
   **Decided (user, 2026-09-30): no regeneration out of combat** (waiting
   for full health would answer every fight). Healing between fights comes
   from **consumables**: M10b built the Healing Draught (35 % over 4 s, 5 in
-  the bag, drops + chests + Ylva for 30 gold); food follows in M12.
+  the bag, drops + chests + Ylva for 30 gold); food came with M12 (the Ember Tuber).
 - M10b numbers to feel: draught drop chances (5 / 15 / 30 %, bosses 2,
   chests 60 %), the price (30 gold), 35 % over 4 s, the cap of 5. Drinking
   only from the inventory is slow on purpose (the user's choice) - in a
@@ -331,7 +353,7 @@
 ## M12 open items
 - **Forest balance:** the Runebreaker solo-check bot (no healing between
   fights, no draughts) dies at ruin 3 after clearing everything before it;
-  Elementalist and Druid bots clear all 13 fights. Tune the cinderbark slam
+  final L6 check over 16 fights: Runebreaker 13-14, Druid 15 (ruin 3 runs out of time), Elementalist 16. Tune the cinderbark slam
   (24) or the wisps after the user's playtest.
 - **Cinderbark readability:** standing as a tree it is meant to be missed;
   whether its ember tell is enough to spot it is a playtest question.

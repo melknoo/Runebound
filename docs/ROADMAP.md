@@ -1,9 +1,12 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-09-29 · M01–M09 gebaut (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
+Stand: 2026-10-09 · M01–M12 gebaut, dazu M09b, M10b und M17a (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
+Offene Playtest-Gates beim Spieler: M10/M10b, M11, M12, M17a. Nächster Meilenstein: M13. Status und Einrichtung
+eines zweiten Rechners: `docs/HANDOFF.md`. Lesehilfe: Unter „Aktuell“ und „Geplant“ stehen auch schon gebaute Meilensteine
+(M09, M09b, M10–M12, M17a); noch nicht gebaut sind M13–M17.
 **M09 Co-op ist gebaut und mit einem Freund angespielt.** Server-Laptop steht
 (`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve. **M09b (Freunde
-ohne Tailscale) läuft.** Am 29.09. hat der Spieler die Richtung nach M09b festgelegt
+ohne Tailscale) ist eingerichtet** (28.09.; Gate: ein Freund spielt ohne Tailscale, offen). Am 29.09. hat der Spieler die Richtung nach M09b festgelegt
 („Spieler-Leitlinien“ unten): zuerst drei Klassen mit Loadout, danach Substanz für Welt, Dungeons
 und Story.
 
@@ -115,7 +118,7 @@ Stand 2026-09-25: alle Phasen gebaut. Smoke 401 grün, 13 Mehrprozess-Netztests 
 Nicht in M09: Listen-Host, Passwort (Tailscale regelt den Zugang; kommt mit „nativ ohne
 Tailscale“), Chat, Interest-Management, Prediction.
 
-### M09b — Freunde ohne Tailscale — in Arbeit
+### M09b — Freunde ohne Tailscale — eingerichtet 2026-09-28, Gate offen
 Plan vom 2026-09-25 (vom Spieler freigegeben): Der Laptop bleibt der Server, kein Mietserver, kein
 Tunnel-Dienst. Starlink lässt nichts herein (CGNAT, Router blockt eingehendes IPv6), deshalb:
 - **Tailscale Funnel** gibt dem Laptop eine öffentliche HTTPS-Adresse. Freunde brauchen kein
@@ -329,7 +332,7 @@ Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden 
 (Runensegen, Prüfungs-Schreine, Nester, verfluchter Friedhof mit dem Geist des Priesters). Phase 7 gebaut
 (der Foliant in der versiegelten Grotte: Lockstein-Rune, Raureif-Fächer, Wurzelgang). Phase 8
 gebaut (Solo-Check, Shots, Perf-A/B, Doku, Playtest-Gruppe „M12“ auf J). **PROTOCOL 13:** vor
-dem Koop muss der Server ein Release bekommen (`tools\run_godot.cmd release`).
+dem Koop braucht der Server ein Release (`tools\run_godot.cmd release`); Stand 2026-10-09 steht `release` auf `main` (f2da9a6), der Deploy am Laptop ist ungeprüft (ssh-Timeout).
 
 ### M13 — Dungeons mit Rätseln
 - **Hollow Cistern und Ember Warrens** (die zwei versiegelten Tore der Highlands) werden Dungeons
