@@ -845,7 +845,19 @@ Plan with the user's answers: ROADMAP M13.
   Elementalist's `take_hit` (owner only) chills `hit.source_id`'s enemy
   within 4 m while `rime_warded()` (time and barrier left). Wellspring:
   HeroFx `wellspring` (the look) + `ally_heal` + `ally_cleanse` +
-  `ally_hot` (its own id).
+  `ally_hot` (its own id). **Forge Brand:** a status on the enemy
+  (`StatusEffectComponent.apply_brand`, x1.2 in `damage_taken_multiplier`,
+  snapshot bit `NetCodec.ST_BRAND` = 64, forward kind `brand`), set by
+  `apply_from_hit` when the hit's ability is `forge_brand` (the ability id
+  rides on a forwarded hit, so no new field); `Player.take_hit` cuts a hit
+  whose `source_id` enemy is branded to x0.75. **Ember Seed:**
+  `EmberSeed` (scripts/abilities) follows its host, bursts after 3 s or on
+  its death (the caster's machine deals the damage); HeroFx `ember_seed`
+  gives puppets a visual seed on the same enemy (`net_world.enemies` by net
+  id). **Cinder Ward:** HeroFx `ally_ward` [ref, seconds, heal] - the
+  target's owner adds the buff `cinder_ward` and keeps the heal;
+  `Player._catch_deadly_blow` (before `apply_hit`) leaves 1 health and
+  spends it, `_cinder_ward_rise` heals and plays `cinder_save`.
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 

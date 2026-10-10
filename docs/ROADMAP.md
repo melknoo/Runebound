@@ -390,7 +390,10 @@ Löschtrog gelöscht verwundbar; die Glutbrutmutter stürmt, gräbt sich ein, le
 Gesundheit füllen sich Lavarinnen, Löschventile verkrusten sie; Solo-Check Stufe 6: alle Klassen 6/6).
 Phase 8a gebaut (der Foliant der Cistern: Wellenbrecher – Schildansturm, der beiseitestößt und
 verspottet –, Raureif-Schild – Barriere, Nahkämpfer werden unterkühlt –, Quellwasser – Heilung,
-wäscht Verlangsamungen ab, Heilung über Zeit).
+wäscht Verlangsamungen ab, Heilung über Zeit). Phase 8b gebaut (der Foliant der Warrens: Schmiedemal –
+das Ziel nimmt mehr Schaden und teilt weniger aus –, Glutsaat – platzt nach 3 s in einem Feuerring –,
+Glutwacht – fängt den nächsten tödlichen Schlag am Verbündeten ab; statt „Aschenblüte“, weil der
+Druide schon das Legendary „Ashbloom Seed“ hat).
 **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

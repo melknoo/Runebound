@@ -363,9 +363,11 @@
   captures/.
 
 ## M13 open items (in progress)
-- The Warrens' tome stands in its room but teaches nothing until phase 8b
-  brings its three abilities. Tome abilities to feel (8a): Breakwater (8 m, half damage, 2.6 m
-  shove), Rime Ward (40 + 3/level, 6 s), Wellspring (25 + 30 over 5 s).
+- Tome abilities to feel (phase 8): Breakwater (8 m, half damage, 2.6 m
+  shove), Rime Ward (40 + 3/level, 6 s), Wellspring (25 + 30 over 5 s),
+  Forge Brand (x1.2 taken, x0.75 dealt, 8 s), Ember Seed (3 s fuse, 30 +
+  Burn, 3.5 m), Cinder Ward (10 s, 45 s cooldown). Each class now has 3
+  tome abilities in its pool; the loadout still has four slots.
 - **Warrens fights to feel (phase 7):** the beetles' break-out ring
   (0.9 s), the head plate (x0.35 from the front), the imps' slag (7 + a
   burning patch), their death burst (16); the Reeve's hot crust (x0.4),

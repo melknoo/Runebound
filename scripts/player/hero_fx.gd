@@ -256,6 +256,39 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 				VFX.ground_ring(scene, spring_target.global_position, ArtKit.color("palettes.cistern.water_hi",
 					Color(0.36, 0.62, 0.64)), 1.6, 0.4)
 				Sfx.play("water_splash", spring_target.global_position, -4.0, 0.08, 1.2)
+		&"forge_brand":  # [from, at] - a hammer-mark of embers struck on the target
+			VFX.lightning_arc(scene, a[0] as Vector3, a[1] as Vector3, ArtKit.color("color_roles.fire.body", Color(1.0, 0.42, 0.16)))
+			VFX.flash(scene, a[1] as Vector3, ArtKit.color("color_roles.fire.core", Color(1.0, 0.82, 0.48)), 1.2, 0.2)
+			VFX.ember_impact(scene, a[1] as Vector3)
+			Sfx.play("block_clang", a[1] as Vector3, -2.0, 0.08, 0.8)
+		&"ember_seed":  # [muzzle, host net id, host pos] - puppets plant a visual copy on the same enemy
+			Sfx.play("ember_cast", a[0] as Vector3, -6.0, 0.1, 0.8)
+			var seed_data := hero.ability(&"ember_seed")
+			var zone_s := ZoneBase.zone_of(hero)
+			if hero.net_role == Player.NetRole.PUPPET and seed_data != null and zone_s != null and zone_s.net_world != null:
+				var seed_host := zone_s.net_world.enemies.get(int(a[1])) as EnemyBase
+				var seed := EmberSeed.new()
+				seed.visual_only = true
+				seed.setup(seed_data, hero, seed_host)
+				seed._last_at = a[2] as Vector3
+				scene.add_child(seed)
+		&"ally_ward":  # [ref, seconds, heal] - Cinder Ward; the target's owner keeps the ward
+			var ward_target := _ally(hero, a[0])
+			if ward_target == null:
+				return
+			VFX.player_ring(ward_target, ward_target.global_position, 1.2, 0.5, ArtKit.color("color_roles.fire.body",
+				Color(1.0, 0.42, 0.16)))
+			VFX.flash(scene, ward_target.global_position + Vector3(0, 1.3, 0), ArtKit.color("color_roles.fire.core",
+				Color(1.0, 0.82, 0.48)), 1.0, 0.18)
+			Sfx.play("barkskin", ward_target.global_position, -3.0, 0.08, 0.8)
+			if ward_target.net_role == Player.NetRole.OWNER:
+				ward_target.add_buff(&"cinder_ward", 1.0, float(a[1]))
+				ward_target._cinder_heal = float(a[2])
+		&"cinder_save":  # [pos] - a deadly blow caught: the embers lift the hero back up
+			VFX.flash(scene, a[0] as Vector3 + Vector3(0, 1.2, 0), ArtKit.color("color_roles.fire.core", Color(1.0, 0.82, 0.48)), 2.4, 0.25)
+			VFX.ember_impact(scene, a[0] as Vector3 + Vector3(0, 0.8, 0))
+			VFX.heal_motes(hero, 0.6)
+			Sfx.play("wild_bloom", a[0] as Vector3, -2.0, 0.05, 1.3)
 		&"ally_buff":  # [pos, radius, key, value, duration]
 			var zone := ZoneBase.zone_of(hero)
 			if zone != null:

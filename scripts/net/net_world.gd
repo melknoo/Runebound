@@ -652,6 +652,8 @@ func _on_status_msg(from: int, payload: Array) -> void:
 			e.status.apply_conductor(duration)
 		"root":
 			e.status.apply_root(minf(duration, 3.0))  # M10 Deep Freeze / Absolute Zero
+		"brand":
+			e.status.apply_brand(minf(duration, StatusEffectComponent.BRAND_DURATION))  # M13 Forge Brand
 
 
 # --- client: what the server tells us --------------------------------------

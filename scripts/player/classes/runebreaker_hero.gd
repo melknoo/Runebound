@@ -49,6 +49,7 @@ var _ward: MeshInstance3D = null
 
 var lodestone_rune: AbilityData   # M12: the tome's rune that drags a pack together
 var breakwater: AbilityData       # M13 the Cistern's tome: a shield charge that shoves aside
+var forge_brand: AbilityData      # M13 the Warrens' tome: a brand - the target takes more, deals less
 
 ## Breakwater: the charge's time over its full reach, the shove to the side,
 ## the share of damage the raised shield keeps off on the way.
@@ -65,6 +66,7 @@ func _load_abilities() -> void:
 	super()
 	lodestone_rune = ability(&"lodestone_rune")
 	breakwater = ability(&"breakwater")
+	forge_brand = ability(&"forge_brand")
 	cleave = ability(&"rune_cleave")
 	earthbreaker = ability(&"earthbreaker")
 	runic_guard = ability(&"runic_guard")
@@ -90,6 +92,7 @@ func _register_actions() -> void:
 		&"warding_rune": try_warding_rune,
 		&"lodestone_rune": try_lodestone_rune,
 		&"breakwater": try_breakwater,
+		&"forge_brand": try_forge_brand,
 	})
 
 
@@ -99,7 +102,7 @@ func _anim_profile() -> Dictionary:
 		&"earthbreaker": &"earthbreaker_rise", &"earthbreaker_impact": &"earthbreaker_impact",
 		&"resonance_burst": &"resonance_burst", &"rune_challenge": &"challenge",
 		&"warden_leap": &"earthbreaker_rise", &"warden_leap_land": &"earthbreaker_impact", &"rune_chain": &"ember",
-		&"lodestone_rune": &"ember", &"breakwater": &"block"})
+		&"lodestone_rune": &"ember", &"breakwater": &"block", &"forge_brand": &"ember"})
 	# instant casts keep the legs running: upper-body layer only
 	(profile["upper"] as Dictionary).merge({&"runic_guard": &"runic_guard", &"rune_wall": &"block",
 		&"warding_rune": &"fracture_rune"})
@@ -728,6 +731,38 @@ func _breakwater_contact() -> void:
 		hit.pull_to = e.global_position + side * BREAKWATER_SHOVE + _charge_dir * 0.8
 		if e.take_hit(hit):
 			VFX.melee_impact(get_tree().current_scene, e.global_position + Vector3(0, 1.0, 0), side)
+
+
+# ---------------------------------------------------------------------------
+# M13 tome (the Warrens): Forge Brand (the target takes more, deals less)
+# ---------------------------------------------------------------------------
+
+func try_forge_brand() -> bool:
+	if not knows(&"forge_brand") or state != State.MOVE or _on_cooldown(&"forge_brand"):
+		return false
+	var mark := _chain_target(forge_brand.aoe_radius)
+	if mark == null:
+		ui_denied()
+		return false
+	var cost := resource_cost(&"forge_brand")
+	if resonance < cost:
+		ui_denied()
+		return false
+	spend_resonance(cost)
+	_set_cooldown(&"forge_brand", forge_brand.cooldown)
+	var to := mark.global_position - global_position
+	to.y = 0.0
+	if to.length() > 0.1:
+		_visual.rotation.y = atan2(-to.x, -to.z)
+		_aim_hold_until = Time.get_ticks_msec() + AIM_HOLD_MSEC
+	var hit := roll_ability_hit(forge_brand)  # its ability id brands (StatusEffectComponent)
+	hit.source_position = global_position
+	hit.threat_mult = forge_brand.threat_mult
+	mark.take_hit(hit)
+	hero_fx(&"forge_brand", [muzzle_position(), mark.global_position + Vector3(0, 1.2, 0)])
+	cooldowns_changed.emit()
+	action_started.emit(&"forge_brand")
+	return true
 
 
 # ---------------------------------------------------------------------------

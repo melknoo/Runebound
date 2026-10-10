@@ -99,6 +99,8 @@ var _heal_rate: float = 0.0
 ## M11: heals over time from allies (the druid's Regrowth): id -> [left, rate].
 ## The same id refreshes; separate from the draught.
 var _hots: Dictionary = {}
+## M13 Cinder Ward: the heal the ward gives when it catches a deadly blow.
+var _cinder_heal: float = 0.0
 ## M12: the heal-over-time id of a meal (separate from ally heals).
 const FOOD_HOT := &"food"
 ## M12: a slow on this hero (the strongest one wins; the druid's Rootwalk
@@ -1431,6 +1433,9 @@ func take_hit(hit: HitInfo) -> bool:
 	if not health.invulnerable and not health.is_dead and _guard_hit(hit):
 		return false  # M10: a class stance took the whole hit (the tank's parry)
 	hit.damage *= damage_taken_mult()
+	var striker := instance_from_id(hit.source_id) as EnemyBase if hit.source_id != 0 else null
+	if striker != null and is_instance_valid(striker) and striker.status.is_branded():
+		hit.damage *= StatusEffectComponent.BRAND_WEAKEN  # M13 Forge Brand: the branded strike weaker
 	if barrier > 0.0 and not health.invulnerable and not health.is_dead:
 		var absorbed := minf(barrier, hit.damage)
 		barrier -= absorbed
@@ -1438,8 +1443,13 @@ func take_hit(hit: HitInfo) -> bool:
 		_on_barrier_absorbed(absorbed)
 		if hit.damage <= 0.01:
 			return false
+	var caught := _catch_deadly_blow(hit)
 	if not health.apply_hit(hit):
+		if caught:
+			_cinder_ward_rise()
 		return false
+	if caught:
+		_cinder_ward_rise()
 	if hit.applies_chill and not hit.from_player:
 		apply_slow(CHILL_SLOW, CHILL_SLOW_TIME)  # M12: the mourner's scream
 	var push := (global_position - hit.source_position)
@@ -1448,6 +1458,25 @@ func take_hit(hit: HitInfo) -> bool:
 	Sfx.play("player_hurt", global_position, -2.0)
 	feel_shake(0.25)
 	return true
+
+
+## M13 Cinder Ward (the druid's Warrens tome, on this hero): a blow that
+## would kill leaves 1 health instead, and the ward is spent.
+func _catch_deadly_blow(hit: HitInfo) -> bool:
+	if buff_time(&"cinder_ward") <= 0.0 or health.invulnerable or health.is_dead \
+			or hit.damage < health.current_health:
+		return false
+	_buffs.erase(&"cinder_ward")
+	hit.damage = maxf(health.current_health - 1.0, 0.0)
+	return true
+
+
+## ... and the embers lift the hero back up (the ward's heal, kept in its value).
+func _cinder_ward_rise() -> void:
+	health.heal(maxf(_cinder_heal, 1.0))
+	_cinder_heal = 0.0
+	hero_fx(&"cinder_save", [global_position])
+	feel_shake(0.3)
 
 
 ## M10: the share of an enemy hit this hero still takes: talents and gear

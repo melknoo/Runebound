@@ -219,5 +219,29 @@
 	"ability.wellspring.desc": {
 		"en": "Spring water over an ally: heals 25 at once, washes off slows and heals 30 more over 5 s. Costs 24 Sap.",
 		"de": "Quellwasser über einen Verbündeten: heilt sofort 25, wäscht Verlangsamungen ab und heilt über 5 s weitere 30. Kostet 24 Saft."
+	},
+	"ability.forge_brand": {
+		"en": "Forge Brand",
+		"de": "Schmiedemal"
+	},
+	"ability.forge_brand.desc": {
+		"en": "Strike a brand of embers on an enemy (up to 12 m): for 8 s it takes 20% more damage from every hero and deals 25% less. Costs 15 Resonance.",
+		"de": "Schlag einem Gegner (bis 12 m) ein Glutmal auf: 8 s lang nimmt er 20 % mehr Schaden von allen Helden und teilt 25 % weniger aus. Kostet 15 Resonanz."
+	},
+	"ability.ember_seed": {
+		"en": "Ember Seed",
+		"de": "Glutsaat"
+	},
+	"ability.ember_seed.desc": {
+		"en": "Plant a seed of embers in an enemy (up to 14 m). After 3 s - or when it dies - it bursts: 30 Fire damage and Burn to every enemy within 3.5 m. Costs 25 Aether.",
+		"de": "Pflanz einem Gegner (bis 14 m) eine Glutsaat ein. Nach 3 s – oder wenn er stirbt – platzt sie: 30 Feuerschaden und Brand für jeden Gegner im Umkreis von 3,5 m. Kostet 25 Äther."
+	},
+	"ability.cinder_ward": {
+		"en": "Cinder Ward",
+		"de": "Glutwacht"
+	},
+	"ability.cinder_ward.desc": {
+		"en": "A ward of embers on an ally for 10 s: the next blow that would kill them leaves them standing, and the embers heal 40. Costs 30 Sap.",
+		"de": "Eine Glutwacht auf einem Verbündeten, 10 s lang: Der nächste Schlag, der ihn töten würde, lässt ihn stehen, und die Glut heilt 40. Kostet 30 Saft."
 	}
 }

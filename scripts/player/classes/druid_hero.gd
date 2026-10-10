@@ -37,7 +37,7 @@ const ROOTWALK_STEP := 0.8
 const ROOTWALK_DROP := 1.6
 
 ## Abilities that go to the heal target (Player.pick_heal_target).
-const TARGETED_HEALS: Array[StringName] = [&"mending_bloom", &"barkskin", &"regrowth", &"wellspring"]
+const TARGETED_HEALS: Array[StringName] = [&"mending_bloom", &"barkskin", &"regrowth", &"wellspring", &"cinder_ward"]
 ## M13 Wellspring: its heal over time is this share of its instant heal.
 const WELLSPRING_HOT_SHARE := 1.2
 
@@ -53,6 +53,7 @@ var growth_totem: AbilityData
 var wild_bloom: AbilityData
 var rootwalk: AbilityData   # M12 tome: through the roots, a bloom at both ends
 var wellspring: AbilityData  # M13 the Cistern's tome: a heal that washes off slows, then a HoT
+var cinder_ward: AbilityData # M13 the Warrens' tome: the next deadly blow on an ally is caught
 var _walk_from := Vector3.ZERO
 var _walk_to := Vector3.ZERO
 
@@ -70,6 +71,7 @@ func _load_abilities() -> void:
 	wild_bloom = ability(&"wild_bloom")
 	rootwalk = ability(&"rootwalk")
 	wellspring = ability(&"wellspring")
+	cinder_ward = ability(&"cinder_ward")
 
 
 func _register_actions() -> void:
@@ -86,6 +88,7 @@ func _register_actions() -> void:
 		&"wild_bloom": try_wild_bloom,
 		&"rootwalk": try_rootwalk,
 		&"wellspring": try_wellspring,
+		&"cinder_ward": try_cinder_ward,
 	})
 
 
@@ -97,7 +100,7 @@ func _anim_profile() -> Dictionary:
 	(profile["actions"] as Dictionary).merge({&"root_grasp": &"root_grasp", &"renewal_grove": &"grove",
 		&"growth_totem": &"totem", &"wild_bloom": &"bloom", &"rootwalk": &"root_grasp"})
 	(profile["upper"] as Dictionary).merge({&"thorn_volley": &"thorn", &"mending_bloom": &"mend",
-		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield", &"wellspring": &"mend"})
+		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield", &"wellspring": &"mend", &"cinder_ward": &"bark"})
 	return profile
 
 
@@ -350,6 +353,26 @@ func try_wellspring() -> bool:
 ## Wellspring's heal over time (its own id: it stacks with Regrowth).
 func zone_hot(zone: ZoneBase, target: Player, total: float) -> void:
 	hero_fx(&"ally_hot", [zone.hero_ref(target), &"wellspring", total, wellspring.active])
+
+
+# ---------------------------------------------------------------------------
+# M13 tome (the Warrens): Cinder Ward (the next deadly blow on an ally is caught)
+# ---------------------------------------------------------------------------
+
+func try_cinder_ward() -> bool:
+	if not _ready_for(&"cinder_ward"):
+		return false
+	var target := pick_heal_target()
+	if not _pay(&"cinder_ward"):
+		return false
+	_set_cooldown(&"cinder_ward", cinder_ward.cooldown)
+	_face_ally(target)
+	var zone := ZoneBase.zone_of(self)
+	if zone != null and target != null:
+		hero_fx(&"ally_ward", [zone.hero_ref(target), cinder_ward.active, heal_amount(cinder_ward.heal, target)])
+	cooldowns_changed.emit()
+	action_started.emit(&"cinder_ward")
+	return true
 
 
 # ---------------------------------------------------------------------------

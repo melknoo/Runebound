@@ -450,14 +450,15 @@ func _run() -> void:
 		"target name plate shows the enemy name")
 	# --- M07b / M10: one ability at the start, the rest are learned; two classes ---
 	var cls := ClassData.load_by_id(&"runebreaker")
-	_check(cls != null and cls.abilities.size() == 11 and cls.basic_attack == &"rune_cleave"
+	_check(cls != null and cls.abilities.size() == 12 and cls.basic_attack == &"rune_cleave"
 		and cls.starting_abilities.size() == 1 and cls.starting_abilities[0] == &"rune_cleave"
 		and cls.trainer_abilities().size() == 6 and cls.trainer_abilities()[0].id == &"earthbreaker"
 		and cls.trainer_abilities()[5].id == &"warding_rune" and cls.ability(&"ember_lance") == null
 		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0)
 		and cls.ability(&"lodestone_rune").unlock == AbilityData.Unlock.TOME
-		and cls.ability(&"breakwater").unlock == AbilityData.Unlock.TOME and cls.ability(&"breakwater").tome_id == &"cistern",
-		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 10: 6 from the trainer, 3 from tomes")
+		and cls.ability(&"breakwater").unlock == AbilityData.Unlock.TOME and cls.ability(&"breakwater").tome_id == &"cistern"
+		and cls.ability(&"forge_brand").tome_id == &"warrens",
+		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 11: 6 from the trainer, 3 from tomes")
 	var mage_cls := ClassData.load_by_id(&"elementalist")
 	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 8
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
@@ -635,7 +636,7 @@ func _run() -> void:
 		"I opens the hero window on the inventory tab")
 	lab.hero_ui.close()
 	var sheet_rows := StatSheet.ability_rows(player)
-	_check(sheet_rows.size() == 9 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
+	_check(sheet_rows.size() == 10 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
 		and sheet_rows[1]["id"] == &"earthbreaker" and sheet_rows[1]["key"] == "RMB" and sheet_rows[6]["key"] == "-",
 		"character sheet lists the known abilities in class order with their slot keys")
 	var d_pct := player.stat(&"damage_pct")
@@ -2441,7 +2442,8 @@ func _run() -> void:
 	player.restore_loadout([])
 	SaveGame.reload_from_disk()
 	SaveGame.restore_player(player)
-	_check(player.gold == 123 and player.known_abilities.size() == 9 and player.knows(&"warding_rune") and player.knows(&"breakwater")
+	_check(player.gold == 123 and player.known_abilities.size() == 10 and player.knows(&"warding_rune") and player.knows(&"breakwater")
+		and player.knows(&"forge_brand")
 		and player.loadout == ([&"rune_challenge", &"rune_wall", &"earthbreaker", &"warden_leap"] as Array[StringName]),
 		"save restores gold, the learned abilities and the loadout (%s)" % str(player.loadout))
 	var restored_names: Array[String] = []
@@ -4764,6 +4766,17 @@ func _run() -> void:
 		(warrens.puzzles["wa_lever_short"] as PuzzleLever).request("pull", 0, wah)
 		await _wait_frames(2)
 		_check((warrens.gates["wa_d_threshold_adit"] as DungeonGate).is_open, "M13 Warrens: the threshold's lever opens the shortcut")
+		var wa_tome := warrens.tomes.get("wa_tome") as Tome
+		var wa_art := Tome.ability_for(wah, &"warrens")
+		if wa_art != null:
+			wah.known_abilities.erase(wa_art.id)
+		if wa_tome != null:
+			wa_tome.use_by(wah)
+		if warrens.lore_ui != null:
+			warrens.lore_ui.close()
+		_check(wa_tome != null and wa_tome.tome_id == &"warrens" and wa_art != null and wah.knows(wa_art.id)
+			and wah.lore_read.has("lore.tome.warrens") and wa_art.tome_id == &"warrens",
+			"M13 Warrens: the Warrens' tome teaches each class its ember art (%s)" % (wa_art.id if wa_art != null else &"none"))
 		# --- phase 7: the Ember Brood (on the landing, away from the camps) ---
 		var land := Vector3(50, 0.2, 20)
 		wah.god_mode = true
@@ -4996,6 +5009,57 @@ func _run() -> void:
 		await _wait_frames(2)
 		_check(ws_cast and el8.health.current_health > ws_hp and is_zero_approx(el8.slow_pct) and el8.hot_left(&"wellspring") > 0.0,
 			"Wellspring: an ally healed at once, its slow washed off, more healing over time")
+		# --- phase 8b: the Warrens' tome abilities ---
+		var branded := warrens.spawn_by_id("rusher", rb8.global_position + Vector3(4, 0, 0))
+		await _wait_frames(2)
+		rb8.learn_ability(&"forge_brand")
+		rb8.resonance = 100.0
+		rb8.intent.aim_dir = (branded.global_position - rb8.global_position).normalized()
+		var fb_cast := rb8.try_forge_brand()
+		var fb_struck := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, el8.global_position)
+		fb_struck.source_id = branded.get_instance_id()
+		el8.health.heal_full()
+		el8.barrier = 0.0
+		var fb_hp := el8.health.current_health
+		el8.take_hit(fb_struck)
+		var fb_taken := fb_hp - el8.health.current_health
+		_check(fb_cast and branded.status.is_branded() and is_equal_approx(branded.status.damage_taken_multiplier(), StatusEffectComponent.BRAND_DAMAGE_MULT)
+			and absf(fb_taken - 20.0 * StatusEffectComponent.BRAND_WEAKEN) < 0.6 and is_equal_approx(rb8.resonance, 85.0),
+			"Forge Brand: the branded enemy takes more from every hero and strikes weaker (%.1f of 20)" % fb_taken)
+		warrens.kill_all_enemies()
+		await _wait_frames(20)
+		var seed_host := warrens.spawn_by_id("rusher", el8.global_position + Vector3(5, 0, 0))
+		var seed_near := warrens.spawn_by_id("rusher", el8.global_position + Vector3(6.5, 0, 1.5))
+		var seed_far := warrens.spawn_by_id("rusher", el8.global_position + Vector3(5, 0, -9))
+		await _wait_frames(2)
+		for foe in [seed_host, seed_near, seed_far]:
+			foe.set_physics_process(false)  # they hold still for the test
+		el8.learn_ability(&"ember_seed")
+		el8.resonance = 100.0
+		el8.intent.aim_dir = (seed_host.global_position - el8.global_position).normalized()
+		var es_cast := el8.try_ember_seed()
+		var es_untouched := is_equal_approx(seed_near.health.current_health, seed_near.health.max_health)
+		await _wait_frames(int(EmberSeed.FUSE * 60.0) + 12)
+		_check(es_cast and es_untouched and seed_near.health.current_health < seed_near.health.max_health and seed_near.status.has_burn()
+			and is_equal_approx(seed_far.health.current_health, seed_far.health.max_health) and is_equal_approx(el8.resonance, 75.0),
+			"Ember Seed: planted in one enemy, it bursts 3 s later - fire and Burn around it, nothing further off")
+		warrens.kill_all_enemies()
+		await _wait_frames(20)
+		el8.health.heal_full()
+		el8.barrier = 0.0
+		dr8.learn_ability(&"cinder_ward")
+		dr8.resonance = dr8.max_resource()
+		el8.health.current_health = el8.health.max_health * 0.4  # the most wounded: the ward's target
+		var cw_cast := dr8.try_cinder_ward()
+		await _wait_frames(2)
+		var cw_armed := el8.buff_time(&"cinder_ward") > 0.0
+		el8.take_hit(HitInfo.create(9999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, el8.global_position))
+		var cw_alive := not el8.health.is_dead and el8.health.current_health > 1.0
+		var cw_spent := el8.buff_time(&"cinder_ward") <= 0.0
+		var cw_again := el8._catch_deadly_blow(HitInfo.create(9999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, el8.global_position))
+		_check(cw_cast and cw_armed and cw_alive and cw_spent and not cw_again,
+			"Cinder Ward: the ally's next deadly blow is caught (the embers heal), once")
+		el8.health.heal_full()
 		for h8: Player in [rb8, el8, dr8]:
 			warrens.remove_player(h8)
 			h8.queue_free()

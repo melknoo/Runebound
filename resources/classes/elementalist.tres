@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ClassData" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="ClassData" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/class_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/player/classes/elementalist_hero.gd" id="10"]
@@ -13,6 +13,7 @@
 [ext_resource type="Resource" path="res://resources/abilities/ember_fall.tres" id="14"]
 [ext_resource type="Resource" path="res://resources/abilities/hoarfrost_fan.tres" id="20"]
 [ext_resource type="Resource" path="res://resources/abilities/rime_ward.tres" id="21"]
+[ext_resource type="Resource" path="res://resources/abilities/ember_seed.tres" id="22"]
 
 [resource]
 script = ExtResource("1")
@@ -21,7 +22,7 @@ display_name = "Elementalist"
 role = "Damage"
 description = "Ranged caster of fire, lightning and frost. Rune bolts and spell hits build Aether; the great spells spend it."
 hero_script = ExtResource("10")
-abilities = [ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("20"), ExtResource("21")]
+abilities = [ExtResource("2"), ExtResource("3"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("11"), ExtResource("12"), ExtResource("13"), ExtResource("14"), ExtResource("20"), ExtResource("21"), ExtResource("22")]
 basic_attack = &"rune_bolt"
 starting_abilities = Array[StringName]([&"rune_bolt"])
 talent_branches = Array[String](["Storm", "Ember", "Frost"])

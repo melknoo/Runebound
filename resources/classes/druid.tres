@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ClassData" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="ClassData" load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/class_data.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/player/classes/druid_hero.gd" id="10"]
@@ -13,6 +13,7 @@
 [ext_resource type="Resource" path="res://resources/abilities/wild_bloom.tres" id="11"]
 [ext_resource type="Resource" path="res://resources/abilities/rootwalk.tres" id="20"]
 [ext_resource type="Resource" path="res://resources/abilities/wellspring.tres" id="21"]
+[ext_resource type="Resource" path="res://resources/abilities/cinder_ward.tres" id="22"]
 
 [resource]
 script = ExtResource("1")
@@ -21,7 +22,7 @@ display_name = "Druid"
 role = "Healer"
 description = "Keeper of what grows back out of burnt earth. Heals the one you aim at (else the most wounded, else yourself), shields with bark, fights with thorns and roots. Sap refills only in a fight."
 hero_script = ExtResource("10")
-abilities = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("11"), ExtResource("20"), ExtResource("21")]
+abilities = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("11"), ExtResource("20"), ExtResource("21"), ExtResource("22")]
 basic_attack = &"thorn_volley"
 starting_abilities = Array[StringName]([&"thorn_volley", &"mending_bloom"])
 talent_branches = Array[String](["Growth", "Thorns", "Grove"])

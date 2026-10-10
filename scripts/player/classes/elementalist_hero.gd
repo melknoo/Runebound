@@ -31,6 +31,7 @@ var ball_lightning: AbilityData   # M10: a slow zapping orb
 var ember_fall: AbilityData       # M10: the meteor, spends Aether
 var hoarfrost_fan: AbilityData    # M12 tome: a cone of rime, spends Aether
 var rime_ward: AbilityData        # M13 the Cistern's tome: a barrier that chills melee strikers
+var ember_seed: AbilityData       # M13 the Warrens' tome: a seed that bursts in a ring of fire
 
 ## Rime Ward: the barrier grows this much per level; until when it holds.
 const RIME_PER_LEVEL := 3.0
@@ -58,6 +59,7 @@ func _load_abilities() -> void:
 	ember_fall = ability(&"ember_fall")
 	hoarfrost_fan = ability(&"hoarfrost_fan")
 	rime_ward = ability(&"rime_ward")
+	ember_seed = ability(&"ember_seed")
 
 
 func _register_actions() -> void:
@@ -74,6 +76,7 @@ func _register_actions() -> void:
 		&"ember_fall": try_ember_fall,
 		&"hoarfrost_fan": try_hoarfrost_fan,
 		&"rime_ward": try_rime_ward,
+		&"ember_seed": try_ember_seed,
 	})
 
 
@@ -85,7 +88,7 @@ func _anim_profile() -> Dictionary:
 		&"frost_nova": &"frost_nova", &"ember_fall": &"ember_fall"})
 	(profile["upper"] as Dictionary).merge({&"rune_bolt": &"bolt", &"chain_spark": &"chain_spark",
 		&"fracture_rune": &"fracture_rune", &"flame_wall": &"flame_wall", &"ball_lightning": &"ball_lightning",
-		&"hoarfrost_fan": &"flame_wall", &"rime_ward": &"chain_spark"})
+		&"hoarfrost_fan": &"flame_wall", &"rime_ward": &"chain_spark", &"ember_seed": &"chain_spark"})
 	return profile
 
 
@@ -455,6 +458,63 @@ func take_hit(hit: HitInfo) -> bool:
 			striker.take_hit(bite)
 			VFX.frost_burst(get_tree().current_scene, striker.global_position + Vector3(0, 0.8, 0), 0.9)
 	return super(hit)
+
+
+# ---------------------------------------------------------------------------
+# M13 tome (the Warrens): Ember Seed (planted in one enemy, bursts in fire)
+# ---------------------------------------------------------------------------
+
+func try_ember_seed() -> bool:
+	if not knows(&"ember_seed") or state != State.MOVE or _on_cooldown(&"ember_seed"):
+		return false
+	var host := _seed_target(ember_seed.projectile_speed)
+	if host == null:
+		ui_denied()
+		return false
+	if resonance < ember_seed.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(ember_seed.resonance_cost)
+	_set_cooldown(&"ember_seed", ember_seed.cooldown)
+	var to := host.global_position - global_position
+	to.y = 0.0
+	if to.length() > 0.1:
+		_visual.rotation.y = atan2(-to.x, -to.z)
+		_aim_hold_until = Time.get_ticks_msec() + AIM_HOLD_MSEC
+	var seed := EmberSeed.new()
+	seed.setup(ember_seed, self, host)
+	get_tree().current_scene.add_child(seed)
+	hero_fx(&"ember_seed", [muzzle_position(), host.net_id, host.global_position])
+	cooldowns_changed.emit()
+	action_started.emit(&"ember_seed")
+	return true
+
+
+## The held Tab target in reach, else the best candidate in view, else
+## (bots) the nearest enemy along the aim.
+func _seed_target(reach: float) -> EnemyBase:
+	if targeting != null:
+		var held := targeting.current
+		if held != null and is_instance_valid(held) and held.ai_state != EnemyBase.AIState.DEAD \
+				and held.global_position.distance_to(global_position) <= reach:
+			return held
+		var best := targeting.best_candidate()
+		if best != null and best.global_position.distance_to(global_position) <= reach:
+			return best
+		return null
+	var aim := aim_direction()
+	aim.y = 0.0
+	var pick: EnemyBase = null
+	var pick_d := reach
+	for e in EnemyBase.all_enemies:
+		if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD or not e.targetable:
+			continue
+		var to_e := e.global_position - global_position
+		to_e.y = 0.0
+		if to_e.length() < pick_d and (aim.length() < 0.01 or aim.normalized().dot(to_e.normalized()) > 0.5):
+			pick_d = to_e.length()
+			pick = e
+	return pick
 
 
 # ---------------------------------------------------------------------------

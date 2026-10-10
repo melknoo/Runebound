@@ -18,6 +18,7 @@ const ST_SHOCK := 4
 const ST_CONDUCTOR := 8
 const ST_INVULNERABLE := 16
 const ST_ROOT := 32  # M10 Deep Freeze / Absolute Zero
+const ST_BRAND := 64  # M13 Forge Brand
 
 const _HIT_BURN := 1
 const _HIT_CHILL := 2

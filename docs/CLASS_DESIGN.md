@@ -96,6 +96,10 @@ threatens double (ClassData `threat_mult` 2).
   lane is struck (14), taunted for 3 s and shoved 2.6 m to the side it
   stood on; 20 Resonance, 12 s. The tank's way into a pack that went for
   the healer, without a jump over it.
+- **Tome (M13, the Ember Warrens): Forge Brand** - a brand of embers on one
+  enemy (the target or the best one in view, 12 m, 8 Fire): for 8 s it
+  takes 20 % more damage from every hero and deals 25 % less to everyone;
+  15 Resonance, 14 s. Turns the tank's attention into the party's damage.
 
 ### Elementalist, the damage dealer (M10)
 Ranged caster of fire, lightning and frost; Rune Bolts and spell hits build
@@ -132,6 +136,10 @@ tank). Burn, Shock and Chill and their interactions moved with the spells.
   level for 6 s; while it holds, an enemy that strikes the Elementalist in
   melee (within 4 m) is Chilled (6 Frost); 25 Aether, 18 s. The caster's
   answer when the line breaks.
+- **Tome (M13, the Ember Warrens): Ember Seed** - a seed planted in one
+  enemy (14 m) bursts after 3 s, or at once when its host dies: 30 Fire and
+  Burn to every enemy within 3.5 m; 25 Aether, 10 s. Damage over a pack,
+  delayed, aimed at one.
 
 ### Root druid, the healer (M11)
 Plants breaking out of burnt earth, totems, thorns. User decisions of
@@ -172,6 +180,11 @@ level 1.
   at once, its slows washed off, 30 more over 5 s (its own heal over time,
   it stacks with Regrowth); 24 Sap, 9 s. The cleanse the dungeons' chilling
   hazards asked for.
+- **Tome (M13, the Ember Warrens): Cinder Ward** - on the heal target for
+  10 s: the next blow that would kill it leaves it standing (1 health) and
+  the embers heal 40 (scaled like the druid's heals); spent once; 30 Sap,
+  45 s. Planned as "Aschenblüte", renamed: Ashbloom Seed is already the
+  druid's legendary.
 - **Travel no longer heals** (user 2026-09-30, for every class): health (and
   Sap) are kept across zones and in the save; the Runehold hearth heals out
   of combat.

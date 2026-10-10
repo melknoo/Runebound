@@ -972,6 +972,52 @@ def icon_wellspring() -> Image.Image:
     return outlined(img)
 
 
+def icon_forge_brand() -> Image.Image:
+    """A hammer striking a glowing brand onto an anvil-dark mark."""
+    img, d = canvas()
+    fi = ROLES["fire"]
+    edge, body, core = rgb(fi["edge"]), rgb(fi["body"]), rgb(fi["core"])
+    d.ellipse([3, 10, 16, 18], fill=rgb("#2A1E18"))                  # the target's dark hide
+    d.polygon([(9, 11), (12, 14), (9, 17), (6, 14)], fill=body)       # the brand
+    d.point((9, 14), fill=core)
+    d.line([12, 1, 17, 6], fill=rgb("#624531"), width=2)             # the hammer's haft
+    d.polygon([(8, 3), (12, 1), (15, 4), (11, 7)], fill=rgb("#4A5257"))  # its head
+    for x, y in ((5, 9), (14, 10), (4, 13)):
+        d.point((x, y), fill=edge)                                   # sparks
+    return outlined(img)
+
+
+def icon_ember_seed() -> Image.Image:
+    """A glowing seed with a ring of fire about to burst out of it."""
+    img, d = canvas()
+    fi = ROLES["fire"]
+    edge, body, core = rgb(fi["edge"]), rgb(fi["body"]), rgb(fi["core"])
+    d.ellipse([2, 2, 17, 17], outline=edge)
+    for k in range(8):
+        a = k * math.tau / 8
+        x, y = 9.5 + math.cos(a) * 6.5, 9.5 + math.sin(a) * 6.5
+        d.point((int(x), int(y)), fill=body)
+    d.ellipse([6, 5, 13, 14], fill=body)                             # the seed
+    d.ellipse([8, 7, 11, 11], fill=core)
+    d.line([9, 3, 9, 5], fill=core)                                  # its sprout of flame
+    return outlined(img)
+
+
+def icon_cinder_ward() -> Image.Image:
+    """A small figure shielded by a ring of embers, one rising."""
+    img, d = canvas()
+    fi = ROLES["fire"]
+    edge, body, core = rgb(fi["edge"]), rgb(fi["body"]), rgb(fi["core"])
+    n_edge, n_body, n_core = _nat()
+    d.arc([2, 3, 17, 18], 200, 340, fill=body, width=2)              # the ward above
+    d.arc([2, 3, 17, 18], 20, 160, fill=edge, width=1)
+    d.ellipse([8, 6, 11, 9], fill=n_body)                            # the ally
+    d.rectangle([8, 10, 11, 15], fill=n_edge)
+    for x, y in ((4, 7), (15, 7), (9, 2)):
+        d.point((x, y), fill=core)                                   # embers
+    return outlined(img)
+
+
 def mk_trial() -> Image.Image:
     """M12 map: a trial shrine (a stele with a rune in the accent)."""
     img, d = canvas12()
@@ -1062,7 +1108,8 @@ def main() -> None:
                      ("growth_totem", icon_growth_totem), ("wild_bloom", icon_wild_bloom),
                      ("lodestone_rune", icon_lodestone_rune), ("hoarfrost_fan", icon_hoarfrost_fan),
                      ("rootwalk", icon_rootwalk), ("breakwater", icon_breakwater), ("rime_ward", icon_rime_ward),
-                     ("wellspring", icon_wellspring)):
+                     ("wellspring", icon_wellspring), ("forge_brand", icon_forge_brand),
+                     ("ember_seed", icon_ember_seed), ("cinder_ward", icon_cinder_ward)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

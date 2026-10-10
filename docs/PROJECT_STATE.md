@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-10 · In progress: **M13 Dungeons with puzzles** (phases
-0-7 and 8a built, below). Latest built milestone: **M12 Highlands with substance**
+0-8 built, below; the wrap-up is next). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -318,6 +318,19 @@ abilities, 9 the wrap-up.
     (the wave along the charge, the rime shell, the spring).
   - Smoke 845 green (the tome teaches each class its art and keeps the
     Charwood's apart; the charge, the ward, the spring).
+- **Phase 8b (built): the Warrens' tome and its three abilities.**
+  - **Forge Brand** (Runebreaker): a brand on one enemy for 8 s - x1.2
+    damage taken from every hero, x0.75 damage dealt (a status, snapshot
+    bit `ST_BRAND`). **Ember Seed** (Elementalist): planted in one enemy,
+    it bursts after 3 s or on its death - 30 Fire + Burn within 3.5 m.
+    **Cinder Ward** (druid; planned as "Aschenblüte", renamed - Ashbloom
+    Seed is the druid's legendary): on the heal target for 10 s, the next
+    deadly blow leaves 1 health and the embers heal 40.
+  - The Warrens' tome (`lore.tome.warrens`), icons, texts (DE/EN), HeroFx
+    entries (the brand's spark, a puppet's seed on the same enemy by net
+    id, the ward and its rise).
+  - Smoke 849 green, 205 s (the tome; the brand's both sides; the seed's
+    burst and Burn, nothing further off; the ward catches one deadly blow).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

@@ -95,5 +95,13 @@
 	"lore.tome.cistern.body": {
 		"en": "What the keepers could not drown, they learned from. A wall of water breaks on a shield and goes on around it. Rime holds the cold it is given and gives it back to the hand that strikes. A spring washes the weariness off whoever stands in it.\n\nThe pages are dry. Only the one meant for you is wet.",
 		"de": "Was die Wächter nicht ertränken konnten, davon lernten sie. Eine Wasserwand bricht an einem Schild und fließt um ihn herum weiter. Raureif hält die Kälte, die man ihm gibt, und gibt sie der Hand zurück, die zuschlägt. Eine Quelle wäscht die Müdigkeit von jedem, der in ihr steht.\n\nDie Seiten sind trocken. Nur die eine, die für dich bestimmt ist, ist nass."
+	},
+	"lore.tome.warrens.title": {
+		"en": "The smiths' book of embers",
+		"de": "Das Glutbuch der Schmiede"
+	},
+	"lore.tome.warrens.body": {
+		"en": "The smiths cast what they could not quench and wrote down how. Mark the iron before you strike it, and it gives way. A seed of embers grows in whatever holds it until it cannot hold it any more. A banked fire under the ash keeps a hearth alive through the worst of the night.\n\nThe pages are warm. The one meant for you is hot to the touch.",
+		"de": "Die Schmiede gossen, was sie nicht löschen konnten, und schrieben auf, wie. Zeichne das Eisen, bevor du zuschlägst, und es gibt nach. Eine Glutsaat wächst in allem, was sie hält, bis es sie nicht mehr halten kann. Ein unter der Asche gehütetes Feuer hält einen Herd durch die schlimmste Nacht am Leben.\n\nDie Seiten sind warm. Die eine, die für dich bestimmt ist, brennt beim Anfassen."
 	}
 }

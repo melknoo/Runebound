@@ -1,7 +1,8 @@
 class_name StatusEffectComponent
 extends Node
 ## Elemental statuses on one entity: Burn (fire DoT), Chill (slow),
-## Shock (increased damage taken), M10 Root (frozen in place: no movement).
+## Shock (increased damage taken), M10 Root (frozen in place: no movement),
+## M13 Brand (the Warrens' tome: takes more from every hero, deals less).
 ## Applied from HitInfo flags by the owner, queried by movement/damage code.
 ## Reapplying refreshes duration.
 
@@ -11,6 +12,12 @@ const CHILL_DURATION := 3.0
 const CHILL_SPEED_MULT := 0.55
 const SHOCK_DURATION := 4.0
 const SHOCK_DAMAGE_MULT := 1.2
+## M13 Forge Brand: the branded take this much more and deal this much less.
+const BRAND_DAMAGE_MULT := 1.2
+const BRAND_WEAKEN := 0.75
+const BRAND_DURATION := 8.0
+## The hit that brands (its ability id travels with a forwarded hit).
+const BRAND_ABILITY := &"forge_brand"
 
 var health: HealthComponent = null  # wired by the owner
 ## M09: set on an enemy puppet (co-op client). Its statuses mirror the
@@ -26,6 +33,7 @@ var _chill_left: float = 0.0
 var _shock_left: float = 0.0
 var _conductor_left: float = 0.0
 var _root_left: float = 0.0
+var _brand_left: float = 0.0
 ## M10 Absolute Zero: when the last chills landed (seconds, engine time).
 var _chill_times: Array[float] = []
 var _tick_vfx_accum: float = 0.0
@@ -87,8 +95,19 @@ func clear_chill_count() -> void:
 	_chill_times.clear()
 
 
+func is_branded() -> bool:
+	return _brand_left > 0.0
+
+
+func apply_brand(duration: float = BRAND_DURATION) -> void:
+	if puppet_of != null:
+		puppet_of.call(&"forward_status", &"brand", duration, 0.0)
+		return
+	_brand_left = maxf(_brand_left, duration)
+
+
 func damage_taken_multiplier() -> float:
-	return SHOCK_DAMAGE_MULT if has_shock() else 1.0
+	return (SHOCK_DAMAGE_MULT if has_shock() else 1.0) * (BRAND_DAMAGE_MULT if is_branded() else 1.0)
 
 
 ## M07b: instance id of whoever applied the current Burn (Wildfire credit).
@@ -109,6 +128,8 @@ func apply_from_hit(hit: HitInfo) -> void:
 		apply_chill(CHILL_DURATION + hit.chill_bonus)  # M10 Cold Snap
 	if hit.applies_shock:
 		apply_shock()
+	if hit.ability == BRAND_ABILITY:
+		apply_brand()
 
 
 func apply_burn(dps: float = BURN_DPS, duration: float = BURN_DURATION, source_id: int = 0) -> void:
@@ -149,6 +170,7 @@ func set_net_bits(bits: int) -> void:
 	_shock_left = NET_HOLD if bits & NetCodec.ST_SHOCK else 0.0
 	_conductor_left = NET_HOLD if bits & NetCodec.ST_CONDUCTOR else 0.0
 	_root_left = NET_HOLD if bits & NetCodec.ST_ROOT else 0.0
+	_brand_left = NET_HOLD if bits & NetCodec.ST_BRAND else 0.0
 
 
 ## The snapshot bits for this component (server side).
@@ -164,6 +186,8 @@ func net_bits() -> int:
 		bits |= NetCodec.ST_CONDUCTOR
 	if is_rooted():
 		bits |= NetCodec.ST_ROOT
+	if is_branded():
+		bits |= NetCodec.ST_BRAND
 	return bits
 
 
@@ -172,6 +196,7 @@ func clear_all() -> void:
 	_chill_left = 0.0
 	_shock_left = 0.0
 	_root_left = 0.0
+	_brand_left = 0.0
 	_chill_times.clear()
 	_burn_dps = 0.0
 
@@ -183,6 +208,7 @@ func _process(delta: float) -> void:
 	_shock_left = maxf(_shock_left - delta, 0.0)
 	_conductor_left = maxf(_conductor_left - delta, 0.0)
 	_root_left = maxf(_root_left - delta, 0.0)
+	_brand_left = maxf(_brand_left - delta, 0.0)
 
 	var owner_3d := get_parent() as Node3D
 	if _burn_left > 0.0:
@@ -206,6 +232,8 @@ func _process(delta: float) -> void:
 			VFX.chill_tick(scene, owner_3d.global_position + Vector3(0, 0.5, 0))
 		if has_shock():
 			VFX.shock_tick(scene, owner_3d.global_position + Vector3(0, 1.0, 0))
+		if is_branded():
+			VFX.flash(scene, owner_3d.global_position + Vector3(0, 2.0, 0), Color(1.0, 0.55, 0.2), 0.45, 0.25)
 		if is_conductor():
 			var top := owner_3d.global_position + Vector3(0, 1.9, 0)
 			VFX.lightning_arc(scene, top, top + Vector3(randf_range(-0.4, 0.4), 0.5, randf_range(-0.4, 0.4)))
