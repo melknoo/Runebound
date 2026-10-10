@@ -3,7 +3,7 @@
 Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat danach nur Doku-Commits, darunter diesen Handoff. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
-**Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). **In Arbeit: M13 Dungeons** (Phasen 0–3 gebaut: Dungeon-Technik, die Cistern als Graubox, das Tor öffnet sich; Runen, Tod, Boss-Arenen, Truhen einmalig; Mechanik-Rätsel und das Puzzle Lab; Element-Rätsel und Fallen). Letzter Smoke-Lauf: 773 Checks grün (2026-10-09, auf dem RTX-2070-PC mit Godot 4.6.3).
+**Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). **In Arbeit: M13 Dungeons** (Phasen 0–4 gebaut: Dungeon-Technik, die Cistern als Graubox, das Tor öffnet sich; Runen, Tod, Boss-Arenen, Truhen einmalig; Mechanik-Rätsel und das Puzzle Lab; Element-Rätsel und Fallen; die Cistern mit allen Rätseln, eigenem Look und Lore). Letzter Smoke-Lauf: 776 Checks grün (2026-10-09, auf dem RTX-2070-PC mit Godot 4.6.3).
 
 **Gates (liegen bei dir, alle offen):** Playtest M10 + M10b, M11, M12, M17a. Je ein „Gate walk“ in `docs/PROJECT_STATE.md`, im Spiel die Liste auf Taste **J**. Dazu das M09b-Gate: ein Freund spielt ohne Tailscale.
 

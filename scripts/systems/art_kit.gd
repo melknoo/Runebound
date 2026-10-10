@@ -120,6 +120,12 @@ static func material(role: StringName) -> Material:
 		&"spire_crystal":
 			mat = terrain_material("sp_crystal", "sp_crystal", "sp_crystal", {
 				"layer_b_amount": 0.0, "ember_density": 0.0})
+		&"cistern_floor":  # M13: wet slabs, algae in the joints
+			mat = terrain_material("ci_floor", "ci_wall_top", "ci_wall", {
+				"layer_b_amount": 0.12, "ember_density": 0.0})
+		&"cistern_wall":
+			mat = terrain_material("ci_wall_top", "ci_floor", "ci_wall", {
+				"layer_b_amount": 0.15, "ember_density": 0.0, "slope_top": 0.6})
 		_:
 			push_warning("ArtKit: unknown material role '%s'" % role)
 			mat = StandardMaterial3D.new()

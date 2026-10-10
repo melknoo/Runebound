@@ -3984,6 +3984,8 @@ func _run() -> void:
 		var poi_floor_ok := true
 		var poi_prefix_ok := true
 		for poi in cistern.layout.pois.pois:
+			if String(poi.get("type", "")) in ["water", "ice", "collapse"]:
+				continue  # they stand in a channel (its bed lies lower)
 			var pp13 := ZoneLayout.pos_of(poi)
 			var poi_beside := pp13 + Vector3(1.2, 0.5, 0)  # beside the POI: its own collider (a chest) is no floor
 			var gp13 := cistern.ground_point(poi_beside)
@@ -4012,8 +4014,37 @@ func _run() -> void:
 					spots_clear = false
 		_check(spot_count >= 8 and spots_clear, "M13: %d camp spots stand clear inside their rooms" % spot_count)
 		_check(cistern.enemy_count() == 0, "M13: no Cistern camp wakes on arrival")
-		_check(cistern.builder.secret_walls.has("ci_d_run_vault") and cistern.builder.plugs.has("ci_d_c4_threshold"),
+		_check(cistern.builder.secret_walls.has("ci_d_run_vault") and cistern.gates.has("ci_d_c4_threshold")
+			and not (cistern.gates["ci_d_c4_threshold"] as DungeonGate).is_open,
 			"M13: the secret wall and the shortcut start closed")
+		# phase 4: the Cistern's puzzles are all there and wired
+		var kinds13: Dictionary = {}
+		for pk: String in cistern.puzzles:
+			var kind_name: String = (cistern.puzzles[pk] as Node).get_script().get_global_name()
+			kinds13[kind_name] = int(kinds13.get(kind_name, 0)) + 1
+		var wired13 := true
+		for d in cistern.layout.doors:
+			for input in d.get("inputs", []):
+				if not String(input).begins_with("flag:") and not cistern.puzzles.has(String(input)):
+					wired13 = false
+		_check(wired13 and cistern.waters.size() == 3 and int(kinds13.get("BeamPuzzle", 0)) == 2
+			and int(kinds13.get("PressurePlate", 0)) == 4 and int(kinds13.get("PushBlock", 0)) == 2
+			and int(kinds13.get("PuzzleLever", 0)) == 3 and int(kinds13.get("IceBridge", 0)) == 2
+			and cistern.carriers.size() == 4 and cistern.traps.size() == 1 and int(kinds13.get("SecretWall", 0)) == 1,
+			"M13 Cistern: water, light, plates, blocks, valves, ice, a trap and the cracked wall, all wired (%s)" % kinds13)
+		var drip := false
+		for node in cistern.world.get_children():
+			if node is AudioStreamPlayer and (node as AudioStreamPlayer).stream != null and (node as AudioStreamPlayer).stream.resource_path.contains("cistern_drip_loop"):
+				drip = true
+		_check(drip and ArtKit.material(&"cistern_floor") is ShaderMaterial and ArtKit.material(&"cistern_wall") is ShaderMaterial,
+			"M13 Cistern: its own stone and its own sound")
+		var kit13: Dictionary = {}
+		for dn in cistern.dressing().get_children():
+			var base_name := String(dn.name).rstrip("0123456789")
+			kit13[base_name] = int(kit13.get(base_name, 0)) + 1
+		_check(int(kit13.get("ci_wall_arch", 0)) >= 10 and int(kit13.get("ci_lamp", 0)) >= 20 and int(kit13.get("ci_sluice_gate", 0)) == 6
+			and int(kit13.get("ci_grate", 0)) >= 4 and cistern.dressing().find_children("*", "CollisionObject3D", true, false).is_empty(),
+			"M13 Cistern: the kit dresses it (arches, lamps, sluices, grates; no collision) %s" % kit13)
 		var in_wall := Vector3(-11.0, 0.0, 33.0)
 		var made_safe := cistern.safe_spawn(in_wall)
 		_check(not cistern.layout.is_walkable(in_wall.x, in_wall.z) and cistern.layout.is_walkable(made_safe.x, made_safe.z),
@@ -4056,7 +4087,7 @@ func _run() -> void:
 		for m in cistern.map_markers():
 			known.append(String(m["id"]))
 		_check(cistern.map_texture() != null and is_equal_approx(cistern.map_bounds().size.x, cistern.map_bounds().size.y)
-			and known.has("ci_exit") and known.has("ci_camp_sluice") and not known.has("ci_chest_vault"),
+			and known.has("ci_exit") and known.has("ci_camp_sluice") and not known.has("ci_chest_tome"),
 			"M13: the Cistern map shows what was found, never the hidden vault (%s)" % ", ".join(known))
 		_check(cistern._room_seen.has("ci_sluice") and Texts.t("area.ci_sluice") != "area.ci_sluice",
 			"M13: rooms announce their names")
@@ -4387,11 +4418,15 @@ func _run() -> void:
 					var blades := lab13.traps["lab_blades"] as ClockTrap
 					eh2.god_mode = false
 					eh2.health.heal_full()
+					blades.set_process(false)  # no clock bursts while the test strikes by hand
 					eh2.global_position = blades.strip_centre(1) + Vector3(0, 0.2, 0)
 					await _wait_frames(2)
 					var hp_before_blade := eh2.health.current_health
+					var dealt_before := blades.hits_dealt
 					blades.burst(1, eh2)
-					_check(eh2.health.current_health < hp_before_blade and blades.hits_dealt == 1, "M13 traps: a blade strip strikes the hero on it")
+					_check(eh2.health.current_health < hp_before_blade and blades.hits_dealt == dealt_before + 1,
+						"M13 traps: a blade strip strikes the hero on it (%.0f -> %.0f, on strip %s, at %s)" % [hp_before_blade,
+						eh2.health.current_health, blades.on_strip(1, eh2.global_position), eh2.global_position])
 					eh2.health.current_health = 1.0
 					blades.burst(1, eh2)
 					_check(eh2.health.current_health >= 1.0 and not eh2.health.is_dead, "M13 traps: a trap never takes the last point")
@@ -4400,6 +4435,7 @@ func _run() -> void:
 					var hp_dodging := eh2.health.current_health
 					blades.burst(1, eh2)
 					eh2.health.invulnerable = false
+					blades.set_process(true)
 					_check(is_equal_approx(eh2.health.current_health, hp_dodging), "M13 traps: a dodge's i-frames carry a hero through")
 					var collapse := lab13.traps["lab_collapse"] as CollapsingFloor
 					_check(collapse.row_down(0, 0.1) and not collapse.row_down(1, 0.1) and collapse.row_down(1, collapse.period * 0.5 + 0.1),

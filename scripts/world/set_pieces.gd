@@ -11,6 +11,7 @@ const KIT_DIRS: Array[String] = [
 	"res://assets/models/env/highlands/",
 	"res://assets/models/env/runehold/",
 	"res://assets/models/env/spire/",
+	"res://assets/models/env/cistern/",  # M13 (ci_*)
 	"res://assets/models/env/common/",
 ]
 const SHADOW_MIN_HEIGHT := 0.6  # art_spec shadows.casters: small props don't cast

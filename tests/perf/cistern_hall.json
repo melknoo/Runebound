@@ -1,0 +1,16 @@
+{
+	"zone": "res://scenes/hollow_cistern.tscn",
+	"comment": "M13 Cistern sluice hall: interior look, lamps on brackets, the water shader, the cistern kit, a mixed pack.",
+	"player": [-45, 0.2, 48],
+	"yaw": 0.0,
+	"pitch": -0.35,
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 12.0,
+	"budget_fps": 60,
+	"wave": [
+		["rusher", [0, 0, -6]], ["rusher", [2.5, 0, -7]], ["warden", [-2.5, 0, -7]],
+		["assassin", [1, 0, -9]], ["assassin", [-1, 0, -10]], ["brute", [3, 0, -10]],
+		["caster", [4, 0, -9]], ["caster", [-4, 0, -10]]
+	]
+}

@@ -746,6 +746,17 @@ Plan with the user's answers: ROADMAP M13.
   `floor - 0.8` in the pit is hurt and set back at `back`, `teleports`++).
 - **Puzzle lab:** `PuzzleLabZone` (registry id `lab`, no title, never
   reachable) for the smoke test and the net scenarios.
+- **Dressing (phase 4):** `DungeonDressing.dress(zone, kit, seed)` - kit
+  keys `arch` (halls' walls every 8 m), `pipe` (one wall of corridors, 3 m
+  up), `grate` (a hall over 300 m2), `sluice` (both ends of every channel),
+  `scatter` (Scatter items with a weight that keeps them on walkable floor
+  outside channels; the wall rects are the obstacles). Doorways (3.4 m +
+  half their width), POIs (2.4 m) and channels stay clear; visual only, no
+  server. `DungeonBuilder` adds a cap course to every wall and hangs the
+  zone's `_lamp_prop()` (origin at the lantern, its arm along -Z to the
+  wall) at each room light, else code-built lamp boxes. Water uses
+  `shaders/water_pixel.gdshader` (palette colours `cistern.water` /
+  `water_hi`).
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 

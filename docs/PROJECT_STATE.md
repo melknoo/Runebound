@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phases
-0-3 built, below). Latest built milestone: **M12 Highlands with substance**
+0-4 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -161,6 +161,45 @@ abilities, 9 the wrap-up.
     puppet at c2, c1 lights the kilns through requests, c2 leads the spark
     along the posts, c1's ice shows at c2; the late joiner finds kilns and
     posts solved).
+- **Phase 4 (built): the Hollow Cistern's content, look and lore.**
+  - **The final layout** (WORLD_DESIGN "The Hollow Cistern"): 17 rooms. The
+    sluice hall's channel blocks the way north until both valves are turned
+    (the causeway shows); the pump chamber (a branch) wants the block on one
+    plate and a hero on the latching other, then its alcove's bars rise
+    (bonus chest); the frost channel is crossed on the ice (a frost crystal
+    on each bank); the mirror gallery's light opens the antechamber; the
+    basin's gate waits on the mid-boss; sluice blades in the undertow run;
+    the cracked wall at its side opens the vault - the big puzzle: ice to the
+    far bank, the light led over the water twice, a latching plate and a
+    block on a plate open the tome room (its chest until phase 8 brings the
+    tome); the threshold's lever opens the shortcut to the inlet.
+  - **Look:** palette `cistern` (art_spec), textures `ci_floor` (slabs,
+    algae in a third of the joints), `ci_wall` (coursed, algae in the bed
+    joints), `ci_wall_top` (biome.py, now runs per kit:
+    `python tools/texgen/biome.py cistern`), ArtKit roles `cistern_floor` /
+    `cistern_wall`, the interior ZoneLook from the palette, pale phosphor
+    lamps. `water_pixel.gdshader`: opaque, world-mapped pixel ripples and
+    glints (no SCREEN / DEPTH reads), on every channel.
+  - **The cistern kit** (generate_props.py, kit `cistern`; Blender 5.2 now
+    also on the RTX 2070 PC): `ci_lamp` (a lantern on an iron arm - the
+    builder hangs one at every room light), `ci_wall_arch` (relief arch
+    with a drain mouth), `ci_pipe`, `ci_grate`, `ci_sluice_gate` (where a
+    channel meets a wall), scatter `ci_rubble` / `ci_moss_tuft`.
+    `DungeonDressing` places them by rule (arches every 8 m on the halls'
+    walls, pipe runs in corridors, a grate per large hall, sluice frames,
+    scatter at the walls' feet; doors, POIs and channels kept clear; no
+    collision). Walls got a cap course; lamps hang on brackets at the walls.
+  - **Lore** (`m13_lore.json`, DE/EN): the keeper's log, the sluice plaque,
+    a mason's note (the light's long way), a note by the basin (it hints at
+    the mid-boss: drain the basin), the words in the vault (the big
+    puzzle's hint). Ambience `cistern_drip_loop` (sfxgen, appended last).
+  - Shots `m13_cistern` (14); perf `cistern_hall` (RTX 2070: 443 FPS, GPU
+    1.2 ms, 351 draw calls - the Spire's hall 445 FPS, 334 on the same PC;
+    the iGPU measurement is still to do).
+  - Smoke 776 green (every gate's inputs resolve; the Cistern's water,
+    beams, plates, blocks, valves, ice, trap and cracked wall; its stone and
+    sound; the kit dresses it without collision). Net `dungeon` and
+    `dungeon_boss` still green on the new layout.
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

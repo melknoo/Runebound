@@ -483,9 +483,63 @@ def generate_highlands() -> None:
     sky_clouds("sky_clouds")
 
 
+def moss_joints(rgba: np.ndarray, joints: np.ndarray, moss: list[str], rng: np.random.Generator,
+                share: float) -> None:
+    """M13: algae in a share of the joints (cistern stone), dithered."""
+    size = rgba.shape[0]
+    patch = fbm(size, rng, ((4, 0.6), (8, 0.4))) + dither((size, size), 0.25)
+    grow = joints & (patch > 1.0 - share)
+    shade = np.clip((patch * 3.0).astype(int) % len(moss), 0, len(moss) - 1)
+    rgba[grow] = paint(shade[grow], moss)
+
+
+def cistern_floor(name: str, ramp: list[str], moss: list[str]) -> None:
+    """M13 cistern floor: dressed slabs (floor_tiles), wet and darker, algae
+    creeping along a part of the joints."""
+    floor_tiles(name, ramp)
+    path = os.path.join(OUT_DIR, name + ".png")
+    rgba = np.array(Image.open(path).convert("RGBA"))
+    size = rgba.shape[0]
+    joints = np.zeros((size, size), dtype=bool)
+    joints[::32, :] = True
+    joints[:, ::32] = True
+    grown = joints | np.roll(joints, 1, axis=0) | np.roll(joints, 1, axis=1)
+    moss_joints(rgba, grown, moss, rng_for(name + ":moss"), 0.3)
+    save(name, rgba)
+
+
+def cistern_wall(name: str, ramp: list[str], moss: list[str]) -> None:
+    """M13 cistern wall: coursed blocks (masonry) with algae in the bed joints
+    and a damp streak here and there."""
+    masonry(name, ramp)
+    path = os.path.join(OUT_DIR, name + ".png")
+    rgba = np.array(Image.open(path).convert("RGBA"))
+    dark = paint(np.array([0]), ramp)[0]
+    joints = np.all(rgba == dark, axis=-1)
+    moss_joints(rgba, joints, moss, rng_for(name + ":moss"), 0.5)
+    save(name, rgba)
+
+
+def generate_cistern() -> None:
+    spec = load_spec()
+    pal = spec["palettes"]["cistern"]
+    print("Biome textures (M13 Hollow Cistern):")
+    cistern_floor("ci_floor", pal["floor"], pal["moss"])
+    cistern_wall("ci_wall", pal["wall"], pal["moss"])
+    ash_surface("ci_wall_top", pal["wall"], 2, pebbles=6, cracks=True)
+
+
 if __name__ == "__main__":
-    generate_highlands()
-    generate_subbiomes()
-    generate_runehold()
-    generate_spire()
+    import sys
+    only = sys.argv[1:]
+    if not only or "highlands" in only:
+        generate_highlands()
+    if not only or "subbiomes" in only:
+        generate_subbiomes()
+    if not only or "runehold" in only:
+        generate_runehold()
+    if not only or "spire" in only:
+        generate_spire()
+    if not only or "cistern" in only:
+        generate_cistern()
     print("done.")

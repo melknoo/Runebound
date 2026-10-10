@@ -590,6 +590,36 @@
 			"ambient": "#3A3050",
 			"background": "#0C0912"
 		},
+		"cistern": {
+			"comment": "M13 interior: no sun; cold wet blue-green stone, algae in the joints, dark water, pale phosphor lamps",
+			"floor": [
+				"#141E22",
+				"#1B292E",
+				"#24363B",
+				"#2F454A",
+				"#3C575B"
+			],
+			"wall": [
+				"#111A1D",
+				"#172327",
+				"#1F2F33",
+				"#293D41",
+				"#344C50"
+			],
+			"moss": [
+				"#1C3328",
+				"#264536",
+				"#335B45",
+				"#437255"
+			],
+			"water": "#16404A",
+			"water_hi": "#2E6A72",
+			"lamp": "#9FE6E0",
+			"rune": "#5FE0E8",
+			"fog": "#12262A",
+			"ambient": "#2A4246",
+			"background": "#070E10"
+		},
 		"stonehulk": {
 			"comment": "Highlands/lab brute: weathered stone slabs, moss on the up-facing planes, ember slit eyes",
 			"stone": [

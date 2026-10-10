@@ -373,7 +373,10 @@ Hebel und Ventile, Druckplatten, Schiebeblöcke, Lichtstrahl mit drehbaren Krist
 Wände, Wasserkanäle mit Damm-Steg; das Puzzle Lab als Testraum). Phase 3 gebaut (Element-Rätsel:
 Glutschale, Frostkristall und Sturmspule geben jedem Helden das Element für 8 s, so löst jede Klasse
 Öfen, Kupferpfosten und Eisbrücken mit dem Grundangriff, der Magier auch direkt; Fallen: Klingen
-und Feuerdüsen im Takt, einstürzender Boden über einer Grube – nie der letzte Lebenspunkt). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+und Feuerdüsen im Takt, einstürzender Boden über einer Grube – nie der letzte Lebenspunkt). Phase 4
+gebaut (die Cistern mit allen Rätseln an ihrem Platz, eigener Look – nasse blaugrüne Steine, Algen,
+Wasser-Shader, Laternen an Eisenarmen, Bögen, Rohre, Schleusentore –, fünf Lore-Texte DE/EN und ein
+Tropf-Ambience). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

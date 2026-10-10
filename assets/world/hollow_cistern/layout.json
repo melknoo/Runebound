@@ -7,7 +7,7 @@
   -88,
   -98
  ],
- "base_y": -1.0,
+ "base_y": -3.0,
  "rooms": [
   {
    "id": "ci_inlet",
@@ -46,6 +46,18 @@
    ],
    "floor": 0.0,
    "name_key": "area.ci_sluice",
+   "channels": [
+    {
+     "id": "ci_ch_sluice",
+     "rect": [
+      -60,
+      30,
+      -30,
+      34
+     ],
+     "depth": 2.0
+    }
+   ],
    "wall_h": 7.0,
    "tags": [
     "combat"
@@ -65,6 +77,18 @@
    "tags": []
   },
   {
+   "id": "ci_pump_alcove",
+   "rect": [
+    -80,
+    14,
+    -70,
+    24
+   ],
+   "floor": 0.0,
+   "wall_h": 5.0,
+   "tags": []
+  },
+  {
    "id": "ci_frost",
    "rect": [
     -60,
@@ -74,6 +98,18 @@
    ],
    "floor": 0.0,
    "name_key": "area.ci_frost",
+   "channels": [
+    {
+     "id": "ci_ch_frost",
+     "rect": [
+      -60,
+      4,
+      -30,
+      8
+     ],
+     "depth": 2.0
+    }
+   ],
    "wall_h": 7.0,
    "tags": []
   },
@@ -190,6 +226,18 @@
     "roofed"
    ],
    "name_key": "area.ci_vault",
+   "channels": [
+    {
+     "id": "ci_ch_vault",
+     "rect": [
+      58,
+      -21,
+      80,
+      -17
+     ],
+     "depth": 2.0
+    }
+   ],
    "wall_h": 7.0
   },
   {
@@ -316,6 +364,30 @@
    "wall_h": 7.0
   },
   {
+   "id": "ci_d_pump_alcove",
+   "a": "ci_pump",
+   "b": "ci_pump_alcove",
+   "at": [
+    -75,
+    25
+   ],
+   "width": 5.0,
+   "kind": "gate",
+   "inputs": [
+    "ci_plate_pump_a",
+    "ci_plate_pump_b"
+   ],
+   "rect": [
+    -77.5,
+    24,
+    -72.5,
+    26
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 5.0
+  },
+  {
    "id": "ci_d_sluice_frost",
    "a": "ci_sluice",
    "b": "ci_frost",
@@ -324,7 +396,7 @@
     21
    ],
    "width": 6.0,
-   "kind": "gate",
+   "kind": "open",
    "inputs": [],
    "rect": [
     -48.0,
@@ -388,7 +460,9 @@
    ],
    "width": 5.0,
    "kind": "gate",
-   "inputs": [],
+   "inputs": [
+    "ci_light_gallery"
+   ],
    "rect": [
     -26,
     -40.5,
@@ -470,16 +544,16 @@
    "b": "ci_vault",
    "at": [
     57,
-    -19
+    -12
    ],
    "width": 4.0,
    "kind": "secret",
    "inputs": [],
    "rect": [
     56,
-    -21.0,
+    -14.0,
     58,
-    -17.0
+    -10.0
    ],
    "axis": "x",
    "floor": 2.0,
@@ -495,7 +569,11 @@
    ],
    "width": 4.0,
    "kind": "gate",
-   "inputs": [],
+   "inputs": [
+    "ci_light_vault",
+    "ci_plate_vault_a",
+    "ci_plate_vault_b"
+   ],
    "rect": [
     63.0,
     -32,
@@ -579,7 +657,9 @@
    ],
    "width": 5.0,
    "kind": "shortcut",
-   "inputs": [],
+   "inputs": [
+    "ci_lever_short"
+   ],
    "rect": [
     42,
     33.5,
@@ -804,7 +884,7 @@
     56.0,
     -30.0,
     58.0,
-    -21.0
+    -14.0
    ],
    "top": 9.0
   },
@@ -864,66 +944,66 @@
   },
   {
    "rect": [
+    -50.0,
+    -16.0,
+    -48.0,
+    -13.0
+   ],
+   "top": 7.5
+  },
+  {
+   "rect": [
+    -42.0,
+    -16.0,
+    -40.0,
+    -13.0
+   ],
+   "top": 7.5
+  },
+  {
+   "rect": [
+    -50.0,
+    -13.0,
+    -48.0,
+    -10.0
+   ],
+   "top": 7.0
+  },
+  {
+   "rect": [
+    -42.0,
+    -13.0,
+    -40.0,
+    -10.0
+   ],
+   "top": 7.0
+  },
+  {
+   "rect": [
+    -50.0,
+    -10.0,
+    -48.0,
+    -8.0
+   ],
+   "top": 6.5
+  },
+  {
+   "rect": [
+    -42.0,
+    -10.0,
+    -40.0,
+    -8.0
+   ],
+   "top": 6.5
+  },
+  {
+   "rect": [
     56.0,
-    -17.0,
+    -10.0,
     58.0,
     -8.0
    ],
    "top": 9.0
-  },
-  {
-   "rect": [
-    -50.0,
-    -16.0,
-    -48.0,
-    -13.0
-   ],
-   "top": 7.5
-  },
-  {
-   "rect": [
-    -42.0,
-    -16.0,
-    -40.0,
-    -13.0
-   ],
-   "top": 7.5
-  },
-  {
-   "rect": [
-    -50.0,
-    -13.0,
-    -48.0,
-    -10.0
-   ],
-   "top": 7.0
-  },
-  {
-   "rect": [
-    -42.0,
-    -13.0,
-    -40.0,
-    -10.0
-   ],
-   "top": 7.0
-  },
-  {
-   "rect": [
-    -50.0,
-    -10.0,
-    -48.0,
-    -8.0
-   ],
-   "top": 6.5
-  },
-  {
-   "rect": [
-    -42.0,
-    -10.0,
-    -40.0,
-    -8.0
-   ],
-   "top": 6.5
   },
   {
    "rect": [
@@ -1062,6 +1142,33 @@
   },
   {
    "rect": [
+    -82.0,
+    12.0,
+    -68.0,
+    14.0
+   ],
+   "top": 5.0
+  },
+  {
+   "rect": [
+    -82.0,
+    14.0,
+    -80.0,
+    24.0
+   ],
+   "top": 5.0
+  },
+  {
+   "rect": [
+    -70.0,
+    14.0,
+    -68.0,
+    24.0
+   ],
+   "top": 5.0
+  },
+  {
+   "rect": [
     48.0,
     14.0,
     50.0,
@@ -1144,6 +1251,15 @@
   {
    "rect": [
     -86.0,
+    24.0,
+    -77.5,
+    26.0
+   ],
+   "top": 7.0
+  },
+  {
+   "rect": [
+    -72.5,
     24.0,
     -60.0,
     26.0
@@ -1340,7 +1456,44 @@
    "top": 7.0
   }
  ],
- "channels": [],
+ "channels": [
+  {
+   "id": "ci_ch_sluice",
+   "rect": [
+    -60,
+    30,
+    -30,
+    34
+   ],
+   "depth": 2.0,
+   "room": "ci_sluice",
+   "floor": 0.0
+  },
+  {
+   "id": "ci_ch_frost",
+   "rect": [
+    -60,
+    4,
+    -30,
+    8
+   ],
+   "depth": 2.0,
+   "room": "ci_frost",
+   "floor": 0.0
+  },
+  {
+   "id": "ci_ch_vault",
+   "rect": [
+    58,
+    -21,
+    80,
+    -17
+   ],
+   "depth": 2.0,
+   "room": "ci_vault",
+   "floor": 2.0
+  }
+ ],
  "pois": [
   {
    "id": "ci_exit",
@@ -1357,11 +1510,24 @@
    "y": 0.0
   },
   {
+   "id": "ci_lore_inlet",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.cistern.keeper_log",
+   "pos": [
+    7,
+    33
+   ],
+   "yaw": -0.6,
+   "room": "ci_inlet",
+   "y": 0.0
+  },
+  {
    "id": "ci_camp_sluice",
    "type": "camp",
    "pos": [
     -45,
-    34
+    42
    ],
    "radius": 10.0,
    "composition": [
@@ -1372,15 +1538,15 @@
    "spots": [
     [
      -48,
-     31
+     39
     ],
     [
      -42,
-     31
+     39
     ],
     [
      -45,
-     37
+     45
     ]
    ],
    "room": "ci_sluice",
@@ -1390,6 +1556,185 @@
     0.0,
     0.0
    ]
+  },
+  {
+   "id": "ci_valve_sluice_a",
+   "type": "lever",
+   "pos": [
+    -57,
+    48
+   ],
+   "yaw": 3.14159,
+   "look": "valve",
+   "room": "ci_sluice",
+   "y": 0.0
+  },
+  {
+   "id": "ci_valve_sluice_b",
+   "type": "lever",
+   "pos": [
+    -33,
+    48
+   ],
+   "yaw": 3.14159,
+   "look": "valve",
+   "room": "ci_sluice",
+   "y": 0.0
+  },
+  {
+   "id": "ci_water_sluice",
+   "type": "water",
+   "pos": [
+    -52,
+    32
+   ],
+   "channel": "ci_ch_sluice",
+   "inputs": [
+    "ci_valve_sluice_a",
+    "ci_valve_sluice_b"
+   ],
+   "walkways": [
+    [
+     -47,
+     30,
+     -43,
+     34
+    ]
+   ],
+   "room": "ci_sluice",
+   "y": 0.0
+  },
+  {
+   "id": "ci_lore_sluice",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.cistern.sluice_plaque",
+   "pos": [
+    -36,
+    25
+   ],
+   "yaw": 3.14159,
+   "room": "ci_sluice",
+   "y": 0.0
+  },
+  {
+   "id": "ci_block_pump",
+   "type": "block",
+   "pos": [
+    -74,
+    42
+   ],
+   "grid": [
+    -82,
+    28,
+    -64,
+    46
+   ],
+   "cell": 2.0,
+   "room": "ci_pump",
+   "y": 0.0
+  },
+  {
+   "id": "ci_reset_pump",
+   "type": "reset",
+   "pos": [
+    -80,
+    45
+   ],
+   "targets": [
+    "ci_block_pump"
+   ],
+   "room": "ci_pump",
+   "y": 0.0
+  },
+  {
+   "id": "ci_plate_pump_a",
+   "type": "plate",
+   "pos": [
+    -74,
+    32
+   ],
+   "room": "ci_pump",
+   "y": 0.0
+  },
+  {
+   "id": "ci_plate_pump_b",
+   "type": "plate",
+   "pos": [
+    -66,
+    30
+   ],
+   "latch": true,
+   "room": "ci_pump",
+   "y": 0.0
+  },
+  {
+   "id": "ci_chest_pump",
+   "type": "chest",
+   "pos": [
+    -75,
+    18
+   ],
+   "yaw": 0.0,
+   "rarity_bias": 1,
+   "room": "ci_pump_alcove",
+   "y": 0.0
+  },
+  {
+   "id": "ci_crystal_frost_s",
+   "type": "carrier",
+   "pos": [
+    -38,
+    14
+   ],
+   "element": "frost",
+   "room": "ci_frost",
+   "y": 0.0
+  },
+  {
+   "id": "ci_crystal_frost_n",
+   "type": "carrier",
+   "pos": [
+    -54,
+    0
+   ],
+   "element": "frost",
+   "room": "ci_frost",
+   "y": 0.0
+  },
+  {
+   "id": "ci_ice_frost",
+   "type": "ice",
+   "pos": [
+    -45,
+    6
+   ],
+   "channel": "ci_ch_frost",
+   "strip": [
+    -47,
+    4,
+    -43,
+    8
+   ],
+   "seconds": 12.0,
+   "room": "ci_frost",
+   "y": 0.0
+  },
+  {
+   "id": "ci_water_frost",
+   "type": "water",
+   "pos": [
+    -36,
+    6
+   ],
+   "channel": "ci_ch_frost",
+   "inputs": [],
+   "walkways": [],
+   "ice": [
+    "ci_ice_frost"
+   ],
+   "room": "ci_frost",
+   "y": 0.0
   },
   {
    "id": "ci_camp_mirror",
@@ -1427,17 +1772,47 @@
    ]
   },
   {
-   "id": "ci_arena_keeper",
-   "type": "arena",
+   "id": "ci_light_gallery",
+   "type": "beam",
    "pos": [
-    10,
-    -40
+    -61,
+    -48
    ],
-   "boss": "dungeon_boss",
-   "flag": "ci_keeper_down",
-   "trigger": 9.0,
-   "reward": "mid",
-   "room": "ci_basin",
+   "dir": 2,
+   "mirrors": [
+    [
+     -50,
+     -48,
+     5
+    ],
+    [
+     -50,
+     -30,
+     7
+    ]
+   ],
+   "receiver": [
+    -29,
+    -30
+   ],
+   "targets": [
+    0,
+    2
+   ],
+   "room": "ci_mirror",
+   "y": 2.0
+  },
+  {
+   "id": "ci_lore_mason",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.cistern.mason",
+   "pos": [
+    -60,
+    -27
+   ],
+   "yaw": 0.4,
+   "room": "ci_mirror",
    "y": 2.0
   },
   {
@@ -1452,6 +1827,220 @@
    "y": 2.0
   },
   {
+   "id": "ci_arena_keeper",
+   "type": "arena",
+   "pos": [
+    10,
+    -40
+   ],
+   "boss": "dungeon_boss",
+   "flag": "ci_keeper_down",
+   "trigger": 9.0,
+   "reward": "mid",
+   "room": "ci_basin",
+   "y": 2.0
+  },
+  {
+   "id": "ci_lore_keeper",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.cistern.keeper_last",
+   "pos": [
+    22,
+    -27
+   ],
+   "yaw": 2.4,
+   "room": "ci_basin",
+   "y": 2.0
+  },
+  {
+   "id": "ci_blades_run",
+   "type": "trap",
+   "pos": [
+    53,
+    -30
+   ],
+   "look": "blades",
+   "lane": [
+    [
+     53,
+     -40
+    ],
+    [
+     53,
+     -20
+    ]
+   ],
+   "strips": 5,
+   "period": 3.0,
+   "damage": 14.0,
+   "room": "ci_run",
+   "y": 2.0
+  },
+  {
+   "id": "ci_crystal_vault",
+   "type": "carrier",
+   "pos": [
+    62,
+    -11
+   ],
+   "element": "frost",
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_crystal_vault_n",
+   "type": "carrier",
+   "pos": [
+    69,
+    -24
+   ],
+   "element": "frost",
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_ice_vault",
+   "type": "ice",
+   "pos": [
+    70,
+    -19
+   ],
+   "channel": "ci_ch_vault",
+   "strip": [
+    68,
+    -21,
+    72,
+    -17
+   ],
+   "seconds": 12.0,
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_water_vault",
+   "type": "water",
+   "pos": [
+    76,
+    -19
+   ],
+   "channel": "ci_ch_vault",
+   "inputs": [],
+   "walkways": [],
+   "ice": [
+    "ci_ice_vault"
+   ],
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_light_vault",
+   "type": "beam",
+   "pos": [
+    61,
+    -12
+   ],
+   "dir": 4,
+   "mirrors": [
+    [
+     61,
+     -27,
+     0
+    ],
+    [
+     77,
+     -27,
+     6
+    ]
+   ],
+   "receiver": [
+    77,
+    -12
+   ],
+   "targets": [
+    2,
+    0
+   ],
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_plate_vault_a",
+   "type": "plate",
+   "pos": [
+    64,
+    -24
+   ],
+   "latch": true,
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_block_vault",
+   "type": "block",
+   "pos": [
+    74,
+    -28
+   ],
+   "grid": [
+    62,
+    -29,
+    79,
+    -25
+   ],
+   "cell": 2.0,
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_plate_vault_b",
+   "type": "plate",
+   "pos": [
+    70,
+    -28
+   ],
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_reset_vault",
+   "type": "reset",
+   "pos": [
+    78,
+    -23
+   ],
+   "targets": [
+    "ci_block_vault"
+   ],
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_lore_vault",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.cistern.warning",
+   "pos": [
+    60,
+    -10
+   ],
+   "yaw": 1.5708,
+   "room": "ci_vault",
+   "y": 2.0
+  },
+  {
+   "id": "ci_chest_tome",
+   "type": "chest",
+   "pos": [
+    65,
+    -46
+   ],
+   "yaw": 0.0,
+   "rarity_bias": 2,
+   "room": "ci_tome_room",
+   "y": 2.0
+  },
+  {
    "id": "ci_rune_threshold",
    "type": "rune",
    "pos": [
@@ -1463,32 +2052,14 @@
    "y": 0.0
   },
   {
-   "id": "ci_arena_deepmaw",
-   "type": "arena",
+   "id": "ci_lever_short",
+   "type": "lever",
    "pos": [
-    83,
-    28
+    46,
+    32
    ],
-   "boss": "dungeon_boss",
-   "flag": "ci_deepmaw_down",
-   "trigger": 10.0,
-   "reward": "end",
-   "room": "ci_heart",
-   "y": 0.0
-  },
-  {
-   "id": "ci_exit_heart",
-   "type": "portal",
-   "pos": [
-    96,
-    28
-   ],
-   "yaw": -1.5708,
-   "dest": "highlands",
-   "arrival": "dungeon_e",
-   "label": "ASHEN HIGHLANDS",
-   "unlock_flag": "ci_deepmaw_down",
-   "room": "ci_heart",
+   "yaw": 1.5708,
+   "room": "ci_threshold",
    "y": 0.0
   },
   {
@@ -1521,28 +2092,33 @@
    ]
   },
   {
-   "id": "ci_chest_pump",
-   "type": "chest",
+   "id": "ci_arena_deepmaw",
+   "type": "arena",
    "pos": [
-    -79,
-    37
+    83,
+    28
    ],
-   "yaw": 1.5708,
-   "rarity_bias": 1,
-   "room": "ci_pump",
+   "boss": "dungeon_boss",
+   "flag": "ci_deepmaw_down",
+   "trigger": 10.0,
+   "reward": "end",
+   "room": "ci_heart",
    "y": 0.0
   },
   {
-   "id": "ci_chest_vault",
-   "type": "chest",
+   "id": "ci_exit_heart",
+   "type": "portal",
    "pos": [
-    76,
-    -19
+    96,
+    28
    ],
    "yaw": -1.5708,
-   "rarity_bias": 1,
-   "room": "ci_vault",
-   "y": 2.0
+   "dest": "highlands",
+   "arrival": "dungeon_e",
+   "label": "ASHEN HIGHLANDS",
+   "unlock_flag": "ci_deepmaw_down",
+   "room": "ci_heart",
+   "y": 0.0
   }
  ],
  "areas": [

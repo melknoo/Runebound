@@ -12,12 +12,16 @@ const CHUNK_M := 32.0
 const FLOOR_THICK := 1.0
 const RAMP_THICK := 0.6
 const ROOF_THICK := 0.6
-## Room lights: no shadows, faded out at range (Forward+ budget, ART_BIBLE).
+## Room lights: no shadows, faded out at range (Forward+ budget, ART_BIBLE),
+## each a lamp on a bracket a step out from a wall.
 const LIGHT_RANGE := 10.0
-const LIGHT_HEIGHT := 2.6
+const LIGHT_HEIGHT := 2.9
 const LIGHT_FADE_BEGIN := 38.0
-const LIGHT_INSET := 3.2
+const LIGHT_INSET := 1.0
 const MAX_ROOM_LIGHTS := 4
+## Cap course on every wall (above the top, a hair wider: the camera's margin).
+const CAP_HEIGHT := 0.18
+const CAP_OVERHANG := 0.12
 
 ## Visual pieces waiting to be merged: material -> chunk key -> SurfaceTool.
 var _tools: Dictionary = {}
@@ -29,14 +33,18 @@ var wall_body: StaticBody3D
 var plugs: Dictionary = {}
 ## M13 phase 2: the secret doorways' cracked walls by door id.
 var secret_walls: Dictionary = {}
+## M13 phase 4: the kit's lantern prop (origin at the lantern, its arm back to
+## the wall along -Z); "" = the code-built lamp boxes.
+var lamp_prop: String = ""
 var lights: Array[OmniLight3D] = []
 
 
 static func build(z: ZoneBase, l: DungeonLayout, floor_mat: Material, wall_mat: Material,
-		light_color: Color) -> DungeonBuilder:
+		light_color: Color, lamp_prop: String = "") -> DungeonBuilder:
 	var b := DungeonBuilder.new()
 	b.zone = z
 	b.layout = l
+	b.lamp_prop = lamp_prop if lamp_prop != "" and SetPieces.prop_path(lamp_prop) != "" and Net.has_view() else ""
 	b.floor_body = b._body("DungeonFloor")
 	b.wall_body = b._body("DungeonWalls")
 	for r in l.rooms:
@@ -59,6 +67,8 @@ static func build(z: ZoneBase, l: DungeonLayout, floor_mat: Material, wall_mat: 
 		var top := float(w.get("top", 7.0))
 		b._piece(b.wall_body, wall_mat, Vector3(rect.get_center().x, (l.base_y + top) * 0.5, rect.get_center().y),
 			Vector3(rect.size.x, top - l.base_y, rect.size.y))
+		b._append_box(wall_mat, Transform3D(Basis(), Vector3(rect.get_center().x, top + CAP_HEIGHT * 0.5, rect.get_center().y)),
+			Vector3(rect.size.x + CAP_OVERHANG * 2.0, CAP_HEIGHT, rect.size.y + CAP_OVERHANG * 2.0))  # visual only
 	b._commit()
 	return b
 
@@ -210,30 +220,43 @@ func _plug(d: Dictionary, mat: Material) -> StaticBody3D:
 	return body
 
 
-## Up to four lights per room: in from the corners of a hall, along the
-## middle of a corridor; none in secret rooms (their own light comes with
-## their content).
+## Up to four lamps per room, each on a bracket at a wall: a hall's on its
+## long walls a third and two thirds along, a corridor's along one side;
+## secret rooms bring their own light. `wall_dir` points from lamp to wall.
 func _room_lights(r: Dictionary, color: Color) -> void:
-	if "secret" in (r.get("tags", []) as Array):
-		return
 	var rect := DungeonLayout.rect_of(r)
 	var spots: Array[Vector2] = []
+	var walls: Array[Vector2] = []
+	var along_x := rect.size.x >= rect.size.y
+	var length := rect.size.x if along_x else rect.size.y
 	var short_side := minf(rect.size.x, rect.size.y)
+	var sides: Array[float] = [-1.0]
 	if short_side >= 12.0:
-		var inner := rect.grow(-LIGHT_INSET)
-		spots = [inner.position, Vector2(inner.end.x, inner.position.y), inner.end, Vector2(inner.position.x, inner.end.y)]
-	else:
-		var along_x := rect.size.x >= rect.size.y
-		var length := rect.size.x if along_x else rect.size.y
-		var count := clampi(int(length / 14.0), 1, MAX_ROOM_LIGHTS)
-		for i in count:
-			var t := (i + 0.5) / count
-			spots.append(Vector2(lerpf(rect.position.x, rect.end.x, t), rect.get_center().y) if along_x
-				else Vector2(rect.get_center().x, lerpf(rect.position.y, rect.end.y, t)))
-	for s in spots:
+		sides.append(1.0)
+	var per_side := 2 if short_side >= 12.0 else clampi(int(length / 14.0), 1, MAX_ROOM_LIGHTS)
+	for side in sides:
+		for i in per_side:
+			var t := (i + 1.0) / (per_side + 1.0)
+			var along := lerpf(rect.position.x if along_x else rect.position.y, rect.end.x if along_x else rect.end.y, t)
+			var edge := (rect.get_center().y + side * (rect.size.y * 0.5 - LIGHT_INSET)) if along_x else (rect.get_center().x + side * (rect.size.x * 0.5 - LIGHT_INSET))
+			spots.append(Vector2(along, edge) if along_x else Vector2(edge, along))
+			walls.append(Vector2(0.0, side) if along_x else Vector2(side, 0.0))
+	if "secret" in (r.get("tags", []) as Array):
+		spots = spots.slice(0, 1)  # one dim lamp: it reads as a hidden room, not a dark box
+	var glow := _lamp_material(color)
+	for k in spots.size():
+		var s := spots[k]
+		var y := DungeonLayout.room_floor(r, s.x, s.y) + LIGHT_HEIGHT
+		if lamp_prop != "":
+			SetPieces.prop(zone.dressing(), lamp_prop, Vector3(s.x, y, s.y), atan2(-walls[k].x, -walls[k].y))
+		else:
+			_append_box(glow, Transform3D(Basis(), Vector3(s.x, y, s.y)), Vector3(0.26, 0.38, 0.26))
+			var to_wall := walls[k] * (LIGHT_INSET * 0.5 + 0.1)
+			_append_box(_bracket_mat, Transform3D(Basis(), Vector3(s.x + to_wall.x, y + 0.24, s.y + to_wall.y)),
+				Vector3(0.1 + absf(to_wall.x) * 2.0, 0.08, 0.1 + absf(to_wall.y) * 2.0))
 		var light := OmniLight3D.new()
 		light.light_color = color
-		light.light_energy = 1.7
+		light.light_energy = 2.2
 		light.omni_range = LIGHT_RANGE
 		light.omni_attenuation = 0.8
 		light.shadow_enabled = false
@@ -241,8 +264,18 @@ func _room_lights(r: Dictionary, color: Color) -> void:
 		light.distance_fade_begin = LIGHT_FADE_BEGIN
 		light.distance_fade_length = 10.0
 		zone.world.add_child(light)
-		light.global_position = Vector3(s.x, DungeonLayout.room_floor(r, s.x, s.y) + LIGHT_HEIGHT, s.y)
+		light.global_position = Vector3(s.x, y - 0.1, s.y)
 		lights.append(light)
+
+
+var _lamp_mats: Dictionary = {}
+var _bracket_mat: Material = EnemyBase.flat_material(Color(0.16, 0.17, 0.18))
+
+
+func _lamp_material(color: Color) -> Material:
+	if not _lamp_mats.has(color):
+		_lamp_mats[color] = EnemyBase.flat_material(color, true, 2.6)
+	return _lamp_mats[color]
 
 
 # ---------------------------------------------------------------------------

@@ -372,6 +372,21 @@ size so they read at the camera's distance.
     to a rune octagon around the Vessel's floor.
   - Scatter: rubble and crystal clusters, with every camp's fight space
     kept clear.
+- **Interior kit (Hollow Cistern, M13):**
+  - Palette `cistern`: cold wet blue-green stone (floor and wall ramps),
+    algae greens in the joints, dark teal water, pale phosphor lamps
+    (#9FE6E0) - the cold reads against the red telegraphs.
+  - Floors are dressed slabs with algae creeping along about a third of the
+    joints; walls are coursed blocks with algae in the bed joints and a cap
+    course on top (code).
+  - Water is opaque (`water_pixel.gdshader`): world-snapped pixel ripples
+    and a few cold glints, level with the floor when full (deep: fenced),
+    low and dark when drained, with the causeway's slabs showing.
+  - Lanterns hang on iron arms 2.9 m up, a metre out from the walls (four
+    per hall, along one side of a corridor); relief arches with drain
+    mouths every 8 m on the halls' walls; pipe runs in corridors; drain
+    grates flush in the floor; sluice frames where the channels meet the
+    walls; fallen stones and algae tufts at the walls' feet.
 - **Common kit (every zone):**
   - Portal v2 is a flush octagonal rune plate, an upright swirling gate
     oval (`portal_gate.gdshader`) and floating arch stones (all >= 2.2 m).

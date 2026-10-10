@@ -363,12 +363,15 @@
   captures/.
 
 ## M13 open items (in progress)
-- **Phase 0 is a greybox:** the Cistern's camps are raiders and wardens,
-  the walls and floors wear the Spire's materials, the lights are bare
-  omnis; water, puzzles, the Drowned, the bosses and the look come in
-  phases 2-5. Gates (`gate` doors) without inputs stand open until the
-  puzzle kit wires them; the secret wall and the shortcut are solid plugs.
-  Both arenas field the placeholder "Arena Warden" (one slam).
+- **Placeholders until phase 5:** the Cistern's camps are raiders and
+  wardens, and both arenas field the "Arena Warden" (one slam); the Drowned
+  and the two bosses come in phase 5. The tome room holds a chest until the
+  tome arrives (phase 8).
+- **Cistern look to judge:** 48 lamps (one omni each, faded at 38 m) and 83
+  relief arches; the halls may read dark or busy. The perf scenario
+  `cistern_hall` still needs its iGPU run (RTX 2070: 443 FPS, like the
+  Spire). Puzzle numbers to feel: the ice holds 12 s, the frost crystal's
+  charge 8 s.
 - Element charges are personal and local: a druid charged with fire lights
   a kiln, but the charge does not change its hits on enemies (puzzles
   only, by design for now). The Elementalist needs a fire / frost /

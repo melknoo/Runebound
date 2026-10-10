@@ -2,7 +2,7 @@
 building blocks per biome kit (and for the M08+ open zones).
 
   assets/models/env/<kit>/<prop>.glb + assets/textures/env/<prop>_atlas.png
-  kits: highlands (ash raiders), runehold (settlement, rh_*), spire (sp_*)
+  kits: highlands (ash raiders), runehold (settlement, rh_*), spire (sp_*), cistern (ci_*, M13)
 
 Props are static meshes at the ENVIRONMENT texel density (32 px/m), baked with
 the same pixel-atlas method as characters. Materials are matched by NAME in
@@ -1398,6 +1398,155 @@ def tome_lectern():
 M12_PROPS = M12_PROPS + (tome_lectern,)
 
 
+# ---------------------------------------------------------------------------
+# M13 cistern kit (ci_*): the Hollow Cistern's walls, lamps, pipes, sluices.
+# Walls, floors and water are built in code (DungeonBuilder, world-mapped
+# roles); these props hug walls (<= 0.3 m proud), hang above head height or
+# lie flush in the floor.
+# ---------------------------------------------------------------------------
+
+CI = SPEC["palettes"]["cistern"]
+IRON = ["#16191B", "#202528", "#2C3236", "#3A4146", "#4A5257"]
+RUST = ["#3A2219", "#4E2F20", "#64402A", "#7A5236"]
+
+
+def ci_lamp():
+    """A keeper's lantern on an iron arm (origin = the lantern's centre, the
+    arm runs back 1 m to a plate on the wall, +Y); phosphor glass glows."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(IRON, 2, "plate")
+    iron_hi = pm.paint(IRON, 3)
+    pm.box(None, (0.06, 0.98, 0.06), (0.0, 0.5, 0.26), paint=iron)                    # the arm
+    pm.box(None, (0.05, 0.05, 0.3), (0.0, 0.84, 0.12), rot=(0.6, 0, 0), paint=iron)   # its brace
+    pm.box(None, (0.32, 0.05, 0.42), (0.0, 1.0, 0.2), paint=iron_hi)                   # wall plate
+    pm.box(None, (0.03, 0.03, 0.12), (0.0, 0.0, 0.26), paint=iron)                     # hook
+    pm.loft(None, [(-0.22, 0.13, 0.13, 0, 0), (-0.18, 0.15, 0.15, 0, 0)], sides=6, paint=iron_hi)   # base
+    for k in range(4):
+        a = k * math.tau / 4 + math.pi / 4
+        pm.box(None, (0.03, 0.03, 0.34), (math.cos(a) * 0.13, math.sin(a) * 0.13, -0.02), paint=iron)
+    pm.loft(None, [(0.15, 0.16, 0.16, 0, 0), (0.2, 0.15, 0.15, 0, 0), (0.28, 0.04, 0.04, 0, 0)], sides=6, paint=iron_hi)
+    pm.loft(None, [(-0.17, 0.1, 0.1, 0, 0), (-0.05, 0.12, 0.12, 0, 0), (0.12, 0.1, 0.1, 0, 0)], sides=6, mat_index=GLOW)
+    finish(pm, "ci_lamp", CI["lamp"], 1.4, kit="cistern")
+
+
+def ci_wall_arch():
+    """Relief arch for a cistern wall face (0.26 m deep, front -Y): pilasters,
+    a round arch with a drain mouth at its foot, algae on the lower courses.
+    3.2 m wide, 4.6 m tall."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(CI["wall"], 3, "masonry")
+    trim = pm.paint(CI["wall"], 4)
+    moss = pm.paint(CI["moss"], 2)
+    for sx in (-1, 1):
+        pm.box(None, (0.46, 0.24, 3.4), (sx * 1.38, -0.12, 1.7), paint=stone)
+        pm.box(None, (0.58, 0.28, 0.2), (sx * 1.38, -0.14, 3.48), paint=trim)
+        pm.box(None, (0.58, 0.28, 0.24), (sx * 1.38, -0.14, 0.12), paint=moss)
+    segs = 9
+    for k in range(segs):
+        a0 = math.pi * k / segs
+        a1 = math.pi * (k + 1) / segs
+        am = (a0 + a1) * 0.5
+        r = 1.38
+        cx, cz = math.cos(am) * r, 3.56 + math.sin(am) * r * 0.75
+        pm.box(None, (0.5, 0.24, 0.36), (cx, -0.12, cz), rot=(0.0, -(am - math.pi / 2), 0.0), paint=stone)
+    pm.box(None, (0.28, 0.28, 0.4), (0.0, -0.14, 3.56 + 1.38 * 0.75 + 0.04), paint=trim)   # keystone
+    pm.box(None, (0.9, 0.2, 0.5), (0.0, -0.1, 0.25), paint=trim)                             # drain mouth
+    pm.box(None, (0.7, 0.04, 0.32), (0.0, -0.21, 0.24), paint=pm.paint(IRON, 0))              # its dark throat
+    pm.box(None, (0.6, 0.06, 0.08), (0.0, -0.22, 0.02), paint=moss)
+    finish(pm, "ci_wall_arch", kit="cistern", sizes=(64, 128, 256, 512), axis_aligned=True)
+
+
+def ci_pipe():
+    """A 4 m length of iron pipe along a wall (local X), flanges at its ends
+    and middle, clamps back to the wall (+Y); rust at the joints."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(IRON, 2, "plate")
+    rust = pm.paint(RUST, 2)
+    pm.loft(None, [(-2.0, 0.15, 0.15, 0, 0), (2.0, 0.15, 0.15, 0, 0)], sides=8, rot=(0, math.pi / 2, 0), paint=iron)
+    for x in (-1.96, 0.0, 1.96):
+        pm.loft(None, [(x - 0.05, 0.21, 0.21, 0, 0), (x + 0.05, 0.21, 0.21, 0, 0)], sides=8,
+                rot=(0, math.pi / 2, 0), paint=rust)
+    for x in (-1.2, 1.2):
+        pm.box(None, (0.08, 0.22, 0.06), (x, 0.14, 0.0), paint=iron)
+    finish(pm, "ci_pipe", kit="cistern")
+
+
+def ci_grate():
+    """A drain grate set in the floor (flush, 4 cm): an iron frame and bars
+    over a dark well."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(IRON, 2, "plate")
+    dark = pm.paint(IRON, 0)
+    pm.box(None, (1.1, 1.1, 0.01), (0.0, 0.0, 0.005), paint=dark)
+    for sx in (-1, 1):
+        pm.box(None, (0.08, 1.2, 0.04), (sx * 0.56, 0.0, 0.02), paint=iron)
+        pm.box(None, (1.2, 0.08, 0.04), (0.0, sx * 0.56, 0.02), paint=iron)
+    for k in range(5):
+        pm.box(None, (0.05, 1.04, 0.035), (-0.4 + k * 0.2, 0.0, 0.018), paint=iron)
+    finish(pm, "ci_grate", kit="cistern")
+
+
+def ci_sluice_gate():
+    """Where a channel meets a wall: a stone sluice frame (4.6 m wide, 3.6 m
+    tall, 0.3 m proud, front -Y) and a rusted iron gate raised in it."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(CI["wall"], 3, "masonry")
+    trim = pm.paint(CI["wall"], 4)
+    rust = pm.paint(RUST, 1, "plate")
+    iron = pm.paint(IRON, 2)
+    for sx in (-1, 1):
+        pm.box(None, (0.42, 0.3, 3.4), (sx * 2.1, -0.15, 1.7), paint=stone)
+    pm.box(None, (4.62, 0.3, 0.5), (0.0, -0.15, 3.45), paint=trim)
+    pm.box(None, (3.7, 0.08, 1.6), (0.0, -0.06, 2.35), paint=rust)                 # the raised gate
+    for k in range(7):
+        pm.box(None, (0.06, 0.1, 1.62), (-1.65 + k * 0.55, -0.12, 2.35), paint=iron)
+    pm.box(None, (0.1, 0.1, 0.6), (-1.2, -0.12, 3.75), paint=iron)                  # chains to the wheel
+    pm.box(None, (0.1, 0.1, 0.6), (1.2, -0.12, 3.75), paint=iron)
+    finish(pm, "ci_sluice_gate", kit="cistern", sizes=(64, 128, 256, 512), axis_aligned=True)
+
+
+def ci_moss_tuft():
+    """Scatter item: a clump of algae and moss at a wall's foot (<= 0.12 m)."""
+    rig.reset_scene()
+    rnd = random.Random(131)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    moss = pm.paint(CI["moss"], 1)
+    moss_hi = pm.paint(CI["moss"], 3)
+    for k in range(6):
+        a = k * math.tau / 6 + rnd.uniform(-0.4, 0.4)
+        r = rnd.uniform(0.04, 0.16)
+        s = rnd.uniform(0.05, 0.09)
+        pm.box(None, (s * 2.2, s * 1.8, s * 1.1), (math.cos(a) * r, math.sin(a) * r, s * 0.5),
+               rot=(0, 0, rnd.uniform(0, math.pi)), taper=0.6, paint=moss_hi if k % 3 == 0 else moss)
+    finish(pm, "ci_moss_tuft", kit="cistern")
+
+
+def ci_rubble():
+    """Scatter item: fallen cistern stones, wet (<= 0.2 m)."""
+    rig.reset_scene()
+    rnd = random.Random(137)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(CI["wall"], 3)
+    top = pm.paint(CI["wall"], 4)
+    moss = pm.paint(CI["moss"], 2)
+    for k in range(4):
+        a = k * math.tau / 4 + rnd.uniform(-0.5, 0.5)
+        r = 0.0 if k == 0 else rnd.uniform(0.1, 0.22)
+        s = rnd.uniform(0.05, 0.09) * (1.5 if k == 0 else 1.0)
+        pm.box(None, (s * 2, s * 1.6, s * 1.2), (math.cos(a) * r, math.sin(a) * r, s * 0.55),
+               rot=(rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3), rnd.uniform(0, math.pi)),
+               paint=(top if k == 0 else (moss if k == 3 else stone)))
+    finish(pm, "ci_rubble", kit="cistern")
+
+
+CISTERN_PROPS = (ci_lamp, ci_wall_arch, ci_pipe, ci_grate, ci_sluice_gate, ci_moss_tuft, ci_rubble)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,
@@ -1406,7 +1555,7 @@ if __name__ == "__main__":
                sp_crystal_pillar, sp_wall_arch, sp_beacon, sp_shard, sp_crystal_cluster, sp_rubble,
                portal_arch, portal_plate, treasure_chest, loot_blade, loot_armor, loot_relic,
                loot_helm, loot_gloves, loot_boots, loot_ring,
-               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS:
+               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS + CISTERN_PROPS:
         if not only or fn.__name__ in only:
             fn()
     print("props done.")

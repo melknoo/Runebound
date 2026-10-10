@@ -1,0 +1,28 @@
+{
+	"zone": "res://scenes/hollow_cistern.tscn",
+	"out": "captures_shots/m13_cistern",
+	"comment": "M13 phase 4: the Hollow Cistern's rooms, water, puzzles and kit (interior look).",
+	"shots": [
+		{"name": "inlet", "player": [0, 0.2, 44], "yaw": 0.0, "pitch": -0.3, "zoom": 7.0, "settle": 0.6},
+		{"name": "sluice_full", "player": [-40, 0.2, 44], "yaw": 0.35, "pitch": -0.45, "zoom": 9.0, "settle": 0.5},
+		{"name": "sluice_drained", "player": [-40, 0.2, 44], "yaw": 0.35, "pitch": -0.45, "zoom": 9.0,
+			"actions": [{"poi": "ci_valve_sluice_a", "act": "pull"}, {"poi": "ci_valve_sluice_b", "act": "pull"}, {"wait": 2.2}],
+			"settle": 0.3},
+		{"name": "pump_chamber", "player": [-70, 0.2, 44], "yaw": 0.6, "pitch": -0.5, "zoom": 9.0, "settle": 0.4},
+		{"name": "frost_ice", "player": [-40, 0.2, 14], "yaw": 0.4, "pitch": -0.45, "zoom": 8.0,
+			"actions": [{"poi": "ci_ice_frost", "act": "freeze"}, {"wait": 0.5}], "settle": 0.3},
+		{"name": "slope", "player": [-45, 0.2, -2], "yaw": 0.0, "pitch": -0.25, "zoom": 6.0, "settle": 0.4},
+		{"name": "mirror_gallery", "player": [-40, 2.2, -28], "yaw": -0.6, "pitch": -0.5, "zoom": 10.0,
+			"actions": [{"poi": "ci_light_gallery", "act": "turn", "arg": 0}, {"poi": "ci_light_gallery", "act": "turn", "arg": 0},
+				{"poi": "ci_light_gallery", "act": "turn", "arg": 0}, {"wait": 0.4}], "settle": 0.3},
+		{"name": "basin", "player": [-4, 2.2, -30], "yaw": -0.8, "pitch": -0.4, "zoom": 9.0, "settle": 0.4},
+		{"name": "undertow_run", "player": [53, 2.2, -44], "yaw": 3.14159, "pitch": -0.3, "zoom": 7.0, "settle": 1.2},
+		{"name": "vault", "player": [62, 2.2, -10], "yaw": 3.6, "pitch": -0.35, "zoom": 7.0,
+			"actions": [{"poi": "ci_d_run_vault", "act": "strike"}, {"poi": "ci_d_run_vault", "act": "strike"},
+				{"poi": "ci_d_run_vault", "act": "strike"}, {"wait": 1.4}], "settle": 0.3},
+		{"name": "threshold", "player": [48, 0.2, 36], "yaw": 2.4, "pitch": -0.35, "zoom": 8.0, "settle": 0.4},
+		{"name": "heart", "player": [70, 0.2, 28], "yaw": -1.5708, "pitch": -0.35, "zoom": 9.0, "settle": 0.4},
+		{"name": "lamp_arch", "player": [-50, 0.2, 49], "yaw": 3.14159, "pitch": 0.05, "zoom": 4.5, "settle": 0.4},
+		{"name": "overview", "player": [-45, 0.2, 40], "yaw": 0.0, "pitch": -1.05, "zoom": 16.0, "settle": 0.4}
+	]
+}

@@ -11,6 +11,7 @@ extends Node3D
 
 const FENCE_HEIGHT := 5.0
 const DRAIN_TIME := 1.6
+const WATER_SHADER := preload("res://shaders/water_pixel.gdshader")
 
 var channel_id: String = ""
 var rect: Rect2 = Rect2()
@@ -53,12 +54,12 @@ func _ready() -> void:
 	_water.name = "Water"
 	var plane := BoxMesh.new()
 	plane.size = Vector3(rect.size.x, 0.1, rect.size.y)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.09, 0.27, 0.31)
-	mat.roughness = 0.15
-	mat.metallic_specular = 0.8
-	mat.emission_enabled = true
-	mat.emission = Color(0.05, 0.2, 0.22)
+	var mat := ShaderMaterial.new()  # opaque pixel ripples (the zone's water colours)
+	mat.shader = WATER_SHADER
+	var deep := ArtKit.color("palettes.cistern.water", Color(0.07, 0.2, 0.24))
+	mat.set_shader_parameter(&"deep", deep)
+	mat.set_shader_parameter(&"shallow", deep.lerp(ArtKit.color("palettes.cistern.water_hi", Color(0.18, 0.4, 0.44)), 0.45))
+	mat.set_shader_parameter(&"glint", ArtKit.color("palettes.cistern.water_hi", Color(0.36, 0.62, 0.64)).lightened(0.15))
 	plane.material = mat
 	_water.mesh = plane
 	_water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

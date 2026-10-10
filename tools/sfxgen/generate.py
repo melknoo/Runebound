@@ -655,6 +655,26 @@ def wing_beat(i: int):
     save(pad(whump, delay(feather, 0.02 + 0.01 * i)), f"wing_beat_{i:02d}")
 
 
+def cistern_drip_loop():
+    """M13 the Hollow Cistern: a low, wet hum of standing water and drips
+    falling at uneven intervals, some near, some far (loops)."""
+    dur = 10.0
+    x = t(dur)
+    hum = lowpass(noise(dur), 0.02) * 0.5 + np.sin(2 * np.pi * 47 * x) * 0.12
+    hum *= 0.75 + 0.25 * np.sin(2 * np.pi * x / dur * 2 + 0.7)
+    drips = np.zeros(len(x))
+    for k in range(17):
+        at = rng.uniform(0.2, dur - 0.6)
+        f = rng.uniform(1100.0, 2400.0)
+        d = 0.18
+        blip = sine_sweep(d, f, f * 0.55) * env_exp(d, 0.035, 0.002) * rng.uniform(0.25, 0.8)
+        ring = sine_sweep(d * 2.0, f * 0.5, f * 0.4) * env_exp(d * 2.0, 0.09, 0.01) * 0.12
+        start = int(at * SR)
+        drips[start:start + len(blip)] += blip
+        drips[start:start + len(ring)] += ring
+    save(_loopable(pad(hum * 0.6, drips), 0.6), "cistern_drip_loop_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -690,4 +710,5 @@ if __name__ == "__main__":
     vulture_screech()
     for i in range(1, 3):
         wing_beat(i)
+    cistern_drip_loop()  # M13 (appended last: the RNG order is shared)
     print("done.")

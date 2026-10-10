@@ -53,6 +53,11 @@ func _light_color() -> Color:
 	return Color(0.45, 0.85, 0.8)
 
 
+## M13 phase 4: the kit's lantern prop ("" = code-built lamps).
+func _lamp_prop() -> String:
+	return ""
+
+
 func _zone_music() -> String:
 	return "spire"  # M13: no new tracks (user, 2026-10-09); the Spire's dark interior pair
 
@@ -88,7 +93,7 @@ func _build_zone() -> void:
 		_material_from_texture("res://assets/textures/spire_floor.png", Color(0.16, 0.13, 0.22), 16.0)
 	var wall_mat: Material = ArtKit.material(_wall_role()) if art else \
 		_material_from_texture("res://assets/textures/spire_wall.png", Color(0.22, 0.18, 0.32), 2.5)
-	builder = DungeonBuilder.build(self, layout, floor_mat, wall_mat, _light_color())
+	builder = DungeonBuilder.build(self, layout, floor_mat, wall_mat, _light_color(), _lamp_prop() if art else "")
 	for poi in layout.pois.pois:
 		var made := DungeonBuilder.build_poi(self, layout, poi)
 		var id := String(poi.get("id", ""))

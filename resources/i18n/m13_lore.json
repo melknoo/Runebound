@@ -1,0 +1,43 @@
+{
+	"_note": "M13 lore: the dungeons' notes and inscriptions (DE/EN, written, never machine-translated). Loaded by scripts/systems/texts.gd.",
+	"lore.cistern.keeper_log.title": {
+		"en": "Keeper's log, last page",
+		"de": "Logbuch des Wächters, letzte Seite"
+	},
+	"lore.cistern.keeper_log.body": {
+		"en": "The water has turned. Third night the sluices sing without wind, and the lamps burn blue instead of gold. Brother Aldric says it is the Rune below the bones, cracking in its sleep.\n\nI have sealed the upper gate. If you read this, I have not come back up.",
+		"de": "Das Wasser hat sich gewendet. Die dritte Nacht singen die Schleusen ohne Wind, und die Lampen brennen blau statt golden. Bruder Aldric sagt, es sei die Rune unter den Knochen, die im Schlaf zerspringt.\n\nIch habe das obere Tor versiegelt. Wenn du das liest, bin ich nicht wieder heraufgekommen."
+	},
+	"lore.cistern.sluice_plaque.title": {
+		"en": "Plaque at the sluices",
+		"de": "Tafel an den Schleusen"
+	},
+	"lore.cistern.sluice_plaque.body": {
+		"en": "HOLLOW CISTERN\nCut in the ninth winter of the Runehold compact.\n\nTwo wheels hold the water. Turn both, and the causeway shows. Turn neither, and pray it holds.",
+		"de": "HOHLE ZISTERNE\nGehauen im neunten Winter des Runehold-Bundes.\n\nZwei Räder halten das Wasser. Dreh beide, und der Damm zeigt sich. Dreh keines, und bete, dass er hält."
+	},
+	"lore.cistern.mason.title": {
+		"en": "A mason's note",
+		"de": "Notiz eines Steinmetzes"
+	},
+	"lore.cistern.mason.body": {
+		"en": "To whoever finishes the gallery: the light must take the long way round. The keepers wanted it so - no straight line to the inner door, no straight thought to the inner vault.\n\nTurn the crystals, not the walls. The walls are mine.",
+		"de": "An den, der die Galerie fertig baut: Das Licht muss den langen Weg nehmen. Die Wächter wollten es so - keine gerade Linie zur inneren Tür, kein gerader Gedanke zur inneren Kammer.\n\nDreh die Kristalle, nicht die Wände. Die Wände sind meine."
+	},
+	"lore.cistern.keeper_last.title": {
+		"en": "A note by the basin",
+		"de": "Notiz am Becken"
+	},
+	"lore.cistern.keeper_last.body": {
+		"en": "It came up through the basin drain. It wears Halvar's coat. It still knows the lever, but it will not pull it.\n\nDrain the basin and it is only flesh again. I cannot reach the lever from here.",
+		"de": "Es kam durch den Abfluss des Beckens herauf. Es trägt Halvars Mantel. Es kennt den Hebel noch, aber es zieht ihn nicht.\n\nLass das Becken leerlaufen, und es ist wieder nur Fleisch. Von hier aus erreiche ich den Hebel nicht."
+	},
+	"lore.cistern.warning.title": {
+		"en": "Words in the vault",
+		"de": "Worte in der Kammer"
+	},
+	"lore.cistern.warning.body": {
+		"en": "Below the water, light. Below the light, the book.\n\nWhat the keepers could not drown, they wrote down, and what they wrote, they locked away. Freeze the way. Bend the light. Weigh the stones.",
+		"de": "Unter dem Wasser das Licht. Unter dem Licht das Buch.\n\nWas die Wächter nicht ertränken konnten, schrieben sie auf, und was sie schrieben, schlossen sie weg. Friere den Weg. Beuge das Licht. Beschwere die Steine."
+	}
+}

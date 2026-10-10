@@ -13,7 +13,7 @@ extends Object
 ## checks every key has both).
 
 const FILES: Array[String] = ["res://resources/i18n/m12_ui.json", "res://resources/i18n/m12_lore.json",
-	"res://resources/i18n/m13_ui.json"]
+	"res://resources/i18n/m13_ui.json", "res://resources/i18n/m13_lore.json"]
 const LANGUAGES: Array[String] = ["en", "de"]
 
 ## key -> {"en": text, "de": text}
