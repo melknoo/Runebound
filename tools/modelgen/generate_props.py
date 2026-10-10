@@ -2,7 +2,8 @@
 building blocks per biome kit (and for the M08+ open zones).
 
   assets/models/env/<kit>/<prop>.glb + assets/textures/env/<prop>_atlas.png
-  kits: highlands (ash raiders), runehold (settlement, rh_*), spire (sp_*), cistern (ci_*, M13)
+  kits: highlands (ash raiders), runehold (settlement, rh_*), spire (sp_*), cistern (ci_*, M13),
+        warrens (wa_*, M13)
 
 Props are static meshes at the ENVIRONMENT texel density (32 px/m), baked with
 the same pixel-atlas method as characters. Materials are matched by NAME in
@@ -1547,6 +1548,146 @@ def ci_rubble():
 CISTERN_PROPS = (ci_lamp, ci_wall_arch, ci_pipe, ci_grate, ci_sluice_gate, ci_moss_tuft, ci_rubble)
 
 
+# ---------------------------------------------------------------------------
+# M13 warrens kit (wa_*): the Ember Warrens' timber, lamps, ore, ember grates,
+# lava spouts. The same rules as the cistern kit: hug the walls (<= 0.3 m
+# proud), hang above head height or lie flush in the floor.
+# ---------------------------------------------------------------------------
+
+WA = SPEC["palettes"]["warrens"]
+
+
+def wa_lamp():
+    """A miner's cage lamp on an iron arm (origin = the cage's centre, the arm
+    runs back 1 m to a plate on the wall, +Y); an ember glow in the cage."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(IRON, 2, "plate")
+    iron_hi = pm.paint(IRON, 3)
+    pm.box(None, (0.07, 0.98, 0.07), (0.0, 0.5, 0.3), paint=iron)                     # the arm
+    pm.box(None, (0.05, 0.05, 0.34), (0.0, 0.84, 0.14), rot=(0.6, 0, 0), paint=iron)   # its brace
+    pm.box(None, (0.3, 0.05, 0.4), (0.0, 1.0, 0.22), paint=iron_hi)                     # wall plate
+    pm.box(None, (0.03, 0.03, 0.14), (0.0, 0.0, 0.3), paint=iron)                       # hook
+    pm.box(None, (0.3, 0.3, 0.04), (0.0, 0.0, 0.2), paint=iron_hi)                      # cage top
+    pm.box(None, (0.3, 0.3, 0.04), (0.0, 0.0, -0.2), paint=iron_hi)                     # cage floor
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            pm.box(None, (0.035, 0.035, 0.4), (sx * 0.13, sy * 0.13, 0.0), paint=iron)
+    pm.box(None, (0.18, 0.18, 0.26), (0.0, 0.0, -0.02), taper=0.7, mat_index=GLOW)      # the ember heart
+    finish(pm, "wa_lamp", WA["lamp"], 1.6, kit="warrens")
+
+
+def wa_timber():
+    """Mine timbering against a hall's wall (0.28 m deep, front -Y): two
+    posts, a header beam with a cap, knee braces, iron straps. 3.2 m wide,
+    4.4 m tall."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    wood = pm.paint(WA["timber"], 2, "planks")
+    wood_hi = pm.paint(WA["timber"], 3)
+    iron = pm.paint(IRON, 2)
+    for sx in (-1, 1):
+        pm.box(None, (0.32, 0.26, 4.0), (sx * 1.42, -0.13, 2.0), paint=wood)
+        pm.box(None, (0.36, 0.28, 0.08), (sx * 1.42, -0.14, 1.2), paint=iron)           # straps
+        pm.box(None, (0.36, 0.28, 0.08), (sx * 1.42, -0.14, 3.0), paint=iron)
+        pm.box(None, (0.16, 0.2, 0.9), (sx * 1.0, -0.1, 3.55), rot=(0.0, sx * 0.75, 0.0), paint=wood)  # knee brace
+    pm.box(None, (3.3, 0.28, 0.36), (0.0, -0.14, 4.1), paint=wood_hi)                    # header
+    pm.box(None, (3.4, 0.3, 0.1), (0.0, -0.15, 4.33), paint=wood)                        # its cap
+    finish(pm, "wa_timber", kit="warrens", sizes=(64, 128, 256, 512), axis_aligned=True)
+
+
+def wa_ore_vein():
+    """A 4 m copper vein in a gallery wall (local X, <= 0.12 m proud): knobbly
+    ore along a seam, a few spots still warm (glow)."""
+    rig.reset_scene()
+    rnd = random.Random(211)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    ore = pm.paint(WA["ore"], 2)
+    ore_hi = pm.paint(WA["ore"], 3)
+    rock = pm.paint(WA["wall"], 3)
+    for k in range(11):
+        x = -1.9 + k * 0.38 + rnd.uniform(-0.08, 0.08)
+        z = math.sin(k * 0.9) * 0.22 + rnd.uniform(-0.06, 0.06)
+        s = rnd.uniform(0.09, 0.16)
+        pm.box(None, (s * 2.0, 0.1, s * 1.4), (x, -0.05, z), rot=(0, rnd.uniform(-0.6, 0.6), 0),
+               paint=ore_hi if k % 4 == 0 else ore)
+        if k % 3 == 1:
+            pm.box(None, (s * 1.6, 0.08, s * 1.0), (x + 0.12, -0.04, z - 0.14), paint=rock)
+    for x in (-1.1, 0.8):
+        pm.box(None, (0.12, 0.06, 0.08), (x, -0.1, math.sin(x) * 0.2), mat_index=GLOW)
+    finish(pm, "wa_ore_vein", WA["ember"][3], 1.2, kit="warrens")
+
+
+def wa_ember_grate():
+    """An ember pit grate set in the floor (flush, 4 cm): an iron frame and
+    bars over glowing coals."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(IRON, 2, "plate")
+    pm.box(None, (1.1, 1.1, 0.01), (0.0, 0.0, 0.005), mat_index=GLOW)
+    for sx in (-1, 1):
+        pm.box(None, (0.08, 1.2, 0.04), (sx * 0.56, 0.0, 0.02), paint=iron)
+        pm.box(None, (1.2, 0.08, 0.04), (0.0, sx * 0.56, 0.02), paint=iron)
+    for k in range(5):
+        pm.box(None, (0.05, 1.04, 0.035), (-0.4 + k * 0.2, 0.0, 0.018), paint=iron)
+    finish(pm, "wa_ember_grate", WA["ember"][2], 1.4, kit="warrens")
+
+
+def wa_lava_spout():
+    """Where a lava runnel meets a wall: a stone spout frame (4.6 m wide,
+    2.4 m tall, 0.3 m proud, front -Y), soot above it, a hot lip."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    stone = pm.paint(WA["wall"], 3, "masonry")
+    trim = pm.paint(WA["wall"], 4)
+    soot = pm.paint(WA["wall"], 0)
+    for sx in (-1, 1):
+        pm.box(None, (0.42, 0.3, 2.3), (sx * 2.1, -0.15, 1.15), paint=stone)
+    pm.box(None, (4.62, 0.3, 0.42), (0.0, -0.15, 2.3), paint=trim)
+    pm.box(None, (3.6, 0.06, 1.6), (0.0, -0.03, 1.1), paint=soot)                         # the dark mouth
+    pm.box(None, (3.4, 0.24, 0.12), (0.0, -0.12, 0.05), mat_index=GLOW)                   # the hot lip
+    finish(pm, "wa_lava_spout", WA["lava_hi"], 1.8, kit="warrens", sizes=(64, 128, 256, 512), axis_aligned=True)
+
+
+def wa_slag():
+    """Scatter item: dark slag lumps, glassy, one with a warm core (<= 0.2 m)."""
+    rig.reset_scene()
+    rnd = random.Random(223)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    slag = pm.paint(WA["floor"], 1)
+    slag_hi = pm.paint(WA["floor"], 3)
+    for k in range(4):
+        a = k * math.tau / 4 + rnd.uniform(-0.5, 0.5)
+        r = 0.0 if k == 0 else rnd.uniform(0.1, 0.22)
+        s = rnd.uniform(0.05, 0.09) * (1.5 if k == 0 else 1.0)
+        pm.box(None, (s * 2, s * 1.6, s * 1.2), (math.cos(a) * r, math.sin(a) * r, s * 0.55),
+               rot=(rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3), rnd.uniform(0, math.pi)),
+               paint=(slag_hi if k == 2 else slag))
+    pm.box(None, (0.05, 0.05, 0.04), (0.02, -0.03, 0.13), mat_index=GLOW)
+    finish(pm, "wa_slag", WA["ember"][2], 0.9, kit="warrens")
+
+
+def wa_ore_chunk():
+    """Scatter item: broken copper ore and a coal lump (<= 0.18 m)."""
+    rig.reset_scene()
+    rnd = random.Random(227)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    ore = pm.paint(WA["ore"], 2)
+    ore_hi = pm.paint(WA["ore"], 3)
+    coal = pm.paint(WA["wall"], 0)
+    for k in range(3):
+        a = k * math.tau / 3 + rnd.uniform(-0.4, 0.4)
+        r = rnd.uniform(0.06, 0.16)
+        s = rnd.uniform(0.05, 0.08)
+        pm.box(None, (s * 2, s * 1.7, s * 1.3), (math.cos(a) * r, math.sin(a) * r, s * 0.6),
+               rot=(rnd.uniform(-0.3, 0.3), rnd.uniform(-0.3, 0.3), rnd.uniform(0, math.pi)),
+               paint=(coal if k == 2 else (ore_hi if k == 0 else ore)))
+    finish(pm, "wa_ore_chunk", kit="warrens")
+
+
+WARRENS_PROPS = (wa_lamp, wa_timber, wa_ore_vein, wa_ember_grate, wa_lava_spout, wa_slag, wa_ore_chunk)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,
@@ -1555,7 +1696,7 @@ if __name__ == "__main__":
                sp_crystal_pillar, sp_wall_arch, sp_beacon, sp_shard, sp_crystal_cluster, sp_rubble,
                portal_arch, portal_plate, treasure_chest, loot_blade, loot_armor, loot_relic,
                loot_helm, loot_gloves, loot_boots, loot_ring,
-               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS + CISTERN_PROPS:
+               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS + CISTERN_PROPS + WARRENS_PROPS:
         if not only or fn.__name__ in only:
             fn()
     print("props done.")

@@ -380,7 +380,11 @@ Tropf-Ambience). Phase 5 gebaut (die Ertrunkenen: der Ertrunkene platzt zu einer
 der Kanallauerer taucht auf, spuckt und ist danach kurz offen; der Aufgedunsene Wärter ist im vollen
 Becken zäh, zwei Schleusenhebel legen ihn 15 s trocken; der Tiefenschlund taucht an vier Abflüssen auf,
 flutet ab halber Gesundheit den Außenring, Frostpylone frieren die Flut ein; eigene Rigs und
-Wasser-Sounds; Solo-Check mit Dungeon-Route). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+Wasser-Sounds; Solo-Check mit Dungeon-Route). Phase 6 gebaut (die Ember Warrens: Lore auf Schienen,
+vier Öfen, Kupferpfosten der Reihe nach, Einsturzgang über Lava, Feuerdüsen, das große Rätsel „Die
+Gussform“ – Tiegel heizen, Kelle kippen, Rinnen drehen –, eigener Look mit Lava-Shader, Grubenholz,
+Kupferadern, Glutgittern und einem Ofen-Grollen; sechs Lore-Texte DE/EN; das Westtor führt jetzt hinein).
+**PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

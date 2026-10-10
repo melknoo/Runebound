@@ -11,6 +11,7 @@ const DESTINATIONS := {
 	"spire": "res://scenes/shattered_spire.tscn",
 	"highlands": "res://scenes/ashen_highlands.tscn",
 	"cistern": "res://scenes/hollow_cistern.tscn",
+	"warrens": "res://scenes/ember_warrens.tscn",
 }
 const PROP_RANGE := 110.0     # visibility_range_end for kit props (m)
 const ROCK_RANGE := 200.0     # hull-dressed rocks

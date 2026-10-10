@@ -247,14 +247,26 @@ lanterns) and five lore texts; phase 5 the Drowned and both bosses:
   the two frost pylons in the ring freezes the flood for 6 s (firm ice, no
   harm). The middle stays dry.
 
-### The Ember Warrens (west gate, the Charwood; planned)
-Ember mines and smelting kilns, black and orange; enemies level 4, the
-bosses 5. Ore carts on rails onto plates, kilns to light at once, lightning
-along copper posts to a lift gate, a collapsing floor over lava, fire jets;
-the mid-boss (the Slag Overseer, cooled by a quench trough) and the end
-boss (the Ember Broodmother); the big puzzle is a foundry (crucibles,
-levers, chutes). Family: the Emberbrood (a burrowing cinder beetle, a
-small kiln imp that throws embers). The gate stays sealed until it is built.
+### The Ember Warrens (west gate, the Charwood; built from M13 phase 6)
+Old ember mines and their smelting halls, soot-black hewn rock, old timber,
+copper ore in the walls, lava in the runnels; enemies level 4, the bosses 5
+(recommended level 5). A ring: the adit -> a gallery into the rail hall (an
+ore cart pushed along its rail onto a plate holds the kiln gate open; the
+ore store is a branch: cart b off the crossing first, then cart a through,
+both on their plates open an alcove with a bonus chest) -> the kiln hall
+(an ember bowl and four kilns lit within 20 s, a lava runnel along its back
+wall) -> a ramp up to the spark shaft (a storm coil, four copper posts struck
+in order lift the gate) -> a ramp down into the collapse gallery (rows of
+stone over a lava pit fall away in turn) -> the landing (a rune) -> the
+smelting hall (the mid-boss, the Slag Reeve: cooled at a quench trough) ->
+the jet run west (fire jets in rhythm; a cracked wall hides the mould room)
+-> the brood's threshold (a rune; its lever opens the shortcut to the adit)
+-> the brood hall (the end boss, the Ember Broodmother). The big puzzle in
+the mould room: heat three crucibles (the ember bowl or a fire spell), pull
+the tipping lever, turn two chutes until the melt runs into the mould - the
+tome room opens. Family: the Emberbrood (a burrowing cinder beetle, a small
+kiln imp that throws embers), phase 7; until then raiders hold the camps
+and both arenas field the placeholder boss. Six lore texts.
 
 **Co-op dungeons** (M13b, the user: "there should be extra dungeons for co-op"):
 - for **3–5 players**, locked for fewer; extra content with their own loot,

@@ -529,6 +529,47 @@ def generate_cistern() -> None:
     ash_surface("ci_wall_top", pal["wall"], 2, pebbles=6, cracks=True)
 
 
+def ore_specks(rgba: np.ndarray, ore: list[str], rng: np.random.Generator, count: int, streak: bool) -> None:
+    """M13 warrens: copper ore in the rock - single specks (floors) or short
+    diagonal streaks (walls), a lit pixel on each."""
+    size = rgba.shape[0]
+    for _ in range(count):
+        x, y = int(rng.integers(0, size)), int(rng.integers(0, size))
+        length = int(rng.integers(3, 7)) if streak else 1
+        for k in range(length):
+            shade = 2 if k % 3 else 1
+            rgba[(y + k // 2) % size, (x + k) % size] = paint(np.array([shade]), ore)[0]
+        rgba[y, x] = paint(np.array([3]), ore)[0]
+
+
+def warrens_floor(name: str, ramp: list[str], ore: list[str]) -> None:
+    """M13 warrens floor: hewn rock worn flat by carts and boots - calm, a few
+    cracks (the terrain shader lights embers in some), coal dust, ore specks."""
+    ash_surface(name, ramp, 2, pebbles=9, cracks=True)
+    path = os.path.join(OUT_DIR, name + ".png")
+    rgba = np.array(Image.open(path).convert("RGBA")).astype(np.float32)
+    ore_specks(rgba, ore, rng_for(name + ":ore"), 14, streak=False)
+    save(name, rgba)
+
+
+def warrens_wall(name: str, ramp: list[str], ore: list[str]) -> None:
+    """M13 warrens wall: layered hewn rock (strata) with copper streaks."""
+    strata_rock(name, ramp)
+    path = os.path.join(OUT_DIR, name + ".png")
+    rgba = np.array(Image.open(path).convert("RGBA")).astype(np.float32)
+    ore_specks(rgba, ore, rng_for(name + ":ore"), 9, streak=True)
+    save(name, rgba)
+
+
+def generate_warrens() -> None:
+    spec = load_spec()
+    pal = spec["palettes"]["warrens"]
+    print("Biome textures (M13 Ember Warrens):")
+    warrens_floor("wa_floor", pal["floor"], pal["ore"])
+    warrens_wall("wa_wall", pal["wall"], pal["ore"])
+    ash_surface("wa_wall_top", pal["wall"], 2, pebbles=6, cracks=True)
+
+
 if __name__ == "__main__":
     import sys
     only = sys.argv[1:]
@@ -542,4 +583,6 @@ if __name__ == "__main__":
         generate_spire()
     if not only or "cistern" in only:
         generate_cistern()
+    if not only or "warrens" in only:
+        generate_warrens()
     print("done.")

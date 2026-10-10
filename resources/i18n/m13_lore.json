@@ -39,5 +39,53 @@
 	"lore.cistern.warning.body": {
 		"en": "Below the water, light. Below the light, the book.\n\nWhat the keepers could not drown, they wrote down, and what they wrote, they locked away. Freeze the way. Bend the light. Weigh the stones.",
 		"de": "Unter dem Wasser das Licht. Unter dem Licht das Buch.\n\nWas die Wächter nicht ertränken konnten, schrieben sie auf, und was sie schrieben, schlossen sie weg. Friere den Weg. Beuge das Licht. Beschwere die Steine."
+	},
+	"lore.warrens.foreman_log.title": {
+		"en": "Foreman's ledger",
+		"de": "Kladde des Steigers"
+	},
+	"lore.warrens.foreman_log.body": {
+		"en": "Shift tally: eleven down, nine up. The deep kilns light themselves now, and the slag in the carts is warm to the touch a day after.\n\nI have ordered the carts left on the rails. The kiln gate only holds while there is weight on its plate.",
+		"de": "Schichtzählung: elf eingefahren, neun ausgefahren. Die tiefen Öfen entzünden sich jetzt von selbst, und die Schlacke in den Loren ist noch einen Tag später warm.\n\nIch habe angeordnet, die Loren auf den Gleisen zu lassen. Das Ofentor hält nur, solange Gewicht auf seiner Platte liegt."
+	},
+	"lore.warrens.smelter_note.title": {
+		"en": "A smelter's note",
+		"de": "Notiz eines Schmelzers"
+	},
+	"lore.warrens.smelter_note.body": {
+		"en": "Four mouths, one breath. The kilns only draw when all four burn together.\n\nCarry the coals from the bowl and be quick about it. A kiln left alone goes dark.",
+		"de": "Vier Mäuler, ein Atem. Die Öfen ziehen nur, wenn alle vier zugleich brennen.\n\nTrag die Glut aus der Schale, und sei schnell dabei. Ein Ofen, den man allein lässt, wird dunkel."
+	},
+	"lore.warrens.lift_plaque.title": {
+		"en": "Plaque at the spark shaft",
+		"de": "Tafel am Funkenschacht"
+	},
+	"lore.warrens.lift_plaque.body": {
+		"en": "SPARK SHAFT\nThe lift answers the storm coil.\n\nLead the spark from post to post, in order, before it dies. Copper remembers for a moment only.",
+		"de": "FUNKENSCHACHT\nDer Aufzug gehorcht der Sturmspule.\n\nFühre den Funken von Pfosten zu Pfosten, der Reihe nach, bevor er erlischt. Kupfer erinnert sich nur einen Augenblick."
+	},
+	"lore.warrens.reeve_hint.title": {
+		"en": "Scrawled on a slag ladle",
+		"de": "Auf eine Schlackenkelle gekritzelt"
+	},
+	"lore.warrens.reeve_hint.body": {
+		"en": "The Reeve will not come out of his slag. Hot, he shrugs off picks like rain.\n\nDouse him at the quench trough and the crust cracks. Then hit him with everything.",
+		"de": "Der Vogt kommt nicht mehr aus seiner Schlacke heraus. Heiß lässt er Spitzhacken abprallen wie Regen.\n\nLösch ihn am Abschrecktrog, dann reißt die Kruste. Dann schlag mit allem zu, was du hast."
+	},
+	"lore.warrens.mould_words.title": {
+		"en": "Words in the mould room",
+		"de": "Worte in der Gusskammer"
+	},
+	"lore.warrens.mould_words.body": {
+		"en": "What the smiths could not quench, they cast, and what they cast, they hid.\n\nHeat the three. Tip the ladle. Lead the fire home.",
+		"de": "Was die Schmiede nicht löschen konnten, gossen sie, und was sie gossen, versteckten sie.\n\nHeize die drei. Kippe die Kelle. Führe das Feuer heim."
+	},
+	"lore.warrens.last_note.title": {
+		"en": "A note by the door",
+		"de": "Notiz an der Tür"
+	},
+	"lore.warrens.last_note.body": {
+		"en": "She is laying in the brood hall. The eggs crack in the heat like chestnuts.\n\nThe lever by the door would let the next crew in the short way, but my arm will not lift it any more. If there is a next crew, pull it for them.",
+		"de": "Sie legt in der Bruthalle. Die Eier platzen in der Hitze wie Kastanien.\n\nDer Hebel an der Tür ließe die nächste Schicht den kurzen Weg herein, aber mein Arm hebt ihn nicht mehr. Falls es eine nächste Schicht gibt, zieh ihn für sie."
 	}
 }

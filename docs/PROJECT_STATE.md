@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-10 · In progress: **M13 Dungeons with puzzles** (phases
-0-5 built, below). Latest built milestone: **M12 Highlands with substance**
+0-6 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -234,6 +234,46 @@ abilities, 9 the wrap-up.
     another drain, its call, the flood in the ring only, the bite, the
     pylon's ice, the flood gone with it). Net `dungeon_boss` now meets
     every DungeonBoss type.
+- **Phase 6 (built): the Ember Warrens' content, look and lore.**
+  - **The layout** (`warrens_layout.py`, WORLD_DESIGN "The Ember Warrens"):
+    17 rooms, a 160 m map. The rail hall's cart pushed along its rail onto
+    a plate holds the kiln gate; the ore store (a branch) wants cart b off
+    the crossing before cart a passes, both on their plates open the
+    alcove's bonus chest; four kilns lit within 20 s open the ramp to the
+    spark shaft; four copper posts struck in order lift its gate; the
+    collapse gallery's rows fall over a lava pit; the landing's rune, the
+    smelting hall (mid-boss arena), the jet run with fire jets and a
+    cracked wall; the mould room's big puzzle (three crucibles heated, the
+    ladle tipped, two chutes turned until the melt runs into the mould)
+    opens the tome room; the threshold's rune and lever (the shortcut to
+    the adit), the brood hall (end boss) and the way out. The Highlands'
+    west gate leads here now (recommended level 5).
+  - **Tech:** lava channels (`"kind": "lava"`: the bake's map colour, a
+    fenced runnel that never drains, `shaders/lava_pixel.gdshader`; the
+    collapse pit glows and burns), the ore cart (`PushBlock` look `cart`:
+    rails along its grid), the melt (`BeamPuzzle` look `melt` with
+    `inputs`: nothing flows until they hold; the authority solves when it
+    flows into the mould).
+  - **Look:** palette `warrens`, textures `wa_floor` / `wa_wall` /
+    `wa_wall_top` (copper in the rock; live embers in the floor's cracks),
+    the warrens kit (`wa_lamp`, `wa_timber`, `wa_ore_vein`,
+    `wa_ember_grate`, `wa_lava_spout`, `wa_slag`, `wa_ore_chunk`), ambience
+    `warrens_rumble_loop`. Lore (DE/EN): the foreman's ledger (the cart
+    holds the gate), a smelter's note (four kilns at once), the spark
+    shaft's plaque (the posts in order), a hint at the mid-boss (the quench
+    trough), the mould room's words, a last note by the shortcut's lever.
+  - Camps hold raiders and both arenas the placeholder boss until the
+    Ember Brood comes (phase 7).
+  - Shots `m13_warrens` (16); perf `warrens_kilns` (RTX 2070: 505 FPS, GPU
+    1.1 ms, 182 draw calls).
+  - Smoke 820 green (the west gate leads into the Warrens; they load with
+    the Spire's music; every POI on its floor, the prefix; four camps clear
+    and asleep; every puzzle kind wired; the lava runnel full and fenced,
+    the pit glows; the rumble, the kit without collision; the cart onto
+    its plate holds the gate and shuts it when sent home; four kilns; the
+    posts only in order; the melt waits for the heat and the ladle, then
+    opens the tome room; a fall into the lava burns and sets back; the
+    shortcut; out at the Charwood gate, whose seal breaks).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

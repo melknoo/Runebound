@@ -1451,7 +1451,7 @@ func fast_travel(key: String) -> void:
 ## M09: display names for the party travel banner.
 const ZONE_LABELS := {"hub": "Runehold", "ashen_highlands": "the Ashen Highlands",
 	"shattered_spire": "the Shattered Spire", "combat_lab": "the Combat Lab",
-	"hollow_cistern": "the Hollow Cistern"}
+	"hollow_cistern": "the Hollow Cistern", "ember_warrens": "the Ember Warrens"}
 
 
 static func zone_label(scene_path: String) -> String:

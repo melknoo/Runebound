@@ -363,7 +363,16 @@
   captures/.
 
 ## M13 open items (in progress)
-- The tome room holds a chest until the tome arrives (phase 8).
+- The tome rooms hold a chest until the tomes arrive (phase 8).
+- **Warrens placeholders until phase 7:** raiders in the camps, the
+  placeholder boss in both arenas (the Slag Reeve's quench trough and the
+  Broodmother's lava come with them).
+- **Warrens to feel:** the kilns' 20 s window with the 8 s ember charge,
+  the posts' 8 s per hop, the collapse rows (1.5 s down every 4 s, 16
+  fire damage per fall), the jets (6 strips, 3 s, 16), the cart's nine
+  pushes; the look may read too dark or too orange in places (shots
+  `m13_warrens`). The puzzle pieces themselves (plates, pedestals, kilns,
+  posts) are still code-built boxes.
 - **Cistern fights to feel (phase 5):** the keeper's wet armour (x0.4) and
   dry bonus (x1.25), the sluices' 8 s window and 15 s of dry basin, its
   ring wave every 9 s; the Deepmaw's 7 s up / 1.4 s under, its flood (7 s,

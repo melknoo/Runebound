@@ -387,6 +387,23 @@ size so they read at the camera's distance.
     mouths every 8 m on the halls' walls; pipe runs in corridors; drain
     grates flush in the floor; sluice frames where the channels meet the
     walls; fallen stones and algae tufts at the walls' feet.
+- **Interior kit (Ember Warrens, M13):**
+  - Palette `warrens`: soot-black umber rock (floor and wall ramps), old
+    timber, copper ore, ember oranges, lava #B8401A / #FFB040 over a dark
+    crust, warm lamps (#FFB25A). The warmth stays in the lamps, the lava and
+    the embers; the rock itself stays dark so red telegraphs still read
+    (the floor's embers are sparse, one per few cracks).
+  - Floors are hewn rock worn flat, cracks with a few live embers (the
+    terrain shader's ember glints) and copper specks; walls are layered
+    strata with copper streaks and a cap course (code).
+  - Lava is opaque (`lava_pixel.gdshader`): dark crust plates drifting,
+    glowing cracks between them that pulse; it lies 0.35 m under the floor
+    lip in runnels (fenced) and deep in the collapse pit.
+  - Cage lamps on iron arms like the cistern's lanterns; mine timbering
+    every 8 m on the halls' walls; copper veins with warm spots along the
+    galleries, 3 m up; ember grates flush in the hall floors; spout frames
+    where the lava runs into a wall; slag and ore at the walls' feet. Ore
+    carts (timber tubs heaped with copper ore) roll on rails with sleepers.
 - **Common kit (every zone):**
   - Portal v2 is a flush octagonal rune plate, an upright swirling gate
     oval (`portal_gate.gdshader`) and floating arch stones (all >= 2.2 m).

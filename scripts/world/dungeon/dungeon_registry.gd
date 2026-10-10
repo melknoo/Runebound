@@ -2,7 +2,7 @@ class_name DungeonRegistry
 extends Object
 ## M13: every dungeon behind a Highlands gate - its scene, baked layout, gate
 ## POI, enemy levels and name (a Texts key). A dungeon without a scene keeps
-## its gate sealed (the Ember Warrens until they are built). `min_party` is
+## its gate sealed (the Ember Warrens did until M13 phase 6). `min_party` is
 ## the seam for the M13b co-op dungeon (heroes needed to enter); the normal
 ## dungeons take anyone.
 
@@ -31,8 +31,8 @@ const DUNGEONS := {
 		"min_party": 1,
 	},
 	"warrens": {
-		"scene": "",
-		"layout": "",
+		"scene": "res://scenes/ember_warrens.tscn",
+		"layout": "res://assets/world/ember_warrens",
 		"gate": "dungeon_w",
 		"exit": "wa_exit",
 		"level": 4,

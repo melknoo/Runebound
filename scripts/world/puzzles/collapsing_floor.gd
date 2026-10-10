@@ -5,7 +5,8 @@ extends Node3D
 ## before each fall - so a hero crosses in rhythm, waiting on the rows that
 ## hold. Every machine moves the rows alike (no state, no traffic). A hero
 ## who falls lands on the pit's bed: hurt (never the last point) and set
-## back at the pit's edge (`back`), judged by its own machine.
+## back at the pit's edge (`back`), judged by its own machine. Phase 6: over
+## a channel of kind "lava" the pit glows below and the fall burns (fire).
 
 const WARN := 0.6
 const FALL_DEPTH := 2.2
@@ -18,6 +19,7 @@ var period: float = 4.0
 var down: float = 1.5
 var back: Vector3 = Vector3.ZERO
 var damage: float = 14.0
+var lava: bool = false
 var _along_x: bool = true
 var _tiles: Array[StaticBody3D] = []
 var _tile_mats: Array[StandardMaterial3D] = []
@@ -37,6 +39,7 @@ static func build(zone: ZoneBase, layout: DungeonLayout, poi: Dictionary) -> Col
 	f.period = float(poi.get("period", 4.0))
 	f.down = float(poi.get("down", 1.5))
 	f.damage = float(poi.get("damage", 14.0))
+	f.lava = String(ch.get("kind", "water")) == "lava"
 	var b: Array = poi.get("back", [0, 0])
 	f.back = Vector3(float(b[0]), zone.ground_y(Vector3(float(b[0]), 0, float(b[1]))), float(b[1]))
 	f.set_meta(&"poi_id", String(poi.get("id", "")))
@@ -46,6 +49,16 @@ static func build(zone: ZoneBase, layout: DungeonLayout, poi: Dictionary) -> Col
 
 
 func _ready() -> void:
+	if lava:
+		var pool := MeshInstance3D.new()
+		pool.name = "Lava"
+		var plane := BoxMesh.new()
+		plane.size = Vector3(rect.size.x, 0.1, rect.size.y)
+		plane.material = WaterChannel.lava_material()
+		pool.mesh = plane
+		pool.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(pool)
+		pool.position = Vector3(0, -depth + 0.5, 0)
 	_along_x = rect.size.x >= rect.size.y
 	var length := rect.size.x if _along_x else rect.size.y
 	var across := rect.size.y if _along_x else rect.size.x
@@ -121,7 +134,10 @@ func fell(hero: Player) -> void:
 	falls += 1
 	var dmg := minf(damage, hero.health.current_health - 1.0)  # never the last point
 	if dmg > 0.0:
-		hero.take_hit(HitInfo.create(dmg, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hero.global_position))
+		hero.take_hit(HitInfo.create(dmg, HitInfo.DamageType.FIRE if lava else HitInfo.DamageType.PHYSICAL,
+			HitInfo.Weight.LIGHT, hero.global_position))
+	if lava:
+		VFX.ember_impact(get_tree().current_scene, hero.global_position + Vector3(0, 0.6, 0))
 	hero.global_position = back + Vector3(0, 0.2, 0)
 	hero.velocity = Vector3.ZERO
 	hero.teleports += 1  # puppets snap instead of sliding out of the pit

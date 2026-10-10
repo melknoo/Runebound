@@ -788,6 +788,24 @@ Plan with the user's answers: ROADMAP M13.
   wall) at each room light, else code-built lamp boxes. Water uses
   `shaders/water_pixel.gdshader` (palette colours `cistern.water` /
   `water_hi`).
+- **The Ember Warrens (phase 6):** `WarrensZone` + `scenes/ember_warrens.tscn`
+  (registry id `warrens`, layout `warrens_layout.py`; the Highlands' west
+  gate leads here now). **Lava:** a channel with `"kind": "lava"` (the
+  bake draws it in `palettes.<map_palette>.lava`); a `water` POI on it
+  without inputs never drains - `WaterChannel.lava` shows
+  `shaders/lava_pixel.gdshader` (crust plates, glowing Voronoi cracks,
+  opaque, `WaterChannel.lava_material()` shared) 0.35 m under the floor's
+  lip and keeps its fence; a `collapse` POI over a lava channel shows the
+  same lava in its pit and burns (FIRE) on a fall. **Carts:** a `block`
+  POI with `"look": "cart"` is a PushBlock drawn as an ore cart on rails
+  laid along its grid (a one-cell-wide grid = a rail; the rules are the
+  block's). **The melt:** a `beam` POI with `"look": "melt"` and `inputs`
+  (like a gate's): `BeamPuzzle.flowing()` only when every input holds -
+  until then the trace stops at the source; every machine redraws when the
+  flow starts, the authority solves as soon as it flows into the mould
+  (checked every 0.25 s). Dressing kit `wa_*` (timber frames, ore veins,
+  ember grates, lava spouts, slag, ore), roles `warrens_floor` (embers in
+  the cracks) / `warrens_wall`, the ambience `warrens_rumble_loop`.
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 

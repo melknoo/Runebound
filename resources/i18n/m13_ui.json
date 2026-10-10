@@ -131,5 +131,49 @@
 	"enemy.deepmaw": {
 		"en": "The Deepmaw",
 		"de": "Der Tiefenschlund"
+	},
+	"area.wa_adit": {
+		"en": "The Adit",
+		"de": "Der Stollenmund"
+	},
+	"area.wa_rails": {
+		"en": "Rail Hall",
+		"de": "Gleishalle"
+	},
+	"area.wa_store": {
+		"en": "Ore Store",
+		"de": "Erzlager"
+	},
+	"area.wa_kilns": {
+		"en": "Kiln Hall",
+		"de": "Ofenhalle"
+	},
+	"area.wa_shaft": {
+		"en": "Spark Shaft",
+		"de": "Funkenschacht"
+	},
+	"area.wa_collapse": {
+		"en": "Collapse Gallery",
+		"de": "Einsturzgang"
+	},
+	"area.wa_smelter": {
+		"en": "Smelting Hall",
+		"de": "Schmelzhalle"
+	},
+	"area.wa_jets": {
+		"en": "Jet Run",
+		"de": "Düsengang"
+	},
+	"area.wa_mould": {
+		"en": "The Mould Room",
+		"de": "Die Gusskammer"
+	},
+	"area.wa_threshold": {
+		"en": "The Brood's Threshold",
+		"de": "Vorhof der Brut"
+	},
+	"area.wa_heart": {
+		"en": "The Brood Hall",
+		"de": "Die Bruthalle"
 	}
 }

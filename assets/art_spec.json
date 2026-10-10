@@ -620,6 +620,22 @@
 			"ambient": "#2A4246",
 			"background": "#070E10"
 		},
+		"warrens": {
+			"comment": "M13 interior: no sun; ember mines and smelting halls - soot-black hewn rock, old timber, copper ore, lava and hot ember light against the dark",
+			"floor": ["#16110E", "#201813", "#2A2019", "#372A21", "#46372B"],
+			"wall": ["#110D0B", "#191310", "#221A15", "#2D231C", "#3B2E25"],
+			"timber": ["#24180F", "#332216", "#45301F", "#5A402A"],
+			"ore": ["#3A2A1E", "#64462A", "#946634", "#C48C48"],
+			"ember": ["#5A1E0E", "#8E3412", "#C8561A", "#F48C2E"],
+			"lava": "#B8401A",
+			"lava_hi": "#FFB040",
+			"lava_crust": "#2A120C",
+			"lamp": "#FFB25A",
+			"rune": "#FF8A3A",
+			"fog": "#1E120C",
+			"ambient": "#5C3E2C",
+			"background": "#0A0605"
+		},
 		"drowned_thrall": {
 			"comment": "M13 the Drowned: a bloated keeper, waterlogged grey-green skin, dark rags, kelp, pale phosphor eyes",
 			"skin": ["#3E4A44", "#4F5D55", "#61716A", "#77877F"],

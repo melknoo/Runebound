@@ -1,0 +1,31 @@
+{
+	"zone": "res://scenes/ember_warrens.tscn",
+	"out": "captures_shots/m13_warrens",
+	"comment": "M13 phase 6: the Ember Warrens' rooms, lava, puzzles and kit (interior look).",
+	"shots": [
+		{"name": "adit", "player": [0, 0.2, 44], "yaw": 0.0, "pitch": -0.3, "zoom": 7.0, "settle": 0.6},
+		{"name": "rails", "player": [2, 0.2, 7], "yaw": 0.45, "pitch": -0.45, "zoom": 9.0, "settle": 0.5},
+		{"name": "store", "player": [-24, 0.2, 2], "yaw": 0.9, "pitch": -0.5, "zoom": 9.0, "settle": 0.4},
+		{"name": "kilns", "player": [0, 0.2, -22], "yaw": 0.0, "pitch": -0.45, "zoom": 11.0, "settle": 0.5},
+		{"name": "kilns_lit", "player": [0, 0.2, -22], "yaw": 0.0, "pitch": -0.45, "zoom": 11.0,
+			"actions": [{"poi": "wa_kilns_fire", "act": "light", "arg": 0}, {"poi": "wa_kilns_fire", "act": "light", "arg": 1},
+				{"poi": "wa_kilns_fire", "act": "light", "arg": 2}, {"poi": "wa_kilns_fire", "act": "light", "arg": 3},
+				{"wait": 1.0}], "settle": 0.3},
+		{"name": "lava_runnel", "player": [-6, 0.2, -46], "yaw": 0.0, "pitch": -0.3, "zoom": 5.5, "settle": 0.4},
+		{"name": "ramp", "player": [21, 0.2, -36], "yaw": -1.5708, "pitch": -0.25, "zoom": 6.0, "settle": 0.4},
+		{"name": "spark_shaft", "player": [50, 3.2, -29], "yaw": 0.0, "pitch": -0.45, "zoom": 10.0,
+			"actions": [{"poi": "wa_posts", "act": "light", "arg": 0}, {"poi": "wa_posts", "act": "light", "arg": 1},
+				{"wait": 0.4}], "settle": 0.3},
+		{"name": "collapse", "player": [50, 0.2, -9], "yaw": 3.14159, "pitch": -0.4, "zoom": 7.0, "settle": 1.2},
+		{"name": "smelter", "player": [64, 0.2, 22], "yaw": -1.5708, "pitch": -0.4, "zoom": 10.0, "settle": 0.4},
+		{"name": "jet_run", "player": [66, 0.2, 44], "yaw": 1.5708, "pitch": -0.3, "zoom": 7.0, "settle": 1.2},
+		{"name": "mould", "player": [43, 0.2, 53], "yaw": 2.5, "pitch": -0.5, "zoom": 9.0,
+			"actions": [{"poi": "wa_crucibles", "act": "light", "arg": 0}, {"poi": "wa_crucibles", "act": "light", "arg": 1},
+				{"poi": "wa_crucibles", "act": "light", "arg": 2}, {"poi": "wa_lever_tip", "act": "pull"},
+				{"wait": 0.6}], "settle": 0.3},
+		{"name": "threshold", "player": [22, 0.2, 52], "yaw": 0.6, "pitch": -0.4, "zoom": 8.0, "settle": 0.4},
+		{"name": "brood_hall", "player": [20, 0.2, 61], "yaw": 3.14159, "pitch": -0.35, "zoom": 9.0, "settle": 0.4},
+		{"name": "lamp_timber", "player": [-13, 0.2, -36], "yaw": 1.5708, "pitch": 0.05, "zoom": 4.5, "settle": 0.4},
+		{"name": "overview", "player": [0, 0.2, -10], "yaw": 0.0, "pitch": -1.05, "zoom": 16.0, "settle": 0.4}
+	]
+}

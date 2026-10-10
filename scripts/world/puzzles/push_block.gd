@@ -7,6 +7,8 @@ extends PoiPuzzle
 ## grid, on walkable floor outside channels, no other block, no hero) and
 ## moves it. The cell is the state, so no physics runs on the server and a
 ## block can never jam between cells. A reset switch sends it home.
+## Phase 6: `look` "cart" - an ore cart on rails laid along its grid (the
+## Warrens; the same rules).
 
 const SIZE := 1.8
 const PUSH_HOLD := 0.3
@@ -18,6 +20,7 @@ const BEHIND_DOT := 0.7
 var home: Vector3 = Vector3.ZERO
 var cell: float = 2.0
 var grid: Rect2 = Rect2()
+var look: String = "stone"
 var _body: StaticBody3D
 var _hold: float = 0.0
 var _push_left: float = 0.0
@@ -31,6 +34,7 @@ static func build(zone: ZoneBase, poi: Dictionary) -> PushBlock:
 	b.name = "Block_" + b.id
 	b.home = ZoneLayout.pos_of(poi)
 	b.cell = float(poi.get("cell", 2.0))
+	b.look = String(poi.get("look", "stone"))
 	var g: Array = poi.get("grid", [0, 0, 0, 0])
 	b.grid = Rect2(float(g[0]), float(g[1]), float(g[2]) - float(g[0]), float(g[3]) - float(g[1]))
 	b.act_range = PUSH_REACH + 1.0
@@ -64,13 +68,16 @@ func _build() -> void:
 	col.shape = shape
 	col.position = Vector3(0, SIZE * 0.5, 0)
 	_body.add_child(col)
-	var mesh := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3.ONE * SIZE
-	box.material = EnemyBase.flat_material(Color(0.42, 0.44, 0.45))
-	mesh.mesh = box
-	mesh.position = col.position
-	_body.add_child(mesh)
+	if look == "cart":
+		_build_cart()
+	else:
+		var mesh := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3.ONE * SIZE
+		box.material = EnemyBase.flat_material(Color(0.42, 0.44, 0.45))
+		mesh.mesh = box
+		mesh.position = col.position
+		_body.add_child(mesh)
 	add_child(_body)
 	_switch = PuzzleSwitch.new()
 	_switch.text_key = "ui.prompt.push"
@@ -81,6 +88,56 @@ func _build() -> void:
 			request("push", [d.x, d.y], hero)
 	_body.add_child(_switch)
 	_switch.position = Vector3(0, 0.2, 0)
+
+
+## An ore cart (a timber tub on iron wheels, copper ore heaped in it) and
+## the rails along the grid's long side (they stay; the cart rolls).
+func _build_cart() -> void:
+	var timber := EnemyBase.flat_material(ArtKit.color("palettes.warrens.timber.2", Color(0.27, 0.19, 0.12)))
+	var iron := EnemyBase.flat_material(Color(0.16, 0.15, 0.15))
+	var ore := EnemyBase.flat_material(ArtKit.color("palettes.warrens.ore.2", Color(0.58, 0.4, 0.2)))
+	var parts: Array = [
+		[Vector3(1.7, 1.0, 1.5), Vector3(0, 0.95, 0), timber],
+		[Vector3(1.78, 0.1, 1.58), Vector3(0, 1.48, 0), iron],
+		[Vector3(1.78, 0.1, 1.58), Vector3(0, 0.5, 0), iron],
+		[Vector3(1.3, 0.35, 1.1), Vector3(0, 1.55, 0), ore],
+	]
+	for wx: float in [-0.78, 0.78]:
+		for wz: float in [-0.5, 0.5]:
+			parts.append([Vector3(0.14, 0.42, 0.42), Vector3(wx, 0.21, wz), iron])
+	var along_x := grid.size.x >= grid.size.y
+	var tub := Node3D.new()
+	tub.rotation.y = PI * 0.5 if along_x else 0.0  # the wheels roll along the rails
+	_body.add_child(tub)
+	for part: Array in parts:
+		var mesh := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = part[0]
+		box.material = part[2]
+		mesh.mesh = box
+		mesh.position = part[1]
+		tub.add_child(mesh)
+	# the rails: two iron bars on sleepers along the grid's long axis
+	var length := grid.size.x if along_x else grid.size.y
+	var mid := Vector3(grid.get_center().x, home.y, grid.get_center().y) - home
+	for side: float in [-0.55, 0.55]:
+		var bar := MeshInstance3D.new()
+		var bar_mesh := BoxMesh.new()
+		bar_mesh.size = Vector3(length, 0.08, 0.1) if along_x else Vector3(0.1, 0.08, length)
+		bar_mesh.material = iron
+		bar.mesh = bar_mesh
+		bar.position = mid + (Vector3(0, 0.04, side) if along_x else Vector3(side, 0.04, 0))
+		add_child(bar)
+	var sleepers := int(length / 1.0)
+	for k in sleepers:
+		var at := -length * 0.5 + (k + 0.5) * length / float(sleepers)
+		var sleeper := MeshInstance3D.new()
+		var sl_mesh := BoxMesh.new()
+		sl_mesh.size = Vector3(0.22, 0.05, 1.5) if along_x else Vector3(1.5, 0.05, 0.22)
+		sl_mesh.material = timber
+		sleeper.mesh = sl_mesh
+		sleeper.position = mid + (Vector3(at, 0.02, 0) if along_x else Vector3(0, 0.02, at))
+		add_child(sleeper)
 
 
 func _ready() -> void:

@@ -7,16 +7,20 @@ extends Node3D
 ## the water sinks and the causeways (`walkways`) laid in it show and carry
 ## heroes across; the fence then stands only where there is no causeway.
 ## Derived on every machine from the shared states, never refilled over a
-## hero. Phase 3 lays temporary ice on a full channel (`freeze`).
+## hero. Phase 3 lays temporary ice on a full channel (`freeze`). Phase 6: a
+## channel of kind "lava" glows instead (the zone's lava colours) and, with
+## no inputs, never drains - a fenced runnel of fire.
 
 const FENCE_HEIGHT := 5.0
 const DRAIN_TIME := 1.6
 const WATER_SHADER := preload("res://shaders/water_pixel.gdshader")
+const LAVA_SHADER := preload("res://shaders/lava_pixel.gdshader")
 
 var channel_id: String = ""
 var rect: Rect2 = Rect2()
 var floor_y: float = 0.0
 var depth: float = 2.0
+var lava: bool = false
 var inputs: Array[String] = []
 var walkways: Array[Rect2] = []
 var drained: bool = false
@@ -39,6 +43,7 @@ static func build(zone: ZoneBase, layout: DungeonLayout, poi: Dictionary) -> Wat
 	w.rect = DungeonLayout.rect_of(ch)
 	w.floor_y = float(ch.get("floor", 0.0))
 	w.depth = float(ch.get("depth", 2.0))
+	w.lava = String(ch.get("kind", "water")) == "lava"
 	for i in poi.get("inputs", []):
 		w.inputs.append(String(i))
 	for r: Array in poi.get("walkways", []):
@@ -54,13 +59,7 @@ func _ready() -> void:
 	_water.name = "Water"
 	var plane := BoxMesh.new()
 	plane.size = Vector3(rect.size.x, 0.1, rect.size.y)
-	var mat := ShaderMaterial.new()  # opaque pixel ripples (the zone's water colours)
-	mat.shader = WATER_SHADER
-	var deep := ArtKit.color("palettes.cistern.water", Color(0.07, 0.2, 0.24))
-	mat.set_shader_parameter(&"deep", deep)
-	mat.set_shader_parameter(&"shallow", deep.lerp(ArtKit.color("palettes.cistern.water_hi", Color(0.18, 0.4, 0.44)), 0.45))
-	mat.set_shader_parameter(&"glint", ArtKit.color("palettes.cistern.water_hi", Color(0.36, 0.62, 0.64)).lightened(0.15))
-	plane.material = mat
+	plane.material = lava_material() if lava else _water_material()
 	_water.mesh = plane
 	_water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_water)
@@ -93,8 +92,36 @@ func _ready() -> void:
 	_rebuild_fence()
 
 
+## Opaque pixel ripples in the zone's water colours.
+static func _water_material() -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = WATER_SHADER
+	var deep := ArtKit.color("palettes.cistern.water", Color(0.07, 0.2, 0.24))
+	mat.set_shader_parameter(&"deep", deep)
+	mat.set_shader_parameter(&"shallow", deep.lerp(ArtKit.color("palettes.cistern.water_hi", Color(0.18, 0.4, 0.44)), 0.45))
+	mat.set_shader_parameter(&"glint", ArtKit.color("palettes.cistern.water_hi", Color(0.36, 0.62, 0.64)).lightened(0.15))
+	return mat
+
+
+static var _lava_mat: ShaderMaterial
+
+
+## Phase 6: crust plates and glowing cracks in the Warrens' lava colours
+## (shared: every lava surface pulses alike).
+static func lava_material() -> ShaderMaterial:
+	if _lava_mat == null:
+		_lava_mat = ShaderMaterial.new()
+		_lava_mat.shader = LAVA_SHADER
+		_lava_mat.set_shader_parameter(&"crust", ArtKit.color("palettes.warrens.lava_crust", Color(0.16, 0.07, 0.05)))
+		_lava_mat.set_shader_parameter(&"hot", ArtKit.color("palettes.warrens.lava", Color(0.72, 0.25, 0.1)))
+		_lava_mat.set_shader_parameter(&"glow", ArtKit.color("palettes.warrens.lava_hi", Color(1.0, 0.69, 0.25)))
+	return _lava_mat
+
+
 ## The water's surface: level with the floor when full, low when drained.
 func _level_y(low: bool) -> float:
+	if lava and not low:
+		return -0.35  # lava sits a little under the floor's lip (it reads as a runnel)
 	return -depth + 0.35 if low else 0.02  # full: just over the causeway
 
 

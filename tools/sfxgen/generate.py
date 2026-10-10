@@ -714,6 +714,32 @@ def wave_surge():
     save(pad(thump, rush * 0.8, hiss), "wave_surge_01")
 
 
+def warrens_rumble_loop():
+    """M13 the Ember Warrens: a deep furnace rumble that breathes, ember
+    crackle, and now and then a far hammer on iron (loops)."""
+    dur = 10.0
+    x = t(dur)
+    rumble = lowpass(noise(dur), 0.012) * 0.9 + np.sin(2 * np.pi * 38 * x) * 0.1
+    rumble *= 0.7 + 0.3 * np.sin(2 * np.pi * x / dur * 3 + 0.4)
+    crackle = np.zeros(len(x))
+    for k in range(60):
+        at = rng.uniform(0.1, dur - 0.1)
+        d = rng.uniform(0.004, 0.012)
+        pop = highpass(noise(d), 0.5) * env_exp(d, d * 0.4, 0.0005) * rng.uniform(0.1, 0.35)
+        start = int(at * SR)
+        crackle[start:start + len(pop)] += pop
+    hammer = np.zeros(len(x))
+    for k in range(3):
+        at = rng.uniform(0.5, dur - 1.0)
+        f = rng.uniform(520.0, 760.0)
+        d = 0.5
+        clang = (np.sin(2 * np.pi * f * t(d)) + np.sin(2 * np.pi * f * 2.76 * t(d)) * 0.4) * env_exp(d, 0.12, 0.001)
+        clang = lowpass(clang, 0.3) * rng.uniform(0.08, 0.14)
+        start = int(at * SR)
+        hammer[start:start + len(clang)] += clang
+    save(_loopable(pad(rumble * 0.7, crackle, hammer), 0.6), "warrens_rumble_loop_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -753,4 +779,5 @@ if __name__ == "__main__":
     for i in range(1, 3):
         water_splash(i)
     deep_roar(); wave_surge()  # M13 phase 5
+    warrens_rumble_loop()  # M13 phase 6
     print("done.")

@@ -41,7 +41,7 @@ from highlands_layout import LAYOUT as HIGHLANDS  # noqa: E402
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ## dungeon id -> layout module (tools/worldgen/<module>.py, LAYOUT dict); "lab"
 ## is the test room of the puzzle kit (scenes/puzzle_lab.tscn, never reachable)
-DUNGEONS = {"cistern": "cistern_layout", "lab": "lab_layout"}
+DUNGEONS = {"cistern": "cistern_layout", "warrens": "warrens_layout", "lab": "lab_layout"}
 GRID = 0.5            # m per raster cell
 MAP_PX_PER_M = 3
 WALL_REACH = 2.0      # m of wall grown around every walkable cell
@@ -61,6 +61,8 @@ FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "p
 ## POIs that belong in a channel (the water itself, an ice socket, a pit's tiles)
 IN_CHANNEL_TYPES = {"water", "ice", "collapse"}
 WATER_COLOR = "#1C4652"
+LAVA_COLOR = "#B8401A"
+CHANNEL_KINDS = {"water", "lava"}
 COMBAT_TYPES = {"camp", "arena"}
 
 
@@ -148,6 +150,7 @@ class Raster:
         self.door = np.full((self.res, self.res), -1, dtype=np.int32)
         self.floor = np.zeros((self.res, self.res), dtype=np.float64)
         self.water = np.zeros((self.res, self.res), dtype=bool)
+        self.lava = np.zeros((self.res, self.res), dtype=bool)  # channels of kind "lava" (the map's colour)
         for k, r in enumerate(rooms):
             x0, z0, x1, z1 = r["rect"]
             sel = (self.X > x0) & (self.X < x1) & (self.Z > z0) & (self.Z < z1)
@@ -168,6 +171,8 @@ class Raster:
                 csel = sel & (self.X > cx0) & (self.X < cx1) & (self.Z > cz0) & (self.Z < cz1)
                 self.floor[csel] = float(r.get("floor", 0.0)) - float(ch["depth"])
                 self.water[csel] = True
+                if ch.get("kind", "water") == "lava":
+                    self.lava[csel] = True
         for k, d in enumerate(doors):
             x0, z0, x1, z1 = d["rect"]
             sel = (self.X > x0) & (self.X < x1) & (self.Z > z0) & (self.Z < z1)
@@ -333,6 +338,8 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
                 problems.append("%s: id without the prefix %s" % (ch["id"], prefix))
             if r.get("slope"):
                 problems.append("%s: a channel in a sloped room" % ch["id"])
+            if ch.get("kind", "water") not in CHANNEL_KINDS:
+                problems.append("%s: unknown channel kind '%s'" % (ch["id"], ch.get("kind")))
             cx0, cz0, cx1, cz1 = ch["rect"]
             x0, z0, x1, z1 = r["rect"]
             if cx0 < x0 or cz0 < z0 or cx1 > x1 or cz1 > z1:
@@ -451,6 +458,9 @@ def write_map(lay: dict, ras: Raster, public_walk: np.ndarray, out_dir: str) -> 
     wet = walk & ras.water[iz, ix]
     water = hex_rgb(pal.get("water", WATER_COLOR))
     rgb[wet] = water[None, :] * (0.92 + 0.16 * (bayer[wet] + 0.5))[:, None]
+    hot = walk & ras.lava[iz, ix]
+    lava = hex_rgb(pal.get("lava", LAVA_COLOR))
+    rgb[hot] = lava[None, :] * (0.9 + 0.2 * (bayer[hot] + 0.5))[:, None]
     # walls: the face next to a floor lighter than the mass behind it
     near = dilate_max(public_walk.astype(np.float64), 1)[iz, ix] > 0.5
     rgb[wall] = wall_ramp[1]

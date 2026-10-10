@@ -2756,8 +2756,9 @@ func _run() -> void:
 	var gate_w := dungeon_gates.get("dungeon_w") as DungeonGatePortal
 	if gate_e != null and gate_w != null:
 		_check(gate_e.destination_scene == "res://scenes/hollow_cistern.tscn" and gate_e.arrival == "ci_exit"
-			and gate_e.is_open() and not gate_w.is_open(),
-			"M13: the east gate leads into the Hollow Cistern, the Ember Warrens stay sealed until built")
+			and gate_e.is_open() and gate_w.destination_scene == "res://scenes/ember_warrens.tscn"
+			and gate_w.arrival == "wa_exit" and gate_w.is_open(),
+			"M13: the east gate leads into the Hollow Cistern, the west gate into the Ember Warrens")
 		var gates_face_spurs := true
 		for pair: Array in [[gate_e, Vector3(126, 0, -56)], [gate_w, Vector3(-132, 0, -30)]]:
 			var g := pair[0] as DungeonGatePortal
@@ -4338,7 +4339,7 @@ func _run() -> void:
 						warren_gate = child
 			_check(seal_gate != null and not seal_gate.locked and back_hl.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_e")),
 				"M13: standing at the gate breaks its seal (remembered by the character)")
-			_check(warren_gate != null and warren_gate.locked, "M13: the Ember Warrens' gate stays sealed")
+			_check(warren_gate != null and warren_gate.locked, "M13: the Ember Warrens' gate stays sealed until a hero comes near")
 			# back in: what was done stays done
 			back_hl.travel_to("res://scenes/hollow_cistern.tscn", "ci_exit")
 			for i in 60:
@@ -4595,6 +4596,167 @@ func _run() -> void:
 					_check(collapse.falls >= 1 and eh2.global_position.distance_to(collapse.back) < 1.0 and eh2.health.current_health < hp_before_fall,
 						"M13 traps: a fall into the pit hurts and sets the hero back at its edge")
 					eh2.god_mode = true
+
+	# --- M13 phase 6: the Ember Warrens - the shell, lava, every puzzle wired ---
+	leave_zone.travel_to("res://scenes/ember_warrens.tscn", "wa_exit")
+	for i in 90:
+		await get_tree().process_frame
+		if get_tree().current_scene is WarrensZone:
+			break
+	var warrens := get_tree().current_scene as WarrensZone
+	_check(warrens != null, "M13: the Ember Warrens load")
+	if warrens != null:
+		leave_zone = warrens
+		await _wait_frames(8)
+		var wah := warrens.player
+		wah.god_mode = true
+		_check(warrens.look != null and warrens.look.interior and MusicDirector.instance.zone_key() == "spire"
+			and warrens.room_id_at(wah.global_position) == "wa_adit" and wah.discovered_zones.has("ember_warrens"),
+			"M13 Warrens: an interior with the Spire's music; the hero arrives in the adit (a discovery)")
+		var wa_floor_ok := true
+		var wa_prefix_ok := true
+		for poi in warrens.layout.pois.pois:
+			if not String(poi["id"]).begins_with("wa_"):
+				wa_prefix_ok = false
+			if String(poi.get("type", "")) in ["water", "ice", "collapse"]:
+				continue
+			var wap := ZoneLayout.pos_of(poi)
+			var wa_beside := wap + Vector3(1.2, 0.5, 0)
+			if absf(wap.y - warrens.layout.floor_at(wap.x, wap.z, -99.0)) > 0.05 \
+					or absf(warrens.ground_point(wa_beside).y - warrens.layout.floor_at(wa_beside.x, wa_beside.z, -99.0)) > 0.1:
+				wa_floor_ok = false
+		_check(wa_floor_ok and wa_prefix_ok, "M13 Warrens: every POI on its room's floor, every id with the wa_ prefix")
+		var wa_probe := PhysicsShapeQueryParameters3D.new()
+		var wa_ball := SphereShape3D.new()
+		wa_ball.radius = 0.5
+		wa_probe.shape = wa_ball
+		wa_probe.collision_mask = 1
+		var wa_spots_ok := true
+		for wa_camp: String in warrens.camps:
+			var wsp := warrens.camps[wa_camp] as EncounterSpawner
+			for spot: Vector3 in wsp.spots:
+				wa_probe.transform = Transform3D(Basis(), spot + Vector3(0, 1.0, 0))
+				if not warrens.world.get_world_3d().direct_space_state.intersect_shape(wa_probe, 4).is_empty() \
+						or warrens.room_id_at(spot) != warrens.room_id_at(wsp.global_position):
+					wa_spots_ok = false
+		_check(wa_spots_ok and warrens.camps.size() == 4 and warrens.enemy_count() == 0,
+			"M13 Warrens: four camps, their spots clear in their rooms, nothing awake on arrival")
+		var wa_kinds: Dictionary = {}
+		for wpk: String in warrens.puzzles:
+			var wa_kind: String = (warrens.puzzles[wpk] as Node).get_script().get_global_name()
+			wa_kinds[wa_kind] = int(wa_kinds.get(wa_kind, 0)) + 1
+		var wa_wired := true
+		for wd in warrens.layout.doors:
+			for input in wd.get("inputs", []):
+				if not String(input).begins_with("flag:") and not warrens.puzzles.has(String(input)):
+					wa_wired = false
+		_check(wa_wired and int(wa_kinds.get("PushBlock", 0)) == 3 and int(wa_kinds.get("ElementPuzzle", 0)) == 3
+			and int(wa_kinds.get("BeamPuzzle", 0)) == 1 and int(wa_kinds.get("PressurePlate", 0)) == 3
+			and int(wa_kinds.get("PuzzleLever", 0)) == 2 and int(wa_kinds.get("SecretWall", 0)) == 1
+			and int(wa_kinds.get("DungeonRune", 0)) == 2 and warrens.carriers.size() == 3 and warrens.traps.size() == 2
+			and warrens.arenas.size() == 2 and warrens.waters.size() == 1,
+			"M13 Warrens: carts, plates, kilns, posts, crucibles, the melt, levers, the cracked wall, runes, traps, arenas, all wired (%s)" % wa_kinds)
+		var wa_lava := warrens.waters["wa_lava_kilns"] as WaterChannel
+		var wa_pit := warrens.traps["wa_collapse_pit"] as CollapsingFloor
+		_check(wa_lava.lava and not wa_lava.drained and not wa_lava.crossable_at(0, -52.5) and wa_pit.lava
+			and ArtKit.material(&"warrens_floor") is ShaderMaterial and ArtKit.material(&"warrens_wall") is ShaderMaterial,
+			"M13 Warrens: the lava runnel stays full and fenced, the collapse pit glows; its own stone")
+		var wa_drone := false
+		for node in warrens.world.get_children():
+			if node is AudioStreamPlayer and (node as AudioStreamPlayer).stream != null \
+					and (node as AudioStreamPlayer).stream.resource_path.contains("warrens_rumble_loop"):
+				wa_drone = true
+		_check(wa_drone and warrens.dressing().get_child_count() > 40
+			and warrens.dressing().find_children("*", "CollisionObject3D", true, false).is_empty(),
+			"M13 Warrens: its rumble, the kit dresses it without collision (%d pieces)" % warrens.dressing().get_child_count())
+		# the cart along its rail onto the plate holds the kiln gate open
+		var wa_cart := warrens.puzzles["wa_cart_rails"] as PushBlock
+		var wa_plate := warrens.puzzles["wa_plate_rails"] as PressurePlate
+		var wa_kiln_gate := warrens.gates["wa_d_rails_kilns"] as DungeonGate
+		_check(wa_cart.look == "cart" and not wa_kiln_gate.is_open and not wa_plate.is_down(), "M13 Warrens: the kiln gate waits on the cart")
+		for push_k in 12:
+			if wa_cart.cell_of().y <= -9:
+				break
+			wah.global_position = wa_cart.rest_position() + Vector3(0, 0.2, 2.3)
+			await _wait_frames(1)
+			wa_cart.request("push", [0, -1], wah)
+			await _wait_frames(1)
+		wah.global_position = Vector3(6, 0.2, 4)
+		await _wait_frames(12)
+		_check(wa_cart.cell_of().y == -9 and wa_plate.is_down() and wa_kiln_gate.is_open,
+			"M13 Warrens: pushed along its rail onto the plate, the cart holds the gate open (cell %s)" % wa_cart.cell_of())
+		wa_cart.request("reset", 0, wah)
+		await _wait_frames(12)
+		_check(not wa_plate.is_down() and not wa_kiln_gate.is_open, "M13 Warrens: the cart sent home, the gate shuts (no weight on the plate)")
+		# four kilns, the ordered posts, the melt that waits for heat and the tipped ladle
+		var wa_kilns := warrens.puzzles["wa_kilns_fire"] as ElementPuzzle
+		for k in 4:
+			wa_kilns.request("light", k, wah)
+		await _wait_frames(2)
+		_check(wa_kilns.is_solved() and (warrens.gates["wa_d_kilns_c2"] as DungeonGate).is_open, "M13 Warrens: four kilns lit, the way east opens")
+		var wa_posts := warrens.puzzles["wa_posts"] as ElementPuzzle
+		wa_posts.request("light", 2, wah)
+		await _wait_frames(1)
+		_check(wa_posts.lit_count() == 0, "M13 Warrens: the spark takes the posts in order only")
+		for k in 4:
+			wa_posts.request("light", k, wah)
+		await _wait_frames(2)
+		_check(wa_posts.is_solved() and (warrens.gates["wa_d_shaft_c3"] as DungeonGate).is_open, "M13 Warrens: the posts in order lift the gate")
+		var wa_melt := warrens.puzzles["wa_melt"] as BeamPuzzle
+		var wa_tome_gate := warrens.gates["wa_d_mould_tome"] as DungeonGate
+		for turn_k in 4:
+			wa_melt.request("turn", 0, wah)  # chute a: 6 -> 2 (east)
+			wa_melt.request("turn", 1, wah)  # chute b: 4 -> 0 (south, into the mould)
+		await _wait_frames(20)
+		_check(not wa_melt.flowing() and not wa_melt.is_solved() and not wa_tome_gate.is_open,
+			"M13 Warrens: the chutes set right, but nothing flows while the crucibles are cold")
+		var wa_crucibles := warrens.puzzles["wa_crucibles"] as ElementPuzzle
+		for k in 3:
+			wa_crucibles.request("light", k, wah)
+		await _wait_frames(20)
+		_check(not wa_melt.flowing() and not wa_melt.is_solved(), "M13 Warrens: heated, the crucibles still wait for the ladle to tip")
+		(warrens.puzzles["wa_lever_tip"] as PuzzleLever).request("pull", 0, wah)
+		await _wait_frames(30)
+		_check(wa_melt.flowing() and wa_melt.is_solved() and wa_tome_gate.is_open,
+			"M13 Warrens: the ladle tipped, the melt runs down the chutes into the mould: the tome room opens")
+		_check(warrens.builder.secret_walls.has("wa_d_jets_mould") and warrens.runes.size() == 2
+			and (warrens.arenas["wa_arena_reeve"] as BossArena).flag == &"wa_reeve_down"
+			and (warrens.portals["wa_exit_heart"] as Portal).locked,
+			"M13 Warrens: the cracked wall, two runes, the arenas with their flags, the way out sealed behind the end boss")
+		# the collapse gallery: a fall into the lava pit burns and sets back
+		var wa_pit_hp := 0.0
+		wah.god_mode = false
+		wah.health.heal_full()
+		wa_pit_hp = wah.health.current_health
+		wah.global_position = Vector3(50, -2.6, 2)
+		await _wait_frames(3)
+		_check(wa_pit.falls >= 1 and wah.global_position.distance_to(wa_pit.back) < 1.0 and wah.health.current_health < wa_pit_hp,
+			"M13 Warrens: a fall into the lava pit burns and sets the hero back at its edge")
+		wah.god_mode = true
+		wah.health.heal_full()
+		# the shortcut: the threshold's lever opens the way to the adit
+		(warrens.puzzles["wa_lever_short"] as PuzzleLever).request("pull", 0, wah)
+		await _wait_frames(2)
+		_check((warrens.gates["wa_d_threshold_adit"] as DungeonGate).is_open, "M13 Warrens: the threshold's lever opens the shortcut")
+		# out through the adit: in front of the west gate, whose seal breaks
+		warrens.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_w")
+		for i in 90:
+			await get_tree().process_frame
+			if get_tree().current_scene is AshenHighlands:
+				break
+		var wa_back := get_tree().current_scene as AshenHighlands
+		_check(wa_back != null, "M13 Warrens: the exit leads back to the Highlands")
+		if wa_back != null:
+			leave_zone = wa_back
+			await _wait_frames(8)
+			await get_tree().process_frame
+			var wa_gate: DungeonGatePortal = null
+			for child in wa_back.world.get_children():
+				if child is DungeonGatePortal and (child as DungeonGatePortal).gate_id == "dungeon_w":
+					wa_gate = child
+			_check(wa_gate != null and wa_back.player.global_position.distance_to(wa_back._arrival_point("dungeon_w")) < 3.0
+				and not wa_gate.locked and wa_back.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_w")),
+				"M13 Warrens: the hero comes out at the Charwood gate; its seal breaks")
 
 	# --- hub shows the spire shortcut once the colossus flag is set ---
 	leave_zone.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate
