@@ -114,6 +114,13 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
 		"timeout": 180.0,
 	},
+	# M13 phase 9: the Warrens' mid-boss for two - slag lumps reach the
+	# clients, a trough's chain pulled by a client quenches him, he falls.
+	"warrens_boss": {
+		"server": ["--zone=res://scenes/ember_warrens.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
+		"timeout": 200.0,
+	},
 	"trial": {
 		# M12 phase 6: two heroes take the Charwood's trial; one is struck too often
 		"server": ["--zone=res://scenes/ashen_highlands.tscn"],

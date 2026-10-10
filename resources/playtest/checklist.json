@@ -3,6 +3,30 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m13",
+			"title": "M13: Dungeons",
+			"items": [
+				{"id": "m13_gates", "src": "M13", "title": "Die Tore", "hint": "Osttor (Knochenfeld) und Westtor (Kohlwald): bricht das Siegel beim Nähern, steht die empfohlene Stufe (4 / 5) dran, kommst du nach dem Ausgang vor dem Tor heraus?"},
+				{"id": "m13_cistern_flow", "src": "M13", "title": "Hohle Zisterne: Weg & Länge", "hint": "Etwa 15 Minuten? Verläuft man sich? Findet man die Runen, die Abkürzung und den Rückweg?"},
+				{"id": "m13_cistern_puzzles", "src": "M13", "title": "Zisterne: Rätsel", "hint": "Ventile, Block + Druckplatten, Eisbrücke (12 s), Lichtstrahl, Schleusenklingen: ohne Hilfe verständlich, zu leicht oder zu schwer?"},
+				{"id": "m13_cistern_secret", "src": "M13", "title": "Zisterne: das große Geheimnis", "hint": "Brüchige Wand im Strömungsgang (3 Treffer), dann Eis + Licht + Platten: findet man es, macht es Spaß, lohnt der Foliant?"},
+				{"id": "m13_drowned", "src": "M13", "title": "Die Ertrunkenen", "hint": "Ertrunkener (die Pfütze bremst) und Kanallauerer (taucht ab, spuckt, danach 1,6 s offen): fair und lesbar?"},
+				{"id": "m13_keeper", "src": "M13", "title": "Der Aufgedunsene Wärter", "hint": "Im vollen Becken zäh, beide Schleusenhebel legen ihn 15 s trocken, Ringwelle alle 9 s: versteht man den Trick (die Notiz am Becken)?"},
+				{"id": "m13_deepmaw", "src": "M13", "title": "Der Tiefenschlund", "hint": "Taucht an vier Abflüssen auf, Stoß und Spucke, ab halber Gesundheit flutet der Außenring, Frostpylone frieren die Flut ein: fair?"},
+				{"id": "m13_warrens_flow", "src": "M13", "title": "Glutstollen: Weg & Länge", "hint": "Etwa 15 Minuten? Ist die Reihenfolge klar (Lore, Öfen, Funkenschacht, Einsturzgang, Schmelzhalle, Düsen)?"},
+				{"id": "m13_warrens_puzzles", "src": "M13", "title": "Glutstollen: Rätsel", "hint": "Lore schieben (9 Stöße), vier Öfen in 20 s, Kupferpfosten der Reihe nach (8 s), Einsturzboden über Lava, Feuerdüsen: passen die Zahlen?"},
+				{"id": "m13_warrens_secret", "src": "M13", "title": "Glutstollen: die Gussform", "hint": "Brüchige Wand im Düsengang, dann Tiegel heizen, Kelle kippen, Rinnen drehen: logisch, findet man es?"},
+				{"id": "m13_brood", "src": "M13", "title": "Die Glutbrut", "hint": "Glutkäfer bricht unter dir hervor (Ring, vorn gepanzert: von der Seite schlagen), Schmelzwicht wirft Schlacke und platzt beim Tod: fair?"},
+				{"id": "m13_reeve", "src": "M13", "title": "Der Schlackenvogt", "hint": "Heiß zäh; an einen Löschtrog locken und die Kette ziehen: die Kruste reißt 14 s. Klappt das Locken, ist der Trick klar (die Notiz an der Kelle)?"},
+				{"id": "m13_broodmother", "src": "M13", "title": "Die Glutbrutmutter", "hint": "Ansturm, Eingraben, Käfer legen, ab halber Gesundheit Lavarinnen, Ventile verkrusten eine Rinne: zu hart, zu lang?"},
+				{"id": "m13_tomes", "src": "M13", "title": "Die Folianten", "hint": "Je Klasse zwei neue Fähigkeiten (Wellenbrecher / Schmiedemal, Raureif-Schild / Glutsaat, Quellwasser / Glutwacht): nützlich, Stärke passend?"},
+				{"id": "m13_death", "src": "M13", "title": "Tod im Dungeon", "hint": "Wiederbeleben an der nächsten entzündeten Rune; ein Boss setzt sich zurück, wenn niemand mehr in seiner Arena lebt: fair?"},
+				{"id": "m13_return", "src": "M13", "title": "Wiederkehr", "hint": "Gegner kommen nach etwa 10 min zurück, Rätsel und Bosse bleiben erledigt, Truhen öffnen sich nur einmal: passt das?"},
+				{"id": "m13_look", "src": "M13", "title": "Look & Klang", "hint": "Zisterne kalt und nass, Stollen dunkel und glühend: zu dunkel? Wasser, Lava, Laternen, Grubenholz, Ambience, die neuen Gegner-Modelle?"},
+				{"id": "m13_coop", "src": "M13", "title": "Dungeons im Koop", "hint": "Zu zweit: Bosse skaliert, Rätsel geteilt, Hebel, Ventile und Ketten über den Server: alles synchron? (vorher Release, Protokoll 14)"}
+			]
+		},
+		{
 			"id": "m12",
 			"title": "M12: Highlands mit Substanz",
 			"items": [

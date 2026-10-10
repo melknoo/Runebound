@@ -706,6 +706,99 @@ class Driver extends Node:
 					return
 				await _seconds(2.0)
 				_finish("ok")
+			"warrens_boss":
+				# M13 phase 9: both heroes wake the Slag Reeve by the west trough;
+				# the slag he spews reaches the clients as lumps; once he stands
+				# beside the trough c1 pulls its chain (a request) and his crust
+				# cracks on every machine; then both strike him down.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as WarrensZone
+				if zone == null:
+					_finish("fail: not in the Ember Warrens")
+					return
+				var world := zone.net_world
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				var trough := zone.puzzles["wa_quench_w"] as QuenchTrough
+				var spot := trough.global_position + (Vector3(1.4, 0.2, 1.6) if role == "c1" else Vector3(1.9, 0.2, 1.0))
+				hero.global_position = spot
+				if not await _until(func() -> bool: return Net.roster.size() >= 2, 30.0, "both heroes"):
+					return
+				var find_reeve := func() -> SlagReeve:
+					for id: int in world.enemies:
+						var e := world.enemies[id] as SlagReeve
+						if e != null and is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
+							return e
+					return null
+				# the arena wakes once a hero is within 9 m of its middle: step in, then back to the trough
+				hero.global_position = Vector3(74, 0.2, 21) if role == "c1" else Vector3(75, 0.2, 22)
+				if not await _until(func() -> bool: return find_reeve.call() != null, 20.0, "the Slag Reeve"):
+					return
+				hero.global_position = spot
+				hero.velocity = Vector3.ZERO
+				var reeve := find_reeve.call() as SlagReeve
+				if not await _until(func() -> bool: return is_instance_valid(reeve) and reeve.health.max_health > 1500.0, 10.0,
+						"the Reeve scaled for two heroes"):
+					return
+				var lumps := {"n": 0}
+				var lump_seen := func() -> bool:
+					for node in get_tree().current_scene.get_children():
+						if node is EmberLump:
+							lumps["n"] = int(lumps["n"]) + 1
+					return int(lumps["n"]) > 0
+				if not await _until(lump_seen, 40.0, "a slag lump from the Reeve"):
+					return
+				if role == "c1":
+					var pulled := {"t": 0}
+					var quenched := func() -> bool:
+						if not is_instance_valid(reeve):
+							return false
+						if reeve.is_cooled():
+							return true
+						var flat := Vector2(reeve.global_position.x - trough.global_position.x, reeve.global_position.z - trough.global_position.z)
+						if flat.length() < SlagReeve.QUENCH_RADIUS - 0.6 and trough.is_ready() and Time.get_ticks_msec() - int(pulled["t"]) > 800:
+							pulled["t"] = Time.get_ticks_msec()
+							trough.request("pull", 0, hero)
+						return false
+					var q_deadline := Time.get_ticks_msec() + 60000
+					var q_ok := false
+					var q_near := INF
+					while Time.get_ticks_msec() < q_deadline:
+						if bool(quenched.call()):
+							q_ok = true
+							break
+						if is_instance_valid(reeve):
+							q_near = minf(q_near, Vector2(reeve.global_position.x - trough.global_position.x,
+								reeve.global_position.z - trough.global_position.z).length())
+						await get_tree().process_frame
+					if not q_ok:
+						_finish("fail: the Reeve was never quenched (closest %.1f m to the trough, %s pulls)" % [q_near,
+							trough.state.get("pulls", 0)])
+						return
+				else:
+					if not await _until(func() -> bool: return is_instance_valid(reeve) and reeve.is_cooled(), 70.0,
+							"the Reeve's crust cracked (seen on the other client)"):
+						return
+				var struck_at := {"t": 0}
+				var felled := func() -> bool:
+					if SaveGame.has_flag(&"wa_reeve_down"):
+						return true
+					var r := find_reeve.call() as SlagReeve
+					if r != null and Time.get_ticks_msec() - int(struck_at["t"]) > 300:
+						struck_at["t"] = Time.get_ticks_msec()
+						var hit := hero.roll_ability_hit(hero.ability(&"rune_cleave"))
+						hit.damage = 250.0
+						r.take_hit(hit)
+					return false
+				if not await _until(felled, 60.0, "the Reeve felled (the flag)"):
+					return
+				if not await _until(func() -> bool: return (zone.gates["wa_d_smelter_jets"] as DungeonGate).is_open, 10.0,
+						"the jet run open"):
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"puzzle_kit":
 				# M13 phase 2: the puzzle lab for two - c1 pulls the lever, c2 holds
 				# the latching plate (judged from its proxy on the server), c1

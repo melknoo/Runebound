@@ -818,7 +818,7 @@ Plan with the user's answers: ROADMAP M13.
   client a visual lump dropping onto the same disc) and `ImpBurst` (a ring
   0.9 s, then FIRE 16; HAZARD `imp_burst`). `SlagReeve` (DungeonBoss): hot
   x0.4, cooled x1.3 and slower for 14 s; `quench(at)` cools him within
-  4.5 m of `at`; a fan of three lumps every 12 s; two imps at half health.
+  6 m of `at`; a fan of three lumps every 12 s; two imps at half health.
   `QuenchTrough` (PoiPuzzle, POI `quench`): the chain ([E]) is a request;
   the authority tips the bucket (`pulls`, `until` = 6 s refill on the
   server clock) and quenches a Reeve beside it (`cooled`). `Broodmother`
@@ -833,6 +833,14 @@ Plan with the user's answers: ROADMAP M13.
   runnel exists and the valve stands outside it. `solocheck <class>
   <level> warrens` quenches the Reeve 8 s after he heats up and turns the
   valve of the hero's runnel 2 s after the lava rises.
+- **Boss timers (phase 9):** a boss's special attacks (the keeper's wave,
+  the Reeve's spew, the Broodmother's burrow and lay, the Deepmaw's call)
+  count down at the top of `_ai_process`, in every state - inside the
+  CHASE branch a melee slam cycle (CHASE for one frame between WINDUP and
+  RECOVER) starved them. Net scenario `warrens_boss`: two clients wake the
+  Reeve, see his slag lumps (HAZARD), c1 pulls the west trough's chain once
+  he stands beside it, both see his crust crack and strike him down (the
+  probe: a trough's `cooled` and the flag).
 - **Tomes (phase 8):** `AbilityData.tome_id` names the tome that teaches a
   TOME ability ("" = the Charwood grotto's); `Tome.build(zone, pos, yaw,
   which)`, `Tome.ability_for(hero, which)`, `lore_id()` (`lore.tome` /

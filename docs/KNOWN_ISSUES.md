@@ -362,7 +362,20 @@
 - Capture run asserts nothing automatically — it relies on eyeball review of
   captures/.
 
-## M13 open items (in progress)
+## M13 open items (built 2026-10-10, the user's playtest is the gate)
+- **Playtest list:** group "M13: Dungeons" on J (18 points, ids `m13_*`).
+- **Boss timers fixed in phase 9:** the keeper's wave, the Reeve's spew,
+  the Broodmother's burrow and brood and the Deepmaw's call counted down
+  only while the boss was chasing - in a melee slam cycle they never came.
+  They count in every state now; the Broodmother was cut again for it
+  (820 health base, one beetle per lay, at most two, burrow every 20 s, lay
+  every 28 s, bite 14, charge 20, break-out 18) and the Reeve's quench
+  reaches 6 m (he stops 3 m from a hero standing at the trough).
+- **Solo checks after phase 9** (the bot never dodges): Cistern level 5 -
+  Elementalist and druid 6/6, the Runebreaker dies at both bosses;
+  Warrens level 6 - Elementalist 6/6 (the Reeve leaves it at about 20 %,
+  the Broodmother at 8 %), druid 6/6, the Runebreaker 5/6 (the Broodmother
+  at 2 %).
 - Tome abilities to feel (phase 8): Breakwater (8 m, half damage, 2.6 m
   shove), Rime Ward (40 + 3/level, 6 s), Wellspring (25 + 30 over 5 s),
   Forge Brand (x1.2 taken, x0.75 dealt, 8 s), Ember Seed (3 s fuse, 30 +
@@ -374,8 +387,8 @@
   the quench (14 s, x1.3) and luring him to a trough; the Broodmother's
   runnels (7 per 0.6 s) and the valves' 8 s of crust. The solo check
   passes with thin margins (the bot never dodges) - judge the bosses in
-  the playtest. Net coverage of the Warrens' bosses (hazards `ember_lump`
-  / `imp_burst`, the runnel fx) comes with the phase 9 net suite.
+  the playtest. Net scenario `warrens_boss` covers the Reeve for two (the
+  lumps reach the clients, a client's chain quenches him, the flag).
 - **Warrens to feel:** the kilns' 20 s window with the 8 s ember charge,
   the posts' 8 s per hop, the collapse rows (1.5 s down every 4 s, 16
   fire damage per fall), the jets (6 strips, 3 s, 16), the cart's nine
@@ -388,11 +401,8 @@
   6 per 0.6 s + Chill) and the pylons' 6 s of ice; the lurker's 1.6 s
   open after a spit. Rigs are first passes (the serpents' heads,
   the keeper's bulk) - judge them in the playtest.
-- **Solo check Cistern, level 5** (`solocheck <class> 5 cistern`): the
-  Elementalist and the druid clear all six fights; the Runebreaker bot
-  dies at both bosses (keeper at 36 %, Deepmaw at 68 %): like at the
-  Colossus it never dodges the ring wave or the lane. If the tank fares
-  as badly in the playtest, lower the keeper's slam / wave first.
+- If the tank fares as badly as its bot at the Cistern's bosses, lower the
+  keeper's slam / wave first.
 - A hero who joins while the heart is flooded does not see the water
   until the next flood (the planes follow the Deepmaw's fx); the bites
   still land correctly.

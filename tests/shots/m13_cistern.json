@@ -23,6 +23,9 @@
 		{"name": "threshold", "player": [48, 0.2, 36], "yaw": 2.4, "pitch": -0.35, "zoom": 8.0, "settle": 0.4},
 		{"name": "heart", "player": [70, 0.2, 28], "yaw": -1.5708, "pitch": -0.35, "zoom": 9.0, "settle": 0.4},
 		{"name": "lamp_arch", "player": [-50, 0.2, 49], "yaw": 3.14159, "pitch": 0.05, "zoom": 4.5, "settle": 0.4},
-		{"name": "overview", "player": [-45, 0.2, 40], "yaw": 0.0, "pitch": -1.05, "zoom": 16.0, "settle": 0.4}
+		{"name": "overview", "player": [-45, 0.2, 40], "yaw": 0.0, "pitch": -1.05, "zoom": 16.0, "settle": 0.4},
+		{"name": "drowned", "player": [-16, 2.2, -34], "yaw": 0.0, "pitch": -0.3, "zoom": 6.5, "spawn": [{"id": "drowned_thrall", "at": [-18, 2.2, -39], "face": 2.8, "freeze": true}, {"id": "drowned_thrall", "at": [-13, 2.2, -40], "face": -2.8, "freeze": true}, {"id": "channel_lurker", "at": [-16, 2.2, -42]}], "settle": 2.6},
+		{"name": "keeper", "player": [10, 2.2, -30], "yaw": 0.0, "pitch": -0.25, "zoom": 7.5, "spawn": [{"id": "bloated_keeper", "at": [10, 2.2, -37], "face": 3.14159, "freeze": true}], "settle": 0.6},
+		{"name": "deepmaw", "player": [83, 0.2, 38], "yaw": 0.0, "pitch": -0.25, "zoom": 8.0, "spawn": [{"id": "deepmaw", "at": [83, 0.2, 30]}], "settle": 3.2}
 	]
 }

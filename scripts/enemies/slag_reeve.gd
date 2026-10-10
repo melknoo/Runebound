@@ -13,7 +13,7 @@ const HOT_ARMOR := 0.4
 const COOLED_BONUS := 1.3
 const COOLED_SLOW := 0.7
 const COOL_TIME := 14.0
-const QUENCH_RADIUS := 4.5
+const QUENCH_RADIUS := 6.0
 const SPEW_EVERY := 12.0
 const SPEW_WINDUP := 0.9
 const SPEW_LUMPS := 3
@@ -102,6 +102,7 @@ func _physics_process(delta: float) -> void:
 
 func _ai_process(delta: float) -> void:
 	var speed := move_speed * (COOLED_SLOW if is_cooled() else 1.0)
+	_spew_left -= delta  # counts in every state: a slam cycle in melee never starves the spew
 	match ai_state:
 		AIState.IDLE:
 			brake(delta)
@@ -110,7 +111,6 @@ func _ai_process(delta: float) -> void:
 		AIState.CHASE:
 			face_player(delta, 3.5)
 			move_towards(dir_to_player(), speed, delta)
-			_spew_left -= delta
 			if _spew_left <= 0.0 and player != null and is_instance_valid(player):
 				_spew_left = SPEW_EVERY
 				lock_strike()

@@ -26,6 +26,9 @@
 		{"name": "threshold", "player": [22, 0.2, 52], "yaw": 0.6, "pitch": -0.4, "zoom": 8.0, "settle": 0.4},
 		{"name": "brood_hall", "player": [20, 0.2, 61], "yaw": 3.14159, "pitch": -0.35, "zoom": 9.0, "settle": 0.4},
 		{"name": "lamp_timber", "player": [-13, 0.2, -36], "yaw": 1.5708, "pitch": 0.05, "zoom": 4.5, "settle": 0.4},
-		{"name": "overview", "player": [0, 0.2, -10], "yaw": 0.0, "pitch": -1.05, "zoom": 16.0, "settle": 0.4}
+		{"name": "overview", "player": [0, 0.2, -10], "yaw": 0.0, "pitch": -1.05, "zoom": 16.0, "settle": 0.4},
+		{"name": "brood", "player": [50, 0.2, 27], "yaw": 0.0, "pitch": -0.3, "zoom": 6.5, "spawn": [{"id": "kiln_imp", "at": [47, 0.2, 21], "face": 2.7, "freeze": true}, {"id": "kiln_imp", "at": [53, 0.2, 20], "face": -2.7, "freeze": true}, {"id": "cinder_beetle", "at": [50, 0.2, 22], "call": "wake"}], "settle": 2.8},
+		{"name": "reeve", "player": [79, 0.2, 30], "yaw": 0.0, "pitch": -0.25, "zoom": 7.5, "spawn": [{"id": "slag_reeve", "at": [79, 0.2, 23], "face": 3.14159, "freeze": true}], "settle": 0.6},
+		{"name": "broodmother", "player": [20, 0.2, 64], "yaw": 3.14159, "pitch": -0.3, "zoom": 9.0, "spawn": [{"id": "broodmother", "at": [20, 0.2, 74], "face": 0.0, "freeze": true}], "settle": 0.6}
 	]
 }

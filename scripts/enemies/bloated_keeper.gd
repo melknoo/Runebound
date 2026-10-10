@@ -98,6 +98,7 @@ func _physics_process(delta: float) -> void:
 
 func _ai_process(delta: float) -> void:
 	var speed := move_speed * (DRY_SLOW if is_dry() else 1.0)
+	_wave_left -= delta  # counts in every state: a slam cycle in melee never starves the wave
 	match ai_state:
 		AIState.IDLE:
 			brake(delta)
@@ -106,7 +107,6 @@ func _ai_process(delta: float) -> void:
 		AIState.CHASE:
 			face_player(delta, 3.5)
 			move_towards(dir_to_player(), speed, delta)
-			_wave_left -= delta
 			if _wave_left <= 0.0:
 				_wave_left = WAVE_EVERY
 				_enter_state(AIState.CIRCLE)  # the stamp's windup

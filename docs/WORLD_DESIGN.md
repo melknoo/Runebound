@@ -276,12 +276,12 @@ bosses:
   once its ring fills.
 - **The Slag Reeve** (mid-boss, the smelting hall): hot, his crust turns
   most of every blow (x0.4). Two quench troughs: pull a chain while he
-  stands beside that trough and his crust cracks for 14 s (x1.3, slower) -
-  lure him there. A hammer slam ahead, a fan of slag every 12 s, two imps
+  stands within 6 m of that trough and his crust cracks for 14 s (x1.3,
+  slower) - lure him there. A hammer slam ahead, a fan of slag every 12 s, two imps
   at half health.
 - **The Ember Broodmother** (end boss, the brood hall): bites, charges
   down a lane, digs in and breaks out under her prey (a wide ring), lays
-  cinder beetles. Below half her health the two lava runnels across the
+  a cinder beetle every 28 s (two at most). Below half her health the two lava runnels across the
   hall fill and burn; a valve by the wall crusts its runnel over for 8 s.
 
 **Co-op dungeons** (M13b, the user: "there should be extra dungeons for co-op"):

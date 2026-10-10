@@ -1,8 +1,8 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-10 · In progress: **M13 Dungeons with puzzles** (phases
-0-8 built, below; the wrap-up is next). Latest built milestone: **M12 Highlands with substance**
-(built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
+Updated: 2026-10-10 · Latest built milestone: **M13 Dungeons with puzzles**
+(built 2026-10-10, below; the user's playtest is the gate; **protocol 14**:
+a release before the next co-op). Before it: **M12 Highlands with substance** (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
@@ -14,7 +14,7 @@ user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
-## M13 Dungeons with puzzles (in progress)
+## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the
 Hollow Cistern (water) and the Ember Warrens (embers) now, the co-op dungeon
 as M13b; ~15 min each with short puzzles, one big secret puzzle (a tome per
@@ -331,6 +331,50 @@ abilities, 9 the wrap-up.
     id, the ward and its rise).
   - Smoke 849 green, 205 s (the tome; the brand's both sides; the seed's
     burst and Burn, nothing further off; the ward catches one deadly blow).
+- **Phase 9 (built): the wrap-up.**
+  - **Boss timers fixed:** the keeper's wave, the Reeve's spew, the
+    Broodmother's burrow and brood and the Deepmaw's call counted only
+    while chasing - a melee slam cycle starved them (the new net scenario
+    found it: no slag ever reached the clients). They count in every state
+    now. The Broodmother was cut for it (820 health base, one beetle per
+    lay, two at most, burrow 20 s, lay 28 s, bite 14, charge 20, break-out
+    18); the Reeve's quench reaches 6 m.
+  - Net scenario `warrens_boss` (two clients: the slag reaches them, a
+    client's chain quenches the Reeve, the flag); the full net suite green
+    (31 scenarios with the WebSocket ones).
+  - Solo checks: Cistern level 5 - Elementalist and druid 6/6, the
+    Runebreaker bot dies at both bosses; Warrens level 6 - Elementalist
+    and druid 6/6, Runebreaker 5/6 (the Broodmother at 2 %). The bot never
+    dodges; the playtest decides.
+  - Shots: `m13_cistern` (17, now with the Drowned, the keeper, the
+    Deepmaw) and `m13_warrens` (19, with the brood, the Reeve, the
+    Broodmother); the shot runner spawns any boss type. Perf (RTX 2070):
+    `cistern_hall` 443 FPS / 373 draw calls, `warrens_kilns` 488 FPS / 185.
+  - Playtest group "M13: Dungeons" on J (18 points).
+  - Smoke 849 green, 205 s.
+- **Gate walk (user):** solo needs no release; for co-op the server needs
+  one first (protocol 14, `tools\run_godot.cmd release`).
+  1. `tools\run_godot.cmd play`, into the Highlands. The east gate (Ribs
+     of Emberfall) and the west gate (Charwood): the seal breaks as you
+     come near, the label names the recommended level (4 / 5).
+  2. The Hollow Cistern: the sluice valves, the pump chamber (block +
+     latching plate, the alcove's chest), the frost channel's ice, the
+     gallery's light, the rune in the antechamber. Die once: you wake at
+     the rune.
+  3. The Bloated Keeper: read the note by the basin, pull both sluice
+     levers, fight him dry. The undertow run's blades; hit the cracked wall
+     (3 strikes): the vault, its big puzzle, the tome (read it; K to slot
+     the new ability).
+  4. The threshold's lever (the shortcut), the Deepmaw: the drains, the
+     flood below half, the frost pylons. Out behind it.
+  5. The Ember Warrens: the cart onto its plate, the ore store's two carts,
+     four kilns in 20 s, the copper posts in order, the collapse gallery.
+  6. The Slag Reeve: lure him to a quench trough and pull its chain. The
+     jet run, its cracked wall, the mould room (heat the crucibles, tip the
+     ladle, turn the chutes), the tome.
+  7. The Broodmother: her brood, her tunnel, the lava runnels and the
+     valves. Out behind her.
+  8. The J list, group "M13: Dungeons".
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

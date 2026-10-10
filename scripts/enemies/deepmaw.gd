@@ -131,6 +131,8 @@ func _physics_process(delta: float) -> void:
 
 func _ai_process(delta: float) -> void:
 	brake(delta)
+	if ai_state != AIState.BURIED and ai_state != AIState.EMERGE:
+		_summon_left -= delta  # up, in any state: the call never starves behind its attacks
 	match ai_state:
 		AIState.EMERGE:
 			face_player(delta, 6.0)
@@ -143,7 +145,6 @@ func _ai_process(delta: float) -> void:
 			face_player(delta, 4.0)
 			_up_left -= delta
 			_attack_left -= delta
-			_summon_left -= delta
 			if _summon_left <= 0.0:
 				_summon_left = SUMMON_EVERY
 				_summon()

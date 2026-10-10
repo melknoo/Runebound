@@ -4895,7 +4895,7 @@ func _run() -> void:
 			for e in EnemyBase.all_enemies:
 				if e is CinderBeetle and (e as CinderBeetle).awake:
 					brood_awake += 1
-			_check(warrens.enemy_count() == brood_before + 2 and brood_awake == 2, "M13 Broodmother: she lays two cinder beetles that hunt at once")
+			_check(warrens.enemy_count() == brood_before + 1 and brood_awake == 1, "M13 Broodmother: she lays a cinder beetle that hunts at once")
 			for e in EnemyBase.all_enemies.duplicate():
 				if e is CinderBeetle and is_instance_valid(e):
 					e.targetable = true

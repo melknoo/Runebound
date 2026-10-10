@@ -114,7 +114,7 @@ func _take(shot: Dictionary, variant_name: String) -> void:
 	for spec: Dictionary in shot.get("spawn", []):
 		var id: String = spec.get("id", "rusher")
 		var enemy: EnemyBase
-		if id in ["colossus", "vessel"]:  # bosses: not in spawn_by_id (zones script them)
+		if id in ZoneBase.BOSS_TYPES:  # bosses: not in spawn_by_id (zones and arenas script them)
 			enemy = ZoneBase.make_enemy(id)
 			_zone.call(&"_spawn_enemy", enemy, _pos(_zone, spec.get("at", [0, 0.2, 0])))
 		else:

@@ -4,8 +4,8 @@ extends DungeonBoss
 ## slag-plated beetle the size of a cart with a glowing egg sac. Close, she
 ## bites ahead; at range she draws a lane and charges down it; every few
 ## seconds she digs in, tunnels under her prey and breaks out beneath it (a
-## wide ring fills first). She lays cinder beetles that dig in and hunt on
-## their own. Below half her health the hall's lava runnels fill: standing
+## wide ring fills first). She lays cinder beetles (one at a time) that dig
+## in and hunt on their own. Below half her health the hall's lava runnels fill: standing
 ## in one burns - unless a quench valve by the wall crusts that runnel over
 ## for a while (no harm, firm ground). The runnels come from her arena (the
 ## layout POI); the authority runs the fight, every machine shows it.
@@ -14,26 +14,26 @@ const BITE_RANGE := 3.2
 const BITE_AHEAD := 2.0
 const BITE_RADIUS := 2.4
 const BITE_WINDUP := 0.8
-const BITE_DAMAGE := 18.0
+const BITE_DAMAGE := 14.0
 const BITE_RECOVER := 1.6
 const CHARGE_MIN := 6.0
 const CHARGE_MAX := 16.0
 const CHARGE_WINDUP := 1.0
 const CHARGE_SPEED := 13.0
-const CHARGE_DAMAGE := 24.0
+const CHARGE_DAMAGE := 20.0
 const CHARGE_COOLDOWN := 8.0
 const CHARGE_HALF_WIDTH := 1.6
 const CHARGE_RECOVER := 1.6
-const BURROW_EVERY := 18.0
+const BURROW_EVERY := 20.0
 const DIG_TIME := 0.8
 const TUNNEL_TIME := 1.5
 const TUNNEL_SPEED := 9.0
 const EMERGE_TIME := 1.1
 const EMERGE_RADIUS := 3.0
-const EMERGE_DAMAGE := 22.0
-const LAY_EVERY := 24.0
+const EMERGE_DAMAGE := 18.0
+const LAY_EVERY := 28.0
 const LAY_TIME := 1.0
-const BROOD_MAX := 3
+const BROOD_MAX := 2
 const RUNNEL_EVERY := 16.0
 const RUNNEL_RISE := 1.5
 const RUNNEL_TIME := 8.0
@@ -68,7 +68,7 @@ func _init() -> void:
 	super()
 	xp_value = 900
 	display_name = "The Ember Broodmother"
-	max_health = 900.0
+	max_health = 820.0
 	move_speed = 3.0
 	body_color = Color(0.2, 0.15, 0.12)
 
@@ -127,6 +127,8 @@ func _physics_process(delta: float) -> void:
 
 func _ai_process(delta: float) -> void:
 	_charge_cd = maxf(_charge_cd - delta, 0.0)
+	_burrow_left -= delta  # count in every state: a bite cycle in melee never starves them
+	_lay_left -= delta
 	match ai_state:
 		AIState.IDLE:
 			brake(delta)
@@ -135,8 +137,6 @@ func _ai_process(delta: float) -> void:
 				play_fx(&"roar")
 		AIState.CHASE:
 			face_player(delta, 4.0)
-			_burrow_left -= delta
-			_lay_left -= delta
 			var dist := distance_to_player()
 			if _lay_left <= 0.0 and _brood_count() < BROOD_MAX:
 				_lay_left = LAY_EVERY
@@ -258,13 +258,14 @@ func _brood_count() -> int:
 	return n
 
 
-## Authority: two cinder beetles behind her; they dig in and hunt at once.
+## Authority: a cinder beetle behind her (one per lay, at most BROOD_MAX
+## alive); it digs in and hunts at once.
 func _lay() -> void:
 	var zone := ZoneBase.zone_of(self)
 	if zone == null:
 		return
 	var back := -present_forward()
-	for side: float in [-1.0, 1.0]:
+	for side: float in [1.0]:
 		var at := global_position + back * 2.4 + Vector3(back.z, 0.0, -back.x) * side * 1.6
 		if arena_rect.has_area():
 			var inner := arena_rect.grow(-1.5)

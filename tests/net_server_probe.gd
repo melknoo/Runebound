@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -386,6 +386,19 @@ func _update() -> void:
 					verdict = "fail: the boss woke %d times (2 expected)" % arena.starts
 				elif not SaveGame.has_flag(&"ci_keeper_down"):
 					verdict = "fail: the mid-boss's flag is not set on the server"
+				else:
+					verdict = "ok"
+		"warrens_boss":  # M13: the Reeve was quenched at a trough a client pulled, and fell
+			var wz := get_tree().current_scene as WarrensZone
+			if wz == null:
+				verdict = "fail: the server is not in the Ember Warrens"
+			else:
+				var cooled := int((wz.puzzles["wa_quench_w"] as QuenchTrough).state.get("cooled", 0)) \
+					+ int((wz.puzzles["wa_quench_e"] as QuenchTrough).state.get("cooled", 0))
+				if cooled < 1:
+					verdict = "fail: no trough ever quenched the Reeve on the server"
+				elif not SaveGame.has_flag(&"wa_reeve_down"):
+					verdict = "fail: the Reeve's flag is not set on the server"
 				else:
 					verdict = "ok"
 		"trial":  # M12 phase 6: the server ran the trial to its end and kept it in its world

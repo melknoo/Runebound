@@ -334,7 +334,7 @@ Unter-Biome mit eigenem Boden, Wald, Dorf, Knochenfeld-Skelett und erzählenden 
 gebaut (Solo-Check, Shots, Perf-A/B, Doku, Playtest-Gruppe „M12“ auf J). **PROTOCOL 13:** vor
 dem Koop braucht der Server ein Release (`tools\run_godot.cmd release`); Stand 2026-10-09 steht `release` auf dem letzten Code-Commit (f2da9a6; `main` hat danach nur Doku), der Deploy am Laptop ist ungeprüft (ssh-Timeout).
 
-### M13 — Dungeons mit Rätseln (in Arbeit)
+### M13 — Dungeons mit Rätseln (gebaut 2026-10-10, dein Playtest ist das Gate)
 **Entscheidungen des Spielers (2026-10-09, drei Runden):**
 - **Umfang:** Hollow Cistern und Ember Warrens jetzt; der Koop-Dungeon (3–5 Spieler, solo
   gesperrt) kommt als **M13b** mit eigenem Plan.
@@ -393,7 +393,10 @@ verspottet –, Raureif-Schild – Barriere, Nahkämpfer werden unterkühlt –,
 wäscht Verlangsamungen ab, Heilung über Zeit). Phase 8b gebaut (der Foliant der Warrens: Schmiedemal –
 das Ziel nimmt mehr Schaden und teilt weniger aus –, Glutsaat – platzt nach 3 s in einem Feuerring –,
 Glutwacht – fängt den nächsten tödlichen Schlag am Verbündeten ab; statt „Aschenblüte“, weil der
-Druide schon das Legendary „Ashbloom Seed“ hat).
+Druide schon das Legendary „Ashbloom Seed“ hat). Phase 9 gebaut (Abschluss: ein Fehler bei den
+Boss-Spezialangriffen behoben – im Nahkampf-Takt kamen Welle, Schlacke, Graben und Brut nie –,
+Netz-Szenario für den Schlackenvogt, komplette Netz-Suite grün, Solo-Checks, Shots, Perf, Playtest-
+Gruppe „M13: Dungeons“ auf J).
 **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
