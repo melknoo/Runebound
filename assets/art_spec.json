@@ -666,6 +666,36 @@
 			"teeth": ["#C8C2A8", "#E2DCC2"],
 			"eyes": "#C6FF9A"
 		},
+		"cinder_beetle": {
+			"comment": "M13 the Ember Brood: a dog-sized beetle, soot-black shell, a slag head plate, ember seams between the wing cases",
+			"shell": ["#120D0B", "#1C1512", "#281E19", "#352822", "#45352C"],
+			"plate": ["#2E2621", "#433830", "#5A4B40", "#706052"],
+			"legs": ["#17110E", "#231A15", "#30241D"],
+			"glow": "#FF8A30"
+		},
+		"kiln_imp": {
+			"comment": "M13 the Ember Brood: a small soot-skinned imp, a furnace belly glowing through cracks, stubby horns",
+			"skin": ["#1E1612", "#2B201A", "#3A2C23", "#4B3A2E"],
+			"belly": ["#5A2410", "#8A3814", "#C2581C"],
+			"horn": ["#4A3E34", "#665648", "#86725F"],
+			"glow": "#FFB040"
+		},
+		"slag_reeve": {
+			"comment": "M13 mid-boss: a smelting reeve grown into his slag, a leather apron, an iron ladle-hammer, molten cracks",
+			"skin": ["#2A201B", "#3A2C25", "#4C3A30", "#5F4A3D"],
+			"slag": ["#1A1614", "#26201C", "#352C26", "#463B33", "#5A4C42"],
+			"apron": ["#2E1E14", "#40291B", "#553723"],
+			"iron": ["#16191B", "#202528", "#2C3236", "#3A4146"],
+			"glow": "#FF7A26"
+		},
+		"broodmother": {
+			"comment": "M13 end boss: the queen of the cinder beetles, slag-plated, a swollen egg sac glowing with brood",
+			"shell": ["#100B09", "#1A1310", "#261C17", "#33261F", "#433329"],
+			"plate": ["#2E2621", "#433830", "#5A4B40", "#706052"],
+			"sac": ["#4A1A0C", "#7A2C10", "#B04818", "#E07024"],
+			"legs": ["#17110E", "#231A15", "#30241D"],
+			"glow": "#FF9A38"
+		},
 		"stonehulk": {
 			"comment": "Highlands/lab brute: weathered stone slabs, moss on the up-facing planes, ember slit eyes",
 			"stone": [

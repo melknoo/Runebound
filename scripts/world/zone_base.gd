@@ -864,8 +864,10 @@ func blessing_toast(hero: Player, id: StringName) -> void:
 const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "warden", "colossus", "vessel",
 	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture",
 	"curse_lantern", "wisp_nest", "jackal_den", "dungeon_boss",
-	"drowned_thrall", "channel_lurker", "bloated_keeper", "deepmaw"]
-const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss", "bloated_keeper", "deepmaw"]
+	"drowned_thrall", "channel_lurker", "bloated_keeper", "deepmaw",
+	"cinder_beetle", "kiln_imp", "slag_reeve", "broodmother"]
+const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss", "bloated_keeper", "deepmaw",
+	"slag_reeve", "broodmother"]
 
 
 static func _enemy_script(id: String) -> GDScript:
@@ -890,6 +892,10 @@ static func _enemy_script(id: String) -> GDScript:
 		"channel_lurker": return ChannelLurker
 		"bloated_keeper": return BloatedKeeper
 		"deepmaw": return Deepmaw
+		"cinder_beetle": return CinderBeetle  # M13 the Ember Warrens
+		"kiln_imp": return KilnImp
+		"slag_reeve": return SlagReeve
+		"broodmother": return Broodmother
 	return MeleeRusher
 
 

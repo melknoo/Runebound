@@ -384,6 +384,10 @@ Wasser-Sounds; Solo-Check mit Dungeon-Route). Phase 6 gebaut (die Ember Warrens:
 vier Öfen, Kupferpfosten der Reihe nach, Einsturzgang über Lava, Feuerdüsen, das große Rätsel „Die
 Gussform“ – Tiegel heizen, Kelle kippen, Rinnen drehen –, eigener Look mit Lava-Shader, Grubenholz,
 Kupferadern, Glutgittern und einem Ofen-Grollen; sechs Lore-Texte DE/EN; das Westtor führt jetzt hinein).
+Phase 7 gebaut (die Glutbrut: der Glutkäfer gräbt sich ein und bricht unter dem Helden hervor, vorn
+gepanzert; der Schmelzwicht wirft Schlacke und platzt beim Tod; der Schlackenvogt ist heiß zäh, am
+Löschtrog gelöscht verwundbar; die Glutbrutmutter stürmt, gräbt sich ein, legt Käfer, ab halber
+Gesundheit füllen sich Lavarinnen, Löschventile verkrusten sie; Solo-Check Stufe 6: alle Klassen 6/6).
 **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

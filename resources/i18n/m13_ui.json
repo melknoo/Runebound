@@ -175,5 +175,25 @@
 	"area.wa_heart": {
 		"en": "The Brood Hall",
 		"de": "Die Bruthalle"
+	},
+	"enemy.cinder_beetle": {
+		"en": "Cinder Beetle",
+		"de": "Glutkäfer"
+	},
+	"enemy.kiln_imp": {
+		"en": "Kiln Imp",
+		"de": "Schmelzwicht"
+	},
+	"enemy.slag_reeve": {
+		"en": "The Slag Reeve",
+		"de": "Der Schlackenvogt"
+	},
+	"enemy.broodmother": {
+		"en": "The Ember Broodmother",
+		"de": "Die Glutbrutmutter"
+	},
+	"ui.prompt.chain": {
+		"en": "Pull the chain",
+		"de": "Kette ziehen"
 	}
 }

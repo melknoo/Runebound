@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-10 · In progress: **M13 Dungeons with puzzles** (phases
-0-6 built, below). Latest built milestone: **M12 Highlands with substance**
+0-7 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -274,6 +274,35 @@ abilities, 9 the wrap-up.
     posts only in order; the melt waits for the heat and the ladle, then
     opens the tome room; a fall into the lava burns and sets back; the
     shortcut; out at the Charwood gate, whose seal breaks).
+- **Phase 7 (built): the Ember Brood, the Slag Reeve and the Broodmother.**
+  - **The Ember Brood** (WORLD_DESIGN "The Ember Warrens"): the Cinder
+    Beetle (70 HP; dug in until woken, tunnels under its prey and breaks
+    out beneath it, bites; a head plate cuts blows from the front to x0.35)
+    and the Kiln Imp (42 HP; keeps its distance, lobs slag onto a disc -
+    burning ground; dead, its belly bursts after a ring). The four camps
+    field them.
+  - **The Slag Reeve** (mid-boss, 800 HP base): x0.4 while hot; two quench
+    troughs (`QuenchTrough`, a chain on [E], 6 s refill) crack his crust
+    for 14 s (x1.3, slower) if he stands beside the one pulled; a hammer
+    slam (1.9 s opening after it), a fan of slag every 12 s, two imps at
+    half health.
+  - **The Ember Broodmother** (end boss, 900 HP base): bite, a lane charge,
+    burrow and break out under her prey, lays cinder beetles (3 at most);
+    below half health the two lava runnels fill (7 fire per 0.6 s in
+    them), a valve by the wall (`LavaValve`) crusts its runnel for 8 s.
+  - Rigs (beetle and queen on the quadruped template, imp and Reeve on the
+    humanoid one), palettes, sounds `chitter`, `imp_cackle`, `steam_hiss`,
+    `brood_shriek`; hazards `ember_lump` / `imp_burst` for co-op clients.
+  - `solocheck <class> 6 warrens`: all three classes 6/6 (the Elementalist
+    ends the Reeve at 4 %, the Runebreaker the Broodmother at 13 %; the bot
+    never dodges); boss numbers were cut twice (health, the slam's
+    recovery, bite and charge damage).
+  - Smoke 841 green, 199 s (four rigs; a beetle dug in, tunnelling to the
+    hero and breaking out beneath it, its head plate; an imp's slag and
+    burning ground, its burst; the Reeve's crust, a wasted bucket, a
+    quench beside the trough, his imps, his fall opens the jet run; the
+    Broodmother's brood, her tunnel, the runnels filling, the lava's bite,
+    a valve's crust, the runnels drained on her death, the way out).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

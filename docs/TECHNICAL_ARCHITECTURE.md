@@ -806,6 +806,33 @@ Plan with the user's answers: ROADMAP M13.
   (checked every 0.25 s). Dressing kit `wa_*` (timber frames, ore veins,
   ember grates, lava spouts, slag, ore), roles `warrens_floor` (embers in
   the cracks) / `warrens_wall`, the ambience `warrens_rumble_loop`.
+- **The Warrens' enemies and bosses (phase 7):** `CinderBeetle` (BURIED
+  until a hero comes within 9 m or fights within 20 m (`wake()`), then it
+  tunnels under the floor towards its prey - unseen, no target, a dust
+  trail fx - and breaks out beneath it after 3 s or within 1.2 m (EMERGE
+  ring); up 7 s or until its prey is 9 m off, then BLINK (digs in); its
+  `take_hit` cuts a blow from the front cone (`from_front`: the attacker's
+  or the hit's source position) to x0.35). `KilnImp` (keeps 4.5-9 m, lobs
+  an `EmberLump` every 2.6 s; dead, an `ImpBurst`). `EmberLump` (a disc,
+  an arc, burst + FirePatch on the authority; HAZARD `ember_lump` gives a
+  client a visual lump dropping onto the same disc) and `ImpBurst` (a ring
+  0.9 s, then FIRE 16; HAZARD `imp_burst`). `SlagReeve` (DungeonBoss): hot
+  x0.4, cooled x1.3 and slower for 14 s; `quench(at)` cools him within
+  4.5 m of `at`; a fan of three lumps every 12 s; two imps at half health.
+  `QuenchTrough` (PoiPuzzle, POI `quench`): the chain ([E]) is a request;
+  the authority tips the bucket (`pulls`, `until` = 6 s refill on the
+  server clock) and quenches a Reeve beside it (`cooled`). `Broodmother`
+  (DungeonBoss): bite, a lane charge, burrow (BLINK -> BURIED tunnelling
+  1.5 s -> EMERGE ring under her prey), lays cinder beetles (`wake()`d, at
+  most 3); her arena POI's `runnels` (rects): below half health they fill
+  (`lava` "", rise, up; a bite every 0.6 s for heroes in a runnel that is
+  not crusted), planes on every machine through her fx (`crust<i>` /
+  `thaw<i>`). `LavaValve` (PoiPuzzle, POI `valve`, `runnel` index): [E]
+  is a request, the authority calls `crust_runnel(i)` (8 s; 10 s refill).
+  The bake checks runnels in the room, the boss not in one, each valve's
+  runnel exists and the valve stands outside it. `solocheck <class>
+  <level> warrens` quenches the Reeve 8 s after he heats up and turns the
+  valve of the hero's runnel 2 s after the lava rises.
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 

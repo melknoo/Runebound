@@ -435,6 +435,10 @@ gameplay timing is untouched.
 | Channel Lurker (M13, serpent) | a drain eel rearing out of the floor: dark teal scales, pale belly plates, fins, green-white eyes | idle, emerge (from 2.3 m under), charge (maw fills = WINDUP), spit, submerge, stagger |
 | The Bloated Keeper (M13 mid-boss, x1.15) | swollen grey-green in a keeper's coat, brass buttons, a chain of keys, kelp | idle, run, slam (= the boss WINDUP + RECOVER), stomp (one foot up = WAVE_WINDUP), stagger |
 | The Deepmaw (M13 end boss, serpent x1.3, girth 1.9, scaled 1.6) | near-black teal eel-worm, pale belly, a red maw with bone teeth | idle, emerge, lunge (reared = LUNGE_WINDUP, then down the lane), spit (gulp = SPIT_WINDUP), submerge (= SINK_TIME), stagger |
+| Cinder Beetle (M13, quadruped, low and wide) | soot-black domed shell, an ember seam between the wing cases, a slag head plate (the armour reads), mandibles | idle, run (scuttle), bite (= WINDUP + ATTACK + RECOVER), emerge (= EMERGE_TIME, from 0.75 m under), burrow (= BURROW_TIME), stagger |
+| Kiln Imp (M13, small humanoid) | soot skin, a pot belly with furnace cracks and a glowing grin, stubby horns, big clawed hands | idle, run (scamper), throw (wind back = WINDUP), stagger |
+| The Slag Reeve (M13 mid-boss, x1.2) | a smelting reeve grown into his slag: crusted shoulders and forearms with molten cracks, a leather apron, an iron ladle-hammer with a hot face | idle, run, slam (= WINDUP + HAMMER_RECOVER), spew (rear back = SPEW_WINDUP), stagger |
+| The Ember Broodmother (M13 end boss, beetle x1.6, scaled 1.5) | the cinder beetle's queen: the same shell and plate, a swollen egg sac on the tail glowing with brood | idle, run, bite, charge, lay (the sac lifts = LAY_TIME), burrow (= DIG_TIME), emerge, stagger |
 
 - Elites keep their model and get an aura only: eyes burn in the affix's
   element colour, and element motes rise off the body. There is no ground

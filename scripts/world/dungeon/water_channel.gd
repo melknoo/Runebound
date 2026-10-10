@@ -59,7 +59,7 @@ func _ready() -> void:
 	_water.name = "Water"
 	var plane := BoxMesh.new()
 	plane.size = Vector3(rect.size.x, 0.1, rect.size.y)
-	plane.material = lava_material() if lava else _water_material()
+	plane.material = lava_material() if lava else water_material()
 	_water.mesh = plane
 	_water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_water)
@@ -93,7 +93,7 @@ func _ready() -> void:
 
 
 ## Opaque pixel ripples in the zone's water colours.
-static func _water_material() -> ShaderMaterial:
+static func water_material() -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = WATER_SHADER
 	var deep := ArtKit.color("palettes.cistern.water", Color(0.07, 0.2, 0.24))

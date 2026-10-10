@@ -26,7 +26,10 @@ as a ring through old ember mines and their smelting halls:
 Rooms stand 2 m apart (the wall); a connector cuts a doorway through that
 gap. Channels are sunken lava (kind "lava") across a flat room. Every id
 carries the prefix "wa_" (SaveGame keys are flat). Rules: see dungeon_bake.py.
-Enemies are placeholders (raiders) until the Ember Brood comes (phase 7).
+The Ember Brood (phase 7): cinder beetles that tunnel and break out under a
+hero, kiln imps that lob slag; the Slag Reeve (two quench troughs crack his
+crust) and the Ember Broodmother (lava runnels fill below half her health;
+two valves crust one each).
 """
 
 LAYOUT = {
@@ -97,7 +100,7 @@ LAYOUT = {
          "pos": [7, 33], "yaw": -0.6},
         # --- the rail hall: the cart along its rail onto the plate holds the kiln gate ---
         {"id": "wa_camp_rails", "type": "camp", "pos": [6, -4], "radius": 9.0,
-         "composition": ["rusher", "rusher", "caster"],
+         "composition": ["cinder_beetle", "kiln_imp", "cinder_beetle"],
          "spots": [[3, -7], [9, -7], [6, -1]]},
         {"id": "wa_cart_rails", "type": "block", "look": "cart", "pos": [-11, 6], "grid": [-12, -14, -10, 8],
          "cell": 2.0},
@@ -119,7 +122,7 @@ LAYOUT = {
         {"id": "wa_lava_kilns", "type": "water", "pos": [0, -52.5], "channel": "wa_ch_kilns",
          "inputs": [], "walkways": []},
         {"id": "wa_camp_kilns", "type": "camp", "pos": [0, -41], "radius": 9.0,
-         "composition": ["rusher", "caster", "rusher"],
+         "composition": ["kiln_imp", "cinder_beetle", "kiln_imp"],
          "spots": [[-5, -43], [5, -43], [0, -46]]},
         {"id": "wa_lore_kilns", "type": "lore", "kind": "note", "text": "lore.warrens.smelter_note",
          "pos": [-15, -21], "yaw": 0.6},
@@ -128,7 +131,7 @@ LAYOUT = {
         {"id": "wa_posts", "type": "element", "pos": [50, -42], "element": "storm", "window": 8.0,
          "ordered": True, "targets": [[42, -50], [50, -54], [58, -48], [56, -32]]},
         {"id": "wa_camp_shaft", "type": "camp", "pos": [50, -42], "radius": 8.0,
-         "composition": ["rusher", "caster"], "spots": [[47, -44], [53, -40]]},
+         "composition": ["cinder_beetle", "kiln_imp"], "spots": [[47, -44], [53, -40]]},
         {"id": "wa_lore_shaft", "type": "lore", "kind": "inscription", "text": "lore.warrens.lift_plaque",
          "pos": [40, -28], "yaw": 1.5708},
         # --- the collapse gallery: rows over the lava pit ---
@@ -136,8 +139,10 @@ LAYOUT = {
          "rows": 4, "period": 4.0, "down": 1.5, "back": [50, -8], "damage": 16.0},
         # --- the landing and the smelting hall (the mid-boss) ---
         {"id": "wa_rune_landing", "type": "rune", "pos": [50, 26], "yaw": 0.0},
-        {"id": "wa_arena_reeve", "type": "arena", "pos": [79, 21], "boss": "dungeon_boss",
+        {"id": "wa_arena_reeve", "type": "arena", "pos": [79, 21], "boss": "slag_reeve",
          "flag": "wa_reeve_down", "trigger": 9.0, "reward": "mid"},
+        {"id": "wa_quench_w", "type": "quench", "pos": [67, 10], "yaw": 0.785},
+        {"id": "wa_quench_e", "type": "quench", "pos": [91, 32], "yaw": -2.356},
         {"id": "wa_lore_reeve", "type": "lore", "kind": "note", "text": "lore.warrens.reeve_hint",
          "pos": [65, 7], "yaw": 0.8},
         # --- the jet run: fire jets in rhythm; the cracked wall at x 52 ---
@@ -158,11 +163,14 @@ LAYOUT = {
         {"id": "wa_rune_threshold", "type": "rune", "pos": [15, 37], "yaw": 0.0},
         {"id": "wa_lever_short", "type": "lever", "pos": [14, 46], "yaw": 1.5708},
         {"id": "wa_camp_threshold", "type": "camp", "pos": [24, 46], "radius": 7.0,
-         "composition": ["rusher", "caster"], "spots": [[21, 44], [27, 48]]},
+         "composition": ["cinder_beetle", "kiln_imp"], "spots": [[21, 44], [27, 48]]},
         {"id": "wa_lore_threshold", "type": "lore", "kind": "note", "text": "lore.warrens.last_note",
          "pos": [29, 37], "yaw": 2.4},
-        {"id": "wa_arena_mother", "type": "arena", "pos": [20, 75], "boss": "dungeon_boss",
-         "flag": "wa_mother_down", "trigger": 10.0, "reward": "end"},
+        {"id": "wa_arena_mother", "type": "arena", "pos": [20, 76], "boss": "broodmother",
+         "flag": "wa_mother_down", "trigger": 10.0, "reward": "end",
+         "runnels": [[4, 69, 36, 72], [4, 80, 36, 83]]},
+        {"id": "wa_valve_a", "type": "valve", "pos": [35, 66], "yaw": -1.5708, "runnel": 0},
+        {"id": "wa_valve_b", "type": "valve", "pos": [5, 86], "yaw": 1.5708, "runnel": 1},
         {"id": "wa_exit_heart", "type": "portal", "pos": [20, 89], "yaw": 3.14159, "dest": "highlands",
          "arrival": "dungeon_w", "label": "ASHEN HIGHLANDS", "unlock_flag": "wa_mother_down"},
     ],

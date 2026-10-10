@@ -3180,6 +3180,333 @@ def build_deepmaw(sheets=False):
     build_serpent("deepmaw", "deepmaw", "deepmaw", 1.3, 1.9, sheets, deepmaw_clips)
 
 
+# --- M13 THE EMBER BROOD: the cinder beetle and its queen (quadruped template,
+# low and wide: the legs splay out, the shell is the silhouette) ----------------
+
+BEETLE = {"hip": (0.3, 0.42), "shoulder": (-0.28, 0.44), "neck": (-0.42, 0.42), "head": (-0.72, 0.34),
+          "jaw0": (-0.62, 0.3), "jaw1": (-0.9, 0.26), "tail": (0.62, 0.3),
+          "f_top": (-0.24, 0.36), "f_elbow": (-0.34, 0.24), "f_wrist": (-0.38, 0.08), "f_toe": (-0.46, 0.01),
+          "h_top": (0.26, 0.36), "h_stifle": (0.36, 0.24), "h_hock": (0.42, 0.12), "h_ankle": (0.44, 0.04),
+          "h_toe": (0.52, 0.01), "leg_x": 0.34}
+
+
+def _scaled(d, s, tail=None):
+    out = {}
+    for key, v in d.items():
+        out[key] = v * s if key == "leg_x" else (v[0] * s, v[1] * s)
+    if tail is not None:
+        out["tail"] = (tail[0] * s, tail[1] * s)
+    return out
+
+
+def build_beetle(name, glb, pal_key, s, sheets, clips, sac=False):
+    """A cinder beetle at scale s (the Broodmother: s > 1 and a glowing egg
+    sac on the tail bone). Slot 1 = the glow (eyes, the shell's seam, the sac's
+    brood)."""
+    rig.reset_scene()
+    d = _scaled(BEETLE, s, (0.95, 0.4) if sac else None)
+    arm = rig.build_armature(name, quadruped_bones(d))
+    pal = PAL[pal_key]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    shell = pm.paint(pal["shell"], 2, "plate")
+    shell_hi = pm.paint(pal["shell"], 3, "plate")
+    plate = pm.paint(pal["plate"], 2, "plate")
+    legs = pm.paint(pal["legs"], 1)
+    hy, hz = d["hip"]
+    rot, ln = _along(d["hip"], d["shoulder"])
+    # the domed shell (two wing cases meeting at a glowing seam) and the belly
+    pm.loft("spine", [(-0.35 * s, 0.18 * s, 0.12 * s, 0, 0.02 * s), (-0.15 * s, 0.34 * s, 0.2 * s, 0, 0.06 * s),
+                      (0.2 * s, 0.4 * s, 0.24 * s, 0, 0.08 * s), (0.5 * s, 0.34 * s, 0.18 * s, 0, 0.06 * s),
+                      (ln + 0.04 * s, 0.26 * s, 0.13 * s, 0, 0.04 * s)],
+            center=(0, hy, hz), rot=rot, paint=shell)
+    pm.loft("spine", [(-0.2 * s, 0.2 * s, 0.08 * s, 0, -0.08 * s), (0.45 * s, 0.24 * s, 0.09 * s, 0, -0.1 * s)],
+            center=(0, hy, hz), rot=rot, paint=legs)
+    pm.box("spine", (0.035 * s, 0.8 * s, 0.04 * s), (0, (hy + d["shoulder"][0]) * 0.5, hz + 0.31 * s), mat_index=1)
+    for x in (1.0, -1.0):
+        pm.box("spine", (0.12 * s, 0.6 * s, 0.05 * s), (0.2 * s * x, 0.0, hz + 0.28 * s), rot=(0, 0.35 * x, 0),
+               paint=shell_hi)                                                                   # the wing cases' ridges
+        pm.box("spine", (0.05 * s, 0.05 * s, 0.32 * s), (0.36 * s * x, 0.0, 0.22 * s), rot=(0, 0.7 * x, 0),
+               paint=legs)                                                                       # the middle legs
+    # the head under its slag plate, mandibles, ember eyes
+    rot, ln = _along(d["neck"], d["head"])
+    pm.loft("head", [(0.0, 0.2 * s, 0.14 * s, 0, 0), (0.16 * s, 0.22 * s, 0.13 * s, 0, 0), (ln, 0.12 * s, 0.08 * s, 0, 0)],
+            center=(0, d["neck"][0], d["neck"][1]), rot=rot, paint=legs)
+    pm.box("head", (0.5 * s, 0.38 * s, 0.08 * s), (0, -0.55 * s, 0.5 * s), rot=(0.25, 0, 0), paint=plate)
+    for x in (1.0, -1.0):
+        pm.box("head", (0.06 * s, 0.04 * s, 0.035 * s), (0.13 * x * s, -0.67 * s, 0.4 * s), mat_index=1)
+        pm.box("jaw", (0.05 * s, 0.24 * s, 0.05 * s), (0.1 * x * s, -0.8 * s, 0.27 * s), rot=(0, 0, 0.45 * x),
+               taper=0.4, paint=plate)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = d["leg_x"] * x
+        for bone, a, b, r in (("f_upper", "f_top", "f_elbow", 0.05), ("f_lower", "f_elbow", "f_wrist", 0.04),
+                              ("h_thigh", "h_top", "h_stifle", 0.05), ("h_shin", "h_stifle", "h_hock", 0.04),
+                              ("h_hock", "h_hock", "h_ankle", 0.035)):
+            pm.loft(bone + "." + side, [(d[a][1], r * s, r * s, lx, d[a][0]), (d[b][1], r * 0.8 * s, r * 0.8 * s, lx, d[b][0])],
+                    sides=6, paint=legs)
+        pm.box("f_paw." + side, (0.05 * s, 0.1 * s, 0.03 * s), (lx, d["f_toe"][0], 0.02 * s), paint=legs)
+        pm.box("h_paw." + side, (0.05 * s, 0.1 * s, 0.03 * s), (lx, d["h_toe"][0], 0.02 * s), paint=legs)
+    if sac:  # the queen's swollen egg sac on the tail bone, brood glowing through
+        sac_paint = pm.paint(pal["sac"], 2, "hide")
+        rot, ln = _along(d["hip"], d["tail"])
+        pm.loft("tail", [(0.0, 0.3 * s, 0.22 * s, 0, 0), (ln * 0.4, 0.42 * s, 0.32 * s, 0, 0.02 * s),
+                         (ln * 0.85, 0.34 * s, 0.26 * s, 0, 0.02 * s), (ln + 0.08 * s, 0.14 * s, 0.1 * s, 0, 0)],
+                center=(0, hy, hz), rot=rot, paint=sac_paint)
+        for k in range(5):
+            pm.box("tail", (0.07 * s, 0.07 * s, 0.05 * s),
+                   (0.22 * s * (1 if k % 2 else -1), hy + ln * (0.25 + k * 0.12), hz + 0.22 * s - k * 0.02 * s), mat_index=1)
+    mats = [rig.make_material(pal_key[:2] + "_body", "#FFFFFF"),
+            rig.make_material(pal_key[:2] + "_glow", pal["glow"], emission_hex=pal["glow"], strength=3.0)]
+    body = pm.to_object(glb, mats, arm)
+    clips(arm, s)
+    finish(body, arm, glb, glb, (1,), sheets)
+
+
+def _beetle_common(arm, s, emerge, burrow):
+    k = keyed(quad_stance({"neck": (0.05, 0, 0)}))
+    action(arm, "idle", [
+        (0, k()), (40, k({"jaw": (0.25, 0, 0), "head": (-0.06, 0, 0.05), "hips": {"rot": (0.0, 0, 0), "loc": (0, 0.01 * s, 0)}})),
+        (80, k()),
+    ], sheet=[0, 40])
+    run_keys = []
+    for frame in (0, 4, 8, 12, 16):
+        ph = frame / 16.0
+        legs = {}
+        for side, off in (("L", 0.0), ("R", 0.5)):
+            c = math.cos(2.0 * math.pi * (ph + off))
+            sn = math.sin(2.0 * math.pi * (ph + off))
+            legs["f_upper." + side] = (-0.45 * c, 0, 0)
+            legs["f_lower." + side] = (0.4 * max(0.0, -sn), 0, 0)
+            legs["h_thigh." + side] = (0.45 * c, 0, 0)
+            legs["h_shin." + side] = (-0.35 * max(0.0, sn), 0, 0)
+        run_keys.append((frame, k({**legs, "hips": {"rot": (0, 0, 0.04 * math.sin(4.0 * math.pi * ph)), "loc": (0, 0, 0)}})))
+    action(arm, "run", run_keys, sheet=[0, 4, 8])
+    under = k({"hips": {"rot": (-0.4, 0, 0), "loc": (0, -0.75 * s, 0)}, "head": (-0.3, 0, 0)})
+    breach = k({"hips": {"rot": (-0.3, 0, 0), "loc": (0, 0.08 * s, 0)}, "head": (-0.35, 0, 0), "jaw": (0.4, 0, 0)})
+    action(arm, "emerge", [(0, under), (int(emerge * 0.75), breach), (emerge, k())],
+           {0: ("QUAD", "EASE_IN"), int(emerge * 0.75): BACK_OUT})
+    nose_down = k({"hips": {"rot": (0.45, 0, 0), "loc": (0, -0.1 * s, 0)}, "head": (0.3, 0, 0)})
+    action(arm, "burrow", [(0, k()), (int(burrow * 0.5), nose_down), (burrow, {**under, "hips": {"rot": (0.5, 0, 0), "loc": (0, -0.75 * s, 0)}})],
+           {0: QUART_OUT, int(burrow * 0.5): ("QUAD", "EASE_IN")})
+    recoil = k({"hips": {"rot": (-0.2, 0, 0.12), "loc": (0, -0.03 * s, 0)}, "head": (-0.3, 0, 0.1), "jaw": (0.3, 0, 0)})
+    action(arm, "stagger", [(0, k()), (3, recoil), (12, {**recoil, "head": (-0.2, 0, 0)}), (34, k())],
+           {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+    return k
+
+
+def _bite(arm, k, s, windup, strike, recover, name="bite"):
+    reared = k({"hips": {"rot": (-0.22, 0, 0), "loc": (0, 0.06 * s, 0)}, "neck": (-0.2, 0, 0), "head": (-0.3, 0, 0),
+                "jaw": (0.55, 0, 0)})
+    snapped = k({"hips": {"rot": (0.12, 0, 0), "loc": (0, -0.03 * s, 0)}, "neck": (0.25, 0, 0), "head": (0.3, 0, 0),
+                 "jaw": (-0.05, 0, 0)})
+    action(arm, name, [(0, k()), (int(windup * 0.7), reared), (windup, snapped), (windup + strike, snapped),
+                       (windup + strike + recover, k())],
+           {int(windup * 0.7): BACK_OUT, windup: QUART_OUT})
+
+
+def beetle_clips(arm, s):
+    script = "enemies/cinder_beetle.gd"
+    k = _beetle_common(arm, s, f(const_from(script, "EMERGE_TIME")), f(const_from(script, "BURROW_TIME")))
+    _bite(arm, k, s, f(const_from(script, "WINDUP_TIME")), f(const_from(script, "ATTACK_TIME")),
+          f(const_from(script, "RECOVER_TIME")))
+
+
+def broodmother_clips(arm, s):
+    script = "enemies/broodmother.gd"
+    k = _beetle_common(arm, s, f(const_from(script, "EMERGE_TIME")), f(const_from(script, "DIG_TIME")))
+    _bite(arm, k, s, f(const_from(script, "BITE_WINDUP")), 6, f(const_from(script, "BITE_RECOVER")))
+    charge_keys = []
+    for frame in (0, 3, 6, 9, 12):
+        ph = frame / 12.0
+        legs = {}
+        for side, off in (("L", 0.0), ("R", 0.5)):
+            c = math.cos(2.0 * math.pi * (ph + off))
+            legs["f_upper." + side] = (-0.6 * c, 0, 0)
+            legs["h_thigh." + side] = (0.6 * c, 0, 0)
+        charge_keys.append((frame, k({**legs, "hips": {"rot": (0.12, 0, 0), "loc": (0, -0.06 * s, 0)},
+                                       "head": (0.2, 0, 0), "jaw": (0.3, 0, 0)})))
+    action(arm, "charge", charge_keys, sheet=[0, 3, 6])
+    lay = f(const_from(script, "LAY_TIME"))
+    lifted = k({"tail": (-0.35, 0, 0), "hips": {"rot": (0.12, 0, 0), "loc": (0, 0.04 * s, 0)}, "head": (-0.15, 0, 0)})
+    action(arm, "lay", [(0, k()), (int(lay * 0.5), lifted), (lay - 4, {**lifted, "tail": (0.15, 0, 0)}), (lay, k())],
+           {int(lay * 0.5): QUART_OUT})
+
+
+def build_cinder_beetle(sheets=False):
+    build_beetle("beetle", "cinder_beetle", "cinder_beetle", 1.0, sheets, beetle_clips)
+
+
+def build_broodmother(sheets=False):
+    build_beetle("broodmother", "broodmother", "broodmother", 1.6, sheets, broodmother_clips, sac=True)
+
+
+# --- KILN IMP: a small soot-skinned thing with a furnace for a belly -----------
+
+IMP_LEG = 0.45 - 0.1
+
+
+def build_imp(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("imp", humanoid_bones(
+        hip=0.45, chest_top=0.85, shoulder_x=0.2, arm_len=0.46, leg_x=0.11, head_base=0.84, head_top=1.16, lean=-0.06))
+    ki = PAL["kiln_imp"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    skin = pm.paint(ki["skin"], 2, "hide")
+    skin_dark = pm.paint(ki["skin"], 1, "hide")
+    belly = pm.paint(ki["belly"], 1)
+    horn = pm.paint(ki["horn"], 2)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.11 * x
+        pm.loft("foot." + side, [(0.0, 0.06, 0.1, lx, -0.04), (0.06, 0.05, 0.07, lx, -0.02)], paint=skin_dark)
+        pm.loft("shin." + side, [(0.06, 0.05, 0.05, lx, 0), (0.25, 0.06, 0.06, lx, 0)], paint=skin)
+        pm.loft("thigh." + side, [(0.25, 0.07, 0.07, lx, 0), (0.46, 0.08, 0.08, lx, 0)], paint=skin)
+        sx = 0.2 * x
+        pm.loft("upper_arm." + side, [(0.8, 0.05, 0.05, sx * 1.02, -0.06), (0.6, 0.045, 0.045, sx * 1.1, -0.06)], paint=skin)
+        pm.loft("forearm." + side, [(0.6, 0.045, 0.045, sx * 1.1, -0.06), (0.4, 0.05, 0.05, sx * 1.14, -0.06)], paint=skin)
+        pm.box("hand." + side, (0.08, 0.09, 0.08), (sx * 1.14, -0.07, 0.36), paint=skin_dark)   # big clawed hands
+    # a pot-bellied body with the furnace glowing through the cracks
+    pm.loft("hips", [(0.4, 0.15, 0.13, 0, 0), (0.52, 0.18, 0.17, 0, -0.02)], paint=skin, sides=8)
+    pm.loft("spine", [(0.52, 0.2, 0.19, 0, -0.03), (0.7, 0.19, 0.18, 0, -0.04)], paint=belly, sides=8)
+    for k in range(3):
+        pm.box("spine", (0.12 - k * 0.02, 0.03, 0.025), (0.02 * (k - 1), -0.2, 0.56 + k * 0.05), mat_index=1)  # cracks
+    pm.loft("chest", [(0.7, 0.18, 0.16, 0, -0.04), (0.86, 0.13, 0.12, 0, -0.05)], paint=skin)
+    # a big head, a wide grin, ember eyes, stubby horns
+    pm.loft("head", [(0.82, 0.13, 0.13, 0, -0.08), (0.98, 0.16, 0.15, 0, -0.1), (1.14, 0.1, 0.1, 0, -0.08)], paint=skin)
+    pm.box("head", (0.16, 0.03, 0.03), (0, -0.25, 0.9), mat_index=1)                        # the furnace grin
+    for x in (1.0, -1.0):
+        pm.box("head", (0.05, 0.03, 0.04), (0.06 * x, -0.25, 1.0), mat_index=1)              # eyes
+        pm.box("head", (0.05, 0.05, 0.14), (0.1 * x, -0.06, 1.16), rot=(0.3, 0, -0.35 * x), taper=0.3, paint=horn)
+    mats = [rig.make_material("ki_body", "#FFFFFF"),
+            rig.make_material("ki_glow", ki["glow"], emission_hex=ki["glow"], strength=3.0)]
+    body = pm.to_object("kiln_imp", mats, arm)
+    imp_clips(arm)
+    finish(body, arm, "kiln_imp", "kiln_imp", (1,), sheets)
+
+
+def imp_clips(arm):
+    windup = f(const_from("enemies/kiln_imp.gd", "WINDUP_TIME"))
+    stance = {**crouch(0.04, IMP_LEG), "spine": (0.1, 0, 0), "chest": (0.08, 0, 0), "head": (0.05, 0, 0),
+              "upper_arm.L": (-0.2, 0, -0.35), "upper_arm.R": (-0.2, 0, 0.35),
+              "forearm.L": (-0.5, 0, 0), "forearm.R": (-0.5, 0, 0), "hand.L": (0.0, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()), (20, k({"head": (0.0, 0.25, 0.1), "chest": (0.1, 0.1, 0)})), (40, k({"head": (0.08, -0.25, -0.1)})),
+        (60, k()),
+    ], sheet=[0, 20, 40])
+    run_keys = []
+    for frame, sgn in ((0, 1.0), (8, -1.0), (16, 1.0)):
+        base = crouch(0.06, IMP_LEG, (0.15, 0.0, 0.1 * sgn))
+        run_keys.append((frame, k({**base,
+            "thigh.L": (-0.2 - 0.5 * sgn, 0, 0), "thigh.R": (-0.2 + 0.5 * sgn, 0, 0),
+            "shin.L": (0.3 + 0.4 * max(-sgn, 0), 0, 0), "shin.R": (0.3 + 0.4 * max(sgn, 0), 0, 0),
+            "upper_arm.L": (-0.4 + 0.4 * sgn, 0, -0.5), "upper_arm.R": (-0.4 - 0.4 * sgn, 0, 0.5),
+            "spine": (0.25, 0.1 * sgn, 0), "head": (-0.1, -0.1 * sgn, 0)})))
+    for frame in (4, 12):
+        run_keys.append((frame, {"hips": {"rot": (0.15, 0, 0), "loc": (0, 0.04, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 4, 8, 12])
+    wound = k({"spine": (-0.2, -0.3, 0), "chest": (-0.2, -0.2, 0), "head": (-0.1, 0.2, 0),
+               "_reach.R": (pos(fwd=-0.25, left=-0.15, up=1.2), way(fwd=-0.6, up=0.6))})
+    thrown = k({"spine": (0.3, 0.3, 0), "chest": (0.25, 0.25, 0), "head": (0.1, -0.1, 0),
+                "_reach.R": (pos(fwd=0.45, left=0.05, up=0.8), way(fwd=1.0, up=-0.2))})
+    action(arm, "throw", [(0, k()), (int(windup * 0.75), wound), (windup, thrown), (windup + 18, k())],
+           {int(windup * 0.75): BACK_OUT, windup: QUART_OUT})
+    recoil = k({"spine": (-0.25, 0, 0), "chest": (-0.2, 0.15, 0), "head": (-0.35, 0.2, 0.15),
+                "upper_arm.L": (0.4, 0, -0.7), "upper_arm.R": (0.4, 0, 0.7)})
+    action(arm, "stagger", [(0, k()), (3, recoil), (12, {**recoil, "chest": (-0.1, 0.08, 0)}), (32, k())],
+           {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+
+
+# --- THE SLAG REEVE: a smelting reeve grown into his slag, a ladle-hammer ------
+
+REEVE_LEG = 1.0 - 0.1
+
+
+def build_reeve(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("reeve", humanoid_bones(
+        hip=1.0, chest_top=1.82, shoulder_x=0.5, arm_len=1.02, leg_x=0.22, head_base=1.8, head_top=2.06, lean=-0.12))
+    sr = PAL["slag_reeve"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    skin = pm.paint(sr["skin"], 2, "hide")
+    slag = pm.paint(sr["slag"], 2, "plate")
+    slag_hi = pm.paint(sr["slag"], 3, "plate")
+    apron = pm.paint(sr["apron"], 1, "hide")
+    iron = pm.paint(sr["iron"], 2, "plate")
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.22 * x
+        pm.loft("foot." + side, [(0.0, 0.12, 0.19, lx, -0.04), (0.14, 0.11, 0.14, lx, -0.02)], paint=slag)
+        pm.loft("shin." + side, [(0.12, 0.13, 0.13, lx, 0), (0.55, 0.15, 0.15, lx, 0)], paint=slag)
+        pm.loft("thigh." + side, [(0.55, 0.17, 0.17, lx, 0), (1.0, 0.2, 0.2, lx, 0)], paint=apron)
+        sx = 0.5 * x
+        pm.loft("upper_arm." + side, [(1.76, 0.15, 0.15, sx * 1.02, -0.12), (1.3, 0.13, 0.13, sx * 1.1, -0.12)], paint=skin)
+        pm.loft("forearm." + side, [(1.3, 0.13, 0.13, sx * 1.1, -0.12), (0.84, 0.14, 0.14, sx * 1.14, -0.12)], paint=slag)
+        pm.box("hand." + side, (0.2, 0.22, 0.18), (sx * 1.14, -0.13, 0.74), paint=slag)
+        pm.box("chest", (0.36, 0.34, 0.24), (sx * 0.95, -0.12, 1.86), rot=(0, 0.2 * x, 0), paint=slag_hi)  # slag shoulders
+        pm.box("chest", (0.2, 0.04, 0.03), (sx * 0.95, -0.3, 1.82), mat_index=1)                         # molten cracks
+    # a barrel chest under a crust of slag, a leather apron, a glowing seam
+    pm.loft("hips", [(0.55, 0.34, 0.28, 0, 0), (1.02, 0.36, 0.3, 0, -0.04)], paint=apron, sides=8)
+    pm.loft("spine", [(1.02, 0.4, 0.34, 0, -0.08), (1.36, 0.44, 0.36, 0, -0.12)], paint=slag, sides=8)
+    pm.loft("chest", [(1.34, 0.46, 0.36, 0, -0.12), (1.66, 0.42, 0.32, 0, -0.12), (1.84, 0.28, 0.22, 0, -0.1)], paint=slag)
+    for k in range(4):
+        pm.box("spine", (0.3 - k * 0.04, 0.04, 0.03), (0.05 * (k % 2 * 2 - 1), -0.48, 1.1 + k * 0.14), mat_index=1)
+    pm.box("hips", (0.5, 0.06, 0.6), (0.0, -0.34, 0.7), paint=apron)                                    # the apron's flap
+    pm.loft("head", [(1.78, 0.16, 0.16, 0, -0.16), (1.92, 0.18, 0.17, 0, -0.18), (2.08, 0.13, 0.12, 0, -0.16)], paint=slag_hi)
+    pm.box("head", (0.26, 0.04, 0.05), (0, -0.35, 1.94), mat_index=1)                                   # eyes in the crust
+    # the ladle-hammer in the right hand: a long haft, a heavy iron head
+    pm.box("hand.R", (0.07, 0.07, 1.3), (-0.57, -0.13, 0.34), paint=iron)
+    pm.box("hand.R", (0.36, 0.5, 0.3), (-0.57, -0.13, -0.3), paint=iron)
+    pm.box("hand.R", (0.3, 0.42, 0.06), (-0.57, -0.13, -0.47), mat_index=1)                             # its hot face
+    mats = [rig.make_material("sr_body", "#FFFFFF"),
+            rig.make_material("sr_glow", sr["glow"], emission_hex=sr["glow"], strength=3.0)]
+    body = pm.to_object("slag_reeve", mats, arm)
+    reeve_clips(arm)
+    finish(body, arm, "slag_reeve", "slag_reeve", (1,), sheets)
+
+
+def reeve_clips(arm):
+    windup = f(const_from("enemies/dungeon_boss.gd", "WINDUP_TIME"))
+    recover = f(const_from("enemies/slag_reeve.gd", "HAMMER_RECOVER"))
+    spew = f(const_from("enemies/slag_reeve.gd", "SPEW_WINDUP"))
+    stance = {**crouch(0.06, REEVE_LEG), "spine": (0.08, 0, 0), "chest": (0.06, 0, 0), "head": (0.1, 0, 0),
+              "upper_arm.L": (-0.1, 0, -0.25), "upper_arm.R": (-0.2, 0, 0.2),
+              "forearm.L": (-0.3, 0, 0), "forearm.R": (-0.5, 0, 0), "hand.L": (0.0, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()), (60, k({"spine": (0.12, 0.04, 0.03), "chest": (0.1, 0, 0.04), "head": (0.16, -0.08, 0.06)})), (120, k()),
+    ], sheet=[0, 60])
+    run_keys = []
+    for frame, sgn in ((0, 1.0), (34, -1.0), (68, 1.0)):
+        base = crouch(0.08, REEVE_LEG, (0.0, 0.0, 0.08 * sgn))
+        run_keys.append((frame, k({**base,
+            "thigh.L": (-0.1 - 0.32 * sgn, 0, 0), "thigh.R": (-0.1 + 0.32 * sgn, 0, 0),
+            "shin.L": (0.2 + 0.28 * max(-sgn, 0), 0, 0), "shin.R": (0.2 + 0.28 * max(sgn, 0), 0, 0),
+            "upper_arm.L": (-0.15 + 0.2 * sgn, 0, -0.28), "spine": (0.12, 0.05 * sgn, 0.06 * sgn)})))
+    for frame in (17, 51):
+        run_keys.append((frame, {"hips": {"rot": (0, 0, 0), "loc": (0, -0.06, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 17, 34, 51])
+    raised = k({"spine": (-0.18, 0, 0), "chest": (-0.28, 0, 0), "head": (-0.1, 0, 0),
+                "_reach.L": (pos(fwd=0.05, left=0.32, up=2.55), way(left=0.3, up=0.9)),
+                "_reach.R": (pos(fwd=0.05, left=-0.32, up=2.55), way(left=-0.3, up=0.9))})
+    slammed = k({**crouch(0.24, REEVE_LEG, (0.22, 0, 0)), "spine": (0.48, 0, 0), "chest": (0.4, 0, 0), "head": (0.15, 0, 0),
+                 "_reach.L": (pos(fwd=1.3, left=0.15, up=0.6), way(fwd=1.0, up=-0.6)),
+                 "_reach.R": (pos(fwd=1.3, left=-0.15, up=0.6), way(fwd=1.0, up=-0.6))})
+    action(arm, "slam", [
+        (0, k()), (int(windup * 0.7), raised), (windup - 3, {**raised, "chest": (-0.32, 0, 0)}), (windup, slammed),
+        (windup + 8, {**slammed, "chest": (0.44, 0, 0)}), (windup + recover, k()),
+    ], {int(windup * 0.7): BACK_OUT, windup - 3: EXPO_IN, windup + 8: QUART_OUT})
+    reared = k({"spine": (-0.3, 0, 0), "chest": (-0.35, 0, 0), "head": (-0.4, 0, 0),
+                "upper_arm.L": (-0.5, 0, -0.8), "upper_arm.R": (-0.5, 0, 0.8)})
+    spewed = k({"spine": (0.3, 0, 0), "chest": (0.35, 0, 0), "head": (0.25, 0, 0),
+                "upper_arm.L": (0.1, 0, -0.6), "upper_arm.R": (0.1, 0, 0.6)})
+    action(arm, "spew", [(0, k()), (int(spew * 0.8), reared), (spew, spewed), (spew + 30, k())],
+           {int(spew * 0.8): BACK_OUT, spew: QUART_OUT})
+    recoil = k({"spine": (-0.15, 0, 0), "chest": (-0.25, 0.15, 0), "head": (-0.35, 0.15, 0.1),
+                "upper_arm.L": (0.35, 0, -0.6), "upper_arm.R": (0.35, 0, 0.6)})
+    action(arm, "stagger", [(0, k()), (4, recoil), (16, {**recoil, "chest": (-0.15, 0.08, 0)}), (44, k())],
+           {0: EXPO_OUT, 4: QUART_OUT, 16: QUART_OUT})
+
+
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
@@ -3190,7 +3517,8 @@ if __name__ == "__main__":
                 "shambler": build_shambler, "mourner": build_mourner, "cinderbark": build_cinderbark,
                 "wisp": build_wisp, "jackal": build_jackal, "vulture": build_vulture,
                 "hare": build_hare, "crow": build_crow,
-                "thrall": build_thrall, "lurker": build_lurker, "keeper": build_keeper, "deepmaw": build_deepmaw}
+                "thrall": build_thrall, "lurker": build_lurker, "keeper": build_keeper, "deepmaw": build_deepmaw,
+                "beetle": build_cinder_beetle, "imp": build_imp, "reeve": build_reeve, "broodmother": build_broodmother}
     only = [a for a in args if not a.startswith("--")] or list(builders)
     for name in only:
         builders[name](want_sheets)

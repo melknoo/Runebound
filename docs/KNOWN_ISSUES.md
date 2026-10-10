@@ -364,9 +364,14 @@
 
 ## M13 open items (in progress)
 - The tome rooms hold a chest until the tomes arrive (phase 8).
-- **Warrens placeholders until phase 7:** raiders in the camps, the
-  placeholder boss in both arenas (the Slag Reeve's quench trough and the
-  Broodmother's lava come with them).
+- **Warrens fights to feel (phase 7):** the beetles' break-out ring
+  (0.9 s), the head plate (x0.35 from the front), the imps' slag (7 + a
+  burning patch), their death burst (16); the Reeve's hot crust (x0.4),
+  the quench (14 s, x1.3) and luring him to a trough; the Broodmother's
+  runnels (7 per 0.6 s) and the valves' 8 s of crust. The solo check
+  passes with thin margins (the bot never dodges) - judge the bosses in
+  the playtest. Net coverage of the Warrens' bosses (hazards `ember_lump`
+  / `imp_burst`, the runnel fx) comes with the phase 9 net suite.
 - **Warrens to feel:** the kilns' 20 s window with the 8 s ember charge,
   the posts' 8 s per hop, the collapse rows (1.5 s down every 4 s, 16
   fire damage per fall), the jets (6 strips, 3 s, 16), the cart's nine

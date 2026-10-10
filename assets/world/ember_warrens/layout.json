@@ -1670,9 +1670,9 @@
    ],
    "radius": 9.0,
    "composition": [
-    "rusher",
-    "rusher",
-    "caster"
+    "cinder_beetle",
+    "kiln_imp",
+    "cinder_beetle"
    ],
    "spots": [
     [
@@ -1882,9 +1882,9 @@
    ],
    "radius": 9.0,
    "composition": [
-    "rusher",
-    "caster",
-    "rusher"
+    "kiln_imp",
+    "cinder_beetle",
+    "kiln_imp"
    ],
    "spots": [
     [
@@ -1972,8 +1972,8 @@
    ],
    "radius": 8.0,
    "composition": [
-    "rusher",
-    "caster"
+    "cinder_beetle",
+    "kiln_imp"
    ],
    "spots": [
     [
@@ -2042,10 +2042,32 @@
     79,
     21
    ],
-   "boss": "dungeon_boss",
+   "boss": "slag_reeve",
    "flag": "wa_reeve_down",
    "trigger": 9.0,
    "reward": "mid",
+   "room": "wa_smelter",
+   "y": 0.0
+  },
+  {
+   "id": "wa_quench_w",
+   "type": "quench",
+   "pos": [
+    67,
+    10
+   ],
+   "yaw": 0.785,
+   "room": "wa_smelter",
+   "y": 0.0
+  },
+  {
+   "id": "wa_quench_e",
+   "type": "quench",
+   "pos": [
+    91,
+    32
+   ],
+   "yaw": -2.356,
    "room": "wa_smelter",
    "y": 0.0
   },
@@ -2222,8 +2244,8 @@
    ],
    "radius": 7.0,
    "composition": [
-    "rusher",
-    "caster"
+    "cinder_beetle",
+    "kiln_imp"
    ],
    "spots": [
     [
@@ -2260,12 +2282,50 @@
    "type": "arena",
    "pos": [
     20,
-    75
+    76
    ],
-   "boss": "dungeon_boss",
+   "boss": "broodmother",
    "flag": "wa_mother_down",
    "trigger": 10.0,
    "reward": "end",
+   "runnels": [
+    [
+     4,
+     69,
+     36,
+     72
+    ],
+    [
+     4,
+     80,
+     36,
+     83
+    ]
+   ],
+   "room": "wa_heart",
+   "y": 0.0
+  },
+  {
+   "id": "wa_valve_a",
+   "type": "valve",
+   "pos": [
+    35,
+    66
+   ],
+   "yaw": -1.5708,
+   "runnel": 0,
+   "room": "wa_heart",
+   "y": 0.0
+  },
+  {
+   "id": "wa_valve_b",
+   "type": "valve",
+   "pos": [
+    5,
+    86
+   ],
+   "yaw": 1.5708,
+   "runnel": 1,
    "room": "wa_heart",
    "y": 0.0
   },

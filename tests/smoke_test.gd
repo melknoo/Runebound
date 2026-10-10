@@ -303,6 +303,11 @@ func _run() -> void:
 		["channel_lurker", ["idle", "emerge", "submerge", "charge", "spit", "stagger"], "emerge", ChannelLurker.EMERGE_TIME],
 		["bloated_keeper", ["idle", "run", "slam", "stomp", "stagger"], "slam", DungeonBoss.WINDUP_TIME + DungeonBoss.RECOVER_TIME],
 		["deepmaw", ["idle", "emerge", "submerge", "lunge", "spit", "stagger"], "submerge", Deepmaw.SINK_TIME],
+		# M13 the Ember Brood and the Warrens' bosses
+		["cinder_beetle", ["idle", "run", "bite", "emerge", "burrow", "stagger"], "emerge", CinderBeetle.EMERGE_TIME],
+		["kiln_imp", ["idle", "run", "throw", "stagger"], "throw", KilnImp.WINDUP_TIME + 0.3],
+		["slag_reeve", ["idle", "run", "slam", "spew", "stagger"], "slam", DungeonBoss.WINDUP_TIME + SlagReeve.HAMMER_RECOVER],
+		["broodmother", ["idle", "run", "bite", "charge", "lay", "burrow", "emerge", "stagger"], "burrow", Broodmother.DIG_TIME],
 	]
 	for spec: Array in rig_specs:
 		var foe := ZoneBase.make_enemy(spec[0])
@@ -4738,6 +4743,176 @@ func _run() -> void:
 		(warrens.puzzles["wa_lever_short"] as PuzzleLever).request("pull", 0, wah)
 		await _wait_frames(2)
 		_check((warrens.gates["wa_d_threshold_adit"] as DungeonGate).is_open, "M13 Warrens: the threshold's lever opens the shortcut")
+		# --- phase 7: the Ember Brood (on the landing, away from the camps) ---
+		var land := Vector3(50, 0.2, 20)
+		wah.god_mode = true
+		wah.global_position = land + Vector3(-6, 0, -2)
+		wah.velocity = Vector3.ZERO
+		var beetle := warrens.spawn_by_id("cinder_beetle", land + Vector3(2, 0, 3)) as CinderBeetle
+		await _wait_frames(2)
+		_check(beetle != null and beetle.ai_state == EnemyBase.AIState.BURIED and not beetle.targetable and not beetle.visual.visible,
+			"M13 Brood: a cinder beetle waits dug into the floor (no body, no target)")
+		for i in 300:
+			await get_tree().physics_frame
+			if beetle.ai_state == EnemyBase.AIState.EMERGE:
+				break
+		var bt_near := Vector2(beetle.global_position.x - wah.global_position.x, beetle.global_position.z - wah.global_position.z).length()
+		_check(beetle.awake and beetle.ai_state == EnemyBase.AIState.EMERGE and bt_near < 2.5,
+			"M13 Brood: woken, it tunnels to the hero and breaks out beneath it (%.1f m off)" % bt_near)
+		for i in 120:
+			await get_tree().physics_frame
+			if beetle.targetable:
+				break
+		beetle.set_physics_process(false)  # holds still while the test strikes it
+		var bt_fwd := beetle.present_forward()
+		var bt_hp := beetle.health.current_health
+		beetle.take_hit(HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, beetle.global_position + bt_fwd * 2.0))
+		var bt_front := bt_hp - beetle.health.current_health
+		bt_hp = beetle.health.current_health
+		beetle.take_hit(HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, beetle.global_position - bt_fwd * 2.0))
+		var bt_back := bt_hp - beetle.health.current_health
+		beetle.set_physics_process(true)
+		_check(beetle.targetable and absf(bt_front - 20.0 * CinderBeetle.FRONT_ARMOR) < 0.5 and absf(bt_back - 20.0) < 0.5,
+			"M13 Brood: its head plate turns a blow from the front (%.0f), not from behind (%.0f)" % [bt_front, bt_back])
+		var imp := warrens.spawn_by_id("kiln_imp", land + Vector3(5, 0, -4)) as KilnImp
+		var lump_seen := false
+		var patch_seen := false
+		for i in 360:
+			await get_tree().physics_frame
+			for node in get_tree().current_scene.get_children():
+				if node is EmberLump:
+					lump_seen = true
+				elif node is FirePatch:
+					patch_seen = true
+			if lump_seen and patch_seen:
+				break
+		_check(imp != null and lump_seen and patch_seen, "M13 Brood: a kiln imp lobs slag; where it lands the ground burns")
+		var imp_at := imp.global_position
+		warrens.kill_all_enemies()
+		wah.god_mode = false
+		wah.health.heal_full()
+		wah.global_position = imp_at + Vector3(1.0, 0.2, 0.0)
+		wah.velocity = Vector3.ZERO
+		await _wait_frames(3)
+		var imp_burst: ImpBurst = null
+		for node in get_tree().current_scene.get_children():
+			if node is ImpBurst:
+				imp_burst = node
+		wah.barrier = 0.0  # a ward left from the fights before would swallow the burst
+		var imp_burst_seen := imp_burst != null  # (freed once it bursts)
+		var imp_hp := wah.health.current_health
+		var imp_dist := Vector2(wah.global_position.x - imp_at.x, wah.global_position.z - imp_at.z).length()
+		await _wait_frames(int(ImpBurst.DELAY * 60.0) + 10)
+		_check(imp_burst_seen and wah.health.current_health < imp_hp,
+			"M13 Brood: a dying imp's belly bursts after its ring fills (%.1f m, hp %.0f -> %.0f)" % [
+				imp_dist, imp_hp, wah.health.current_health])
+		wah.god_mode = true
+		wah.health.heal_full()
+		await _wait_frames(20)
+		# the Slag Reeve: hot he shrugs blows off; a trough's water cracks his crust
+		var reeve_arena := warrens.arenas["wa_arena_reeve"] as BossArena
+		wah.global_position = Vector3(74, 0.2, 21)
+		await _wait_frames(20)
+		var reeve := reeve_arena.boss as SlagReeve
+		_check(reeve_arena.fighting() and reeve != null and reeve.level == 5, "M13 Reeve: a hero in the smelting hall wakes the Slag Reeve (level 5)")
+		if reeve != null:
+			var rv_hp := reeve.health.current_health
+			reeve.take_hit(HitInfo.create(100.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, wah.global_position))
+			var rv_hot := rv_hp - reeve.health.current_health
+			var trough_e := warrens.puzzles["wa_quench_e"] as QuenchTrough
+			var trough_w := warrens.puzzles["wa_quench_w"] as QuenchTrough
+			reeve.global_position = Vector3(79, 0.2, 21)
+			trough_e.request("pull", 0, wah)
+			await _wait_frames(2)
+			_check(int(trough_e.state.get("pulls", 0)) == 1 and int(trough_e.state.get("cooled", 0)) == 0 and not reeve.is_cooled()
+				and not trough_e.is_ready(), "M13 Reeve: the bucket tips far from him - the water is wasted, the trough refills")
+			reeve.global_position = trough_w.global_position + Vector3(2.0, 0.2, 2.0)
+			trough_w.request("pull", 0, wah)
+			await _wait_frames(2)
+			rv_hp = reeve.health.current_health
+			reeve.take_hit(HitInfo.create(100.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, wah.global_position))
+			var rv_cool := rv_hp - reeve.health.current_health
+			_check(reeve.is_cooled() and int(trough_w.state.get("cooled", 0)) == 1
+				and absf(rv_cool / maxf(rv_hot, 0.01) - SlagReeve.COOLED_BONUS / SlagReeve.HOT_ARMOR) < 0.05,
+				"M13 Reeve: beside the trough the water cracks his crust - he takes far more (%.0f hot, %.0f cooled)" % [rv_hot, rv_cool])
+			var rv_before := warrens.enemy_count()
+			reeve.take_hit(HitInfo.create((reeve.health.current_health - reeve.health.max_health * 0.45) / maxf(rv_cool / 100.0, 0.01),
+				HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, wah.global_position))
+			await _wait_frames(3)
+			_check(warrens.enemy_count() == rv_before + 2, "M13 Reeve: at half health he calls two kiln imps")
+			reeve.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, wah.global_position))
+		await _wait_frames(30)
+		_check(SaveGame.has_flag(&"wa_reeve_down") and (warrens.gates["wa_d_smelter_jets"] as DungeonGate).is_open,
+			"M13 Reeve: he falls - his flag, the jet run opens")
+		warrens.kill_all_enemies()
+		await _wait_frames(20)
+		# the Ember Broodmother: her brood, her tunnel, the lava runnels and the valves
+		var mother_arena := warrens.arenas["wa_arena_mother"] as BossArena
+		wah.global_position = Vector3(20, 0.2, 67)
+		await _wait_frames(20)
+		var mother := mother_arena.boss as Broodmother
+		_check(mother_arena.fighting() and mother != null and mother.runnels.size() == 2 and mother._planes.size() == 2 and mother.lava == "",
+			"M13 Broodmother: she wakes in the brood hall; two dry runnels cross it")
+		if mother != null:
+			var brood_before := warrens.enemy_count()
+			mother._lay()
+			await _wait_frames(2)
+			var brood_awake := 0
+			for e in EnemyBase.all_enemies:
+				if e is CinderBeetle and (e as CinderBeetle).awake:
+					brood_awake += 1
+			_check(warrens.enemy_count() == brood_before + 2 and brood_awake == 2, "M13 Broodmother: she lays two cinder beetles that hunt at once")
+			for e in EnemyBase.all_enemies.duplicate():
+				if e is CinderBeetle and is_instance_valid(e):
+					e.targetable = true
+					e.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, e.global_position))
+			mother._burrow_left = 0.0
+			for i in 300:
+				await get_tree().physics_frame
+				if mother.ai_state == EnemyBase.AIState.BURIED:
+					break
+			var mother_hidden := mother.ai_state == EnemyBase.AIState.BURIED and not mother.targetable
+			for i in 240:
+				await get_tree().physics_frame
+				if mother.ai_state == EnemyBase.AIState.EMERGE:
+					break
+			var mo_near := Vector2(mother.global_position.x - wah.global_position.x, mother.global_position.z - wah.global_position.z).length()
+			_check(mother_hidden and mother.ai_state == EnemyBase.AIState.EMERGE and mo_near < 3.5,
+				"M13 Broodmother: she digs in (no target) and breaks out beneath the hero (%.1f m off)" % mo_near)
+			mother.targetable = true
+			mother.take_hit(HitInfo.create(mother.health.max_health * 0.55, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, wah.global_position))
+			mother._lava_left = 0.0
+			for i in 160:
+				await get_tree().physics_frame
+				if mother.lava == "up":
+					break
+			_check(mother.lava == "up" and mother._planes[0].material_override == WaterChannel.lava_material(),
+				"M13 Broodmother: below half her health the runnels fill with lava")
+			wah.god_mode = false
+			wah.health.heal_full()
+			wah.global_position = Vector3(10, 0.2, 70.5)  # in runnel 0
+			var mo_hp := wah.health.current_health
+			mother._lava_bite()
+			var bitten := wah.health.current_health < mo_hp
+			var valve_a := warrens.puzzles["wa_valve_a"] as LavaValve
+			valve_a.request("turn", 0, wah)
+			await _wait_frames(2)
+			mo_hp = wah.health.current_health
+			mother._lava_bite()
+			_check(bitten and mother.crust_left[0] > 0.0 and int(valve_a.state.get("turns", 0)) == 1
+				and is_equal_approx(wah.health.current_health, mo_hp) and mother.runnel_at(wah.global_position) == 0,
+				"M13 Broodmother: the lava burns; a turned valve crusts its runnel over (firm, cold)")
+			wah.god_mode = true
+			wah.health.heal_full()
+			mother.targetable = true
+			mother.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, wah.global_position))
+			await _wait_frames(2)
+			_check(mother.lava == "", "M13 Broodmother: the runnels drain when she falls")
+		await _wait_frames(20)
+		_check(SaveGame.has_flag(&"wa_mother_down") and not (warrens.portals["wa_exit_heart"] as Portal).locked,
+			"M13 Broodmother: she falls - her flag, the way out opens")
+		warrens.kill_all_enemies()
+		await _wait_frames(20)
 		# out through the adit: in front of the west gate, whose seal breaks
 		warrens.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_w")
 		for i in 90:
@@ -5482,6 +5657,6 @@ func _run() -> void:
 	ClientSettings.path = real_settings
 
 	SaveGame.wipe()
-	print("== %d failures ==" % _failures.size())
+	print("== %d failures (%.0f s) ==" % [_failures.size(), Time.get_ticks_msec() / 1000.0])
 	get_tree().quit(0 if _failures.is_empty() else 1)
 

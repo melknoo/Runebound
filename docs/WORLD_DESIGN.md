@@ -264,9 +264,25 @@ the jet run west (fire jets in rhythm; a cracked wall hides the mould room)
 -> the brood hall (the end boss, the Ember Broodmother). The big puzzle in
 the mould room: heat three crucibles (the ember bowl or a fire spell), pull
 the tipping lever, turn two chutes until the melt runs into the mould - the
-tome room opens. Family: the Emberbrood (a burrowing cinder beetle, a small
-kiln imp that throws embers), phase 7; until then raiders hold the camps
-and both arenas field the placeholder boss. Six lore texts.
+tome room opens. Six lore texts. Phase 7 brought the Ember Brood and both
+bosses:
+- **Cinder Beetle:** waits dug in; woken (a hero within 9 m, or a fight
+  within 20 m) it tunnels under its prey and breaks out beneath it (a ring
+  fills - step out), then bites. Its slag head plate turns most of a blow
+  from the front: strike it from the side or behind. After a while up, or
+  when its prey runs off, it digs in again.
+- **Kiln Imp:** small and quick, keeps 5-9 m away and lobs slag where its
+  prey stands (a disc; the ground burns after); dead, its belly bursts
+  once its ring fills.
+- **The Slag Reeve** (mid-boss, the smelting hall): hot, his crust turns
+  most of every blow (x0.4). Two quench troughs: pull a chain while he
+  stands beside that trough and his crust cracks for 14 s (x1.3, slower) -
+  lure him there. A hammer slam ahead, a fan of slag every 12 s, two imps
+  at half health.
+- **The Ember Broodmother** (end boss, the brood hall): bites, charges
+  down a lane, digs in and breaks out under her prey (a wide ring), lays
+  cinder beetles. Below half her health the two lava runnels across the
+  hall fill and burn; a valve by the wall crusts its runnel over for 8 s.
 
 **Co-op dungeons** (M13b, the user: "there should be extra dungeons for co-op"):
 - for **3–5 players**, locked for fewer; extra content with their own loot,

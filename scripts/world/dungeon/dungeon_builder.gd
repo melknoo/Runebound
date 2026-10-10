@@ -327,6 +327,10 @@ static func build_poi(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> Diction
 			return {"puzzle": BasinDrain.build(z, l, poi)}
 		"pylon":
 			return {"puzzle": FloodPylon.build(z, poi)}
+		"quench":  # M13 phase 7: the Warrens' bosses' rooms
+			return {"puzzle": QuenchTrough.build(z, poi)}
+		"valve":
+			return {"puzzle": LavaValve.build(z, poi)}
 	return {}
 
 

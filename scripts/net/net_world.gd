@@ -850,6 +850,17 @@ func _on_hazard_msg(_from: int, payload: Array) -> void:
 			puddle.visual_only = true
 			puddle.position = pos
 			zone.add_child(puddle)
+		"ember_lump":  # M13 the Ember Warrens: a lump falling where it will burn
+			var lump := EmberLump.new()
+			lump.visual_only = true
+			lump.target = pos
+			lump.from = pos + EmberLump.DROP_FROM
+			zone.add_child(lump)
+		"imp_burst":
+			var burst := ImpBurst.new()
+			burst.visual_only = true
+			burst.position = pos
+			zone.add_child(burst)
 
 
 func _on_enemy_scale_msg(_from: int, payload: Array) -> void:

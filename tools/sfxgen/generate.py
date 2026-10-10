@@ -740,6 +740,50 @@ def warrens_rumble_loop():
     save(_loopable(pad(rumble * 0.7, crackle, hammer), 0.6), "warrens_rumble_loop_01")
 
 
+def chitter(i: int):
+    """M13 the Ember Brood: a beetle's dry chitter - quick clicks over a
+    rasping buzz."""
+    d = 0.5
+    clicks = np.zeros(len(t(d)))
+    for k in range(7 + i):
+        at = 0.02 + k * (0.035 + 0.006 * i) + rng.uniform(-0.004, 0.004)
+        c = highpass(noise(0.008), 0.6) * env_exp(0.008, 0.002, 0.0003) * rng.uniform(0.5, 1.0)
+        start = int(at * SR)
+        clicks[start:start + len(c)] += c
+    x = t(d)
+    buzz = np.sign(np.sin(2 * np.pi * (190 + 40 * i) * x)) * 0.12 * env_exp(d, 0.15, 0.02)
+    save(pad(clicks, lowpass(buzz, 0.25)), f"chitter_{i:02d}")
+
+
+def imp_cackle():
+    """M13 the kiln imp: a high, wheezing cackle with a crackle of embers."""
+    d = 0.6
+    x = t(d)
+    syll = 0.5 + 0.5 * np.sign(np.sin(2 * np.pi * 9.0 * x))
+    voice = np.sin(2 * np.pi * (620 + 120 * np.sin(2 * np.pi * 9.0 * x)) * x) * syll * env_exp(d, 0.3, 0.02)
+    breath = highpass(noise(d), 0.35) * syll * env_exp(d, 0.25, 0.02) * 0.3
+    save(pad(lowpass(voice, 0.35) * 0.6, breath), "imp_cackle_01")
+
+
+def steam_hiss():
+    """M13: water on hot slag - a sharp burst of steam that hisses away."""
+    d = 1.1
+    hiss = highpass(noise(d), 0.3) * env_exp(d, 0.4, 0.005)
+    crack = sine_sweep(0.12, 900, 300) * env_exp(0.12, 0.04) * 0.4
+    save(pad(hiss * 0.8, crack), "steam_hiss_01")
+
+
+def brood_shriek():
+    """M13 the Ember Broodmother: a grinding, chittering shriek."""
+    dur = 1.0
+    x = t(dur)
+    scream = np.sin(2 * np.pi * (420 + 160 * np.sin(2 * np.pi * 14 * x)) * x) * 0.45
+    grind = np.sign(np.sin(2 * np.pi * (85 + 20 * np.sin(2 * np.pi * 6 * x)) * x)) * 0.25
+    rasp = highpass(noise(dur), 0.4) * 0.25
+    e = np.sin(np.pi * np.clip(x / dur, 0, 1) ** 0.6) ** 0.8
+    save(pad(lowpass(scream, 0.4), lowpass(grind, 0.2), rasp) * e, "brood_shriek_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -780,4 +824,7 @@ if __name__ == "__main__":
         water_splash(i)
     deep_roar(); wave_surge()  # M13 phase 5
     warrens_rumble_loop()  # M13 phase 6
+    for i in range(1, 3):
+        chitter(i)
+    imp_cackle(); steam_hiss(); brood_shriek()  # M13 phase 7
     print("done.")

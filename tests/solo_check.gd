@@ -12,14 +12,17 @@ extends Node
 ## M13: `--dungeon=cistern` takes a dungeon's camps and its bosses instead.
 ## Its puzzles count as solved; in the boss fights the test plays the room's
 ## part a player would (it drains the basin again a few seconds after the
-## water comes back, it strikes a frost pylon soon after the heart floods).
+## water comes back, it strikes a frost pylon soon after the heart floods;
+## the Warrens: it quenches the Reeve a while after he heats up again, it
+## turns the valve of the runnel the hero stands in soon after the lava rises).
 
 const CAMP_TIMEOUT := 90.0    # simulated seconds per camp
 const BOSS_TIMEOUT := 240.0   # simulated seconds for the Colossus
 const APPROACH := 11.0        # the hero starts this far from a camp (inside its trigger radius)
 const GEAR_ITEM_LEVEL := 3    # the Highlands' top band
 const DRAIN_AFTER := 6.0      # dungeon: seconds a player needs to run the sluices again
-const FREEZE_AFTER := 2.0     # dungeon: seconds before a player strikes a pylon
+const FREEZE_AFTER := 2.0     # dungeon: seconds before a player strikes a pylon (or turns a valve)
+const QUENCH_AFTER := 8.0     # dungeon: seconds a player needs to lure the Reeve to a trough
 
 var class_id: StringName = &"elementalist"
 var level: int = 6
@@ -239,6 +242,20 @@ func _fight_arena(arena: BossArena) -> void:
 			if flooded[0] >= FREEZE_AFTER:
 				flooded[0] = 0.0
 				maw.freeze_flood()
+		var reeve := boss as SlagReeve
+		if reeve != null and not reeve.is_cooled():
+			wet[0] += step
+			if wet[0] >= QUENCH_AFTER:
+				wet[0] = 0.0
+				reeve.quench(reeve.global_position)  # lured to a trough, the chain pulled
+		var mother := boss as Broodmother
+		if mother != null and mother.lava == "up":
+			var lane := mother.runnel_at(hero.global_position)
+			if lane >= 0 and mother.crust_left[lane] <= 0.0:
+				flooded[0] += step
+				if flooded[0] >= FREEZE_AFTER:
+					flooded[0] = 0.0
+					mother.crust_runnel(lane)
 		return false, BOSS_TIMEOUT)
 	var down := boss == null or not is_instance_valid(boss) or boss.ai_state == EnemyBase.AIState.DEAD
 	var left := "" if down else " - at %.0f %%" % (100.0 * boss.health.current_health / boss.health.max_health)

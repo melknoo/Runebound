@@ -55,9 +55,9 @@ SPOT_CLEAR = 1.0
 DOOR_KINDS = {"open", "gate", "secret", "shortcut"}
 KNOWN_TYPES = {"portal", "camp", "chest", "lore", "rune", "arena", "tome", "light",
                "lever", "plate", "block", "reset", "beam", "water",
-               "carrier", "element", "ice", "trap", "collapse", "drain", "pylon"}
+               "carrier", "element", "ice", "trap", "collapse", "drain", "pylon", "quench", "valve"}
 FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "plate", "block", "reset", "beam",
-                 "carrier", "element", "pylon"}
+                 "carrier", "element", "pylon", "quench", "valve"}
 ## POIs that belong in a channel (the water itself, an ice socket, a pit's tiles)
 IN_CHANNEL_TYPES = {"water", "ice", "collapse"}
 WATER_COLOR = "#1C4652"
@@ -393,6 +393,17 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
             for dr in p.get("drains", []):
                 if not inside(room["rect"], dr[0], dr[1]) or not ras.clear_around(dr[0], dr[1], FEATURE_CLEAR):
                     problems.append("%s: a drain not clear inside its room" % p["id"])
+            for rn in p.get("runnels", []):
+                if not inside(room["rect"], rn[0], rn[1]) or not inside(room["rect"], rn[2], rn[3]):
+                    problems.append("%s: a runnel runs past its room" % p["id"])
+                elif inside(rn, x, z):
+                    problems.append("%s: the boss wakes standing in a runnel" % p["id"])
+        if p["type"] == "valve":
+            arenas = [a for a in lay["pois"] if a["type"] == "arena" and a.get("room") == p.get("room")]
+            if not arenas or int(p.get("runnel", -1)) not in range(len(arenas[0].get("runnels", []))):
+                problems.append("%s: no runnel %s in its room's arena" % (p["id"], p.get("runnel")))
+            elif inside(arenas[0]["runnels"][int(p["runnel"])], x, z):
+                problems.append("%s: stands in its own runnel" % p["id"])
         if p["type"] == "trap":
             for q in p.get("lane", []):
                 if not inside(room["rect"], q[0], q[1]):
