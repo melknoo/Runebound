@@ -863,8 +863,9 @@ func blessing_toast(hero: Player, id: StringName) -> void:
 ## spawned by their zones only. An unknown id is a rusher (and a warning).
 const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "warden", "colossus", "vessel",
 	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture",
-	"curse_lantern", "wisp_nest", "jackal_den", "dungeon_boss"]
-const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss"]
+	"curse_lantern", "wisp_nest", "jackal_den", "dungeon_boss",
+	"drowned_thrall", "channel_lurker", "bloated_keeper", "deepmaw"]
+const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss", "bloated_keeper", "deepmaw"]
 
 
 static func _enemy_script(id: String) -> GDScript:
@@ -885,6 +886,10 @@ static func _enemy_script(id: String) -> GDScript:
 		"wisp_nest": return WispNest
 		"jackal_den": return JackalDen
 		"dungeon_boss": return DungeonBoss  # M13: the arena placeholder (phase 1)
+		"drowned_thrall": return DrownedThrall  # M13 the Hollow Cistern
+		"channel_lurker": return ChannelLurker
+		"bloated_keeper": return BloatedKeeper
+		"deepmaw": return Deepmaw
 	return MeleeRusher
 
 
@@ -1281,6 +1286,7 @@ func kill_all_enemies() -> void:
 	for child in enemies_root.get_children():
 		var enemy := child as EnemyBase
 		if enemy != null and enemy.ai_state != EnemyBase.AIState.DEAD:
+			enemy.targetable = true  # buried or submerged ones too
 			enemy.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, enemy.global_position))
 
 

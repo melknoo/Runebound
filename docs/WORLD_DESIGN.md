@@ -226,9 +226,26 @@ Deepmaw). Family: the Drowned (a bloated thrall that bursts into a slowing
 puddle; a channel lurker that strikes from the water). Phases 0-4 built
 the rooms, every puzzle (the sluice valves, the pump chamber's block and
 plates, the frost channel's ice, the gallery's light, the run's blades, the
-cracked wall, the vault's ice + light + plates), the runes, both arenas (a
-placeholder boss until phase 5), the shortcut, the look (wet blue-green
-stone, algae, dark water, phosphor lanterns) and five lore texts.
+cracked wall, the vault's ice + light + plates), the runes, both arenas, the
+shortcut, the look (wet blue-green stone, algae, dark water, phosphor
+lanterns) and five lore texts; phase 5 the Drowned and both bosses:
+- **Drowned Thrall:** slow and heavy, both arms down on a disc ahead;
+  dead, it bursts into a puddle that chills (slows) and nips for 5 s.
+- **Channel Lurker:** waits under the floor (untouchable), rises, spits a
+  bolt of cistern water, stays up spent for 1.6 s (the moment to punish),
+  sinks and rises a few metres away (a hero fighting within 24 m wakes
+  it too). A lone lurker guards the frost channel's south bank.
+- **The Bloated Keeper** (mid-boss, the settling basin): tough while the
+  basin stands full (x0.4 damage, a splash shows it); both sluice levers
+  pulled within 8 s drain the basin for 15 s: laid bare it takes x1.25 and
+  drags itself slower. A slam ahead, a stamped ring wave every 9 s (dodge
+  through it), two drowned at two thirds and one third.
+- **The Deepmaw** (end boss, the heart): never walks; rises at one of four
+  drains, lunges down a lane or spits three bolts, sinks after 7 s and
+  rises at another drain; calls drowned through the other drains. Below
+  half its health the outer ring floods (nips, slows); a strike on one of
+  the two frost pylons in the ring freezes the flood for 6 s (firm ice, no
+  harm). The middle stays dry.
 
 ### The Ember Warrens (west gate, the Charwood; planned)
 Ember mines and smelting kilns, black and orange; enemies level 4, the

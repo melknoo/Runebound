@@ -690,6 +690,37 @@ Plan with the user's answers: ROADMAP M13.
   `boss_health_changed` signal (bars everywhere), `loot_kind` `boss`,
   `gold_piles`, clamped into `arena_rect` on the authority; as
   "dungeon_boss" it is the placeholder (one telegraphed slam).
+  `setup_arena(rect, poi)` (BossArena before the spawn; on a client
+  `DungeonZone.setup_enemy_puppet` finds the nearest arena with the same
+  `boss_id`) hands it the room and its layout POI; `setup_from_poi` reads
+  the extras (the Deepmaw's `drains` and `inner`).
+- **The Cistern's enemies and bosses (phase 5):** `DrownedThrall` (dead, the
+  authority leaves a `DrownedPuddle`: an Area3D on the player-hurtbox mask,
+  FROST 1 + Chill every 0.5 s for 5 s; HAZARD `drowned_puddle` gives
+  clients a visual copy). `ChannelLurker` (immobile; BURIED (wakes within
+  13 m, or 24 m of a hero `in_combat()`) -> EMERGE ->
+  up -> WINDUP -> spit an `EnemyBolt` -> RECOVER (open) -> CIRCLE (sinks)
+  -> `_relocate` within 5.5 m, walkable and outside channels; puppets
+  follow `targetable`/visibility in `_present_state`). `BloatedKeeper`
+  (DungeonBoss): its `drain()` is the `BasinDrain` in its arena; wet it
+  takes x0.4, dry x1.25 and moves at 0.6; a ring wave (authority: the
+  radius grows 6 m/s to 9 m, each hero once in a 0.8 m band); two drowned
+  at 66 % and 33 %. `BasinDrain` (PoiPuzzle, POI `drain`): `pulled` [msec]
+  per lever and `until`; both within `window` -> dry for `seconds` on the
+  server clock (`IceBridge.now_msec`), reset on load. `Deepmaw`
+  (DungeonBoss, immobile): starts BURIED, rises at the drain nearest a
+  hero, up 7 s alternating lunge (a lane) and spit (3 bolts), sinks
+  (BLINK), rises at another drain; drowned through two other drains every
+  22 s; below 50 % the flood (`flood` "", rise, up, frozen; authority)
+  bites heroes in the ring (arena minus `inner`) every 0.6 s; planes over
+  the ring (`DungeonBuilder.subtract`) on every machine through its fx.
+  `FloodPylon` (PoiPuzzle, POI `pylon`): a hurtbox whose strike is a
+  request; the authority calls `freeze_flood()` (frozen 6 s, no harm). On
+  death the flood drains. `ZoneBase.kill_all_enemies` reaches submerged
+  enemies too (tests). `tests/solo_check.gd --dungeon=cistern`
+  (`solocheck <class> <level> cistern`): the dungeon's camps, then its
+  arenas; the test drains the basin 6 s after it refills and freezes the
+  flood 2 s after it rises (what a player would do).
 - **Gates (phase 1):** `DungeonGate` (a door with `inputs`: `flag:<name>`
   or PoiPuzzle ids, `is_active()`) - bars on the foliage layer, open when
   all hold, derived on every machine (no state; `refresh_gates` on

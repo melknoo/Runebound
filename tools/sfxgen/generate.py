@@ -675,6 +675,45 @@ def cistern_drip_loop():
     save(_loopable(pad(hum * 0.6, drips), 0.6), "cistern_drip_loop_01")
 
 
+def water_splash(i: int):
+    """M13 the Drowned: water slapping on stone - a wet burst, a slosh, a few
+    droplets after (a thrall bursting, a lurker breaking the surface)."""
+    d = 0.55
+    body = lowpass(noise(d), 0.24 - 0.05 * i) * env_exp(d, 0.08, 0.004) * 0.9
+    slosh = lowpass(noise(d), 0.05) * env_exp(d, 0.2, 0.02) * 0.7
+    drops = np.zeros(len(t(d)))
+    for k in range(4):
+        at = rng.uniform(0.08, d - 0.15)
+        f = rng.uniform(900.0, 1800.0)
+        blip = sine_sweep(0.08, f, f * 0.6) * env_exp(0.08, 0.02, 0.002) * rng.uniform(0.15, 0.35)
+        start = int(at * SR)
+        drops[start:start + len(blip)] += blip
+    save(pad(body, slosh, drops), f"water_splash_{i:02d}")
+
+
+def deep_roar():
+    """M13 the Bloated Keeper and the Deepmaw: a roar through water - a low,
+    wavering growl over bubbling."""
+    dur = 1.3
+    x = t(dur)
+    growl = np.sin(2 * np.pi * (52 + 14 * np.sin(2 * np.pi * 5 * x)) * x)
+    growl += np.sin(2 * np.pi * (78 + 20 * np.sin(2 * np.pi * 11 * x)) * x) * 0.5
+    bubbles = lowpass(noise(dur), 0.08) * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 17 * x))) * 0.6
+    e = np.sin(np.pi * np.clip(x / dur, 0, 1) ** 0.6) ** 0.8
+    save(pad(growl * 0.8, bubbles) * e, "deep_roar_01")
+
+
+def wave_surge():
+    """M13: a sheet of water rushing out over stone (the keeper's ring wave,
+    the heart flooding, the basin running dry)."""
+    dur = 1.2
+    x = t(dur)
+    rush = lowpass(noise(dur), 0.15) * np.minimum(x / 0.1, 1.0) * env_exp(dur, 0.45, attack=0.1)
+    hiss = highpass(noise(dur), 0.35) * env_exp(dur, 0.3, attack=0.05) * 0.3
+    thump = sine_sweep(0.3, 70, 40) * env_exp(0.3, 0.12) * 0.8
+    save(pad(thump, rush * 0.8, hiss), "wave_surge_01")
+
+
 if __name__ == "__main__":
     print("Generating SFX:")
     for i in range(1, 4):
@@ -711,4 +750,7 @@ if __name__ == "__main__":
     for i in range(1, 3):
         wing_beat(i)
     cistern_drip_loop()  # M13 (appended last: the RNG order is shared)
+    for i in range(1, 3):
+        water_splash(i)
+    deep_roar(); wave_surge()  # M13 phase 5
     print("done.")

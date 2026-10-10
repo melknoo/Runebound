@@ -376,7 +376,11 @@ Glutschale, Frostkristall und Sturmspule geben jedem Helden das Element für 8 s
 und Feuerdüsen im Takt, einstürzender Boden über einer Grube – nie der letzte Lebenspunkt). Phase 4
 gebaut (die Cistern mit allen Rätseln an ihrem Platz, eigener Look – nasse blaugrüne Steine, Algen,
 Wasser-Shader, Laternen an Eisenarmen, Bögen, Rohre, Schleusentore –, fünf Lore-Texte DE/EN und ein
-Tropf-Ambience). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+Tropf-Ambience). Phase 5 gebaut (die Ertrunkenen: der Ertrunkene platzt zu einer bremsenden Pfütze,
+der Kanallauerer taucht auf, spuckt und ist danach kurz offen; der Aufgedunsene Wärter ist im vollen
+Becken zäh, zwei Schleusenhebel legen ihn 15 s trocken; der Tiefenschlund taucht an vier Abflüssen auf,
+flutet ab halber Gesundheit den Außenring, Frostpylone frieren die Flut ein; eigene Rigs und
+Wasser-Sounds; Solo-Check mit Dungeon-Route). **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

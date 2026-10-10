@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-09 · In progress: **M13 Dungeons with puzzles** (phases
-0-4 built, below). Latest built milestone: **M12 Highlands with substance**
+Updated: 2026-10-10 · In progress: **M13 Dungeons with puzzles** (phases
+0-5 built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -200,6 +200,40 @@ abilities, 9 the wrap-up.
     beams, plates, blocks, valves, ice, trap and cracked wall; its stone and
     sound; the kit dresses it without collision). Net `dungeon` and
     `dungeon_boss` still green on the new layout.
+- **Phase 5 (built): the Drowned, the Bloated Keeper and the Deepmaw.**
+  - **The Drowned** (WORLD_DESIGN "The Hollow Cistern"): the Drowned
+    Thrall (85 HP, a slow two-armed slam; dead, a 5 s puddle that chills
+    and nips) and the Channel Lurker (60 HP, under the floor until a hero
+    comes within 13 m - or within 24 m of a hero in a fight -, spits a bolt,
+    1.6 s open, sinks and rises up to 5.5 m away). The Cistern's camps
+    field them; a lone lurker guards the frost channel.
+  - **The Bloated Keeper** (mid-boss, 950 HP base): x0.4 damage while the
+    basin stands full; the basin's two sluice levers (`BasinDrain`, both
+    within 8 s) drain it for 15 s - x1.25 and slower; a slam, a ring wave
+    every 9 s, two drowned at 66 % and 33 %.
+  - **The Deepmaw** (end boss, 1300 HP base): starts under the floor, rises
+    at the drain nearest a hero (four drains), alternates a lane lunge and
+    a three-bolt spit for 7 s, sinks, rises at another drain; drowned
+    through the other drains every 22 s; below half its health the outer
+    ring floods (6 + Chill per 0.6 s for 7 s); a strike on one of two frost
+    pylons (`FloodPylon`) freezes it for 6 s. The flood drains when it dies.
+  - Rigs (generate_characters_v2.py, timings read from the scripts): the
+    thrall and the keeper on the humanoid template, the lurker and the
+    Deepmaw on a new serpent template; palettes in art_spec; sounds
+    `water_splash`, `deep_roar`, `wave_surge` (sfxgen, appended).
+  - `solocheck <class> <level> cistern`: the Cistern's camps, then both
+    bosses (the test drains the basin and freezes the flood like a
+    player). Level 5: the Elementalist 6/6 (the Deepmaw leaves it at
+    28 %), the druid 6/6, the Runebreaker 4/6 (dies at both bosses, as
+    the bot never reads a telegraph - the Colossus left it at 3 %); boss
+    health cut from 1100 / 1600 after the first runs.
+  - Smoke 799 green (four new rigs with clips at gameplay timing; a
+    thrall's puddle slows and nips and dries up; a lurker's whole cycle; the
+    keeper's wet armour vs. dry, one lever is not enough, its call at two
+    thirds and its ring wave; the Deepmaw under the floor, at a drain, at
+    another drain, its call, the flood in the ring only, the bite, the
+    pylon's ice, the flood gone with it). Net `dungeon_boss` now meets
+    every DungeonBoss type.
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

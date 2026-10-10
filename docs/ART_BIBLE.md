@@ -414,6 +414,10 @@ gameplay timing is untouched.
 | Smoulder Wisp (M12) | a sooty husk around a burning heart, flame tongues, hot pale eyes | idle, glide, charge, cast (the spit), stagger |
 | Ash Jackal (M12, four-legged) | lean ash-grey dog, dark back stripe and ears, pale ribs showing, ember eyes | idle, run (gallop), trot (circling), pounce (crouch = WINDUP, leap = LEAP_TIME), stagger |
 | Carrion Vulture (M12, winged, x1.25) | dark wings for the sky silhouette, a step-3 body and pale ruff for the ground read, raw red bald head, bone beak | idle (on the ground, mantling), soar, charge (wings up in a V = DIVE_WINDUP), swoop (tucked dive, flare), takeoff, stagger |
+| Drowned Thrall (M13) | a swollen keeper, waterlogged grey-green skin, dark rags, kelp, pale phosphor eyes | idle, run (heavy shamble), attack (both arms down = WINDUP + ATTACK + RECOVER), stagger |
+| Channel Lurker (M13, serpent) | a drain eel rearing out of the floor: dark teal scales, pale belly plates, fins, green-white eyes | idle, emerge (from 2.3 m under), charge (maw fills = WINDUP), spit, submerge, stagger |
+| The Bloated Keeper (M13 mid-boss, x1.15) | swollen grey-green in a keeper's coat, brass buttons, a chain of keys, kelp | idle, run, slam (= the boss WINDUP + RECOVER), stomp (one foot up = WAVE_WINDUP), stagger |
+| The Deepmaw (M13 end boss, serpent x1.3, girth 1.9, scaled 1.6) | near-black teal eel-worm, pale belly, a red maw with bone teeth | idle, emerge, lunge (reared = LUNGE_WINDUP, then down the lane), spit (gulp = SPIT_WINDUP), submerge (= SINK_TIME), stagger |
 
 - Elites keep their model and get an aura only: eyes burn in the affix's
   element colour, and element motes rise off the body. There is no ground

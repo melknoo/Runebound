@@ -72,7 +72,8 @@ func _enemy_level(enemy: EnemyBase, _pos: Vector3) -> int:
 	return int(info.get("level", 3))
 
 
-## Every enemy type the layout's camps field (their rigs warm up on arrival).
+## Every enemy type the layout's camps and arenas field (their rigs warm up
+## on arrival).
 func _warm_up_ids() -> Array[String]:
 	var out: Array[String] = []
 	if layout == null:
@@ -82,7 +83,28 @@ func _warm_up_ids() -> Array[String]:
 			var key := "rusher" if id == "elite" else id
 			if not key in out:
 				out.append(key)
+	for poi in layout.pois.by_type("arena"):
+		var boss_key := String(poi.get("boss", "dungeon_boss"))
+		if not boss_key in out:
+			out.append(boss_key)
 	return out
+
+
+## A co-op client's boss puppet learns its arena (the nearest one fielding
+## its kind): the bar, and what its looks need (the Deepmaw's flood ring).
+func setup_enemy_puppet(e: EnemyBase) -> void:
+	super(e)
+	var b := e as DungeonBoss
+	if b == null:
+		return
+	var best: BossArena = null
+	for id: String in arenas:
+		var a := arenas[id] as BossArena
+		if a.boss_id == e.type_id and (best == null or a.global_position.distance_to(e.global_position)
+				< best.global_position.distance_to(e.global_position)):
+			best = a
+	if best != null:
+		b.setup_arena(best.rect, best.poi)
 
 
 func _build_zone() -> void:

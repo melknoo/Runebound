@@ -627,7 +627,7 @@ class Driver extends Node:
 					if not await _until(func() -> bool: return rune.is_solved(), 30.0, "c1's rune lit here"):
 						return
 					hero.god_mode = false
-					hero.global_position = Vector3(-4, 2.2, -50)  # the basin, far from the boss's trigger
+					hero.global_position = Vector3(-4, 2.2, -30)  # the basin, far from the boss's trigger and its levers
 					hero.velocity = Vector3.ZERO
 					await _seconds(0.5)
 					hero.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hero.global_position))
@@ -663,7 +663,7 @@ class Driver extends Node:
 				var find_boss := func() -> EnemyBase:
 					for id: int in world.enemies:
 						var e := world.enemies[id] as EnemyBase
-						if e != null and is_instance_valid(e) and e.type_id == "dungeon_boss" and e.ai_state != EnemyBase.AIState.DEAD:
+						if e != null and is_instance_valid(e) and e is DungeonBoss and e.ai_state != EnemyBase.AIState.DEAD:
 							return e
 					return null
 				hero.global_position = inside

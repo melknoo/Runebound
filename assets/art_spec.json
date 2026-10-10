@@ -620,6 +620,36 @@
 			"ambient": "#2A4246",
 			"background": "#070E10"
 		},
+		"drowned_thrall": {
+			"comment": "M13 the Drowned: a bloated keeper, waterlogged grey-green skin, dark rags, kelp, pale phosphor eyes",
+			"skin": ["#3E4A44", "#4F5D55", "#61716A", "#77877F"],
+			"rags": ["#1F2526", "#2B3335", "#394346", "#4A5558"],
+			"kelp": ["#1E3A28", "#2B4E36", "#3B6446"],
+			"eyes": "#9FF2E0"
+		},
+		"channel_lurker": {
+			"comment": "M13 the Drowned: a drain eel, dark teal scales, a pale belly, fins, bioluminescent eyes",
+			"scales": ["#16282C", "#1E363B", "#284750", "#335A63", "#406E78"],
+			"belly": ["#5B6E66", "#71857A", "#8A9E90"],
+			"fin": ["#2E5A5E", "#3F7478"],
+			"eyes": "#C6FF9A"
+		},
+		"bloated_keeper": {
+			"comment": "M13 mid-boss: swollen in a keeper's coat, brass buttons and a chain of keys",
+			"skin": ["#45524C", "#56655D", "#697A70", "#7F9086"],
+			"coat": ["#2A2620", "#3A342B", "#4C4438", "#5E5546"],
+			"brass": ["#5E4A26", "#7A6232", "#9A7E42"],
+			"kelp": ["#1E3A28", "#2B4E36", "#3B6446"],
+			"eyes": "#9FF2E0"
+		},
+		"deepmaw": {
+			"comment": "M13 end boss: the great eel-worm, near-black teal scales, a pale belly, a red maw, bone teeth",
+			"scales": ["#0F1E22", "#16292E", "#1F363C", "#29454C", "#35565E"],
+			"belly": ["#4F625C", "#64786F", "#7B9084"],
+			"maw": ["#4A1C22", "#6A2830", "#8E3640"],
+			"teeth": ["#C8C2A8", "#E2DCC2"],
+			"eyes": "#C6FF9A"
+		},
 		"stonehulk": {
 			"comment": "Highlands/lab brute: weathered stone slabs, moss on the up-facing planes, ember slit eyes",
 			"stone": [

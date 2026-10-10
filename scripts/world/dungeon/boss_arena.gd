@@ -24,6 +24,8 @@ var rect: Rect2 = Rect2()
 var trigger_radius: float = 9.0
 ## "mid" (a rare per hero) or "end" (a legendary and a rare per hero).
 var reward: String = "mid"
+## The layout POI (the boss reads its extras from it).
+var poi: Dictionary = {}
 
 var boss: EnemyBase = null
 ## Tests: fights started and resets so far (authority).
@@ -90,7 +92,7 @@ func start() -> void:
 	_empty_for = 0.0
 	boss = ZoneBase.make_enemy(boss_id)
 	if boss is DungeonBoss:
-		(boss as DungeonBoss).arena_rect = rect
+		(boss as DungeonBoss).setup_arena(rect, poi)
 	zone._spawn_enemy(boss, zone.ground_point(global_position, 0.2))
 	boss.enemy_died.connect(_on_boss_died)
 	if zone.hud != null and boss.has_signal(&"boss_health_changed"):  # offline: the bar (clients get it with the puppet)

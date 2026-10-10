@@ -363,10 +363,21 @@
   captures/.
 
 ## M13 open items (in progress)
-- **Placeholders until phase 5:** the Cistern's camps are raiders and
-  wardens, and both arenas field the "Arena Warden" (one slam); the Drowned
-  and the two bosses come in phase 5. The tome room holds a chest until the
-  tome arrives (phase 8).
+- The tome room holds a chest until the tome arrives (phase 8).
+- **Cistern fights to feel (phase 5):** the keeper's wet armour (x0.4) and
+  dry bonus (x1.25), the sluices' 8 s window and 15 s of dry basin, its
+  ring wave every 9 s; the Deepmaw's 7 s up / 1.4 s under, its flood (7 s,
+  6 per 0.6 s + Chill) and the pylons' 6 s of ice; the lurker's 1.6 s
+  open after a spit. Rigs are first passes (the serpents' heads,
+  the keeper's bulk) - judge them in the playtest.
+- **Solo check Cistern, level 5** (`solocheck <class> 5 cistern`): the
+  Elementalist and the druid clear all six fights; the Runebreaker bot
+  dies at both bosses (keeper at 36 %, Deepmaw at 68 %): like at the
+  Colossus it never dodges the ring wave or the lane. If the tank fares
+  as badly in the playtest, lower the keeper's slam / wave first.
+- A hero who joins while the heart is flooded does not see the water
+  until the next flood (the planes follow the Deepmaw's fx); the bites
+  still land correctly.
 - **Cistern look to judge:** 48 lamps (one omni each, faded at 38 m) and 83
   relief arches; the halls may read dark or busy. The perf scenario
   `cistern_hall` still needs its iGPU run (RTX 2070: 443 FPS, like the

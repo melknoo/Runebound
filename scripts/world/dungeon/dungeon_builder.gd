@@ -323,6 +323,10 @@ static func build_poi(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> Diction
 			return {"trap": ClockTrap.build(z, poi)}
 		"collapse":
 			return {"trap": CollapsingFloor.build(z, l, poi)}
+		"drain":  # M13 phase 5: the bosses' rooms
+			return {"puzzle": BasinDrain.build(z, l, poi)}
+		"pylon":
+			return {"puzzle": FloodPylon.build(z, poi)}
 	return {}
 
 
@@ -366,6 +370,7 @@ static func arena(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> BossArena:
 	a.trigger_radius = float(poi.get("trigger", 9.0))
 	a.reward = String(poi.get("reward", "mid"))
 	a.rect = DungeonLayout.rect_of(l.room(String(poi.get("room", ""))))
+	a.poi = poi
 	a.set_meta(&"poi_id", a.arena_id)
 	z.world.add_child(a)
 	a.global_position = ZoneLayout.pos_of(poi)

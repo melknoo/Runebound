@@ -845,6 +845,11 @@ func _on_hazard_msg(_from: int, payload: Array) -> void:
 			rune.visual_only = true
 			rune.position = pos
 			zone.add_child(rune)
+		"drowned_puddle":  # M13
+			var puddle := DrownedPuddle.new()
+			puddle.visual_only = true
+			puddle.position = pos
+			zone.add_child(puddle)
 
 
 func _on_enemy_scale_msg(_from: int, payload: Array) -> void:

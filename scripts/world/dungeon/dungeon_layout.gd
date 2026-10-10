@@ -111,6 +111,14 @@ func floor_at(x: float, z: float, fallback: float = 0.0) -> float:
 	return fallback
 
 
+## In a sunken channel (water or a pit)?
+func in_channel(x: float, z: float) -> bool:
+	for c in channels:
+		if _inside(rect_of(c), x, z):
+			return true
+	return false
+
+
 func is_walkable(x: float, z: float) -> bool:
 	return not room_at(x, z).is_empty() or not door_at(x, z).is_empty()
 

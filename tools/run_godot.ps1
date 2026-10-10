@@ -10,14 +10,14 @@
 #   .\tools\run_godot.ps1 perf <scenario> [label] # scripted fight: tests/perf/<scenario>.json
 #   .\tools\run_godot.ps1 stress                 # lab stress test (exit 1 below budget)
 #   .\tools\run_godot.ps1 serverperf [heroes]    # M09: headless Highlands tick cost with bot heroes
-#   .\tools\run_godot.ps1 solocheck [class] [level] # M10: one bot hero alone through the Highlands camps + Colossus
+#   .\tools\run_godot.ps1 solocheck [class] [level] [dungeon] # M10: one bot hero alone through the Highlands camps + Colossus ([dungeon]: a dungeon instead, M13)
 #   .\tools\run_godot.ps1 net [scenario]        # M09: multi-process co-op tests (server + headless clients)
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 #   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
 #   .\tools\run_godot.ps1 wsspike <host> [secs]  # M09b: WebSocket echo + download through Tailscale Funnel (tests/ws_spike.gd)
 #   .\tools\run_godot.ps1 release               # ship: main -> release (fast-forward), then deploy it now
 #   .\tools\run_godot.ps1 deploy                # roll the laptop server to the latest release now (runebound-deploy)
-param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "")
+param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "", [string]$Extra = "")
 
 $godot = $env:GODOT
 # setx stores GODOT for new processes only: a terminal (or VS Code) started
@@ -245,7 +245,9 @@ switch ($Mode) {
 		# Elementalist, level 6) fights every camp, then the Colossus.
 		$class = if ($Name) { $Name } else { "elementalist" }
 		$level = if ($Label) { $Label } else { "6" }
-		& $godot --headless --fixed-fps 60 --path $proj --quit-after 150000 res://tests/solo_check.tscn -- "--class=$class" "--level=$level"
+		$where = @()  # M13: solocheck <class> <level> cistern (a one-item if-expression would unroll to a string)
+		if ($Extra) { $where = @("--dungeon=$Extra") }
+		& $godot --headless --fixed-fps 60 --path $proj --quit-after 150000 res://tests/solo_check.tscn -- "--class=$class" "--level=$level" @where
 	}
 	default   { Write-Error "unknown mode $Mode"; exit 1 }
 }

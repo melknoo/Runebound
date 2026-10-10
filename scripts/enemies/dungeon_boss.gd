@@ -16,6 +16,8 @@ const ARENA_MARGIN := 1.2
 
 ## The arena room on XZ (authority; empty = unbounded).
 var arena_rect: Rect2 = Rect2()
+## M13 phase 5: the arena's layout POI (drains, rings: what a boss needs).
+var arena_poi: Dictionary = {}
 
 const ATTACK_RANGE := 3.0
 const SLAM_RADIUS := 3.2
@@ -59,6 +61,19 @@ func _ready() -> void:
 
 func nameplate_height() -> float:
 	return 3.6
+
+
+## The arena it fights in (the BossArena on the authority before it spawns;
+## DungeonZone.setup_enemy_puppet on a co-op client's puppet).
+func setup_arena(rect: Rect2, poi: Dictionary) -> void:
+	arena_rect = rect
+	arena_poi = poi
+	setup_from_poi(poi)
+
+
+## Subclasses read their arena's extras (the Deepmaw's drains).
+func setup_from_poi(_poi: Dictionary) -> void:
+	pass
 
 
 ## Placeholder body: a hulking stone figure (subclasses bring their rigs).

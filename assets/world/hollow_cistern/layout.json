@@ -111,7 +111,9 @@
     }
    ],
    "wall_h": 7.0,
-   "tags": []
+   "tags": [
+    "combat"
+   ]
   },
   {
    "id": "ci_c3",
@@ -1531,9 +1533,9 @@
    ],
    "radius": 10.0,
    "composition": [
-    "rusher",
-    "rusher",
-    "caster"
+    "drowned_thrall",
+    "drowned_thrall",
+    "channel_lurker"
    ],
    "spots": [
     [
@@ -1737,6 +1739,29 @@
    "y": 0.0
   },
   {
+   "id": "ci_camp_frost",
+   "type": "camp",
+   "pos": [
+    -38,
+    -1
+   ],
+   "radius": 6.0,
+   "composition": [
+    "channel_lurker"
+   ],
+   "spots": [
+    [
+     -38,
+     -2
+    ]
+   ],
+   "room": "ci_frost",
+   "y": 0.0,
+   "spots_y": [
+    0.0
+   ]
+  },
+  {
    "id": "ci_camp_mirror",
    "type": "camp",
    "pos": [
@@ -1745,9 +1770,9 @@
    ],
    "radius": 11.0,
    "composition": [
-    "rusher",
-    "caster",
-    "warden"
+    "drowned_thrall",
+    "channel_lurker",
+    "drowned_thrall"
    ],
    "spots": [
     [
@@ -1833,10 +1858,34 @@
     10,
     -40
    ],
-   "boss": "dungeon_boss",
+   "boss": "bloated_keeper",
    "flag": "ci_keeper_down",
    "trigger": 9.0,
    "reward": "mid",
+   "room": "ci_basin",
+   "y": 2.0
+  },
+  {
+   "id": "ci_drain_basin",
+   "type": "drain",
+   "pos": [
+    10,
+    -41
+   ],
+   "seconds": 15.0,
+   "window": 8.0,
+   "levers": [
+    [
+     -3,
+     -50,
+     1.5708
+    ],
+    [
+     23,
+     -50,
+     -1.5708
+    ]
+   ],
    "room": "ci_basin",
    "y": 2.0
   },
@@ -2071,8 +2120,8 @@
    ],
    "radius": 8.0,
    "composition": [
-    "warden",
-    "caster"
+    "drowned_thrall",
+    "channel_lurker"
    ],
    "spots": [
     [
@@ -2098,10 +2147,54 @@
     83,
     28
    ],
-   "boss": "dungeon_boss",
+   "boss": "deepmaw",
    "flag": "ci_deepmaw_down",
    "trigger": 10.0,
    "reward": "end",
+   "drains": [
+    [
+     72,
+     16
+    ],
+    [
+     94,
+     16
+    ],
+    [
+     72,
+     40
+    ],
+    [
+     94,
+     40
+    ]
+   ],
+   "inner": [
+    76,
+    20,
+    90,
+    36
+   ],
+   "room": "ci_heart",
+   "y": 0.0
+  },
+  {
+   "id": "ci_pylon_n",
+   "type": "pylon",
+   "pos": [
+    83,
+    13
+   ],
+   "room": "ci_heart",
+   "y": 0.0
+  },
+  {
+   "id": "ci_pylon_s",
+   "type": "pylon",
+   "pos": [
+    83,
+    43
+   ],
    "room": "ci_heart",
    "y": 0.0
   },

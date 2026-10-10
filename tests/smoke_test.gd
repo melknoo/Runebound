@@ -297,6 +297,12 @@ func _run() -> void:
 		["smoulder_wisp", ["idle", "glide", "charge", "cast", "stagger"], "charge", SmoulderWisp.WINDUP_TIME],
 		["ash_jackal", ["idle", "run", "trot", "pounce", "stagger"], "pounce", AshJackal.WINDUP_TIME + AshJackal.LEAP_TIME],
 		["carrion_vulture", ["idle", "soar", "charge", "swoop", "takeoff", "stagger"], "charge", CarrionVulture.DIVE_WINDUP],
+		# M13 the Drowned and the Cistern's bosses
+		["drowned_thrall", ["idle", "run", "attack", "stagger"], "attack",
+			DrownedThrall.WINDUP_TIME + DrownedThrall.ATTACK_TIME + DrownedThrall.RECOVER_TIME],
+		["channel_lurker", ["idle", "emerge", "submerge", "charge", "spit", "stagger"], "emerge", ChannelLurker.EMERGE_TIME],
+		["bloated_keeper", ["idle", "run", "slam", "stomp", "stagger"], "slam", DungeonBoss.WINDUP_TIME + DungeonBoss.RECOVER_TIME],
+		["deepmaw", ["idle", "emerge", "submerge", "lunge", "spit", "stagger"], "submerge", Deepmaw.SINK_TIME],
 	]
 	for spec: Array in rig_specs:
 		var foe := ZoneBase.make_enemy(spec[0])
@@ -4110,6 +4116,61 @@ func _run() -> void:
 			and ch13.global_position.distance_to(rune_ante.respawn_point()) < 0.6,
 			"M13: a hero who falls wakes healed at the nearest lit rune")
 		ch13.god_mode = true
+		# --- phase 5: the Drowned (in the antechamber, away from camps and arenas) ---
+		var ante_mid := Vector3(-16, 2.2, -38)
+		ch13.global_position = ante_mid + Vector3(-3, 0, 2)
+		ch13.velocity = Vector3.ZERO
+		var thrall13 := cistern.spawn_by_id("drowned_thrall", ante_mid + Vector3(4, 0, 2))
+		await _wait_frames(3)
+		var thrall_fell_at := thrall13.global_position
+		thrall13.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+		await _wait_frames(3)
+		var puddle13: DrownedPuddle = null
+		for node in get_tree().current_scene.get_children():
+			if node is DrownedPuddle:
+				puddle13 = node
+		_check(thrall13 is DrownedThrall and puddle13 != null and not puddle13.visual_only
+			and Vector2(puddle13.global_position.x - thrall_fell_at.x, puddle13.global_position.z - thrall_fell_at.z).length() < 1.0,
+			"M13: a drowned thrall bursts into a puddle where it falls")
+		if puddle13 != null:
+			ch13.god_mode = false
+			ch13.health.heal_full()
+			ch13.clear_slow()
+			ch13.global_position = puddle13.global_position + Vector3(0, 0.1, 0)
+			ch13.velocity = Vector3.ZERO
+			await _wait_frames(45)
+			_check(ch13.slow_pct > 0.0 and ch13.health.current_health < ch13.health.max_health,
+				"M13: wading in the puddle chills (slows) and nips the hero")
+			ch13.god_mode = true
+			ch13.clear_slow()
+			ch13.health.heal_full()
+			ch13.global_position = ante_mid + Vector3(-3, 0, 2)
+		var lurker13 := cistern.spawn_by_id("channel_lurker", ante_mid) as ChannelLurker
+		await _wait_frames(2)
+		_check(lurker13 != null and lurker13.ai_state == EnemyBase.AIState.BURIED and not lurker13.targetable
+			and not lurker13.visual.visible
+			and not lurker13.take_hit(HitInfo.create(50.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position)),
+			"M13: a channel lurker waits under the floor (no body, no hit lands)")
+		var lurk_seen := {}
+		var lurk_from := lurker13.global_position if lurker13 != null else Vector3.ZERO
+		for i in 420:
+			await get_tree().physics_frame
+			if lurker13 == null or not is_instance_valid(lurker13):
+				break
+			if not lurk_seen.has(lurker13.ai_state):
+				lurk_seen[lurker13.ai_state] = lurker13.targetable
+			if lurker13.ai_state == EnemyBase.AIState.BURIED and lurk_seen.has(EnemyBase.AIState.CIRCLE):
+				break
+		var lurk_moved := lurker13.global_position.distance_to(lurk_from) if lurker13 != null and is_instance_valid(lurker13) else -1.0
+		_check(lurk_seen.get(EnemyBase.AIState.EMERGE, true) == false and lurk_seen.get(EnemyBase.AIState.WINDUP, false) == true
+			and lurk_seen.get(EnemyBase.AIState.RECOVER, false) == true and lurk_seen.has(EnemyBase.AIState.CIRCLE)
+			and lurker13.ai_state == EnemyBase.AIState.BURIED and lurk_moved > 1.0 and lurk_moved <= ChannelLurker.RELOCATE + 0.5
+			and cistern.layout.is_walkable(lurker13.global_position.x, lurker13.global_position.z),
+			"M13: it rises (untouchable), spits, stays up spent, sinks and surfaces nearby (moved %.1f m, %s)" % [lurk_moved, lurk_seen])
+		_check(puddle13 == null or not is_instance_valid(puddle13), "M13: the puddle dries up")
+		cistern.kill_all_enemies()
+		await _wait_frames(20)
+		_check(cistern.enemy_count() == 0, "M13: the test's drowned are gone (a submerged lurker too)")
 		var keeper := cistern.arenas["ci_arena_keeper"] as BossArena
 		var basin_gate := cistern.gates["ci_d_basin_run"] as DungeonGate
 		_check(not keeper.fighting() and not keeper.is_done() and basin_gate != null and not basin_gate.is_open,
@@ -4130,7 +4191,41 @@ func _run() -> void:
 		_check(keeper.fighting() and keeper.starts == 2 and is_equal_approx(keeper.boss.health.current_health, keeper.boss.health.max_health),
 			"M13: the next try meets the boss at full health")
 		var keeper_boss := keeper.boss
-		if keeper_boss != null:
+		var kb := keeper_boss as BloatedKeeper
+		if kb != null:
+			# wet it shrugs off blows; both sluices drain the basin and lay it bare
+			var basin_drain := cistern.puzzles["ci_drain_basin"] as BasinDrain
+			var hp_wet := kb.health.current_health
+			kb.take_hit(HitInfo.create(100.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+			var wet_taken := hp_wet - kb.health.current_health
+			basin_drain.request("pull", 0, ch13)
+			await _wait_frames(2)
+			_check(basin_drain != null and not basin_drain.is_dry() and not kb.is_dry(),
+				"M13: one sluice lever alone does not drain the basin")
+			basin_drain.request("pull", 1, ch13)
+			await _wait_frames(2)
+			var hp_dry := kb.health.current_health
+			kb.take_hit(HitInfo.create(100.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+			var dry_taken := hp_dry - kb.health.current_health
+			_check(kb.is_dry() and absf(dry_taken / maxf(wet_taken, 0.01) - BloatedKeeper.DRY_BONUS / BloatedKeeper.WET_ARMOR) < 0.05,
+				"M13: both sluice levers drain the basin: laid bare, the keeper takes far more (%.0f wet, %.0f dry)" % [wet_taken, dry_taken])
+			# at two thirds it calls up two drowned
+			var before_call := cistern.enemy_count()
+			var per_point := maxf(dry_taken / 100.0, 0.01)
+			kb.take_hit(HitInfo.create((kb.health.current_health - kb.health.max_health * 0.55) / per_point,
+				HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+			await _wait_frames(3)
+			_check(cistern.enemy_count() == before_call + 2, "M13: at two thirds of its health the keeper calls up two drowned")
+			# its stamp sends a ring wave out through the basin
+			ch13.global_position = kb.global_position + Vector3(0, 0.2, 4.0)
+			kb._wave_left = 0.0
+			var wave_reached := false
+			for i in 360:
+				await get_tree().physics_frame
+				if kb._wave_hit.has(ch13.get_instance_id()):
+					wave_reached = true
+					break
+			_check(wave_reached, "M13: the keeper's stamp sends a ring wave that reaches the hero")
 			keeper_boss.global_position = Vector3(40, 2.2, -40)  # pushed out of the room...
 			await _wait_frames(2)
 			_check(DungeonLayout.rect_of(cistern.layout.room("ci_basin")).has_point(Vector2(keeper_boss.global_position.x, keeper_boss.global_position.z)),
@@ -4146,10 +4241,64 @@ func _run() -> void:
 		var maw := cistern.arenas["ci_arena_deepmaw"] as BossArena
 		var heart_exit := cistern.portals["ci_exit_heart"] as Portal
 		_check(heart_exit.locked, "M13: the way out of the heart is sealed while its boss lives")
+		cistern.kill_all_enemies()  # the keeper's drowned
+		await _wait_frames(20)
 		ch13.global_position = Vector3(83, 0.2, 33)
 		await _wait_frames(20)
 		_check(maw.fighting(), "M13: the end boss wakes in the heart")
-		if maw.fighting():
+		var dm := maw.boss as Deepmaw
+		if dm != null:
+			_check(dm.drains.size() == 4 and dm.inner.has_area() and not dm.targetable
+				and not dm.take_hit(HitInfo.create(50.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position)),
+				"M13: the Deepmaw waits under the floor (four drains, a safe middle; no hit lands)")
+			for i in 240:
+				await get_tree().physics_frame
+				if dm.targetable:
+					break
+			dm._up_left = 99.0  # keep it up for the test
+			var at_drain := -1
+			for di in dm.drains.size():
+				if Vector2(dm.drains[di].x - dm.global_position.x, dm.drains[di].z - dm.global_position.z).length() < 0.5:
+					at_drain = di
+			_check(dm.targetable and at_drain >= 0, "M13: the Deepmaw rises at a drain and can be struck")
+			var from_drain := dm.global_position
+			dm._move_to_next_drain()
+			_check(dm.global_position.distance_to(from_drain) > 5.0, "M13: it sinks at one drain and rises at another")
+			var before_call13 := cistern.enemy_count()
+			dm._summon()
+			await _wait_frames(2)
+			_check(cistern.enemy_count() == before_call13 + 2, "M13: the Deepmaw calls the drowned up through the other drains")
+			# below half its health the ring floods
+			_check(dm.flood == "", "M13: no flood while the Deepmaw is above half its health")
+			dm.take_hit(HitInfo.create(dm.health.max_health * 0.58, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+			dm._flood_left = 0.0
+			for i in 160:
+				await get_tree().physics_frame
+				if dm.flood == "up":
+					break
+			var ring_spot := Vector3(70, 0.2, 14)
+			_check(dm.flood == "up" and dm._flood_planes.size() >= 4 and dm.in_ring(ring_spot) and not dm.in_ring(Vector3(83, 0, 28)),
+				"M13: below half its health the heart's outer ring floods (the middle stays dry)")
+			ch13.god_mode = false
+			ch13.health.heal_full()
+			ch13.clear_slow()
+			ch13.global_position = ring_spot
+			var hp_ring := ch13.health.current_health
+			dm._flood_bite()
+			_check(ch13.health.current_health < hp_ring and ch13.slow_pct > 0.0, "M13: the flood nips and slows a hero in the ring")
+			ch13.god_mode = true
+			ch13.clear_slow()
+			ch13.health.heal_full()
+			ch13.global_position = Vector3(83, 0.2, 33)
+			var pylon13 := cistern.puzzles["ci_pylon_n"] as FloodPylon
+			pylon13.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+			await _wait_frames(2)
+			_check(dm.flood == "frozen" and int(pylon13.state.get("froze", 0)) == 1,
+				"M13: a strike on a frost pylon freezes the flood solid")
+			dm.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
+			await _wait_frames(2)
+			_check(dm.flood == "", "M13: the heart drains when the Deepmaw falls")
+		elif maw.fighting():
 			maw.boss.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, ch13.global_position))
 		await _wait_frames(10)
 		var legendary_from_maw := false

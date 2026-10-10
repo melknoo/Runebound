@@ -115,5 +115,21 @@
 	"ui.element.storm": {
 		"en": "Lightning crackles in your strikes",
 		"de": "Blitze knistern in deinen Schlägen"
+	},
+	"enemy.drowned_thrall": {
+		"en": "Drowned Thrall",
+		"de": "Ertrunkener"
+	},
+	"enemy.channel_lurker": {
+		"en": "Channel Lurker",
+		"de": "Kanallauerer"
+	},
+	"enemy.bloated_keeper": {
+		"en": "The Bloated Keeper",
+		"de": "Der Aufgedunsene Wärter"
+	},
+	"enemy.deepmaw": {
+		"en": "The Deepmaw",
+		"de": "Der Tiefenschlund"
 	}
 }

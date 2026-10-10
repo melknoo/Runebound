@@ -55,9 +55,9 @@ SPOT_CLEAR = 1.0
 DOOR_KINDS = {"open", "gate", "secret", "shortcut"}
 KNOWN_TYPES = {"portal", "camp", "chest", "lore", "rune", "arena", "tome", "light",
                "lever", "plate", "block", "reset", "beam", "water",
-               "carrier", "element", "ice", "trap", "collapse"}
+               "carrier", "element", "ice", "trap", "collapse", "drain", "pylon"}
 FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "plate", "block", "reset", "beam",
-                 "carrier", "element"}
+                 "carrier", "element", "pylon"}
 ## POIs that belong in a channel (the water itself, an ice socket, a pit's tiles)
 IN_CHANNEL_TYPES = {"water", "ice", "collapse"}
 WATER_COLOR = "#1C4652"
@@ -378,6 +378,14 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
                 s = p.get("strip", [0, 0, 0, 0])
                 if not inside(ch[0]["rect"], x, z) or s[0] < cx0 or s[1] < cz0 or s[2] > cx1 or s[3] > cz1:
                     problems.append("%s: its socket or strip lies outside its channel" % p["id"])
+        if p["type"] == "drain":
+            for lv in p.get("levers", []):
+                if not inside(room["rect"], lv[0], lv[1]) or not ras.clear_around(lv[0], lv[1], SPOT_CLEAR):
+                    problems.append("%s: a lever not clear inside its room" % p["id"])
+        if p["type"] == "arena":
+            for dr in p.get("drains", []):
+                if not inside(room["rect"], dr[0], dr[1]) or not ras.clear_around(dr[0], dr[1], FEATURE_CLEAR):
+                    problems.append("%s: a drain not clear inside its room" % p["id"])
         if p["type"] == "trap":
             for q in p.get("lane", []):
                 if not inside(room["rect"], q[0], q[1]):
