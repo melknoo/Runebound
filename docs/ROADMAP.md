@@ -388,6 +388,9 @@ Phase 7 gebaut (die Glutbrut: der Glutkäfer gräbt sich ein und bricht unter de
 gepanzert; der Schmelzwicht wirft Schlacke und platzt beim Tod; der Schlackenvogt ist heiß zäh, am
 Löschtrog gelöscht verwundbar; die Glutbrutmutter stürmt, gräbt sich ein, legt Käfer, ab halber
 Gesundheit füllen sich Lavarinnen, Löschventile verkrusten sie; Solo-Check Stufe 6: alle Klassen 6/6).
+Phase 8a gebaut (der Foliant der Cistern: Wellenbrecher – Schildansturm, der beiseitestößt und
+verspottet –, Raureif-Schild – Barriere, Nahkämpfer werden unterkühlt –, Quellwasser – Heilung,
+wäscht Verlangsamungen ab, Heilung über Zeit).
 **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

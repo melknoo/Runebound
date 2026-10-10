@@ -158,6 +158,7 @@ LAYOUT = {
          "inputs": ["wa_crucibles", "wa_lever_tip"]},
         {"id": "wa_lore_mould", "type": "lore", "kind": "inscription", "text": "lore.warrens.mould_words",
          "pos": [42, 52], "yaw": 1.5708},
+        {"id": "wa_tome", "type": "tome", "pos": [48, 81], "yaw": 3.14159, "tome": "warrens"},
         {"id": "wa_chest_tome", "type": "chest", "pos": [48, 86], "yaw": 0.0, "rarity_bias": 2},
         # --- the threshold, the shortcut's lever, the brood hall (the end boss) ---
         {"id": "wa_rune_threshold", "type": "rune", "pos": [15, 37], "yaw": 0.0},

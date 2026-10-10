@@ -6,18 +6,23 @@ extends Interactable
 ## (AbilityData.Unlock.TOME: one per class) and opens its text in the lore
 ## window; every character reads it for itself (it is the owner's: the
 ## known abilities are per character). The ability then waits in the
-## loadout (K).
+## loadout (K). M13: the dungeons' big secrets hold tomes of their own
+## (`tome_id`, AbilityData.tome_id): one more ability per class each, and
+## their own text (`lore.tome.<id>`).
 
 const READ_XP := 150
 const LORE_ID := "lore.tome"
 
+## "" = the Charwood grotto's tome; else the dungeon whose tome this is.
+var tome_id: StringName = &""
 var _light: OmniLight3D
 
 
-static func build(zone: ZoneBase, pos: Vector3, yaw: float) -> Tome:
+static func build(zone: ZoneBase, pos: Vector3, yaw: float, which: StringName = &"") -> Tome:
 	var tome := Tome.new()
-	tome.name = "Tome"
-	tome.id = "tome"
+	tome.tome_id = which
+	tome.name = "Tome" if which == &"" else "Tome_" + String(which)
+	tome.id = "tome" if which == &"" else "tome_" + String(which)
 	tome.reach = 2.6
 	tome.prompt_height = 1.7
 	zone.world.add_child(tome)
@@ -34,14 +39,19 @@ static func build(zone: ZoneBase, pos: Vector3, yaw: float) -> Tome:
 	return tome
 
 
-## The tome ability of `hero`'s class (null: the class has none).
-static func ability_for(hero: Player) -> AbilityData:
+## The ability tome `which` teaches `hero`'s class (null: none).
+static func ability_for(hero: Player, which: StringName = &"") -> AbilityData:
 	if hero == null or hero.class_data == null:
 		return null
 	for data in hero.class_data.abilities:
-		if data != null and data.unlock == AbilityData.Unlock.TOME:
+		if data != null and data.unlock == AbilityData.Unlock.TOME and data.tome_id == which:
 			return data
 	return null
+
+
+## This tome's text in the lore window.
+func lore_id() -> String:
+	return LORE_ID if tome_id == &"" else "%s.%s" % [LORE_ID, tome_id]
 
 
 func prompt_text(_hero: Player) -> String:
@@ -53,8 +63,8 @@ func interact(hero: Player) -> void:
 	if zone == null:
 		return
 	if zone.lore_ui != null:
-		zone.lore_ui.open(LORE_ID, "lore.kind.tome", hero)
-	var data := ability_for(hero)
+		zone.lore_ui.open(lore_id(), "lore.kind.tome", hero)
+	var data := ability_for(hero, tome_id)
 	if data != null and hero.learn_ability(data.id):
 		zone.receive_reward(hero, READ_XP, 0, 0, [], global_position, "", true)
 		if zone.hud != null:
@@ -62,4 +72,4 @@ func interact(hero: Player) -> void:
 				ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")))
 		Sfx.play_ui("ability_learned", -4.0)
 		SaveGame.request_save()
-	hero.read_lore(LORE_ID)
+	hero.read_lore(lore_id())

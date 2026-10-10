@@ -833,6 +833,19 @@ Plan with the user's answers: ROADMAP M13.
   runnel exists and the valve stands outside it. `solocheck <class>
   <level> warrens` quenches the Reeve 8 s after he heats up and turns the
   valve of the hero's runnel 2 s after the lava rises.
+- **Tomes (phase 8):** `AbilityData.tome_id` names the tome that teaches a
+  TOME ability ("" = the Charwood grotto's); `Tome.build(zone, pos, yaw,
+  which)`, `Tome.ability_for(hero, which)`, `lore_id()` (`lore.tome` /
+  `lore.tome.<which>`); a `tome` POI (`"tome": "cistern"`) in a dungeon
+  becomes one (`DungeonZone.tomes`). `Player.debug_learn_all` learns every
+  tome's ability. Breakwater uses `Player.State.CHARGE` (appended to the
+  enum): the tank's `_class_damage_reduction` is 0.5 while it lasts, the
+  collision mask lets it pass through enemies, each one met once gets a
+  hit with `taunt` and a `pull_to` beside the lane. Rime Ward: the
+  Elementalist's `take_hit` (owner only) chills `hit.source_id`'s enemy
+  within 4 m while `rime_warded()` (time and barrier left). Wellspring:
+  HeroFx `wellspring` (the look) + `ally_heal` + `ally_cleanse` +
+  `ally_hot` (its own id).
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 

@@ -2202,6 +2202,18 @@
    "y": 0.0
   },
   {
+   "id": "wa_tome",
+   "type": "tome",
+   "pos": [
+    48,
+    81
+   ],
+   "yaw": 3.14159,
+   "tome": "warrens",
+   "room": "wa_tome_room",
+   "y": 0.0
+  },
+  {
    "id": "wa_chest_tome",
    "type": "chest",
    "pos": [

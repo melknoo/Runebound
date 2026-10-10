@@ -29,6 +29,8 @@ var waters: Dictionary = {}
 ## M13 phase 3: element sources and traps by POI id.
 var carriers: Dictionary = {}
 var traps: Dictionary = {}
+## M13 phase 8: the tomes by POI id.
+var tomes: Dictionary = {}
 var _map_texture: Texture2D
 var _discover_left: float = 0.0
 var _room_seen: Dictionary = {}
@@ -137,6 +139,8 @@ func _build_zone() -> void:
 			carriers[id] = made["carrier"]
 		if made.has("trap"):
 			traps[id] = made["trap"]
+		if made.has("tome"):
+			tomes[id] = made["tome"]
 	for id: String in waters:  # M13 phase 3: the ice anchors freeze their water
 		for ice_id in layout.pois.find(id).get("ice", []):
 			var bridge := puzzles.get(String(ice_id)) as IceBridge

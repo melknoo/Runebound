@@ -327,6 +327,9 @@ static func build_poi(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> Diction
 			return {"puzzle": BasinDrain.build(z, l, poi)}
 		"pylon":
 			return {"puzzle": FloodPylon.build(z, poi)}
+		"tome":  # M13 phase 8: the big secret's reward
+			return {"tome": Tome.build(z, ZoneLayout.pos_of(poi), float(poi.get("yaw", 0.0)),
+				StringName(String(poi.get("tome", ""))))}
 		"quench":  # M13 phase 7: the Warrens' bosses' rooms
 			return {"puzzle": QuenchTrough.build(z, poi)}
 		"valve":

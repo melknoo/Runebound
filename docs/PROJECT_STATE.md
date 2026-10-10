@@ -1,7 +1,7 @@
 # RUNEBOUND — Project State
 
 Updated: 2026-10-10 · In progress: **M13 Dungeons with puzzles** (phases
-0-7 built, below). Latest built milestone: **M12 Highlands with substance**
+0-7 and 8a built, below). Latest built milestone: **M12 Highlands with substance**
 (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -303,6 +303,21 @@ abilities, 9 the wrap-up.
     quench beside the trough, his imps, his fall opens the jet run; the
     Broodmother's brood, her tunnel, the runnels filling, the lava's bite,
     a valve's crust, the runnels drained on her death, the way out).
+- **Phase 8a (built): the Cistern's tome and its three abilities.**
+  - Tomes per dungeon: `AbilityData.tome_id` ("" = the Charwood grotto's,
+    the old .tres unchanged), `Tome.build(..., which)` with its own text
+    (`lore.tome.cistern`), POI `tome` in the dungeons (the tome rooms keep
+    their chest). The vault's big puzzle now ends at the Cistern's tome.
+  - **Breakwater** (Runebreaker, CLASS_DESIGN): a shield charge 8 m along
+    the aim taking half damage; the enemies in the lane are struck,
+    taunted 3 s and shoved aside. **Rime Ward** (Elementalist): a barrier
+    of 40 + 3 per level for 6 s; melee strikers are Chilled. **Wellspring**
+    (druid): on the heal target 25 at once, slows washed off, 30 more
+    over 5 s.
+  - Icons (`ui.py`), texts and the tome's lore (DE/EN), HeroFx entries
+    (the wave along the charge, the rime shell, the spring).
+  - Smoke 845 green (the tome teaches each class its art and keeps the
+    Charwood's apart; the charge, the ward, the spring).
 
 ## M12 Highlands with substance (built 2026-10-02, the user's playtest is the gate)
 Plan with the user's answers: ROADMAP M12 (three sub-biomes - the abandoned

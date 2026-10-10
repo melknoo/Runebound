@@ -220,6 +220,42 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 				VFX.dodge_dust(hero.get_tree().current_scene, walk_to, Vector3.UP)
 				VFX.heal_motes(hero, 0.4)
 				Sfx.play("mend", walk_to, -4.0, 0.08))
+		# --- M13 the dungeons' tomes ---
+		&"breakwater":  # [from, dir, length] - a wave breaking along the shield charge
+			var bw_from := a[0] as Vector3
+			var bw_dir := a[1] as Vector3
+			for k in 4:
+				var at := bw_from + bw_dir * float(a[2]) * (0.25 + 0.25 * float(k))
+				hero.get_tree().create_timer(0.1 * float(k)).timeout.connect(func() -> void:
+					if hero.is_inside_tree():
+						VFX.frost_burst(hero.get_tree().current_scene, at + Vector3(0, 0.4, 0), 1.2))
+			VFX.flash(scene, bw_from + Vector3(0, 1.1, 0) + bw_dir * 0.7, ArtKit.color("color_roles.player_accent.hot"), 1.2, 0.15)
+			Sfx.play("wave_surge", bw_from, -2.0, 0.08, 1.15)
+		&"rime_ward":  # [duration] - a shell of rime around the hero (the barrier is the owner's)
+			var shell := MeshInstance3D.new()
+			var orb := SphereMesh.new()
+			orb.radius = 0.95
+			orb.height = 2.1
+			var ice := StandardMaterial3D.new()
+			ice.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			ice.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			ice.albedo_color = Color(ArtKit.color("color_roles.frost.body", Color(0.6, 0.85, 1.0)), 0.22)
+			ice.cull_mode = BaseMaterial3D.CULL_DISABLED
+			orb.material = ice
+			shell.mesh = orb
+			shell.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			shell.position = Vector3(0, 1.05, 0)
+			hero.add_child(shell)
+			hero.get_tree().create_timer(float(a[0])).timeout.connect(shell.queue_free)
+			VFX.frost_burst(scene, hero.global_position + Vector3(0, 1.0, 0), 1.4)
+			Sfx.play("frost_nova", hero.global_position, -4.0, 0.06, 1.4)
+		&"wellspring":  # [ref] - spring water over the ally (the heal comes as ally_heal / ally_hot)
+			var spring_target := _ally(hero, a[0])
+			if spring_target != null:
+				VFX.frost_burst(scene, spring_target.global_position + Vector3(0, 1.8, 0), 1.0)
+				VFX.ground_ring(scene, spring_target.global_position, ArtKit.color("palettes.cistern.water_hi",
+					Color(0.36, 0.62, 0.64)), 1.6, 0.4)
+				Sfx.play("water_splash", spring_target.global_position, -4.0, 0.08, 1.2)
 		&"ally_buff":  # [pos, radius, key, value, duration]
 			var zone := ZoneBase.zone_of(hero)
 			if zone != null:

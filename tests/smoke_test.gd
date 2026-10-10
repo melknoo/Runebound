@@ -450,13 +450,14 @@ func _run() -> void:
 		"target name plate shows the enemy name")
 	# --- M07b / M10: one ability at the start, the rest are learned; two classes ---
 	var cls := ClassData.load_by_id(&"runebreaker")
-	_check(cls != null and cls.abilities.size() == 10 and cls.basic_attack == &"rune_cleave"
+	_check(cls != null and cls.abilities.size() == 11 and cls.basic_attack == &"rune_cleave"
 		and cls.starting_abilities.size() == 1 and cls.starting_abilities[0] == &"rune_cleave"
 		and cls.trainer_abilities().size() == 6 and cls.trainer_abilities()[0].id == &"earthbreaker"
 		and cls.trainer_abilities()[5].id == &"warding_rune" and cls.ability(&"ember_lance") == null
 		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0)
-		and cls.ability(&"lodestone_rune").unlock == AbilityData.Unlock.TOME,
-		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 9: 6 from the trainer, 1 from the tome")
+		and cls.ability(&"lodestone_rune").unlock == AbilityData.Unlock.TOME
+		and cls.ability(&"breakwater").unlock == AbilityData.Unlock.TOME and cls.ability(&"breakwater").tome_id == &"cistern",
+		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 10: 6 from the trainer, 3 from tomes")
 	var mage_cls := ClassData.load_by_id(&"elementalist")
 	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 8
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
@@ -634,7 +635,7 @@ func _run() -> void:
 		"I opens the hero window on the inventory tab")
 	lab.hero_ui.close()
 	var sheet_rows := StatSheet.ability_rows(player)
-	_check(sheet_rows.size() == 8 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
+	_check(sheet_rows.size() == 9 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
 		and sheet_rows[1]["id"] == &"earthbreaker" and sheet_rows[1]["key"] == "RMB" and sheet_rows[6]["key"] == "-",
 		"character sheet lists the known abilities in class order with their slot keys")
 	var d_pct := player.stat(&"damage_pct")
@@ -2440,7 +2441,7 @@ func _run() -> void:
 	player.restore_loadout([])
 	SaveGame.reload_from_disk()
 	SaveGame.restore_player(player)
-	_check(player.gold == 123 and player.known_abilities.size() == 8 and player.knows(&"warding_rune")
+	_check(player.gold == 123 and player.known_abilities.size() == 9 and player.knows(&"warding_rune") and player.knows(&"breakwater")
 		and player.loadout == ([&"rune_challenge", &"rune_wall", &"earthbreaker", &"warden_leap"] as Array[StringName]),
 		"save restores gold, the learned abilities and the loadout (%s)" % str(player.loadout))
 	var restored_names: Array[String] = []
@@ -3441,7 +3442,7 @@ func _run() -> void:
 		var cdata := ClassData.load_by_id(cid)
 		var tomes := 0
 		for adata in cdata.abilities:
-			if adata != null and adata.unlock == AbilityData.Unlock.TOME:
+			if adata != null and adata.unlock == AbilityData.Unlock.TOME and adata.tome_id == &"":
 				tomes += 1
 				tome_ids.append(String(adata.id))
 		for tdata in cdata.trainer_abilities():
@@ -4366,6 +4367,26 @@ func _run() -> void:
 				await _wait_frames(30)
 				_check(not (cistern2.arenas["ci_arena_keeper"] as BossArena).fighting() and cistern2.enemy_count() == 0,
 					"M13: a fallen boss stays dead")
+				# --- phase 8: the Cistern's tome teaches each class its water art ---
+				var ci_tome := cistern2.tomes.get("ci_tome") as Tome
+				var ci_hero := cistern2.player
+				var ci_art := Tome.ability_for(ci_hero, &"cistern")
+				var ci_tome_ids: Array[String] = []
+				for ccid: StringName in [&"runebreaker", &"elementalist", &"druid"]:
+					var ccd := ClassData.load_by_id(ccid)
+					for cad in ccd.abilities:
+						if cad != null and cad.tome_id == &"cistern" and cad.unlock == AbilityData.Unlock.TOME:
+							ci_tome_ids.append(String(cad.id))
+				if ci_art != null:
+					ci_hero.known_abilities.erase(ci_art.id)
+				if ci_tome != null:
+					ci_tome.use_by(ci_hero)
+				if cistern2.lore_ui != null:
+					cistern2.lore_ui.close()
+				_check(ci_tome != null and ci_tome.tome_id == &"cistern" and ci_art != null and ci_hero.knows(ci_art.id)
+					and ci_hero.lore_read.has("lore.tome.cistern") and ",".join(ci_tome_ids) == "breakwater,rime_ward,wellspring"
+					and Tome.ability_for(ci_hero) != ci_art and ci_art.title() == Texts.t("ability." + String(ci_art.id)),
+					"M13: the Cistern's tome teaches each class its water art (%s)" % ", ".join(ci_tome_ids))
 				# --- phase 2: the puzzle kit in its lab ---
 				cistern2.travel_to("res://scenes/puzzle_lab.tscn", "lab_exit")
 				for i in 60:
@@ -4912,6 +4933,72 @@ func _run() -> void:
 		_check(SaveGame.has_flag(&"wa_mother_down") and not (warrens.portals["wa_exit_heart"] as Portal).locked,
 			"M13 Broodmother: she falls - her flag, the way out opens")
 		warrens.kill_all_enemies()
+		await _wait_frames(20)
+		# --- phase 8: the Cistern's tome abilities (in the empty smelting hall) ---
+		var hall := Vector3(79, 0.2, 21)
+		wah.global_position = hall + Vector3(0, 0, 12)
+		var rb8 := Player.create(ClassData.load_by_id(&"runebreaker")) as RunebreakerHero
+		rb8.is_local = false
+		rb8.input_source = InputSource.new()
+		warrens.add_player(rb8)
+		rb8.global_position = hall + Vector3(-7, 0, 0)
+		rb8._visual.rotation.y = -PI * 0.5
+		rb8.intent.aim_dir = Vector3(1, 0, 0)
+		await _wait_frames(3)
+		var shoved := warrens.spawn_by_id("rusher", hall + Vector3(-2.5, 0, 0.6))
+		await _wait_frames(2)
+		rb8.learn_ability(&"breakwater")
+		rb8.resonance = 100.0
+		var bw_from := rb8.global_position
+		var bw_cast := rb8.try_breakwater()
+		var bw_shield := rb8.state == Player.State.CHARGE and is_equal_approx(rb8._class_damage_reduction(), RunebreakerHero.BREAKWATER_REDUCTION)
+		var bw_side := 0.0
+		for i in int(RunebreakerHero.BREAKWATER_TIME * 60.0) + 40:
+			await get_tree().physics_frame
+			if is_instance_valid(shoved):
+				bw_side = maxf(bw_side, absf(shoved.global_position.z - hall.z))
+		var bw_len := (rb8.global_position - bw_from).dot(Vector3(1, 0, 0))
+		_check(bw_cast and bw_shield and rb8.state == Player.State.MOVE and bw_len > 6.0 and is_equal_approx(rb8.resonance, 80.0)
+			and shoved.taunted_by() == rb8 and shoved.health.current_health < shoved.health.max_health and bw_side > 1.8,
+			"Breakwater: a shield charge (%.1f m, half damage), the enemy in the way struck, taunted, shoved aside (%.1f m)" % [bw_len, bw_side])
+		warrens.kill_all_enemies()
+		var el8 := Player.create(ClassData.load_by_id(&"elementalist")) as ElementalistHero
+		el8.is_local = false
+		el8.input_source = InputSource.new()
+		warrens.add_player(el8)
+		el8.global_position = hall + Vector3(0, 0, 6)
+		await _wait_frames(3)
+		el8.learn_ability(&"rime_ward")
+		el8.resonance = 100.0
+		var rw_cast := el8.try_rime_ward()
+		var rw_bar := el8.barrier
+		var striker8 := warrens.spawn_by_id("rusher", el8.global_position + Vector3(1.5, 0, 0))
+		await _wait_frames(2)
+		var rw_hit := HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.MEDIUM, striker8.global_position)
+		rw_hit.source_id = striker8.get_instance_id()
+		el8.take_hit(rw_hit)
+		_check(rw_cast and is_equal_approx(rw_bar, el8.rime_amount()) and el8.barrier < rw_bar and el8.rime_warded()
+			and striker8.status.has_chill() and is_equal_approx(el8.resonance, 75.0),
+			"Rime Ward: a barrier of rime; the enemy that strikes it in melee is Chilled")
+		warrens.kill_all_enemies()
+		var dr8 := Player.create(ClassData.load_by_id(&"druid")) as DruidHero
+		dr8.is_local = false
+		dr8.input_source = InputSource.new()
+		warrens.add_player(dr8)
+		dr8.global_position = hall + Vector3(-4, 0, 6)
+		await _wait_frames(3)
+		el8.health.current_health = el8.health.max_health * 0.5
+		el8.apply_slow(0.4, 5.0)
+		var ws_hp := el8.health.current_health
+		dr8.learn_ability(&"wellspring")
+		dr8.resonance = dr8.max_resource()
+		var ws_cast := dr8.try_wellspring()
+		await _wait_frames(2)
+		_check(ws_cast and el8.health.current_health > ws_hp and is_zero_approx(el8.slow_pct) and el8.hot_left(&"wellspring") > 0.0,
+			"Wellspring: an ally healed at once, its slow washed off, more healing over time")
+		for h8: Player in [rb8, el8, dr8]:
+			warrens.remove_player(h8)
+			h8.queue_free()
 		await _wait_frames(20)
 		# out through the adit: in front of the west gate, whose seal breaks
 		warrens.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_w")

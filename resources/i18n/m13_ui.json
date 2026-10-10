@@ -195,5 +195,29 @@
 	"ui.prompt.chain": {
 		"en": "Pull the chain",
 		"de": "Kette ziehen"
+	},
+	"ability.breakwater": {
+		"en": "Breakwater",
+		"de": "Wellenbrecher"
+	},
+	"ability.breakwater.desc": {
+		"en": "Charge up to 8 m behind your raised shield, taking half damage: enemies in the way are shoved aside, struck and taunted for 3 s. Costs 20 Resonance.",
+		"de": "Stürm bis zu 8 m hinter erhobenem Schild vor und nimm dabei nur halben Schaden: Gegner im Weg werden beiseitegestoßen, getroffen und 3 s verspottet. Kostet 20 Resonanz."
+	},
+	"ability.rime_ward": {
+		"en": "Rime Ward",
+		"de": "Raureif-Schild"
+	},
+	"ability.rime_ward.desc": {
+		"en": "A shell of rime absorbs 40 damage (more with your level) for 6 s. Enemies that strike you in melee while it holds are Chilled. Costs 25 Aether.",
+		"de": "Eine Hülle aus Raureif fängt 6 s lang 40 Schaden ab (mehr mit deiner Stufe). Gegner, die dich im Nahkampf treffen, solange sie hält, werden unterkühlt. Kostet 25 Äther."
+	},
+	"ability.wellspring": {
+		"en": "Wellspring",
+		"de": "Quellwasser"
+	},
+	"ability.wellspring.desc": {
+		"en": "Spring water over an ally: heals 25 at once, washes off slows and heals 30 more over 5 s. Costs 24 Sap.",
+		"de": "Quellwasser über einen Verbündeten: heilt sofort 25, wäscht Verlangsamungen ab und heilt über 5 s weitere 30. Kostet 24 Saft."
 	}
 }

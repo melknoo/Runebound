@@ -91,6 +91,11 @@ threatens double (ClassData `threat_mult` 2).
   0.5 s, then drags every enemy within 6 m 3 m toward its middle (the heavy
   ones keep their footing), strikes them (12) and taunts them for 2 s; 30
   Resonance, 15 s. Gathers a scattered pack for the party's area spells.
+- **Tome (M13, the Hollow Cistern): Breakwater** - a shield charge along the
+  aim, 8 m in 0.45 s, taking half damage on the way; every enemy in the
+  lane is struck (14), taunted for 3 s and shoved 2.6 m to the side it
+  stood on; 20 Resonance, 12 s. The tank's way into a pack that went for
+  the healer, without a jump over it.
 
 ### Elementalist, the damage dealer (M10)
 Ranged caster of fire, lightning and frost; Rune Bolts and spell hits build
@@ -123,6 +128,10 @@ tank). Burn, Shock and Chill and their interactions moved with the spells.
   Frost and Chill; enemies already Chilled take half again as much and freeze
   in place for 1 s; 20 Aether, 8 s. The third frost spell, the answer to the
   bone field's jackals at close range.
+- **Tome (M13, the Hollow Cistern): Rime Ward** - a barrier of 40 + 3 per
+  level for 6 s; while it holds, an enemy that strikes the Elementalist in
+  melee (within 4 m) is Chilled (6 Frost); 25 Aether, 18 s. The caster's
+  answer when the line breaks.
 
 ### Root druid, the healer (M11)
 Plants breaking out of burnt earth, totems, thorns. User decisions of
@@ -159,6 +168,10 @@ level 1.
   (untouchable like a dodge, never through a wall or over a drop); both ends
   bloom: allies within 3 m heal 15 and lose their slows (the first debuffs on
   heroes came with M12); 18 Sap, 12 s. The druid's only movement ability.
+- **Tome (M13, the Hollow Cistern): Wellspring** - on the heal target: 25
+  at once, its slows washed off, 30 more over 5 s (its own heal over time,
+  it stacks with Regrowth); 24 Sap, 9 s. The cleanse the dungeons' chilling
+  hazards asked for.
 - **Travel no longer heals** (user 2026-09-30, for every class): health (and
   Sap) are kept across zones and in the save; the Runehold hearth heals out
   of combat.

@@ -2078,6 +2078,18 @@
    "y": 2.0
   },
   {
+   "id": "ci_tome",
+   "type": "tome",
+   "pos": [
+    65,
+    -40
+   ],
+   "yaw": 0.0,
+   "tome": "cistern",
+   "room": "ci_tome_room",
+   "y": 2.0
+  },
+  {
    "id": "ci_chest_tome",
    "type": "chest",
    "pos": [

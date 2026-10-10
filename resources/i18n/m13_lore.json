@@ -87,5 +87,13 @@
 	"lore.warrens.last_note.body": {
 		"en": "She is laying in the brood hall. The eggs crack in the heat like chestnuts.\n\nThe lever by the door would let the next crew in the short way, but my arm will not lift it any more. If there is a next crew, pull it for them.",
 		"de": "Sie legt in der Bruthalle. Die Eier platzen in der Hitze wie Kastanien.\n\nDer Hebel an der Tür ließe die nächste Schicht den kurzen Weg herein, aber mein Arm hebt ihn nicht mehr. Falls es eine nächste Schicht gibt, zieh ihn für sie."
+	},
+	"lore.tome.cistern.title": {
+		"en": "The keepers' book of water",
+		"de": "Das Wasserbuch der Wächter"
+	},
+	"lore.tome.cistern.body": {
+		"en": "What the keepers could not drown, they learned from. A wall of water breaks on a shield and goes on around it. Rime holds the cold it is given and gives it back to the hand that strikes. A spring washes the weariness off whoever stands in it.\n\nThe pages are dry. Only the one meant for you is wet.",
+		"de": "Was die Wächter nicht ertränken konnten, davon lernten sie. Eine Wasserwand bricht an einem Schild und fließt um ihn herum weiter. Raureif hält die Kälte, die man ihm gibt, und gibt sie der Hand zurück, die zuschlägt. Eine Quelle wäscht die Müdigkeit von jedem, der in ihr steht.\n\nDie Seiten sind trocken. Nur die eine, die für dich bestimmt ist, ist nass."
 	}
 }

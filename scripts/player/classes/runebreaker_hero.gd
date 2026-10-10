@@ -48,11 +48,23 @@ var _ward: MeshInstance3D = null
 
 
 var lodestone_rune: AbilityData   # M12: the tome's rune that drags a pack together
+var breakwater: AbilityData       # M13 the Cistern's tome: a shield charge that shoves aside
+
+## Breakwater: the charge's time over its full reach, the shove to the side,
+## the share of damage the raised shield keeps off on the way.
+const BREAKWATER_TIME := 0.45
+const BREAKWATER_SHOVE := 2.6
+const BREAKWATER_REDUCTION := 0.5
+var _charge_from: Vector3 = Vector3.ZERO
+var _charge_dir: Vector3 = Vector3.FORWARD
+var _charge_len: float = 0.0
+var _charge_struck: Array[int] = []
 
 
 func _load_abilities() -> void:
 	super()
 	lodestone_rune = ability(&"lodestone_rune")
+	breakwater = ability(&"breakwater")
 	cleave = ability(&"rune_cleave")
 	earthbreaker = ability(&"earthbreaker")
 	runic_guard = ability(&"runic_guard")
@@ -77,6 +89,7 @@ func _register_actions() -> void:
 		&"warden_leap": try_warden_leap,
 		&"warding_rune": try_warding_rune,
 		&"lodestone_rune": try_lodestone_rune,
+		&"breakwater": try_breakwater,
 	})
 
 
@@ -86,7 +99,7 @@ func _anim_profile() -> Dictionary:
 		&"earthbreaker": &"earthbreaker_rise", &"earthbreaker_impact": &"earthbreaker_impact",
 		&"resonance_burst": &"resonance_burst", &"rune_challenge": &"challenge",
 		&"warden_leap": &"earthbreaker_rise", &"warden_leap_land": &"earthbreaker_impact", &"rune_chain": &"ember",
-		&"lodestone_rune": &"ember"})
+		&"lodestone_rune": &"ember", &"breakwater": &"block"})
 	# instant casts keep the legs running: upper-body layer only
 	(profile["upper"] as Dictionary).merge({&"runic_guard": &"runic_guard", &"rune_wall": &"block",
 		&"warding_rune": &"fracture_rune"})
@@ -105,13 +118,15 @@ func _process_class_state(delta: float) -> void:
 			_process_block(delta)
 		State.LEAP:
 			_process_leap(delta)
+		State.CHARGE:
+			_process_breakwater(delta)
 		_:
 			state = State.MOVE
 
 
 ## Earthbreaker is committed once the hero leaves the ground; so is a leap.
 func _dodge_allowed() -> bool:
-	if state == State.LEAP:
+	if state == State.LEAP or state == State.CHARGE:
 		return false
 	return not (state == State.SLAM and _state_timer < earthbreaker.startup + earthbreaker.active)
 
@@ -346,8 +361,11 @@ func taunt_seconds(base: float) -> float:
 	return base + stat(&"taunt_duration")
 
 
-## M10 Unyielding: badly hurt, the tank takes less.
+## M10 Unyielding: badly hurt, the tank takes less. M13 Breakwater: behind
+## the raised shield of the charge, half.
 func _class_damage_reduction() -> float:
+	if state == State.CHARGE:
+		return BREAKWATER_REDUCTION
 	if has_power(&"unyielding") and health != null and health.max_health > 0.0 \
 			and health.current_health / health.max_health < UNYIELDING_BELOW:
 		return UNYIELDING_REDUCTION
@@ -640,6 +658,76 @@ func _rune_aim(reach: float) -> Vector3:
 	if offset.length() > reach:
 		offset = offset.normalized() * reach
 	return ZoneBase.ground_under(self, global_position + offset, 0.02)
+
+
+# ---------------------------------------------------------------------------
+# M13 tome (the Cistern): Breakwater (a shield charge that shoves aside)
+# ---------------------------------------------------------------------------
+
+func try_breakwater() -> bool:
+	if not knows(&"breakwater") or state != State.MOVE or _on_cooldown(&"breakwater"):
+		return false
+	var cost := resource_cost(&"breakwater")
+	if resonance < cost:
+		ui_denied()
+		return false
+	spend_resonance(cost)
+	_set_cooldown(&"breakwater", breakwater.cooldown)
+	var dir := aim_direction()
+	dir.y = 0.0
+	dir = dir.normalized() if dir.length() > 0.01 else facing()
+	_charge_dir = dir
+	_charge_from = global_position
+	_charge_len = breakwater.projectile_speed  # data: the charge's reach in metres
+	_charge_struck.clear()
+	state = State.CHARGE
+	_state_timer = 0.0
+	collision_mask = 0b1000001  # through the enemies (they are shoved), not through walls
+	_visual.rotation.y = atan2(-dir.x, -dir.z)
+	hero_fx(&"breakwater", [global_position, dir, _charge_len])
+	feel_impulse(dir, 0.1)
+	cooldowns_changed.emit()
+	action_started.emit(&"breakwater")
+	return true
+
+
+func _process_breakwater(delta: float) -> void:
+	_state_timer += delta
+	var speed := _charge_len / BREAKWATER_TIME
+	velocity.x = _charge_dir.x * speed
+	velocity.z = _charge_dir.z * speed
+	_breakwater_contact()
+	var run := (global_position - _charge_from).dot(_charge_dir)
+	if run >= _charge_len or _state_timer >= BREAKWATER_TIME + 0.1 or (is_on_wall() and _state_timer > 0.05):
+		velocity.x = 0.0
+		velocity.z = 0.0
+		collision_mask = 0b1000101
+		state = State.MOVE
+		_consume_buffer()
+
+
+## Every enemy the shield meets: struck, taunted and shoved to the side it
+## stands on (each once a charge).
+func _breakwater_contact() -> void:
+	var half := breakwater.aoe_radius
+	for e in _enemies_near(global_position, half + 1.2):
+		if _charge_struck.has(e.get_instance_id()) or not e.targetable:
+			continue
+		var rel := e.global_position - global_position
+		rel.y = 0.0
+		var ahead := rel.dot(_charge_dir)
+		var side_off := rel - _charge_dir * ahead
+		if ahead < -0.8 or ahead > 1.6 or side_off.length() > half + 0.4:
+			continue
+		_charge_struck.append(e.get_instance_id())
+		var side := side_off.normalized() if side_off.length() > 0.05 else Vector3(_charge_dir.z, 0.0, -_charge_dir.x)
+		var hit := roll_ability_hit(breakwater)
+		hit.source_position = global_position
+		hit.taunt = taunt_seconds(breakwater.active)
+		hit.threat_mult = breakwater.threat_mult
+		hit.pull_to = e.global_position + side * BREAKWATER_SHOVE + _charge_dir * 0.8
+		if e.take_hit(hit):
+			VFX.melee_impact(get_tree().current_scene, e.global_position + Vector3(0, 1.0, 0), side)
 
 
 # ---------------------------------------------------------------------------

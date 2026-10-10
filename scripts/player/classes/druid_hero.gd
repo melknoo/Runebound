@@ -37,7 +37,9 @@ const ROOTWALK_STEP := 0.8
 const ROOTWALK_DROP := 1.6
 
 ## Abilities that go to the heal target (Player.pick_heal_target).
-const TARGETED_HEALS: Array[StringName] = [&"mending_bloom", &"barkskin", &"regrowth"]
+const TARGETED_HEALS: Array[StringName] = [&"mending_bloom", &"barkskin", &"regrowth", &"wellspring"]
+## M13 Wellspring: its heal over time is this share of its instant heal.
+const WELLSPRING_HOT_SHARE := 1.2
 
 # Ability tuning: derived caches of `abilities` (the tests read them by name).
 var thorn_volley: AbilityData
@@ -50,6 +52,7 @@ var thornfield: AbilityData
 var growth_totem: AbilityData
 var wild_bloom: AbilityData
 var rootwalk: AbilityData   # M12 tome: through the roots, a bloom at both ends
+var wellspring: AbilityData  # M13 the Cistern's tome: a heal that washes off slows, then a HoT
 var _walk_from := Vector3.ZERO
 var _walk_to := Vector3.ZERO
 
@@ -66,6 +69,7 @@ func _load_abilities() -> void:
 	growth_totem = ability(&"growth_totem")
 	wild_bloom = ability(&"wild_bloom")
 	rootwalk = ability(&"rootwalk")
+	wellspring = ability(&"wellspring")
 
 
 func _register_actions() -> void:
@@ -81,6 +85,7 @@ func _register_actions() -> void:
 		&"growth_totem": try_growth_totem,
 		&"wild_bloom": try_wild_bloom,
 		&"rootwalk": try_rootwalk,
+		&"wellspring": try_wellspring,
 	})
 
 
@@ -92,7 +97,7 @@ func _anim_profile() -> Dictionary:
 	(profile["actions"] as Dictionary).merge({&"root_grasp": &"root_grasp", &"renewal_grove": &"grove",
 		&"growth_totem": &"totem", &"wild_bloom": &"bloom", &"rootwalk": &"root_grasp"})
 	(profile["upper"] as Dictionary).merge({&"thorn_volley": &"thorn", &"mending_bloom": &"mend",
-		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield"})
+		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield", &"wellspring": &"mend"})
 	return profile
 
 
@@ -316,6 +321,35 @@ func try_regrowth() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"regrowth")
 	return true
+
+
+# ---------------------------------------------------------------------------
+# M13 tome (the Cistern): Wellspring (a heal, the slows washed off, a HoT)
+# ---------------------------------------------------------------------------
+
+func try_wellspring() -> bool:
+	if not _ready_for(&"wellspring"):
+		return false
+	var target := pick_heal_target()
+	if not _pay(&"wellspring"):
+		return false
+	_set_cooldown(&"wellspring", wellspring.cooldown)
+	_face_ally(target)
+	var amount := heal_amount(wellspring.heal, target)
+	var zone := ZoneBase.zone_of(self)
+	if zone != null and target != null:
+		hero_fx(&"wellspring", [zone.hero_ref(target)])
+		heal_ally(target, amount)
+		hero_fx(&"ally_cleanse", [zone.hero_ref(target)])
+		zone_hot(zone, target, amount * WELLSPRING_HOT_SHARE)
+	cooldowns_changed.emit()
+	action_started.emit(&"wellspring")
+	return true
+
+
+## Wellspring's heal over time (its own id: it stacks with Regrowth).
+func zone_hot(zone: ZoneBase, target: Player, total: float) -> void:
+	hero_fx(&"ally_hot", [zone.hero_ref(target), &"wellspring", total, wellspring.active])
 
 
 # ---------------------------------------------------------------------------

@@ -920,6 +920,58 @@ def icon_rootwalk() -> Image.Image:
     return outlined(img)
 
 
+# --- M13: the dungeons' tome abilities ----------------------------------------
+
+def icon_breakwater() -> Image.Image:
+    """A shield driving forward, a wave breaking white on its rim."""
+    img, d = canvas()
+    fr = ROLES["frost"]
+    edge, body, core = rgb(fr["edge"]), rgb(fr["body"]), rgb(fr["core"])
+    d.ellipse([7, 3, 17, 17], fill=ACCENT_DIM, outline=ACCENT)       # the shield, seen from the side
+    d.line([12, 5, 12, 15], fill=GOLD)                               # its rune spine
+    d.arc([1, 2, 11, 18], 100, 260, fill=body, width=2)              # the wave curling back off it
+    d.arc([3, 4, 10, 16], 120, 240, fill=core)
+    for x, y in ((2, 4), (1, 9), (3, 15), (5, 3)):
+        d.point((x, y), fill=edge)                                   # spray
+    for x in (14, 16, 18):
+        d.point((x + 1, 10), fill=ACCENT_HOT)                        # the drive forward
+    return outlined(img)
+
+
+def icon_rime_ward() -> Image.Image:
+    """A ring of rime shards around a pale shell."""
+    img, d = canvas()
+    fr = ROLES["frost"]
+    edge, body, core = rgb(fr["edge"]), rgb(fr["body"]), rgb(fr["core"])
+    d.ellipse([3, 3, 16, 16], outline=body)
+    d.ellipse([5, 5, 14, 14], fill=edge)
+    d.ellipse([7, 7, 12, 12], fill=core)
+    cx = cy = 9.5
+    for k in range(6):
+        a = k * math.tau / 6
+        tip = (cx + math.cos(a) * 9.5, cy + math.sin(a) * 9.5)
+        base = (cx + math.cos(a) * 6.5, cy + math.sin(a) * 6.5)
+        side = a + math.pi / 2
+        d.polygon([(base[0] + math.cos(side) * 1.4, base[1] + math.sin(side) * 1.4), tip,
+                   (base[0] - math.cos(side) * 1.4, base[1] - math.sin(side) * 1.4)], fill=body)
+    return outlined(img)
+
+
+def icon_wellspring() -> Image.Image:
+    """Water welling up from a spring, a healing cross in the spray."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    water, water_hi = rgb("#2E6A72"), rgb("#9FE6E0")
+    d.ellipse([2, 13, 17, 18], fill=water)                           # the pool
+    d.polygon([(7, 14), (9, 4), (12, 14)], fill=water_hi)            # the spring rising
+    for x, y in ((5, 8), (14, 7), (4, 12), (15, 11)):
+        d.point((x, y), fill=water_hi)                               # drops
+    d.rectangle([9, 6, 10, 11], fill=n_core)                         # healing cross
+    d.rectangle([7, 8, 12, 9], fill=n_core)
+    d.point((9, 3), fill=n_body)
+    return outlined(img)
+
+
 def mk_trial() -> Image.Image:
     """M12 map: a trial shrine (a stele with a rune in the accent)."""
     img, d = canvas12()
@@ -1009,7 +1061,8 @@ def main() -> None:
                      ("renewal_grove", icon_healing_zone), ("thornfield", icon_thornfield),
                      ("growth_totem", icon_growth_totem), ("wild_bloom", icon_wild_bloom),
                      ("lodestone_rune", icon_lodestone_rune), ("hoarfrost_fan", icon_hoarfrost_fan),
-                     ("rootwalk", icon_rootwalk)):
+                     ("rootwalk", icon_rootwalk), ("breakwater", icon_breakwater), ("rime_ward", icon_rime_ward),
+                     ("wellspring", icon_wellspring)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),

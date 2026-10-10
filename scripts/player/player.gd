@@ -30,7 +30,7 @@ signal loadout_changed
 signal consumables_changed
 
 ## One enum for every class: the network sends the state as an int.
-enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP, BLOCK, LEAP, ROOTWALK }
+enum State { MOVE, DODGE, MELEE, CAST, SLAM, STORM_STEP, BLOCK, LEAP, ROOTWALK, CHARGE }
 
 const MAX_SPEED := 6.8
 const ACCEL := 60.0

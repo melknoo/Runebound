@@ -150,6 +150,7 @@ LAYOUT = {
         {"id": "ci_reset_vault", "type": "reset", "pos": [78, -23], "targets": ["ci_block_vault"]},
         {"id": "ci_lore_vault", "type": "lore", "kind": "inscription", "text": "lore.cistern.warning",
          "pos": [60, -10], "yaw": 1.5708},
+        {"id": "ci_tome", "type": "tome", "pos": [65, -40], "yaw": 0.0, "tome": "cistern"},
         {"id": "ci_chest_tome", "type": "chest", "pos": [65, -46], "yaw": 0.0, "rarity_bias": 2},
         # --- the threshold, the shortcut's lever, the heart (the end boss) ---
         {"id": "ci_rune_threshold", "type": "rune", "pos": [47, 21], "yaw": 0.0},

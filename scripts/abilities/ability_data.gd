@@ -31,7 +31,7 @@ extends Resource
 ## M07b: how a character comes to know this ability (docs/PROGRESSION_DESIGN.md).
 ## START: known from creation. TRAINER: bought at the hub trainer (level +
 ## gold). TALENT: granted while the talent `unlock_power` is learned. M12 TOME:
-## taught by the tome in the Charwood's sealed grotto (one per class).
+## taught by a tome (one per class and tome; `tome_id` names which).
 enum Unlock { START, TRAINER, TALENT, TOME }
 ## M10: holding its key keeps firing it (the Elementalist's Rune Bolt).
 @export var repeat_while_held: bool = false
@@ -45,6 +45,9 @@ enum Unlock { START, TRAINER, TALENT, TOME }
 @export var learn_price: int = 0
 ## TALENT unlocks: the power id Player.has_power() must report.
 @export var unlock_power: StringName = &""
+## M13 TOME unlocks: the tome that teaches it ("" = the Charwood grotto's,
+## "cistern" / "warrens" = the dungeons' big secrets).
+@export var tome_id: StringName = &""
 
 
 ## M12: the name players read - the text table's "ability.<id>" (DE/EN) where

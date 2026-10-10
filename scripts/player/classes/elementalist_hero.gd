@@ -30,6 +30,11 @@ var flame_wall: AbilityData       # M10: burning line at the aim
 var ball_lightning: AbilityData   # M10: a slow zapping orb
 var ember_fall: AbilityData       # M10: the meteor, spends Aether
 var hoarfrost_fan: AbilityData    # M12 tome: a cone of rime, spends Aether
+var rime_ward: AbilityData        # M13 the Cistern's tome: a barrier that chills melee strikers
+
+## Rime Ward: the barrier grows this much per level; until when it holds.
+const RIME_PER_LEVEL := 3.0
+var _rime_until: int = 0
 
 ## The spell State.CAST is winding up (Ember Lance, Ember Fall).
 var _cast_id: StringName = &""
@@ -52,6 +57,7 @@ func _load_abilities() -> void:
 	ball_lightning = ability(&"ball_lightning")
 	ember_fall = ability(&"ember_fall")
 	hoarfrost_fan = ability(&"hoarfrost_fan")
+	rime_ward = ability(&"rime_ward")
 
 
 func _register_actions() -> void:
@@ -67,6 +73,7 @@ func _register_actions() -> void:
 		&"ball_lightning": try_ball_lightning,
 		&"ember_fall": try_ember_fall,
 		&"hoarfrost_fan": try_hoarfrost_fan,
+		&"rime_ward": try_rime_ward,
 	})
 
 
@@ -78,7 +85,7 @@ func _anim_profile() -> Dictionary:
 		&"frost_nova": &"frost_nova", &"ember_fall": &"ember_fall"})
 	(profile["upper"] as Dictionary).merge({&"rune_bolt": &"bolt", &"chain_spark": &"chain_spark",
 		&"fracture_rune": &"fracture_rune", &"flame_wall": &"flame_wall", &"ball_lightning": &"ball_lightning",
-		&"hoarfrost_fan": &"flame_wall"})
+		&"hoarfrost_fan": &"flame_wall", &"rime_ward": &"chain_spark"})
 	return profile
 
 
@@ -404,6 +411,50 @@ func try_frost_nova() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"frost_nova")
 	return true
+
+
+# ---------------------------------------------------------------------------
+# M13 tome (the Cistern): Rime Ward (a barrier; melee strikers are Chilled)
+# ---------------------------------------------------------------------------
+
+func rime_amount() -> float:
+	var lvl := progression.level if progression != null else 1
+	return rime_ward.heal + RIME_PER_LEVEL * lvl
+
+
+## Does the rime still hold (time left and barrier left)?
+func rime_warded() -> bool:
+	return rime_ward != null and Time.get_ticks_msec() < _rime_until and barrier > 0.0
+
+
+func try_rime_ward() -> bool:
+	if not knows(&"rime_ward") or state != State.MOVE or _on_cooldown(&"rime_ward"):
+		return false
+	if resonance < rime_ward.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(rime_ward.resonance_cost)
+	_set_cooldown(&"rime_ward", rime_ward.cooldown)
+	grant_barrier(rime_amount(), rime_ward.active)
+	_rime_until = Time.get_ticks_msec() + int(rime_ward.active * 1000.0)
+	hero_fx(&"rime_ward", [rime_ward.active])
+	cooldowns_changed.emit()
+	action_started.emit(&"rime_ward")
+	return true
+
+
+## The rime bites back: an enemy that strikes this hero in melee while the
+## ward holds is Chilled (its owner's machine judges, like every hit taken).
+func take_hit(hit: HitInfo) -> bool:
+	if hit != null and not hit.from_player and net_role == NetRole.OWNER and not god_mode and rime_warded():
+		var striker := instance_from_id(hit.source_id) as EnemyBase if hit.source_id != 0 else null
+		if striker != null and is_instance_valid(striker) and striker.ai_state != EnemyBase.AIState.DEAD \
+				and striker.global_position.distance_to(global_position) <= rime_ward.aoe_radius:
+			var bite := roll_ability_hit(rime_ward)
+			bite.source_position = global_position
+			striker.take_hit(bite)
+			VFX.frost_burst(get_tree().current_scene, striker.global_position + Vector3(0, 0.8, 0), 0.9)
+	return super(hit)
 
 
 # ---------------------------------------------------------------------------

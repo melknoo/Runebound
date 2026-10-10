@@ -363,7 +363,9 @@
   captures/.
 
 ## M13 open items (in progress)
-- The tome rooms hold a chest until the tomes arrive (phase 8).
+- The Warrens' tome stands in its room but teaches nothing until phase 8b
+  brings its three abilities. Tome abilities to feel (8a): Breakwater (8 m, half damage, 2.6 m
+  shove), Rime Ward (40 + 3/level, 6 s), Wellspring (25 + 30 over 5 s).
 - **Warrens fights to feel (phase 7):** the beetles' break-out ring
   (0.9 s), the head plate (x0.35 from the front), the imps' slag (7 + a
   burning patch), their death burst (16); the Reeve's hot crust (x0.4),
