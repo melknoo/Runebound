@@ -32,6 +32,14 @@ var ember_fall: AbilityData       # M10: the meteor, spends Aether
 var hoarfrost_fan: AbilityData    # M12 tome: a cone of rime, spends Aether
 var rime_ward: AbilityData        # M13 the Cistern's tome: a barrier that chills melee strikers
 var ember_seed: AbilityData       # M13 the Warrens' tome: a seed that bursts in a ring of fire
+var thunderhead: AbilityData      # M13b the Stormwatch's tome: a thundercloud over the aim
+
+## M13b Eye of the Storm (legendary): Chain Spark jumps this much further, and
+## from its third target on each strikes harder.
+const EYE_JUMPS := 2
+const EYE_LATE_MULT := 1.25
+## M13b Cloudkeeper (legendary): Thunderhead lasts this much longer.
+const CLOUDKEEPER_TIME := 3.0
 
 ## Rime Ward: the barrier grows this much per level; until when it holds.
 const RIME_PER_LEVEL := 3.0
@@ -60,6 +68,7 @@ func _load_abilities() -> void:
 	hoarfrost_fan = ability(&"hoarfrost_fan")
 	rime_ward = ability(&"rime_ward")
 	ember_seed = ability(&"ember_seed")
+	thunderhead = ability(&"thunderhead")
 
 
 func _register_actions() -> void:
@@ -77,6 +86,7 @@ func _register_actions() -> void:
 		&"hoarfrost_fan": try_hoarfrost_fan,
 		&"rime_ward": try_rime_ward,
 		&"ember_seed": try_ember_seed,
+		&"thunderhead": try_thunderhead,
 	})
 
 
@@ -88,7 +98,8 @@ func _anim_profile() -> Dictionary:
 		&"frost_nova": &"frost_nova", &"ember_fall": &"ember_fall"})
 	(profile["upper"] as Dictionary).merge({&"rune_bolt": &"bolt", &"chain_spark": &"chain_spark",
 		&"fracture_rune": &"fracture_rune", &"flame_wall": &"flame_wall", &"ball_lightning": &"ball_lightning",
-		&"hoarfrost_fan": &"flame_wall", &"rime_ward": &"chain_spark", &"ember_seed": &"chain_spark"})
+		&"hoarfrost_fan": &"flame_wall", &"rime_ward": &"chain_spark", &"ember_seed": &"chain_spark",
+		&"thunderhead": &"ball_lightning"})
 	return profile
 
 
@@ -315,6 +326,8 @@ func try_chain_spark() -> bool:
 		var chest := next.global_position + Vector3(0, 1.0, 0)
 		hero_fx(&"arc", [from, chest, Color(1.0, 0.95, 0.5), true])
 		var hit := roll_ability_hit(chain_spark)
+		if has_power(&"eye_of_the_storm") and hit_enemies.size() >= 2:
+			hit.damage *= EYE_LATE_MULT  # M13b legendary: the later jumps strike harder
 		if next.take_hit(hit):
 			gain_resonance(chain_spark.resonance_gain_per_hit, true)
 			# Conductor's Oath: struck enemies stay charged; later lightning
@@ -323,7 +336,7 @@ func try_chain_spark() -> bool:
 				next.status.apply_conductor()
 		hit_enemies.append(next)
 		from = chest
-		var max_targets := 3 + int(stat(&"chain_jumps")) + (1 if bonus_jump else 0)
+		var max_targets := chain_spark_targets(bonus_jump)
 		next = null
 		if hit_enemies.size() < max_targets:
 			next = _nearest_chain_candidate(from, hit_enemies)
@@ -345,6 +358,12 @@ func try_chain_spark() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"chain_spark")
 	return true
+
+
+## How many enemies Chain Spark strikes: 3, its affixes' jumps, one more
+## through a Shocked enemy, two more with Eye of the Storm (M13b).
+func chain_spark_targets(bonus_jump: bool) -> int:
+	return 3 + int(stat(&"chain_jumps")) + (1 if bonus_jump else 0) + (EYE_JUMPS if has_power(&"eye_of_the_storm") else 0)
 
 
 func _nearest_chain_candidate(from: Vector3, exclude: Array[EnemyBase]) -> EnemyBase:
@@ -458,6 +477,28 @@ func take_hit(hit: HitInfo) -> bool:
 			striker.take_hit(bite)
 			VFX.frost_burst(get_tree().current_scene, striker.global_position + Vector3(0, 0.8, 0), 0.9)
 	return super(hit)
+
+
+# ---------------------------------------------------------------------------
+# M13b tome (the Stormwatch): Thunderhead (a thundercloud over the aim)
+# ---------------------------------------------------------------------------
+
+func try_thunderhead() -> bool:
+	if not knows(&"thunderhead") or state != State.MOVE or _on_cooldown(&"thunderhead"):
+		return false
+	if resonance < thunderhead.resonance_cost:
+		ui_denied()
+		return false
+	spend_resonance(thunderhead.resonance_cost)
+	_set_cooldown(&"thunderhead", thunderhead.cooldown)
+	var at := _ground_aim(thunderhead.projectile_speed)
+	_hold_aim()
+	var keeper := has_power(&"cloud_keeper")
+	var duration := thunderhead.active + (CLOUDKEEPER_TIME if keeper else 0.0)
+	hero_fx(&"thunderhead", [at, thunderhead.aoe_radius, duration, keeper])  # every machine raises the cloud
+	cooldowns_changed.emit()
+	action_started.emit(&"thunderhead")
+	return true
 
 
 # ---------------------------------------------------------------------------

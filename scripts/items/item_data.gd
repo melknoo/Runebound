@@ -60,6 +60,26 @@ static func from_dict(data: Dictionary) -> ItemData:
 	return item
 
 
+## M13b: the name players read - the text table's "item.<legendary id>.name"
+## where there is one (the storm legendaries), else the stored name.
+func title() -> String:
+	if legendary_id != &"" and Texts.has("item.%s.name" % legendary_id):
+		return Texts.t("item.%s.name" % legendary_id)
+	return display_name
+
+
+## ... and its power ("item.<legendary id>.text", else the stored text).
+func power_text() -> String:
+	if legendary_id != &"" and Texts.has("item.%s.text" % legendary_id):
+		return Texts.t("item.%s.text" % legendary_id)
+	return legendary_text
+
+
+## M13b: a slot's name in the player's language (the newer windows).
+static func slot_title(s: Slot) -> String:
+	return Texts.t("item.slot.%s" % slot_name(s).to_lower())
+
+
 static func rarity_color(r: Rarity) -> Color:
 	match r:
 		Rarity.MAGIC:

@@ -1045,8 +1045,53 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
     bot party offline through every camp and the three bosses; enemies get
     the server's health for the party; per fight the result (clear / wipe
     / timeout), the seconds, the downs and each hero's damage taken.
+- **The tome, the shards, the storm trader (phase 7):**
+  - The tome (`sw_tome`, `tome_id` "stormwatch") teaches Storm Tether
+    (Runebreaker), Thunderhead (Elementalist), Cloudburst (druid); the class
+    pools hold 13.
+  - Storm Tether: HeroFx `ally_tether` [ref, seconds, share, rod] draws a
+    `StormTetherLink` (the look) on every machine; the bound hero's owner
+    keeps it (`Player.bind_tether`). In its `take_hit` (after the brand,
+    before the barrier) `_tether_carry` cuts the share off and sends HeroFx
+    `tether_carry` [tank ref, amount, striker net id, instance id, whole];
+    the tank's owner takes it (`RunebreakerHero.carry_for_ally`: a
+    LIGHTNING hit with ability `storm_tether`, never carried again, no
+    block) and lashes the striker (a hit of the carried amount with
+    threat_mult 3 - a forwarded hit on a client, so the server books the
+    threat). It snaps beyond `Player.TETHER_SNAP` (16 m).
+  - Thunderhead (`scripts/abilities/thunderhead.gd`): built on every machine
+    (HeroFx `thunderhead`, the node kept in the hero's meta); the caster's
+    own copy strikes one enemy under it every 0.8 s and sends HeroFx
+    `thunderhead_bolt` [cloud pos, struck pos] (the look; another player's
+    copy glides to the cloud's position); every machine gives the heroes it
+    simulates under it `move_pct` +20 (a short buff renewed).
+  - Cloudburst (`scripts/abilities/cloudburst.gd`): a child of the druid's
+    hero on every machine (HeroFx `cloudburst`), so it follows her puppet
+    too; each machine heals its own heroes in 6 m and clears their slows.
+  - Storm shards: `Player.storm_shards` (+ `storm_shards_changed`), saved
+    per character (`storm_shards`, optional). `give_reward`/`receive_reward`
+    and GRANT carry `shards` (payload index 8); `BossArena.shards_for(zone,
+    kind)` reads the registry's `shards` {"mid": 3, "end": 6}. Boss loot
+    takes `DungeonZone.boss_level()` (the party's level + 1 here).
+  - Storm legendaries: `AffixPool.STORM_LEGENDARIES` (never in the drop
+    pool), `ItemGenerator.make_storm_legendary(id, class, level)`;
+    `ItemData.title()` / `power_text()` read `item.<id>.name` / `.text`
+    from the text table where there is one (the stored English stays the
+    fallback). Powers: `lightning_rod` (the tether carries a whole blow
+    every 4 s), `thunder_wall` (a parry's ring, 4 m, 25 + Shock),
+    `eye_of_the_storm` (`ElementalistHero.chain_spark_targets` + 2, x1.25
+    from the third target), `cloud_keeper` (+3 s, drifts after its last
+    strike), `rain_heart` (a 20 barrier when the rain ends, for 5 s),
+    `storm_seed` (the totem's pulse: `DruidHero.storm_seed_pulse`, 8
+    lightning + Shock; arcs on every machine).
+  - The storm trader: `StormTraderNpc` (Tova, Runehold, east of the hearth)
+    opens the TrainerUI's third view (`_storm_row`, `try_buy_storm`,
+    `storm_deny_reason`; shards in the corner instead of gold; texts from
+    the table). 30 shards, the item at the hero's level with two class
+    affixes. The HUD shows the shards beside the draughts once there are
+    any.
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
-  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`, `stormsworn`, `stormcaller`,
+  NOTICE with a key, shards in GRANT). Net scenarios `coop_gate`, `revive`, `coop_puzzles`, `stormsworn`, `stormcaller`, `storm_tether`,
   `coop_bots` (the real companion driver helps a scripted leader through
   the lab's co-op rooms and revives it; companions take `--until-alone=`
   in tests).

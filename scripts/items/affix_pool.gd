@@ -80,6 +80,42 @@ const LEGENDARIES: Array[Dictionary] = [
 ]
 
 
+## M13b: the storm legendaries - never dropped, only bought for storm shards
+## from the storm trader in Runehold (two per class; their names and texts
+## live in the text table as item.<id>.name / .text, the English here is the
+## fallback the item keeps).
+const STORM_PRICE := 30
+const STORM_LEGENDARIES: Array[Dictionary] = [
+	{"id": &"lightning_rod", "name": "Lightning Rod", "class": &"runebreaker", "slot": ItemData.Slot.AMULET,
+		"text": "Once every 4 s, Storm Tether draws the whole of a blow on the bound ally into you."},
+	{"id": &"thunder_wall", "name": "Thunderwall", "class": &"runebreaker", "slot": ItemData.Slot.GLOVES,
+		"text": "A parry with Rune Wall discharges a ring of lightning: 25 damage and Shock to every enemy within 4 m."},
+	{"id": &"eye_of_the_storm", "name": "Eye of the Storm", "class": &"elementalist", "slot": ItemData.Slot.HELM,
+		"text": "Chain Spark jumps to two more enemies; from the third on, each takes 25% more."},
+	{"id": &"cloud_keeper", "name": "Cloudkeeper", "class": &"elementalist", "slot": ItemData.Slot.BOOTS,
+		"text": "Thunderhead lasts 3 s longer and drifts after the enemy it last struck."},
+	{"id": &"rain_heart", "name": "Rainheart", "class": &"druid", "slot": ItemData.Slot.CHEST,
+		"text": "When Cloudburst ends, every ally under it gains a 20-health barrier for 5 s."},
+	{"id": &"storm_seed", "name": "Stormseed", "class": &"druid", "slot": ItemData.Slot.WEAPON,
+		"text": "The Totem of Growth's pulses strike every enemy in its reach with lightning: 8 damage and Shock."},
+]
+
+
+static func storm_legendaries_for(class_id: StringName = &"") -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for def in STORM_LEGENDARIES:
+		if _fits_class(def, class_id):
+			out.append(def)
+	return out
+
+
+static func storm_def(id: StringName) -> Dictionary:
+	for def in STORM_LEGENDARIES:
+		if def["id"] == id:
+			return def
+	return {}
+
+
 ## Affixes a slot can roll. M07b: an affix tagged "class" only drops for that
 ## class (`class_id` empty = everything, for debug drops and tests).
 static func defs_for_slot(slot: ItemData.Slot, class_id: StringName = &"") -> Array[Dictionary]:

@@ -115,6 +115,15 @@ func reset() -> void:
 		zone.hud.hide_boss_bar()
 
 
+## M13b: the storm shards each hero gets for this boss (the registry's
+## `shards` by the arena's reward kind; 0 outside the co-op dungeon).
+static func shards_for(zone: ZoneBase, kind: String) -> int:
+	if zone is not DungeonZone:
+		return 0
+	var table: Variant = (zone as DungeonZone).info.get("shards", {})
+	return int((table as Dictionary).get(kind, 0)) if table is Dictionary else 0
+
+
 func _on_boss_died(_e: EnemyBase) -> void:
 	var zone := _zone()
 	var at := boss.global_position if boss != null and is_instance_valid(boss) else global_position
@@ -124,7 +133,8 @@ func _on_boss_died(_e: EnemyBase) -> void:
 	if zone == null:
 		return
 	zone.apply_world_flag(flag)
-	var ilvl := int((zone as DungeonZone).info.get("boss_level", 4)) if zone is DungeonZone else 4
+	var ilvl := (zone as DungeonZone).boss_level() if zone is DungeonZone else 4  # M13b: the run's in the co-op dungeon
+	var shards := shards_for(zone, reward)
 	for hero in zone.party():  # personal loot (M09): every hero its own rolls
 		var items: Array[ItemData] = []
 		if reward == "end":
@@ -134,4 +144,4 @@ func _on_boss_died(_e: EnemyBase) -> void:
 		var rare := ItemGenerator.generate(2, hero.class_data.id)
 		ItemGenerator.apply_item_level(rare, ilvl)
 		items.append(rare)
-		zone.give_reward(hero, 0, 0, 0, items, at)
+		zone.give_reward(hero, 0, 0, 0, items, at, "", false, 0, shards)

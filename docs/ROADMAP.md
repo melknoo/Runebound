@@ -457,6 +457,9 @@ Windklingen, Böe und Windgeist-Wellen; alles wächst mit der Gruppe; eigene Rig
 Phase 6 gebaut (der letzte Sturmrufer: harte Schläge, Statik-Pulse durch die ganze Halle, ab 60 % der Donnerschlag, den nur
 eine Kette aus allen Helden außer einem zwischen den Erdungsspulen ableitet, ab 30 % Adds; Party-Check mit Bots: mit allen
 drei Rollen 9/9 ohne Ausfall, ohne Tank oder ohne Heiler 8/9 mit einem Wipe, drei Magier 7/9 mit zwei Wipes).
+Phase 7 gebaut (Foliant im Geheimnis: Sturmband, Gewitterwolke, Wolkenbruch; Sturmsplitter 3 je Zwischenboss, 6 vom
+Sturmrufer; Tova in Runehold verkauft die 6 Sturm-Legendaries für je 30 Splitter: Blitzableiter, Donnerwall, Auge des Sturms,
+Wolkenhüter, Regenherz, Sturmsaat).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

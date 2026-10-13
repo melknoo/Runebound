@@ -1,0 +1,9 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/m13b_trader",
+	"comment": "M13b phase 7: Tova, the storm trader, east of Runehold's hearth.",
+	"shots": [
+		{"name": "trader", "player": [5.0, 0.2, 9.0], "yaw": 0.3, "pitch": -0.2, "zoom": 4.5, "settle": 0.6},
+		{"name": "hearth_east", "player": [0, 0.2, 9.5], "yaw": 0.0, "pitch": -0.3, "zoom": 7.0, "settle": 0.6}
+	]
+}

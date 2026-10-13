@@ -1018,6 +1018,162 @@ def icon_cinder_ward() -> Image.Image:
     return outlined(img)
 
 
+def _storm() -> tuple:
+    sw = PALETTES["stormwatch"]
+    return rgb(ROLES["lightning"]["edge"]), rgb(sw["lightning"]), rgb(sw["lightning_hi"])
+
+
+def icon_storm_tether() -> Image.Image:
+    """M13b: a shield and a small ally, bound by a zigzag of lightning."""
+    img, d = canvas()
+    edge, body, core = _storm()
+    n_edge, n_body, n_core = _nat()
+    d.polygon([(2, 9), (8, 9), (8, 14), (5, 17), (2, 14)], fill=rgb("#4A5257"))   # the tank's shield
+    d.line([3, 10, 7, 10], fill=GOLD)
+    d.point((5, 13), fill=GOLD)
+    d.ellipse([13, 3, 16, 6], fill=n_body)                                        # the ally
+    d.rectangle([13, 7, 16, 11], fill=n_edge)
+    d.line([7, 8, 10, 8, 9, 6, 12, 6, 11, 4, 13, 4], fill=body)                   # the tether
+    d.point((10, 7), fill=core)
+    d.point((12, 5), fill=core)
+    for x, y in ((3, 4), (17, 14), (11, 15)):
+        d.point((x, y), fill=edge)
+    return outlined(img)
+
+
+def icon_thunderhead() -> Image.Image:
+    """M13b: a dark thundercloud with a bolt falling out of it."""
+    img, d = canvas()
+    edge, body, core = _storm()
+    dark, mid = rgb("#2A2C3A"), rgb("#4A4E64")
+    d.ellipse([1, 3, 9, 10], fill=mid)
+    d.ellipse([6, 1, 15, 9], fill=mid)
+    d.ellipse([11, 4, 18, 10], fill=mid)
+    d.rectangle([3, 7, 16, 10], fill=dark)                                       # the cloud's dark belly
+    d.line([6, 3, 10, 2], fill=rgb("#6A6F88"))
+    d.line([10, 10, 8, 13, 11, 13, 8, 18], fill=body, width=2)                    # the bolt
+    d.line([10, 11, 9, 13], fill=core)
+    for x, y in ((4, 13), (15, 13), (14, 16)):
+        d.point((x, y), fill=edge)
+    return outlined(img)
+
+
+def icon_cloudburst() -> Image.Image:
+    """M13b: a pale rain cloud, rain streaks and a healing cross under it."""
+    img, d = canvas()
+    n_edge, n_body, n_core = _nat()
+    grey, grey_hi = rgb("#5A6474"), rgb("#8A94A4")
+    water = rgb("#9FE6E0")
+    d.ellipse([1, 2, 9, 9], fill=grey)
+    d.ellipse([6, 1, 15, 8], fill=grey_hi)
+    d.ellipse([11, 3, 18, 9], fill=grey)
+    d.rectangle([3, 6, 16, 9], fill=grey)
+    for x in (3, 7, 15):
+        d.line([x, 11, x - 1, 14], fill=water)                                  # rain
+    d.line([5, 15, 4, 18], fill=water)
+    d.line([16, 16, 15, 18], fill=water)
+    d.rectangle([10, 11, 11, 17], fill=n_core)                                    # healing cross
+    d.rectangle([8, 13, 13, 14], fill=n_core)
+    d.point((10, 10), fill=n_body)
+    return outlined(img)
+
+
+def icon_storm_shard() -> Image.Image:
+    """M13b currency: a violet shard of the storm with a white core and a spark."""
+    img, d = canvas()
+    edge, body, core = _storm()
+    d.polygon([(10, 1), (15, 7), (12, 18), (7, 18), (4, 8)], fill=edge)           # the shard
+    d.polygon([(10, 2), (14, 7), (11, 17), (9, 7)], fill=body)                     # its lit face
+    d.line([10, 4, 10, 14], fill=core)
+    d.point((11, 6), fill=core)
+    d.point((3, 3), fill=core)                                                     # sparks
+    d.point((17, 12), fill=body)
+    return outlined(img)
+
+
+def legendary_lightning_rod() -> Image.Image:
+    """Tank amulet: a copper rod on a chain, a bolt striking its tip."""
+    img, d = item_canvas()
+    edge, body, core = _storm()
+    copper, copper_hi = rgb("#3F7D66"), rgb("#5FA88A")
+    d.ellipse([2, 1, 13, 7], outline=IRON_HI)                                      # the chain
+    d.line([8, 6, 8, 15], fill=copper, width=2)                                    # the rod
+    d.line([8, 6, 8, 14], fill=copper_hi)
+    d.line([12, 1, 10, 4, 12, 4, 9, 7], fill=body)                                 # the bolt
+    d.point((9, 6), fill=core)
+    return outlined(img)
+
+
+def legendary_thunder_wall() -> Image.Image:
+    """Tank gauntlet with a ring of lightning around the fist."""
+    img, d = item_canvas()
+    edge, body, core = _storm()
+    d.ellipse([1, 1, 14, 14], outline=edge)
+    d.rectangle([5, 7, 10, 13], fill=IRON)
+    for x in (5, 7, 9):
+        d.rectangle([x, 4, x + 1, 7], fill=IRON_HI)
+    d.rectangle([11, 7, 12, 10], fill=IRON_HI)
+    d.line([5, 12, 10, 12], fill=GOLD)
+    for x, y in ((2, 4), (13, 3), (14, 10), (1, 11)):
+        d.point((x, y), fill=core)
+    return outlined(img)
+
+
+def legendary_eye_of_the_storm() -> Image.Image:
+    """Mage hood with a storm eye glowing on its brow."""
+    img, d = item_canvas()
+    edge, body, core = _storm()
+    d.pieslice([2, 2, 13, 15], 180, 360, fill=rgb("#3A3550"))
+    d.rectangle([2, 8, 13, 13], fill=rgb("#3A3550"))
+    d.line([4, 10, 11, 10], fill=rgb("#16121C"))
+    d.ellipse([5, 3, 10, 8], fill=edge)                                           # the eye
+    d.ellipse([6, 4, 9, 7], fill=body)
+    d.point((7, 5), fill=core)
+    return outlined(img)
+
+
+def legendary_cloud_keeper() -> Image.Image:
+    """Mage boots under a small thundercloud."""
+    img, d = item_canvas()
+    edge, body, core = _storm()
+    d.rectangle([5, 7, 9, 13], fill=rgb("#3A3550"))
+    d.rectangle([5, 12, 13, 14], fill=rgb("#3A3550"))
+    d.line([5, 12, 13, 12], fill=GOLD)
+    d.ellipse([1, 0, 7, 4], fill=rgb("#4A4E64"))                                  # the cloud
+    d.ellipse([5, 0, 12, 5], fill=rgb("#4A4E64"))
+    d.line([8, 5, 7, 7], fill=body)
+    d.point((7, 6), fill=core)
+    return outlined(img)
+
+
+def legendary_rain_heart() -> Image.Image:
+    """Druid barkmail with a heart-shaped drop of rain on the chest."""
+    img, d = item_canvas()
+    n_edge, n_body, n_core = _nat()
+    water, water_hi = rgb("#2E6A72"), rgb("#9FE6E0")
+    d.polygon([(3, 3), (6, 2), (10, 2), (13, 3), (13, 8), (11, 14), (5, 14), (3, 8)], fill=rgb("#54392C"))
+    d.line([4, 4, 12, 4], fill=n_body)
+    d.polygon([(8, 5), (11, 9), (8, 12), (5, 9)], fill=water)                    # the drop
+    d.line([8, 6, 8, 10], fill=water_hi)
+    d.point((7, 8), fill=water_hi)
+    return outlined(img)
+
+
+def legendary_storm_seed() -> Image.Image:
+    """Druid branch-staff with a crackling violet seed in its fork."""
+    img, d = item_canvas()
+    edge, body, core = _storm()
+    bark = rgb("#6C4A38")
+    d.line([3, 14, 10, 5], fill=bark, width=2)                                    # the staff
+    d.line([10, 5, 13, 2], fill=bark)
+    d.line([10, 5, 9, 1], fill=bark)
+    d.ellipse([9, 2, 13, 6], fill=body)                                           # the seed
+    d.point((11, 4), fill=core)
+    for x, y in ((14, 6), (7, 2), (15, 1)):
+        d.point((x, y), fill=edge)
+    return outlined(img)
+
+
 def mk_trial() -> Image.Image:
     """M12 map: a trial shrine (a stele with a rune in the accent)."""
     img, d = canvas12()
@@ -1109,12 +1265,17 @@ def main() -> None:
                      ("lodestone_rune", icon_lodestone_rune), ("hoarfrost_fan", icon_hoarfrost_fan),
                      ("rootwalk", icon_rootwalk), ("breakwater", icon_breakwater), ("rime_ward", icon_rime_ward),
                      ("wellspring", icon_wellspring), ("forge_brand", icon_forge_brand),
-                     ("ember_seed", icon_ember_seed), ("cinder_ward", icon_cinder_ward)):
+                     ("ember_seed", icon_ember_seed), ("cinder_ward", icon_cinder_ward),
+                     ("storm_tether", icon_storm_tether), ("thunderhead", icon_thunderhead),
+                     ("cloudburst", icon_cloudburst), ("storm_shard", icon_storm_shard)):
         save(fn(), "icons", name + ".png")
     for name, fn in (("weapon", item_weapon), ("armor", item_armor), ("relic", item_relic),
                      ("helm", item_helm), ("gloves", item_gloves), ("boots", item_boots), ("ring", item_ring),
                      ("cindermaw", legendary_cindermaw), ("conductors_oath", legendary_conductors_oath),
-                     ("glacier_heart", legendary_glacier_heart)):
+                     ("glacier_heart", legendary_glacier_heart), ("lightning_rod", legendary_lightning_rod),
+                     ("thunder_wall", legendary_thunder_wall), ("eye_of_the_storm", legendary_eye_of_the_storm),
+                     ("cloud_keeper", legendary_cloud_keeper), ("rain_heart", legendary_rain_heart),
+                     ("storm_seed", legendary_storm_seed)):
         save(fn(), "items", name + ".png")
     # M17a settings widgets
     save(knob(ACCENT, ACCENT_DIM, ACCENT_HOT), "grabber.png")

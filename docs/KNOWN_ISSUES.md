@@ -413,6 +413,16 @@
 - The party check has no draughts (bots never drink) and its fights all
   start at full health; a real run is harder in that and easier in
   dodging.
+- **Phase 7 numbers to feel:** 30 shards a legendary (12 per run: about
+  three runs for the first); Storm Tether 30 %, 8 s, 18 s cooldown, the
+  lash = the carried damage at threat x3; Thunderhead 14 every 0.8 s in
+  4 m, +20 % speed; Cloudburst 6 a second in 6 m for 6 s (40 Sap). The
+  party check's bots never use tome abilities (no bot does).
+- The storm trader's window is the trainer panel's third view: her lines,
+  prices and buttons follow the language, the panel's frame ("[Esc]
+  Leave") is still English like the other old menus (M14).
+- The storm legendaries keep their English name in the save and read the
+  text table when shown; an item from before a rename keeps working.
 - The storm family's rigs and both bosses read dark in the dim halls in the
   shots (contact sheets show them clearly); judge them in the playtest.
 - **The Stormwatch's look to judge (phase 4, shots `m13b_stormwatch`):**

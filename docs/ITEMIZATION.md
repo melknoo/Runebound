@@ -121,6 +121,25 @@ answer every fight); healing between fights comes from consumables, drunk
 | Ashbloom Seed | Druid | Ring | Mending Bloom heals twice as much on an ally below 35 % |
 | Thornmother's Crown | Druid | Helm | Thorn Volley throws two more thorns |
 
+## Storm legendaries (M13b, the co-op dungeon)
+Never dropped: the storm trader Tova in Runehold sells them for **storm
+shards** (every hero gets 3 from each of the Stormwatch's mid-bosses and 6
+from the Last Stormcaller, every run). 30 shards each, at the buyer's level
+with two affixes for the class. Names and powers in DE/EN
+(`item.<id>.name` / `.text`).
+| Item | Class | Slot | Power |
+|---|---|---|---|
+| Lightning Rod (Blitzableiter) | Runebreaker | Amulet | once every 4 s Storm Tether carries a whole blow on the bound ally |
+| Thunderwall (Donnerwall) | Runebreaker | Gloves | a parry with Rune Wall discharges a ring (4 m): 25 Lightning and Shock |
+| Eye of the Storm (Auge des Sturms) | Elementalist | Helm | Chain Spark jumps to two more enemies; from the third on, +25 % |
+| Cloudkeeper (Wolkenhüter) | Elementalist | Boots | Thunderhead lasts 3 s longer and drifts after its last target |
+| Rainheart (Regenherz) | Druid | Chest | when Cloudburst ends, a 20 barrier (5 s) for every ally under it |
+| Stormseed (Sturmsaat) | Druid | Weapon | the Totem of Growth's pulses strike enemies in reach: 8 Lightning, Shock |
+
+The plan had "bolts on allies within 6 m strike the tank" for the Lightning
+Rod; the hybrid authority decides a bolt's victim on the server, so it went
+to the tether instead (the tank still draws the blows meant for others).
+
 ## Implementation notes
 - Items are runtime `ItemData` resources from `ItemGenerator`; base ability
   .tres files are never mutated — equipment modifies at the hook points in

@@ -450,15 +450,15 @@ func _run() -> void:
 		"target name plate shows the enemy name")
 	# --- M07b / M10: one ability at the start, the rest are learned; two classes ---
 	var cls := ClassData.load_by_id(&"runebreaker")
-	_check(cls != null and cls.abilities.size() == 12 and cls.basic_attack == &"rune_cleave"
+	_check(cls != null and cls.abilities.size() == 13 and cls.basic_attack == &"rune_cleave"
 		and cls.starting_abilities.size() == 1 and cls.starting_abilities[0] == &"rune_cleave"
 		and cls.trainer_abilities().size() == 6 and cls.trainer_abilities()[0].id == &"earthbreaker"
 		and cls.trainer_abilities()[5].id == &"warding_rune" and cls.ability(&"ember_lance") == null
 		and cls.role == "Tank" and is_equal_approx(cls.threat_mult, 2.0) and is_equal_approx(cls.base_max_hp, 120.0)
 		and cls.ability(&"lodestone_rune").unlock == AbilityData.Unlock.TOME
 		and cls.ability(&"breakwater").unlock == AbilityData.Unlock.TOME and cls.ability(&"breakwater").tome_id == &"cistern"
-		and cls.ability(&"forge_brand").tome_id == &"warrens",
-		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 11: 6 from the trainer, 3 from tomes")
+		and cls.ability(&"forge_brand").tome_id == &"warrens" and cls.ability(&"storm_tether").tome_id == &"stormwatch",
+		"ClassData: the Runebreaker tanks (120 health, threat x2) with Rune Cleave on LMB and a pool of 13: 6 from the trainer, 4 from tomes")
 	var mage_cls := ClassData.load_by_id(&"elementalist")
 	_check(mage_cls != null and mage_cls.basic_attack == &"rune_bolt" and mage_cls.trainer_abilities().size() == 8
 		and mage_cls.trainer_abilities()[0].id == &"ember_lance" and mage_cls.ability(&"fracture_rune") != null
@@ -636,7 +636,7 @@ func _run() -> void:
 		"I opens the hero window on the inventory tab")
 	lab.hero_ui.close()
 	var sheet_rows := StatSheet.ability_rows(player)
-	_check(sheet_rows.size() == 10 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
+	_check(sheet_rows.size() == 11 and sheet_rows[0]["id"] == &"rune_cleave" and sheet_rows[0]["key"] == "LMB"
 		and sheet_rows[1]["id"] == &"earthbreaker" and sheet_rows[1]["key"] == "RMB" and sheet_rows[6]["key"] == "-",
 		"character sheet lists the known abilities in class order with their slot keys")
 	var d_pct := player.stat(&"damage_pct")
@@ -2429,6 +2429,7 @@ func _run() -> void:
 	player.equipment.add_item(keepsake)
 	player.equipment.equip(keepsake)
 	player.add_gold(123 - player.gold)  # M07b: gold and known abilities ride along
+	player.storm_shards = 17  # M13b: and the storm shards
 	player._last_combat_msec = -1000000
 	player.set_loadout_slot(2, &"earthbreaker")  # M10: the loadout rides along too
 	player.consumables = {Consumables.HEALING_DRAUGHT: 3}  # M10b: and the bag
@@ -2438,12 +2439,14 @@ func _run() -> void:
 	player.equipment.equipped.clear()
 	player.equipment._recompute()
 	player.gold = 0
+	player.storm_shards = 0
 	player.known_abilities = [&"rune_cleave"]
 	player.restore_loadout([])
 	SaveGame.reload_from_disk()
 	SaveGame.restore_player(player)
-	_check(player.gold == 123 and player.known_abilities.size() == 10 and player.knows(&"warding_rune") and player.knows(&"breakwater")
-		and player.knows(&"forge_brand")
+	_check(player.storm_shards == 17, "M13b: the save keeps the storm shards")
+	_check(player.gold == 123 and player.known_abilities.size() == 11 and player.knows(&"warding_rune") and player.knows(&"breakwater")
+		and player.knows(&"forge_brand") and player.knows(&"storm_tether")
 		and player.loadout == ([&"rune_challenge", &"rune_wall", &"earthbreaker", &"warden_leap"] as Array[StringName]),
 		"save restores gold, the learned abilities and the loadout (%s)" % str(player.loadout))
 	var restored_names: Array[String] = []
@@ -2562,6 +2565,38 @@ func _run() -> void:
 			and TrainerUI.buy_deny_reason(hp, draught) == "Bag full" and not hub.trainer_ui.try_buy_consumable(draught),
 			"the bag holds %d; a full bag refuses the next one" % Consumables.cap(draught))
 		hub.trainer_ui.close()
+	# ===== M13b: the storm trader (storm legendaries for storm shards) =====
+	var storm_trader := hub.world.get_node_or_null("StormTrader") as StormTraderNpc
+	var storm_ids: Array[String] = []
+	for sdef in AffixPool.storm_legendaries_for(hp.class_data.id):
+		storm_ids.append(String(sdef["id"]))
+	_check(storm_trader != null and storm_trader.npc_name.begins_with("Tova") and storm_ids.size() == 2
+		and AffixPool.STORM_LEGENDARIES.size() == 6,
+		"M13b: Tova, the storm trader, stands in Runehold; two storm legendaries for each class (%s)" % ", ".join(storm_ids))
+	if storm_trader != null and storm_ids.size() == 2:
+		while hp.equipment.is_full():
+			hp.equipment.discard(hp.equipment.inventory.back())
+		var stt_bag := hp.equipment.inventory.size()
+		hp.storm_shards = 0
+		hp.add_storm_shards(AffixPool.STORM_PRICE - 1)
+		var stt_hud := hub.hud.shards_text()
+		hub.trainer_ui.open(storm_trader, hp)
+		var stt_shelf := 0
+		for row: Node in hub.trainer_ui._rows.get_children():
+			stt_shelf += 0 if row.is_queued_for_deletion() else 1
+		var stt_poor := not hub.trainer_ui.try_buy_storm(StringName(storm_ids[0])) and hp.storm_shards == AffixPool.STORM_PRICE - 1
+		var stt_other := TrainerUI.storm_deny_reason(hp, &"rain_heart" if hp.class_data.id != &"druid" else &"lightning_rod") != ""
+		hp.add_storm_shards(1)
+		var stt_bought := hub.trainer_ui.try_buy_storm(StringName(storm_ids[0]))
+		var stt_item: ItemData = hp.equipment.inventory.back() if hp.equipment.inventory.size() > stt_bag else null
+		_check(hub.trainer_ui.visible and stt_shelf == 2 and stt_poor and stt_other and stt_bought and hp.storm_shards == 0
+			and stt_hud == str(AffixPool.STORM_PRICE - 1) and stt_item != null and stt_item.legendary_id == StringName(storm_ids[0])
+			and stt_item.rarity == ItemData.Rarity.LEGENDARY and stt_item.affixes.size() == 2
+			and stt_item.item_level == hp.progression.level and hub.trainer_ui._gold_label.text == "0",
+			"M13b: her shelf - too few shards refused, another class's not sold; %d shards buy one, at the hero's level" % AffixPool.STORM_PRICE)
+		hub.trainer_ui.close()
+		if stt_item != null:
+			hp.equipment.discard(stt_item)
 	_check(hp.add_consumable(draught, 3) == 0, "add_consumable takes nothing past the cap")
 	# drinking: only when hurt, one at a time, 35 % over 4 s
 	hp.health.current_health = hp.health.max_health
@@ -2662,7 +2697,7 @@ func _run() -> void:
 	# --- M06 C3: Runehold kit on the unchanged hub layout ---
 	_check(hub.look != null and hub.look.art_pass, "hub uses the Runehold ZoneLook (art pass)")
 	var hub_bodies := hub.world.find_children("*", "StaticBody3D", true, false)
-	_check(hub_bodies.size() == 24, "hub dressing adds no collision (%d bodies: layout 19 + three trainers + the merchant + the M08 shrine)" % hub_bodies.size())
+	_check(hub_bodies.size() == 25, "hub dressing adds no collision (%d bodies: layout 19 + three trainers + the merchant + the storm trader + the M08 shrine)" % hub_bodies.size())
 	var wall_trims := 0
 	var sod_roofs := 0
 	var roofs_fit := true
@@ -5526,6 +5561,224 @@ func _run() -> void:
 			sw.remove_player(lc_m)
 			lc_m.queue_free()
 		swh.global_position = Vector3(0, 0.2, -36)
+		await _wait_frames(4)
+		# --- M13b phase 7: the Stormwatch's tome and its three abilities (in the crossing) ---
+		var st_tome := sw.tomes.get("sw_tome") as Tome
+		var st_art := Tome.ability_for(swh, &"stormwatch")
+		var st_ids: Array[String] = []
+		for st_cid: StringName in [&"runebreaker", &"elementalist", &"druid"]:
+			for st_ad in ClassData.load_by_id(st_cid).abilities:
+				if st_ad != null and st_ad.tome_id == &"stormwatch" and st_ad.unlock == AbilityData.Unlock.TOME:
+					st_ids.append(String(st_ad.id))
+		if st_art != null:
+			swh.known_abilities.erase(st_art.id)
+		if st_tome != null:
+			st_tome.use_by(swh)
+		if sw.lore_ui != null:
+			sw.lore_ui.close()
+		_check(st_tome != null and st_tome.tome_id == &"stormwatch" and st_art != null and swh.knows(st_art.id)
+			and swh.lore_read.has("lore.tome.stormwatch") and ",".join(st_ids) == "storm_tether,thunderhead,cloudburst"
+			and st_art.title() == Texts.t("ability." + String(st_art.id)),
+			"M13b: the Stormwatch's tome teaches each class its storm art (%s)" % ", ".join(st_ids))
+		var st_tank := Player.create(ClassData.load_by_id(&"runebreaker")) as RunebreakerHero
+		var st_mage := Player.create(ClassData.load_by_id(&"elementalist")) as ElementalistHero
+		var st_druid := Player.create(ClassData.load_by_id(&"druid")) as DruidHero
+		for st_h: Player in [st_tank, st_mage, st_druid]:
+			st_h.is_local = false
+			st_h.input_source = InputSource.new()
+			sw.add_player(st_h)
+		st_tank.global_position = Vector3(-15, 0.2, -36)
+		st_mage.global_position = Vector3(-12, 0.2, -33)
+		st_druid.global_position = Vector3(-12, 0.2, -39)
+		await _wait_frames(3)
+		# Storm Tether: the wounded ally bound; a blow on it shared, the striker lashed onto the tank
+		var tt_foe := sw.spawn_by_id("rusher", st_mage.global_position + Vector3(2, 0, 0))
+		await _wait_frames(2)
+		tt_foe.set_physics_process(false)
+		st_tank.learn_ability(&"storm_tether")
+		st_tank.resonance = 100.0
+		st_mage.health.current_health = st_mage.health.max_health * 0.6
+		var tt_cast := st_tank.try_storm_tether()
+		var tt_res := st_tank.resonance
+		await _wait_frames(2)
+		var tt_bound := st_mage.tethered() and not st_druid.tethered() and not swh.tethered()
+		st_mage.barrier = 0.0
+		st_tank.barrier = 0.0
+		var tt_mage_hp := st_mage.health.current_health
+		var tt_tank_hp := st_tank.health.current_health
+		var tt_hit := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, tt_foe.global_position)
+		tt_hit.source_id = tt_foe.get_instance_id()
+		st_mage.take_hit(tt_hit)
+		await _wait_frames(2)
+		var tt_mage_took := tt_mage_hp - st_mage.health.current_health
+		var tt_tank_took := tt_tank_hp - st_tank.health.current_health
+		_check(tt_cast and tt_bound and absf(tt_mage_took - 14.0) < 0.6 and tt_tank_took > 1.0 and tt_tank_took <= 6.01
+			and tt_foe.health.current_health < tt_foe.health.max_health and tt_foe.threat_of(st_tank) > tt_foe.threat_of(st_mage)
+			and is_equal_approx(tt_res, 80.0),
+			"M13b Storm Tether: the tank binds the wounded ally; of a blow of 20 it carries 30 %% (%.1f / %.1f), the striker lashed onto it" % [tt_mage_took, tt_tank_took])
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		# Thunderhead: a cloud at the aim (a bot's: 16 m along it) strikes what stands under it, hastes allies under it
+		var th_foe := sw.spawn_by_id("rusher", Vector3(4.5, 0.2, -33))
+		var th_far := sw.spawn_by_id("rusher", Vector3(13, 0.2, -33))
+		await _wait_frames(2)
+		for th_f: EnemyBase in [th_foe, th_far]:
+			th_f.set_physics_process(false)
+		st_mage.learn_ability(&"thunderhead")
+		st_mage.resonance = 100.0
+		st_druid.global_position = Vector3(3, 0.2, -31.5)  # an ally under the cloud
+		await _wait_frames(2)
+		st_mage.intent.aim_dir = Vector3(1, 0, 0)  # the input source resets it each frame: set it right before
+		var th_cast := st_mage.try_thunderhead()
+		var th_res := st_mage.resonance
+		await _wait_frames(80)
+		var th_buff := st_druid.buff_stat(&"move_pct")
+		_check(th_cast and th_foe.health.current_health < th_foe.health.max_health and th_foe.status.has_shock()
+			and is_equal_approx(th_far.health.current_health, th_far.health.max_health) and th_buff >= Thunderhead.HASTE_PCT
+			and is_equal_approx(th_res, 70.0),
+			"M13b Thunderhead: a cloud over the aim strikes the enemy under it (Shock), not the one beyond; the ally under it runs faster (%s %.0f/%.0f %s %.0f %.0f %.0f)"
+			% [th_cast, th_foe.health.current_health, th_foe.health.max_health, th_foe.status.has_shock(),
+			th_far.health.current_health, th_buff, th_res])
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		# Cloudburst: rain over the druid heals and unslows whoever stands in it, not the one outside
+		st_druid.global_position = Vector3(-6, 0.2, -36)
+		st_mage.global_position = Vector3(-3, 0.2, -36)
+		st_tank.global_position = Vector3(-18, 0.2, -36)
+		await _wait_frames(3)
+		st_mage.health.current_health = st_mage.health.max_health * 0.5
+		st_tank.health.current_health = st_tank.health.max_health * 0.5
+		st_mage.apply_slow(0.4, 5.0)
+		var cb_mage := st_mage.health.current_health
+		var cb_tank := st_tank.health.current_health
+		st_druid.learn_ability(&"cloudburst")
+		st_druid.resonance = st_druid.max_resource()
+		var cb_cast := st_druid.try_cloudburst()
+		var cb_sap := st_druid.resonance
+		var cb_rain := false
+		for cb_c in st_druid.get_children():
+			if cb_c is Cloudburst:
+				cb_rain = true
+		await _wait_frames(75)
+		_check(cb_cast and cb_rain and st_mage.health.current_health > cb_mage + 4.0 and is_zero_approx(st_mage.slow_pct)
+			and is_equal_approx(st_tank.health.current_health, cb_tank) and is_equal_approx(cb_sap, st_druid.max_resource() - 40.0),
+			"M13b Cloudburst: rain over the druid heals the ally under it and washes off its slow; the one outside gets nothing")
+		# --- M13b phase 7a: storm shards from the bosses; the storm legendaries never drop ---
+		var sh_before := swh.storm_shards
+		sw.give_reward(swh, 0, 0, 0, [], swh.global_position, "", false, 0, 6)
+		var sh_drop_ok := true
+		for sh_cid: StringName in [&"runebreaker", &"elementalist", &"druid"]:
+			for sh_def in AffixPool.legendaries_for(sh_cid):
+				if not AffixPool.storm_def(sh_def["id"]).is_empty():
+					sh_drop_ok = false
+		for sh_i in 60:
+			var sh_l := ItemGenerator.generate_legendary(&"druid")
+			if not AffixPool.storm_def(sh_l.legendary_id).is_empty():
+				sh_drop_ok = false
+		var sh_item := ItemGenerator.make_storm_legendary(&"rain_heart", &"druid", 9)
+		_check(swh.storm_shards == sh_before + 6 and BossArena.shards_for(sw, "mid") == 3 and BossArena.shards_for(sw, "end") == 6
+			and sw.boss_level() == sw.party_level() + 1 and sh_drop_ok and sh_item.slot == ItemData.Slot.CHEST
+			and sh_item.item_level == 9 and sh_item.title() == "Rainheart" and sh_item.power_text().contains("Cloudburst")
+			and Texts.in_language("item.rain_heart.name", "de") == "Regenherz",
+			"M13b: storm shards with the bosses (3, the Stormcaller 6), their loot at the run's level; storm legendaries never drop")
+		var lg_eye_base := st_mage.chain_spark_targets(false)
+		for lg_pair: Array in [[st_tank, &"lightning_rod"], [st_tank, &"thunder_wall"], [st_mage, &"eye_of_the_storm"],
+				[st_mage, &"cloud_keeper"], [st_druid, &"rain_heart"], [st_druid, &"storm_seed"]]:
+			var lg_hero := lg_pair[0] as Player
+			var lg_item := ItemGenerator.make_storm_legendary(lg_pair[1] as StringName, lg_hero.class_data.id, 9)
+			lg_hero.equipment.add_item(lg_item)
+			lg_hero.equipment.equip(lg_item)
+		_check(st_mage.chain_spark_targets(false) == lg_eye_base + ElementalistHero.EYE_JUMPS and st_tank.has_power(&"thunder_wall")
+			and st_druid.has_power(&"storm_seed"),
+			"M13b Eye of the Storm: Chain Spark reaches two more enemies (%d)" % st_mage.chain_spark_targets(false))
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		# Lightning Rod: the tether carries a whole blow, then 4 s nothing more than its share
+		st_tank.global_position = Vector3(-15, 0.2, -36)
+		st_mage.global_position = Vector3(-12, 0.2, -33)
+		st_druid.global_position = Vector3(-12, 0.2, -39)
+		await _wait_frames(3)
+		var lr_foe := sw.spawn_by_id("rusher", st_mage.global_position + Vector3(2, 0, 0))
+		await _wait_frames(2)
+		lr_foe.set_physics_process(false)
+		st_tank._cooldowns.erase(&"storm_tether")
+		st_tank.resonance = 100.0
+		st_tank.health.heal_full()
+		st_druid.health.heal_full()
+		st_mage.health.current_health = st_mage.health.max_health * 0.6
+		var lr_cast := st_tank.try_storm_tether()
+		await _wait_frames(2)
+		st_mage.barrier = 0.0
+		st_tank.barrier = 0.0
+		var lr_mage := st_mage.health.current_health
+		var lr_tank := st_tank.health.current_health
+		var lr_hit := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, lr_foe.global_position)
+		lr_hit.source_id = lr_foe.get_instance_id()
+		st_mage.take_hit(lr_hit)
+		var lr_first := lr_mage - st_mage.health.current_health
+		var lr_hit2 := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, lr_foe.global_position)
+		lr_hit2.source_id = lr_foe.get_instance_id()
+		st_mage.take_hit(lr_hit2)
+		var lr_second := lr_mage - st_mage.health.current_health - lr_first
+		await _wait_frames(2)
+		var lr_tank_took := lr_tank - st_tank.health.current_health
+		_check(lr_cast and lr_first < 0.01 and absf(lr_second - 14.0) < 0.6 and lr_tank_took > 10.0,
+			"M13b Lightning Rod: the tether draws a whole blow into the tank, the next only its share (%.1f, %.1f; the tank %.1f)"
+			% [lr_first, lr_second, lr_tank_took])
+		# Thunderwall: a parry discharges a ring of lightning
+		var tw_foe := sw.spawn_by_id("rusher", st_tank.global_position + Vector3(-2.5, 0, 0))
+		await _wait_frames(2)
+		tw_foe.set_physics_process(false)
+		var tw_hit := HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, tw_foe.global_position)
+		st_tank._parry(tw_hit, st_tank.global_position + Vector3(0, 1.2, 0))
+		await _wait_frames(2)
+		_check(tw_foe.health.current_health < tw_foe.health.max_health and tw_foe.status.has_shock(),
+			"M13b Thunderwall: a parry discharges a ring of lightning (damage, Shock)")
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		# Cloudkeeper: the cloud lasts longer and drifts
+		st_mage._cooldowns.erase(&"thunderhead")
+		st_mage.resonance = 100.0
+		st_mage.intent.aim_dir = Vector3(1, 0, 0)
+		var ck_cast := st_mage.try_thunderhead()
+		var ck_v: Variant = st_mage.get_meta(&"thunderhead") if st_mage.has_meta(&"thunderhead") else null
+		var ck_cloud := ck_v as Thunderhead if is_instance_valid(ck_v) else null
+		_check(ck_cast and ck_cloud != null and is_equal_approx(ck_cloud.duration, 9.0) and ck_cloud.drifts,
+			"M13b Cloudkeeper: Thunderhead lasts 3 s longer and drifts after what it struck")
+		if ck_cloud != null:
+			ck_cloud.queue_free()
+		# Rainheart: when the rain ends, the ally under it keeps a barrier
+		st_druid._cooldowns.erase(&"cloudburst")
+		st_druid.resonance = st_druid.max_resource()
+		st_mage.global_position = st_druid.global_position + Vector3(2, 0, 0)
+		await _wait_frames(2)
+		st_mage.barrier = 0.0
+		var rh_cast := st_druid.try_cloudburst()
+		var rh_rain: Cloudburst = null
+		for rh_c in st_druid.get_children():
+			if rh_c is Cloudburst:
+				rh_rain = rh_c as Cloudburst
+		if rh_rain != null:
+			rh_rain._age = rh_rain.duration - 0.05
+		await _wait_frames(4)
+		_check(rh_cast and rh_rain != null and st_mage.barrier >= DruidHero.RAINHEART_BARRIER - 0.01,
+			"M13b Rainheart: when Cloudburst ends the ally under it keeps a barrier (%.0f)" % st_mage.barrier)
+		# Stormseed: the totem's pulse strikes the enemy near it with lightning
+		var ss_foe := sw.spawn_by_id("rusher", st_druid.global_position + Vector3(3, 0, 0))
+		await _wait_frames(2)
+		ss_foe.set_physics_process(false)
+		st_druid.learn_ability(&"growth_totem")
+		st_druid._cooldowns.erase(&"growth_totem")
+		st_druid.resonance = st_druid.max_resource()
+		var ss_cast := st_druid.try_growth_totem()
+		await _wait_frames(6)
+		_check(ss_cast and ss_foe.health.current_health < ss_foe.health.max_health and ss_foe.status.has_shock(),
+			"M13b Stormseed: the Totem of Growth's pulse strikes the enemy near it with lightning (Shock)")
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		for st_h: Player in [st_tank, st_mage, st_druid]:
+			sw.remove_player(st_h)
+			st_h.queue_free()
 		await _wait_frames(4)
 		# --- M13b phase 3: bots' ways through the rooms ---
 		var wp_fore := sw.layout.next_waypoint(Vector3(0, 0, 55), Vector3(0, 0, 5), sw.door_passable)

@@ -12,6 +12,10 @@ var radius: float = 8.0
 var duration: float = 12.0
 var damage_pct: float = 15.0
 var heal: float = 3.0
+## M13b Stormseed (the druid's legendary): each pulse shocks the enemies in
+## reach; arcs on every machine, the strike on the planting druid's own.
+var storm_seed: bool = false
+var source: Player = null
 var _age: float = 0.0
 var _pulse_left: float = 0.0
 var _ring_mat: StandardMaterial3D
@@ -85,3 +89,20 @@ func _physics_process(delta: float) -> void:
 		if p.net_role == Player.NetRole.OWNER:
 			p.add_buff(&"damage_pct", damage_pct, PULSE + 0.5)
 			p.receive_heal(heal)
+	if storm_seed:
+		_storm_pulse()
+
+
+func _storm_pulse() -> void:
+	if Net.has_view():
+		var top := global_position + Vector3(0, 1.6, 0)
+		var color := ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF"))
+		for e in EnemyBase.all_enemies:
+			if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD and e.targetable \
+					and e.global_position.distance_to(global_position) <= radius:
+				VFX.lightning_arc(get_tree().current_scene, top, e.global_position + Vector3(0, 1.0, 0), color)
+	if not is_instance_valid(source):
+		return  # the druid left (the zone, the game): the totem only shows
+	var druid := source as DruidHero
+	if druid != null and druid.net_role == Player.NetRole.OWNER:
+		druid.storm_seed_pulse(global_position, radius)

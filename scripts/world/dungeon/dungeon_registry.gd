@@ -12,6 +12,8 @@ extends Object
 ##   level_mode "party", min_level - enemy and loot level = the party's
 ##                   average level on entry (at least min_level), bosses +1
 ##   revive        - a fallen hero lies downed and can be revived (ReviveSystem)
+##   shards        - storm shards each hero gets per boss, by the arena's
+##                   reward kind (the storm trader in Runehold takes them)
 
 const DUNGEONS := {
 	"cistern": {
@@ -64,6 +66,7 @@ const DUNGEONS := {
 		"revive": true,
 		"level_mode": "party",
 		"min_level": 7,
+		"shards": {"mid": 3, "end": 6},  # M13b phase 7: storm shards per hero and boss
 	},
 }
 

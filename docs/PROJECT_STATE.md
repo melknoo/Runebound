@@ -201,6 +201,32 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
     Net scenario `stormcaller` (two clients link up, the server grounds
     the thunder through their proxies, he falls, the flag); `coop_bots`,
     `stormsworn` green. Shot `stormcaller` (22).
+- **Phase 7 (built): the tome, the storm shards, the storm trader.**
+  - The tome in the tome room behind the orrery teaches each class its
+    storm art (co-op only, the fourth tome ability; the pools hold 13):
+    Storm Tether (the tank binds an ally for 8 s, carries 30 % of every
+    blow on it and lashes the striker onto itself), Thunderhead (a cloud at
+    the aim strikes an enemy under it every 0.8 s, allies under it run 20 %
+    faster), Cloudburst (rain over the druid, following her: 6 a second
+    and the slows washed off for everyone in 6 m). Icons, DE/EN texts, the
+    tome's own text; the looks reuse the storm sounds.
+  - Storm shards: 3 per mid-boss, 6 for the Last Stormcaller, every hero,
+    every run; saved per character; the HUD counts them beside the
+    draughts once there are any. The boss loot now takes the run's level
+    (the party's + 1).
+  - Tova Stormward east of Runehold's hearth sells the six storm
+    legendaries (two per class, 30 shards, never dropped): Lightning Rod,
+    Thunderwall, Eye of the Storm, Cloudkeeper, Rainheart, Stormseed
+    (ITEMIZATION). Names and powers in DE/EN; their own inventory icons.
+  - The tome first (7b), then the trader (7a): two legendaries need the
+    new abilities. The Lightning Rod's planned "bolts on allies strike the
+    tank" went to the tether (the server decides a bolt's victim).
+  - Smoke 911 green (the tome, the three abilities, shards from a boss,
+    the loot level, no storm legendary in the drops, the save, the
+    trader's shelf, the six powers). Net scenario `storm_tether` (c1's tank
+    binds c2: c2 takes 70 %, c1 the rest on its own machine, the lash
+    threatens the server's dummy); `rewards`, `heal`, `stormcaller` green.
+    Shots `tome` (23), `m13b_trader`.
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

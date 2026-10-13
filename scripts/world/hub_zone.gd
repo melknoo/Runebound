@@ -19,6 +19,9 @@ const MAGE_TRAINER_SPOT := Vector3(12.6, 0, 8.4)
 ## M10b: Ylva, who sells Healing Draughts, south-west of the hearth on the
 ## way from the spawn to the west hut.
 const MERCHANT_SPOT := Vector3(-6.0, 0, 5.2)
+## M13b: Tova, the storm trader (storm legendaries for storm shards), east
+## of the hearth across from Ylva.
+const STORM_TRADER_SPOT := Vector3(6.2, 0, 5.4)
 ## M11: Hild, the druid trainer, by the south wall west of the spawn.
 const DRUID_TRAINER_SPOT := Vector3(-5.2, 0, 12.4)
 ## M11: resting by the hearth (out of combat) is the one place that heals
@@ -141,6 +144,15 @@ func _build_zone() -> void:
 	merchant.global_position = MERCHANT_SPOT
 	var merchant_to_fire := FIRE_POS - MERCHANT_SPOT
 	merchant.rotation.y = atan2(-merchant_to_fire.x, -merchant_to_fire.z)
+	# M13b: the storm trader (storm legendaries for the Stormwatch's shards)
+	var trader := StormTraderNpc.new()
+	trader.name = "StormTrader"
+	trader.body_tint = Color(0.62, 0.62, 0.74)  # storm-grey mail: she came down from the Stormwatch
+	trader.rune_color = ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF"))
+	world.add_child(trader)
+	trader.global_position = STORM_TRADER_SPOT
+	var trader_to_fire := FIRE_POS - STORM_TRADER_SPOT
+	trader.rotation.y = atan2(-trader_to_fire.x, -trader_to_fire.z)
 
 	# Portals.
 	var highlands := Portal.new()

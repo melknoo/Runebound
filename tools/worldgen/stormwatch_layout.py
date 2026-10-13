@@ -179,6 +179,7 @@ LAYOUT = {
          "inputs": ["sw_orrery_coils"]},
         {"id": "sw_lore_orrery", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.dome_words",
          "pos": [-76, -74], "yaw": 1.5708},
-        {"id": "sw_chest_tome", "type": "chest", "pos": [-64, -96], "yaw": 0.0, "rarity_bias": 2},
+        {"id": "sw_tome", "type": "tome", "pos": [-64, -96], "yaw": 0.0, "tome": "stormwatch"},
+        {"id": "sw_chest_tome", "type": "chest", "pos": [-64, -102], "yaw": 0.0, "rarity_bias": 2},
     ],
 }

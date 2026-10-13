@@ -81,6 +81,23 @@ static func generate_legendary(class_id: StringName = &"") -> ItemData:
 	return _make_legendary(item, class_id)
 
 
+## M13b: a storm legendary as the storm trader sells it (its two affixes for
+## the buyer's class, at the buyer's level); null for an unknown id.
+static func make_storm_legendary(id: StringName, class_id: StringName, lvl: int) -> ItemData:
+	var def := AffixPool.storm_def(id)
+	if def.is_empty():
+		return null
+	var item := ItemData.new()
+	item.rarity = ItemData.Rarity.LEGENDARY
+	item.slot = def["slot"]
+	item.display_name = def["name"]
+	item.legendary_id = def["id"]
+	item.legendary_text = def["text"]
+	_roll_affixes(item, 2, class_id)
+	apply_item_level(item, lvl)
+	return item
+
+
 static func _make_legendary(item: ItemData, class_id: StringName = &"") -> ItemData:
 	var pool := AffixPool.legendaries_for(class_id)
 	if pool.is_empty():

@@ -300,6 +300,73 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			VFX.ember_impact(scene, a[0] as Vector3 + Vector3(0, 0.8, 0))
 			VFX.heal_motes(hero, 0.6)
 			Sfx.play("wild_bloom", a[0] as Vector3, -2.0, 0.05, 1.3)
+		# --- M13b the Stormwatch's tome ---
+		&"ally_tether":  # [ref, seconds, share, rod] - Storm Tether; the bound hero's owner keeps it
+			var bound := _ally(hero, a[0])
+			if bound == null or bound == hero:
+				return
+			var link := StormTetherLink.new()
+			link.tank = hero
+			link.ally = bound
+			link.duration = float(a[1])
+			scene.add_child(link)
+			VFX.lightning_arc(scene, hero.global_position + Vector3(0, 1.2, 0), bound.global_position + Vector3(0, 1.2, 0),
+				ArtKit.color("palettes.stormwatch.lightning_hi", Color("#F2EEFF")))
+			Sfx.play("coil_discharge", bound.global_position, -6.0, 0.08, 1.3)
+			if bound.net_role == Player.NetRole.OWNER:
+				var zone_t := ZoneBase.zone_of(bound)
+				if zone_t != null:
+					bound.bind_tether(zone_t.hero_ref(hero), float(a[1]), float(a[2]), bool(a[3]))
+		&"tether_carry":  # [tank ref, amount, striker net id, striker instance id, whole] - from the bound hero
+			var tank := _ally(hero, a[0])
+			if tank == null:
+				return
+			VFX.lightning_arc(scene, hero.global_position + Vector3(0, 1.2, 0), tank.global_position + Vector3(0, 1.2, 0),
+				ArtKit.color("palettes.stormwatch.lightning_hi", Color("#F2EEFF")) if bool(a[4]) else
+				ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF")))
+			if tank.net_role == Player.NetRole.OWNER:
+				var zone_c := ZoneBase.zone_of(tank)
+				var striker: EnemyBase = null
+				if zone_c != null and zone_c.net_world != null:
+					striker = zone_c.net_world.enemies.get(int(a[2])) as EnemyBase
+				elif int(a[3]) != 0:
+					striker = instance_from_id(int(a[3])) as EnemyBase
+				tank.carry_for_ally(float(a[1]), striker)
+		&"tether_lash":  # [from, to] - the tether lashing the striker
+			VFX.lightning_arc(scene, a[0] as Vector3, a[1] as Vector3, ArtKit.color("palettes.stormwatch.lightning_hi",
+				Color("#F2EEFF")))
+			VFX.shock_tick(scene, a[1] as Vector3)
+			Sfx.play("storm_bolt", a[1] as Vector3, -8.0, 0.1, 1.4)
+		&"thunder_wall":  # [pos, radius] - Thunderwall (legendary): the parry's ring of lightning
+			var tw_color := ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF"))
+			VFX.ground_ring(scene, a[0] as Vector3, tw_color, float(a[1]), 0.3)
+			for k in 6:
+				var ang := TAU * float(k) / 6.0
+				var rim := (a[0] as Vector3) + Vector3(cos(ang), 0.0, sin(ang)) * float(a[1])
+				VFX.lightning_arc(scene, (a[0] as Vector3) + Vector3(0, 1.1, 0), rim + Vector3(0, 0.3, 0), tw_color)
+			Sfx.play("coil_discharge", a[0] as Vector3, -2.0, 0.06)
+		&"thunderhead":  # [pos, radius, duration, cloudkeeper] - every machine raises the cloud
+			var cloud := Thunderhead.new()
+			cloud.setup(hero.ability(&"thunderhead"), hero)
+			cloud.radius = float(a[1])
+			cloud.duration = float(a[2])
+			cloud.drifts = bool(a[3])
+			cloud.position = a[0] as Vector3
+			scene.add_child(cloud)
+			hero.set_meta(&"thunderhead", cloud)
+		&"thunderhead_bolt":  # [cloud pos, struck pos] - from the caster's cloud
+			var th_v: Variant = hero.get_meta(&"thunderhead") if hero.has_meta(&"thunderhead") else null
+			if is_instance_valid(th_v) and th_v is Thunderhead:
+				(th_v as Thunderhead).bolt(a[0] as Vector3, a[1] as Vector3)
+			else:
+				VFX.lightning_arc(scene, (a[0] as Vector3) + Vector3(0, Thunderhead.HEIGHT, 0), (a[1] as Vector3) + Vector3(0, 1.0, 0))
+		&"cloudburst":  # [radius, duration, heal per second, rainheart barrier] - follows the druid everywhere
+			var rain := Cloudburst.new()
+			rain.radius = float(a[0])
+			rain.duration = float(a[1])
+			rain.rate = float(a[2])
+			rain.end_barrier = float(a[3])
+			hero.add_child(rain)
 		&"ally_buff":  # [pos, radius, key, value, duration]
 			var zone := ZoneBase.zone_of(hero)
 			if zone != null:
@@ -336,12 +403,14 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			grove.source = hero
 			grove.position = a[0] as Vector3
 			scene.add_child(grove)
-		&"growth_totem":  # [pos, radius, duration, damage %, heal per pulse] - an ally effect
+		&"growth_totem":  # [pos, radius, duration, damage %, heal per pulse, stormseed] - an ally effect
 			var totem := GrowthTotem.new()
 			totem.radius = float(a[1])
 			totem.duration = float(a[2])
 			totem.damage_pct = float(a[3])
 			totem.heal = float(a[4])
+			totem.storm_seed = a.size() > 5 and bool(a[5])
+			totem.source = hero
 			totem.position = a[0] as Vector3
 			scene.add_child(totem)
 		&"thornfield":  # [pos, radius, duration] - a visual copy on puppets

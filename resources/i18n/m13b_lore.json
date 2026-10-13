@@ -79,5 +79,13 @@
 	"lore.stormwatch.dome_words.body": {
 		"en": "Two hands wake the sky. Three mirrors teach it the way home.\nWhat it reaches, it keeps: the book of the last storm.",
 		"de": "Zwei Hände wecken den Himmel. Drei Spiegel lehren ihn den Heimweg.\nWas er erreicht, behält er: das Buch des letzten Sturms."
+	},
+	"lore.tome.stormwatch.title": {
+		"en": "The wardens' book of the storm",
+		"de": "Das Sturmbuch der Wächter"
+	},
+	"lore.tome.stormwatch.body": {
+		"en": "The wardens could not hold the storm alone, so they learned to hold it together. A tether of lightning lets the strong carry the blows meant for the weak. A cloud called down on the enemy hurries the friends beneath it. Rain that follows the healer washes the weariness off everyone it reaches.\n\nNo one reads this book alone. The page meant for you crackles when another hand is near.",
+		"de": "Allein konnten die Wächter den Sturm nicht halten, also lernten sie, ihn gemeinsam zu halten. Ein Band aus Blitzen lässt den Starken die Schläge tragen, die dem Schwachen galten. Eine Wolke, über den Feind gerufen, treibt die Freunde darunter an. Regen, der dem Heiler folgt, wäscht die Müdigkeit von jedem, den er erreicht.\n\nNiemand liest dieses Buch allein. Die Seite, die für dich bestimmt ist, knistert, wenn eine andere Hand in der Nähe ist."
 	}
 }

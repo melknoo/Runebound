@@ -6,7 +6,7 @@ extends Node
 ## reads it after the clients are done and then stops the server.
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
-const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
+const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "storm_tether", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
 	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots", "stormsworn", "stormcaller",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
@@ -183,6 +183,24 @@ func _heal_verdict() -> String:
 var _saw_heal_threat := false
 
 
+func _tether_verdict() -> String:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone == null or zone.net_world == null:
+		return "fail: no zone replication on the server"
+	if not _threat_spawned:
+		return _threat_verdict()  # spawns the dummy once both heroes are in
+	if not is_instance_valid(_threat_dummy):
+		return "fail: the dummy is gone"
+	for peer: int in zone.net_world.heroes:
+		var h := zone.net_world.heroes[peer] as Player
+		if h != null and is_instance_valid(h) and _role_of(h) == "c1" and _threat_dummy.threat_of(h) > 0.0:
+			_saw_lash = true
+	return "ok" if _saw_lash else "fail: the tether's lash never reached the server's dummy"
+
+
+var _saw_lash := false
+
+
 func _role_of(p: Player) -> String:
 	return str((Net.roster.get(p.peer_id, {}) as Dictionary).get("name", "")).to_lower()
 
@@ -339,6 +357,8 @@ func _update() -> void:
 			verdict = _threat_verdict()
 		"heal":
 			verdict = _heal_verdict()
+		"storm_tether":  # M13b: the tank's lash (a forwarded hit) threatens the dummy for c1
+			verdict = _tether_verdict()
 		"enemy_types":
 			verdict = _types_verdict()
 		"look_boss":

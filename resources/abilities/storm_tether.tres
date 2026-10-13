@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="AbilityData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/abilities/ability_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"storm_tether"
+display_name = "Storm Tether"
+description = "Bind an ally (up to 14 m) to you with lightning for 8 s: you take 30% of every blow on them, and the tether lashes whoever struck them, turning it on you. Costs 20 Resonance."
+cooldown = 18.0
+resonance_cost = 20.0
+resonance_gain_per_hit = 0.0
+startup = 0.0
+active = 8.0
+recovery = 0.0
+damage = 0.0
+damage_type = 3
+weight = 0
+knockback = 0.0
+projectile_speed = 0.0
+aoe_radius = 14.0
+applies_burn = false
+applies_chill = false
+applies_shock = false
+crit_chance = 0.08
+crit_multiplier = 1.6
+heal = 0.0
+repeat_while_held = false
+threat_mult = 3.0
+unlock = 3
+learn_level = 1
+learn_price = 0
+unlock_power = &""
+tome_id = &"stormwatch"

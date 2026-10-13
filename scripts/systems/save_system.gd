@@ -436,6 +436,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 		player.known_abilities = known
 	player.restore_loadout(ch.get("loadout", []) as Array)  # M10: after the known abilities
 	player.gold = maxi(int(ch.get("gold", 0)), 0)
+	player.storm_shards = maxi(int(ch.get("storm_shards", 0)), 0)  # M13b, optional
 	player.consumables = {}  # M10b: id -> count, clamped to the bag
 	var bag: Variant = ch.get("consumables", {})
 	if bag is Dictionary:
@@ -457,6 +458,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 	player.equipment.changed.emit()
 	player.abilities_changed.emit()
 	player.gold_changed.emit(player.gold, 0)
+	player.storm_shards_changed.emit(player.storm_shards, 0)
 
 
 static func character_dict(player: Player) -> Dictionary:
@@ -465,7 +467,7 @@ static func character_dict(player: Player) -> Dictionary:
 		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered),
 		"discovered": Array(player.discovered_zones),
 		"lore_read": Array(player.lore_read), "collected": Array(player.collected), "gathered": player.gathered.duplicate(),
-		"blessings": Array(player.blessings)}
+		"blessings": Array(player.blessings), "storm_shards": player.storm_shards}
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:

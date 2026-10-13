@@ -78,7 +78,7 @@ func _build_greybox_shape(color: Color) -> void:
 
 func _add_presentation(color: Color) -> void:
 	var label := Label3D.new()
-	label.text = item.display_name
+	label.text = item.title()
 	label.font_size = 36
 	label.pixel_size = 0.004
 	label.modulate = color

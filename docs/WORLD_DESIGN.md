@@ -311,6 +311,10 @@ once bound lightning into runes; its gate stands east of the Cinder Flats.
 - **Own loot:** storm shards from every boss for every hero, a trader in
   Runehold sells six new storm legendaries for them (two per class, only
   there); a tome in the secret teaches each class a fourth tome ability.
+  Built in phase 7: 3 shards per mid-boss, 6 for the Last Stormcaller;
+  Tova Stormward stands east of Runehold's hearth, across from Ylva (30
+  shards a legendary); the tome lies in the tome room behind the orrery
+  (Storm Tether, Thunderhead, Cloudburst - ITEMIZATION, CLASS_DESIGN).
 - **Level grows with the party:** enemy and loot level = the party's average
   on entry, at least 7.
 

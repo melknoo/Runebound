@@ -463,6 +463,64 @@ class Driver extends Node:
 						return
 					await _seconds(3.0)
 					_finish("ok")
+			"storm_tether":
+				# M13b phase 7: c1 (Runebreaker) binds the hurt c2 with Storm Tether
+				# (HERO_FX ally_tether, kept by c2's own machine); c2 takes a blow
+				# from the dummy - the share travels back (tether_carry), c1 takes
+				# it and lashes the dummy (a forwarded hit: threat on the server).
+				if not await _in_zone():
+					return
+				var tz := get_tree().current_scene as ZoneBase
+				var tworld := tz.net_world
+				if not await _until(func() -> bool: return _threat_dummy(tworld) != null, 40.0, "the server's dummy"):
+					return
+				var tdummy := _threat_dummy(tworld)
+				var me := tz.player
+				me.input_source = InputSource.new()
+				if role == "c1":
+					var tank := me as RunebreakerHero
+					if tank == null:
+						_finish("fail: c1 is no Runebreaker")
+						return
+					var hurt := func() -> Player:
+						for peer: int in tworld.heroes:
+							var h := tworld.heroes[peer] as Player
+							if h != null and is_instance_valid(h) and h.health.current_health < h.health.max_health * 0.7:
+								return h
+						return null
+					if not await _until(func() -> bool: return hurt.call() != null, 40.0, "the mage hurt in the snapshots"):
+						return
+					var mate := hurt.call() as Player
+					tank.global_position = tz.ground_point(mate.global_position + Vector3(3, 0, 0), 0.2)
+					tank.velocity = Vector3.ZERO
+					await _seconds(0.5)
+					tank.learn_ability(&"storm_tether")
+					tank.resonance = 100.0
+					if tank.tether_target() != mate or not tank.try_storm_tether():
+						_finish("fail: Storm Tether refused or aimed past the hurt mage")
+						return
+					var hp0 := tank.health.current_health
+					if not await _until(func() -> bool: return tank.health.current_health < hp0 - 1.0, 30.0,
+							"the carried share arriving (%.0f)" % tank.health.current_health):
+						return
+					await _seconds(2.0)
+					_finish("ok")
+				else:
+					me.health.current_health = me.health.max_health * 0.5
+					if not await _until(func() -> bool: return me.tethered(), 40.0, "the tank's tether"):
+						return
+					await _seconds(0.5)
+					me.barrier = 0.0
+					var before := me.health.current_health
+					var blow := HitInfo.create(20.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, tdummy.global_position)
+					blow.source_id = tdummy.get_instance_id()
+					me.take_hit(blow)
+					var took := before - me.health.current_health
+					if absf(took - 14.0) > 0.6:
+						_finish("fail: the mage took %.1f of 20 (14 expected)" % took)
+						return
+					await _seconds(4.0)
+					_finish("ok")
 			"enemy_types":
 				# The server spawns every enemy type (low health) once both heroes are in.
 				if not await _in_zone():

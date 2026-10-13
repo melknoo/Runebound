@@ -50,6 +50,15 @@ var _ward: MeshInstance3D = null
 var lodestone_rune: AbilityData   # M12: the tome's rune that drags a pack together
 var breakwater: AbilityData       # M13 the Cistern's tome: a shield charge that shoves aside
 var forge_brand: AbilityData      # M13 the Warrens' tome: a brand - the target takes more, deals less
+var storm_tether: AbilityData     # M13b the Stormwatch's tome: an ally bound to the tank by lightning
+
+## M13b Storm Tether: the share of each blow on the bound ally the tank
+## carries; the lash on the striker deals the carried damage x this.
+const TETHER_SHARE := 0.3
+const TETHER_LASH := 1.0
+## M13b Thunderwall (legendary): a parry's ring of lightning.
+const THUNDER_WALL_RADIUS := 4.0
+const THUNDER_WALL_DAMAGE := 25.0
 
 ## Breakwater: the charge's time over its full reach, the shove to the side,
 ## the share of damage the raised shield keeps off on the way.
@@ -67,6 +76,7 @@ func _load_abilities() -> void:
 	lodestone_rune = ability(&"lodestone_rune")
 	breakwater = ability(&"breakwater")
 	forge_brand = ability(&"forge_brand")
+	storm_tether = ability(&"storm_tether")
 	cleave = ability(&"rune_cleave")
 	earthbreaker = ability(&"earthbreaker")
 	runic_guard = ability(&"runic_guard")
@@ -93,6 +103,7 @@ func _register_actions() -> void:
 		&"lodestone_rune": try_lodestone_rune,
 		&"breakwater": try_breakwater,
 		&"forge_brand": try_forge_brand,
+		&"storm_tether": try_storm_tether,
 	})
 
 
@@ -105,7 +116,7 @@ func _anim_profile() -> Dictionary:
 		&"lodestone_rune": &"ember", &"breakwater": &"block", &"forge_brand": &"ember"})
 	# instant casts keep the legs running: upper-body layer only
 	(profile["upper"] as Dictionary).merge({&"runic_guard": &"runic_guard", &"rune_wall": &"block",
-		&"warding_rune": &"fracture_rune"})
+		&"warding_rune": &"fracture_rune", &"storm_tether": &"fracture_rune"})
 	# M10: the block is held for as long as the key stays down
 	profile["hold"] = {&"rune_wall": &"rune_wall_end"}
 	return profile
@@ -493,6 +504,17 @@ func _parry(hit: HitInfo, at: Vector3) -> void:
 		foe.take_hit(counter)
 	if has_power(&"wardens_oath"):  # M10 legendary: a parry leaves a barrier
 		grant_barrier(WARDENS_OATH_BARRIER, 3.0)
+	if has_power(&"thunder_wall"):  # M13b legendary: a parry discharges a ring of lightning
+		hero_fx(&"thunder_wall", [global_position, THUNDER_WALL_RADIUS])
+		for foe in _enemies_near(global_position, THUNDER_WALL_RADIUS):
+			var ring := roll_ability_hit(rune_wall)
+			ring.damage = THUNDER_WALL_DAMAGE * (1.0 + stat(&"damage_pct") / 100.0)
+			ring.type = HitInfo.DamageType.LIGHTNING
+			ring.weight = HitInfo.Weight.LIGHT
+			ring.applies_shock = true
+			ring.threat_mult = rune_wall.threat_mult
+			ring.source_position = global_position
+			foe.take_hit(ring)
 
 
 # ---------------------------------------------------------------------------
@@ -763,6 +785,78 @@ func try_forge_brand() -> bool:
 	cooldowns_changed.emit()
 	action_started.emit(&"forge_brand")
 	return true
+
+
+# ---------------------------------------------------------------------------
+# M13b tome (the Stormwatch): Storm Tether (an ally bound to the tank)
+# ---------------------------------------------------------------------------
+
+func try_storm_tether() -> bool:
+	if not knows(&"storm_tether") or state != State.MOVE or _on_cooldown(&"storm_tether"):
+		return false
+	var bound := tether_target()
+	if bound == null:
+		ui_denied()
+		return false
+	var cost := resource_cost(&"storm_tether")
+	if resonance < cost:
+		ui_denied()
+		return false
+	spend_resonance(cost)
+	_set_cooldown(&"storm_tether", storm_tether.cooldown)
+	var to := bound.global_position - global_position
+	to.y = 0.0
+	if to.length() > 0.1:
+		_visual.rotation.y = atan2(-to.x, -to.z)
+		_aim_hold_until = Time.get_ticks_msec() + AIM_HOLD_MSEC
+	var zone := ZoneBase.zone_of(self)
+	if zone != null:
+		hero_fx(&"ally_tether", [zone.hero_ref(bound), storm_tether.active, TETHER_SHARE, has_power(&"lightning_rod")])
+	cooldowns_changed.emit()
+	action_started.emit(&"storm_tether")
+	return true
+
+
+## The ally to bind: the one under the crosshair, else the one with the
+## lowest health share within reach (never the tank itself).
+func tether_target() -> Player:
+	var zone := ZoneBase.zone_of(self)
+	if zone == null or storm_tether == null:
+		return null
+	if targeting != null and camera_rig != null:
+		var aimed := targeting.ally_under_aim(storm_tether.aoe_radius)
+		if aimed != null and aimed != self:
+			return aimed
+	var best: Player = null
+	var best_frac := INF
+	for ally in zone.players_within(global_position, storm_tether.aoe_radius):
+		if ally == self:
+			continue
+		var frac := ally.health.current_health / maxf(ally.health.max_health, 1.0)
+		if frac < best_frac:
+			best_frac = frac
+			best = ally
+	return best
+
+
+## A blow carried for the bound ally: the tank takes it (its own damage
+## reduction and barrier count, never a block) and the tether lashes the
+## striker with lightning - threat that turns it onto the tank.
+func carry_for_ally(amount: float, striker: EnemyBase) -> void:
+	if health.is_dead or amount <= 0.0:
+		return
+	var carried := HitInfo.create(amount, HitInfo.DamageType.LIGHTNING, HitInfo.Weight.LIGHT, global_position)
+	carried.ability = &"storm_tether"
+	take_hit(carried)
+	if striker == null or not is_instance_valid(striker) or striker.ai_state == EnemyBase.AIState.DEAD \
+			or storm_tether == null:
+		return
+	var lash := roll_ability_hit(storm_tether)
+	lash.damage = amount * TETHER_LASH * (1.0 + stat(&"damage_pct") / 100.0)
+	lash.threat_mult = storm_tether.threat_mult
+	lash.source_position = global_position
+	striker.take_hit(lash)
+	hero_fx(&"tether_lash", [global_position + Vector3(0, 1.2, 0), striker.global_position + Vector3(0, 1.2, 0)])
 
 
 # ---------------------------------------------------------------------------

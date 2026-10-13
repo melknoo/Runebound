@@ -2421,11 +2421,23 @@
    "y": 0.0
   },
   {
+   "id": "sw_tome",
+   "type": "tome",
+   "pos": [
+    -64,
+    -96
+   ],
+   "yaw": 0.0,
+   "tome": "stormwatch",
+   "room": "sw_tome_room",
+   "y": 0.0
+  },
+  {
    "id": "sw_chest_tome",
    "type": "chest",
    "pos": [
     -64,
-    -96
+    -102
    ],
    "yaw": 0.0,
    "rarity_bias": 2,

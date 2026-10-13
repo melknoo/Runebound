@@ -151,5 +151,149 @@
 	"ui.revive.wiped": {
 		"en": "The party has fallen - back to the rune",
 		"de": "Die Gruppe ist gefallen - zurück zur Rune"
+	},
+	"ability.storm_tether": {
+		"en": "Storm Tether",
+		"de": "Sturmband"
+	},
+	"ability.storm_tether.desc": {
+		"en": "Bind an ally (up to 14 m) to you with lightning for 8 s: you take 30% of every blow on them, and the tether lashes whoever struck them, turning it on you. Costs 20 Resonance.",
+		"de": "Binde einen Verbündeten (bis 14 m) 8 s lang mit Blitzen an dich: Du trägst 30 % jedes Schlags gegen ihn, und das Band peitscht zurück, wer ihn getroffen hat – der wendet sich dir zu. Kostet 20 Resonanz."
+	},
+	"ability.thunderhead": {
+		"en": "Thunderhead",
+		"de": "Gewitterwolke"
+	},
+	"ability.thunderhead.desc": {
+		"en": "A thundercloud over the aim (up to 16 m) for 6 s: lightning strikes an enemy under it every 0.8 s (14 damage, Shock), and allies under it move 20% faster. Costs 30 Aether.",
+		"de": "Eine Gewitterwolke über dem Zielpunkt (bis 16 m), 6 s lang: Alle 0,8 s schlägt ein Blitz in einen Gegner darunter (14 Schaden, Schock), und Verbündete darunter laufen 20 % schneller. Kostet 30 Äther."
+	},
+	"ability.cloudburst": {
+		"en": "Cloudburst",
+		"de": "Wolkenbruch"
+	},
+	"ability.cloudburst.desc": {
+		"en": "A rain cloud follows you for 6 s: every ally within 6 m heals 6 a second, and the rain washes off their slows. Costs 40 Sap.",
+		"de": "Eine Regenwolke folgt dir 6 s lang: Jeder Verbündete im Umkreis von 6 m heilt 6 pro Sekunde, und der Regen wäscht seine Verlangsamungen ab. Kostet 40 Saft."
+	},
+	"ui.storm.shards_gained": {
+		"en": "+%d Storm Shards",
+		"de": "+%d Sturmsplitter"
+	},
+	"ui.storm_trader.prompt": {
+		"en": "Trade shards",
+		"de": "Splitter tauschen"
+	},
+	"ui.storm_trader.line.0": {
+		"en": "Shards of the last storm. Bring me enough and I'll bind one into something you can wear.",
+		"de": "Splitter des letzten Sturms. Bring mir genug, und ich binde einen in etwas, das du tragen kannst."
+	},
+	"ui.storm_trader.line.1": {
+		"en": "Nobody comes down from the Stormwatch alone. Nobody should go up alone either.",
+		"de": "Niemand kommt allein von der Sturmwarte herunter. Und niemand sollte allein hinaufgehen."
+	},
+	"ui.storm_trader.line.2": {
+		"en": "The wardens made these for each other. A shield that draws the lightning, rain that follows the healer.",
+		"de": "Die Wächter haben das füreinander gemacht. Ein Schild, der den Blitz anzieht, Regen, der dem Heiler folgt."
+	},
+	"ui.storm_trader.price": {
+		"en": "%d shards",
+		"de": "%d Splitter"
+	},
+	"ui.storm_trader.buy": {
+		"en": "Buy",
+		"de": "Kaufen"
+	},
+	"ui.storm_trader.need": {
+		"en": "Need %d more shards",
+		"de": "Noch %d Splitter"
+	},
+	"ui.storm_trader.bag_full": {
+		"en": "Bag full",
+		"de": "Tasche voll"
+	},
+	"ui.storm_trader.not_yours": {
+		"en": "Not for your class",
+		"de": "Nicht für deine Klasse"
+	},
+	"ui.storm_trader.bought": {
+		"en": "Bought: %s",
+		"de": "Gekauft: %s"
+	},
+	"item.slot.weapon": {
+		"en": "Weapon",
+		"de": "Waffe"
+	},
+	"item.slot.chest": {
+		"en": "Chest",
+		"de": "Brust"
+	},
+	"item.slot.amulet": {
+		"en": "Amulet",
+		"de": "Amulett"
+	},
+	"item.slot.helm": {
+		"en": "Helm",
+		"de": "Helm"
+	},
+	"item.slot.gloves": {
+		"en": "Gloves",
+		"de": "Handschuhe"
+	},
+	"item.slot.boots": {
+		"en": "Boots",
+		"de": "Stiefel"
+	},
+	"item.slot.ring": {
+		"en": "Ring",
+		"de": "Ring"
+	},
+	"item.lightning_rod.name": {
+		"en": "Lightning Rod",
+		"de": "Blitzableiter"
+	},
+	"item.lightning_rod.text": {
+		"en": "Once every 4 s, Storm Tether draws the whole of a blow on the bound ally into you.",
+		"de": "Einmal alle 4 s zieht Sturmband einen ganzen Schlag gegen den gebundenen Verbündeten in dich."
+	},
+	"item.thunder_wall.name": {
+		"en": "Thunderwall",
+		"de": "Donnerwall"
+	},
+	"item.thunder_wall.text": {
+		"en": "A parry with Rune Wall discharges a ring of lightning: 25 damage and Shock to every enemy within 4 m.",
+		"de": "Eine Parade mit Rune Wall entlädt einen Blitzring: 25 Schaden und Schock für jeden Gegner im Umkreis von 4 m."
+	},
+	"item.eye_of_the_storm.name": {
+		"en": "Eye of the Storm",
+		"de": "Auge des Sturms"
+	},
+	"item.eye_of_the_storm.text": {
+		"en": "Chain Spark jumps to two more enemies; from the third on, each takes 25% more.",
+		"de": "Chain Spark springt auf zwei weitere Gegner; ab dem dritten nimmt jeder 25 % mehr Schaden."
+	},
+	"item.cloud_keeper.name": {
+		"en": "Cloudkeeper",
+		"de": "Wolkenhüter"
+	},
+	"item.cloud_keeper.text": {
+		"en": "Thunderhead lasts 3 s longer and drifts after the enemy it last struck.",
+		"de": "Die Gewitterwolke hält 3 s länger und zieht dem Gegner nach, den sie zuletzt getroffen hat."
+	},
+	"item.rain_heart.name": {
+		"en": "Rainheart",
+		"de": "Regenherz"
+	},
+	"item.rain_heart.text": {
+		"en": "When Cloudburst ends, every ally under it gains a 20-health barrier for 5 s.",
+		"de": "Wenn der Wolkenbruch endet, erhält jeder Verbündete darunter 5 s lang eine Barriere von 20."
+	},
+	"item.storm_seed.name": {
+		"en": "Stormseed",
+		"de": "Sturmsaat"
+	},
+	"item.storm_seed.text": {
+		"en": "The Totem of Growth's pulses strike every enemy in its reach with lightning: 8 damage and Shock.",
+		"de": "Die Pulse des Totem of Growth treffen jeden Gegner in seiner Reichweite mit Blitzen: 8 Schaden und Schock."
 	}
 }

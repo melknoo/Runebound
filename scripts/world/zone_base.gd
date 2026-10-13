@@ -1199,18 +1199,23 @@ static func party_needed_text(scene_path: String) -> String:
 ## own personal loot). `note` becomes a toast for the local hero. M10b:
 ## `draughts` Healing Draughts lie among the drops.
 func give_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
-		note: String = "", float_xp: bool = false, draughts: int = 0) -> void:
+		note: String = "", float_xp: bool = false, draughts: int = 0, shards: int = 0) -> void:
 	if hero == null or not is_instance_valid(hero):
 		return
 	if hero.net_role == Player.NetRole.PROXY:
 		if net_world != null:
-			net_world.send_grant(hero, xp, gold, piles, items, pos, note, float_xp, draughts)
+			net_world.send_grant(hero, xp, gold, piles, items, pos, note, float_xp, draughts, shards)
 		return
-	receive_reward(hero, xp, gold, piles, items, pos, note, float_xp, draughts)
+	receive_reward(hero, xp, gold, piles, items, pos, note, float_xp, draughts, shards)
 
 
 func receive_reward(hero: Player, xp: int, gold: int, piles: int, items: Array[ItemData], pos: Vector3,
-		note: String = "", float_xp: bool = false, draughts: int = 0) -> void:
+		note: String = "", float_xp: bool = false, draughts: int = 0, shards: int = 0) -> void:
+	if shards > 0:  # M13b: storm shards go straight into the purse
+		hero.add_storm_shards(shards)
+		GameFeel.float_text(pos + Vector3(0, 2.6, 0), Texts.t("ui.storm.shards_gained", [shards]),
+			ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF")))
+		SaveGame.request_save()
 	if xp > 0:
 		hero.progression.add_xp(xp)
 		if float_xp:

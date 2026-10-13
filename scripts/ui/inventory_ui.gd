@@ -84,7 +84,7 @@ func _refresh() -> void:
 		var btn := Button.new()
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		if item != null:
-			btn.text = "%s: %s" % [ItemData.slot_name(slot), item.display_name]
+			btn.text = "%s: %s" % [ItemData.slot_name(slot), item.title()]
 			btn.icon = UiTheme.item_icon(item)
 			btn.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 			btn.pressed.connect(_select.bind(item))
@@ -118,7 +118,7 @@ func _refresh() -> void:
 	for item in player.equipment.inventory:
 		var btn := Button.new()
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		btn.text = item.display_name
+		btn.text = item.title()
 		btn.icon = UiTheme.item_icon(item)
 		btn.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 		btn.pressed.connect(_select.bind(item))
@@ -162,13 +162,13 @@ func _render_detail() -> void:
 	if _selected == null:
 		return
 	var item := _selected
-	_add_detail_label(item.display_name, ItemData.rarity_color(item.rarity))
+	_add_detail_label(item.title(), ItemData.rarity_color(item.rarity))
 	_add_detail_label("%s · %s · Item Level %d" % [ItemData.rarity_name(item.rarity), ItemData.slot_name(item.slot),
 		item.item_level], Color(0.7, 0.7, 0.75))
 	for affix in item.affixes:
 		_add_detail_label("· " + String(affix["label"]), Color(0.85, 0.85, 0.9))
-	if item.legendary_text != "":
-		_add_detail_label(item.legendary_text, Color(1.0, 0.6, 0.25), true)
+	if item.power_text() != "":
+		_add_detail_label(item.power_text(), Color(1.0, 0.6, 0.25), true)
 
 	var in_inventory := player.equipment.inventory.has(item)
 	var equipped_same: ItemData = player.equipment.equipped.get(item.slot)
@@ -262,9 +262,9 @@ static func compare_lines(candidate: ItemData, current: ItemData, hero: Player =
 		lines.append([StatSheet.stat_text(key, delta, hero), Color(0.45, 0.9, 0.5) if delta > 0.0 else Color(0.95, 0.4, 0.38)])
 	if candidate.legendary_id != current.legendary_id:
 		if candidate.legendary_id != &"":
-			lines.append(["+ legendary power: " + candidate.display_name, Color(1.0, 0.6, 0.25)])
+			lines.append(["+ legendary power: " + candidate.title(), Color(1.0, 0.6, 0.25)])
 		if current.legendary_id != &"":
-			lines.append(["- loses legendary power: " + current.display_name, Color(0.95, 0.4, 0.38)])
+			lines.append(["- loses legendary power: " + current.title(), Color(0.95, 0.4, 0.38)])
 	return lines
 
 

@@ -13,6 +13,8 @@ var _level_label: Label
 var _gold_box: HBoxContainer
 var _gold_label: Label
 var _draught_label: Label
+var _shard_icon: TextureRect  # M13b: storm shards, beside the draughts once there are any
+var _shard_label: Label
 var _cost_tick: ColorRect
 var _hurt_flash: ColorRect
 var _last_health: float = -1.0  # M10b: the red flash is for losses only
@@ -203,6 +205,17 @@ func _build() -> void:
 	_gold_box.add_child(_draught_label)
 	player.consumables_changed.connect(_on_consumables_changed)
 	_on_consumables_changed()
+	_shard_icon = TextureRect.new()
+	_shard_icon.texture = Hud.icon(&"storm_shard")
+	_shard_icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	_shard_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(_shard_icon)
+	_shard_label = Label.new()
+	_shard_label.add_theme_color_override("font_color", ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF")))
+	_shard_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gold_box.add_child(_shard_label)
+	player.storm_shards_changed.connect(_on_shards_changed)
+	_on_shards_changed(player.storm_shards, 0)
 
 	# Ability row: icon + key only. Names live in the hover tooltip.
 	var slot_row := HBoxContainer.new()
@@ -673,6 +686,16 @@ func gold_text() -> String:
 
 func _on_consumables_changed() -> void:
 	_draught_label.text = str(player.consumable_count(Consumables.HEALING_DRAUGHT))
+
+
+func _on_shards_changed(total: int, _delta: int) -> void:
+	_shard_label.text = str(total)
+	_shard_icon.visible = total > 0
+	_shard_label.visible = total > 0
+
+
+func shards_text() -> String:
+	return _shard_label.text if _shard_label != null and _shard_label.visible else ""
 
 
 func _on_gold_changed(total: int, delta: int) -> void:

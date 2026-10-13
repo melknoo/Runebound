@@ -75,6 +75,15 @@ const SCENARIOS := {
 			{"role": "c2", "delay": 0.5, "args": ["--class=runebreaker", "--netsim=80,20,1"]}],
 		"timeout": 120.0,
 	},
+	# M13b phase 7: c1 (Runebreaker) binds the hurt c2 (Elementalist) with Storm
+	# Tether; a blow on c2 is shared - c2 takes 70 %, c1 on its own machine the
+	# rest, and the tether lashes the server's dummy: its threat on c1.
+	"storm_tether": {
+		"server": ["--zone=res://scenes/combat_lab.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--class=runebreaker"]},
+			{"role": "c2", "delay": 0.5, "args": ["--class=elementalist", "--netsim=80,20,1"]}],
+		"timeout": 120.0,
+	},
 	"enemy_types": {
 		"server": ["--zone=res://scenes/combat_lab.tscn"],
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],

@@ -84,6 +84,12 @@ func _enemy_level(enemy: EnemyBase, _pos: Vector3) -> int:
 	return level
 
 
+## The bosses' level (and their loot's): the registry's, in the co-op
+## dungeon as far above the party's level.
+func boss_level() -> int:
+	return _enemy_level(null, Vector3.ZERO) + int(info.get("boss_level", 4)) - int(info.get("level", 3))
+
+
 ## M13b: is every entry a new run (the co-op dungeon)?
 func fresh_runs() -> bool:
 	return bool(info.get("fresh_runs", false))

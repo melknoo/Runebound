@@ -54,6 +54,12 @@ var wild_bloom: AbilityData
 var rootwalk: AbilityData   # M12 tome: through the roots, a bloom at both ends
 var wellspring: AbilityData  # M13 the Cistern's tome: a heal that washes off slows, then a HoT
 var cinder_ward: AbilityData # M13 the Warrens' tome: the next deadly blow on an ally is caught
+var cloudburst: AbilityData  # M13b the Stormwatch's tome: a rain cloud that heals whoever is under it
+
+## M13b Rainheart (legendary): the barrier a Cloudburst leaves when it ends.
+const RAINHEART_BARRIER := 20.0
+## M13b Stormseed (legendary): the Totem of Growth's pulses strike enemies this hard.
+const STORMSEED_DAMAGE := 8.0
 var _walk_from := Vector3.ZERO
 var _walk_to := Vector3.ZERO
 
@@ -72,6 +78,7 @@ func _load_abilities() -> void:
 	rootwalk = ability(&"rootwalk")
 	wellspring = ability(&"wellspring")
 	cinder_ward = ability(&"cinder_ward")
+	cloudburst = ability(&"cloudburst")
 
 
 func _register_actions() -> void:
@@ -89,6 +96,7 @@ func _register_actions() -> void:
 		&"rootwalk": try_rootwalk,
 		&"wellspring": try_wellspring,
 		&"cinder_ward": try_cinder_ward,
+		&"cloudburst": try_cloudburst,
 	})
 
 
@@ -98,7 +106,7 @@ func _register_actions() -> void:
 func _anim_profile() -> Dictionary:
 	var profile := super()
 	(profile["actions"] as Dictionary).merge({&"root_grasp": &"root_grasp", &"renewal_grove": &"grove",
-		&"growth_totem": &"totem", &"wild_bloom": &"bloom", &"rootwalk": &"root_grasp"})
+		&"growth_totem": &"totem", &"wild_bloom": &"bloom", &"rootwalk": &"root_grasp", &"cloudburst": &"grove"})
 	(profile["upper"] as Dictionary).merge({&"thorn_volley": &"thorn", &"mending_bloom": &"mend",
 		&"barkskin": &"bark", &"regrowth": &"regrowth", &"thornfield": &"thornfield", &"wellspring": &"mend", &"cinder_ward": &"bark"})
 	return profile
@@ -376,6 +384,39 @@ func try_cinder_ward() -> bool:
 
 
 # ---------------------------------------------------------------------------
+# M13b tome (the Stormwatch): Cloudburst (a rain cloud that follows the druid)
+# ---------------------------------------------------------------------------
+
+func try_cloudburst() -> bool:
+	if not _ready_for(&"cloudburst") or not _pay(&"cloudburst"):
+		return false
+	_set_cooldown(&"cloudburst", cloudburst.cooldown)
+	_hold_aim()
+	hero_fx(&"cloudburst", [cloudburst.aoe_radius, cloudburst.active, heal_amount(cloudburst.heal),
+		heal_amount(RAINHEART_BARRIER) if has_power(&"rain_heart") else 0.0])
+	cooldowns_changed.emit()
+	action_started.emit(&"cloudburst")
+	return true
+
+
+## M13b Stormseed: a totem pulse's strike on the enemies near it (the
+## druid's own totem only - GrowthTotem asks its caster).
+func storm_seed_pulse(at: Vector3, radius: float) -> void:
+	if growth_totem == null:
+		return
+	for e in EnemyBase.all_enemies.duplicate():
+		if not is_instance_valid(e) or e.ai_state == EnemyBase.AIState.DEAD or not e.targetable \
+				or e.global_position.distance_to(at) > radius:
+			continue
+		var hit := roll_ability_hit(growth_totem)
+		hit.damage = STORMSEED_DAMAGE * (1.0 + stat(&"damage_pct") / 100.0)
+		hit.type = HitInfo.DamageType.LIGHTNING
+		hit.applies_shock = true
+		hit.source_position = at
+		e.take_hit(hit)
+
+
+# ---------------------------------------------------------------------------
 # Root Grasp (roots burst from the ground at the aim)
 # ---------------------------------------------------------------------------
 
@@ -476,7 +517,8 @@ func try_growth_totem() -> bool:
 	_set_cooldown(&"growth_totem", growth_totem.cooldown)
 	var at := ZoneBase.ground_under(self, global_position + facing() * 1.2, 0.02)
 	var duration := growth_totem.active * (HEART_OF_THE_GROVE if has_power(&"heart_of_the_grove") else 1.0)
-	hero_fx(&"growth_totem", [at, growth_totem.aoe_radius, duration, totem_damage_pct(), heal_amount(growth_totem.heal)])
+	hero_fx(&"growth_totem", [at, growth_totem.aoe_radius, duration, totem_damage_pct(), heal_amount(growth_totem.heal),
+		has_power(&"storm_seed")])
 	if has_power(&"rooted_totem"):
 		for e in EnemyBase.all_enemies:
 			if is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD \

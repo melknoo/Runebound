@@ -100,6 +100,12 @@ threatens double (ClassData `threat_mult` 2).
   enemy (the target or the best one in view, 12 m, 8 Fire): for 8 s it
   takes 20 % more damage from every hero and deals 25 % less to everyone;
   15 Resonance, 14 s. Turns the tank's attention into the party's damage.
+- **Tome (M13b, the Stormwatch, co-op only): Storm Tether** - binds an ally
+  (the one under the crosshair, else the most wounded within 14 m) for 8 s:
+  the tank takes 30 % of every enemy blow on it, and the tether lashes the
+  striker with the carried damage (threat x3), turning it onto the tank;
+  20 Resonance, 18 s. Snaps beyond 16 m. Lightning Rod (legendary): once
+  every 4 s it carries a whole blow.
 
 ### Elementalist, the damage dealer (M10)
 Ranged caster of fire, lightning and frost; Rune Bolts and spell hits build
@@ -140,6 +146,11 @@ tank). Burn, Shock and Chill and their interactions moved with the spells.
   enemy (14 m) bursts after 3 s, or at once when its host dies: 30 Fire and
   Burn to every enemy within 3.5 m; 25 Aether, 10 s. Damage over a pack,
   delayed, aimed at one.
+- **Tome (M13b, the Stormwatch, co-op only): Thunderhead** - a thundercloud
+  over the aim (16 m) for 6 s: every 0.8 s lightning strikes one enemy
+  under it (4 m; 14 Lightning, Shock), and allies under it run 20 % faster;
+  30 Aether, 16 s. Cloudkeeper (legendary): 3 s longer, drifts after its
+  last target.
 
 ### Root druid, the healer (M11)
 Plants breaking out of burnt earth, totems, thorns. User decisions of
@@ -185,6 +196,11 @@ level 1.
   the embers heal 40 (scaled like the druid's heals); spent once; 30 Sap,
   45 s. Planned as "Aschenblüte", renamed: Ashbloom Seed is already the
   druid's legendary.
+- **Tome (M13b, the Stormwatch, co-op only): Cloudburst** - a rain cloud
+  over the druid that goes where she goes, 6 s: every ally within 6 m heals
+  6 a second and the rain washes off its slows; 40 Sap, 26 s. Unlike the
+  Renewal Grove it moves with the fight. Rainheart (legendary): a 20
+  barrier for everyone under it when it ends.
 - **Travel no longer heals** (user 2026-09-30, for every class): health (and
   Sap) are kept across zones and in the save; the Runehold hearth heals out
   of combat.

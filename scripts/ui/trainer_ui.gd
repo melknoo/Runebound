@@ -4,7 +4,9 @@ extends CanvasLayer
 ## and gold price; Learn buys one. Opened by a TrainerNpc, closed with Esc.
 ## Locks combat input and frees the mouse like the other panels. Also nudges
 ## the player with a toast when an ability first becomes affordable. M10b: a
-## MerchantNpc opens the same panel as a shop (consumables for gold).
+## MerchantNpc opens the same panel as a shop (consumables for gold). M13b:
+## the StormTraderNpc opens it as her shelf (storm legendaries for shards,
+## in the player's language).
 
 var player: Player
 
@@ -12,6 +14,7 @@ var _root: Control
 var _title: Label
 var _flavour: Label
 var _gold_label: Label
+var _coin: TextureRect
 var _rows: VBoxContainer
 var _announced: Array[StringName] = []
 var _npc: Npc = null  # a TrainerNpc, or a MerchantNpc for the shop view
@@ -163,10 +166,10 @@ func _build() -> void:
 	var gold_box := HBoxContainer.new()
 	gold_box.add_theme_constant_override("separation", 6)
 	top.add_child(gold_box)
-	var coin := TextureRect.new()
-	coin.texture = Hud.icon(&"coin")
-	coin.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-	gold_box.add_child(coin)
+	_coin = TextureRect.new()
+	_coin.texture = Hud.icon(&"coin")
+	_coin.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
+	gold_box.add_child(_coin)
 	_gold_label = Label.new()
 	_gold_label.add_theme_color_override("font_color", ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 	_gold_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -196,8 +199,19 @@ func _refresh() -> void:
 		return
 	_title.text = (_npc.npc_name if _npc != null else "Trainer").to_upper()
 	_gold_label.text = str(player.gold)
+	_coin.texture = Hud.icon(&"coin")
+	_gold_label.add_theme_color_override("font_color", ArtKit.color("color_roles.resonance.hot", Color("#FFD97A")))
 	for child in _rows.get_children():
 		child.queue_free()
+	var trader := _npc as StormTraderNpc
+	if trader != null:  # M13b: the storm trader's shelf
+		_gold_label.text = str(player.storm_shards)
+		_coin.texture = Hud.icon(&"storm_shard")
+		_gold_label.add_theme_color_override("font_color", ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF")))
+		_flavour.text = trader.flavour_line()
+		for def in AffixPool.storm_legendaries_for(player.class_data.id):
+			_rows.add_child(_storm_row(def))
+		return
 	var merchant := _npc as MerchantNpc
 	if merchant != null:  # M10b: the shop view
 		_flavour.text = merchant.flavour_line()
@@ -307,6 +321,90 @@ func _shop_row(cid: StringName) -> Control:
 	btn.text = "Buy" if reason == "" else reason
 	btn.disabled = reason != ""
 	btn.pressed.connect(func() -> void: try_buy_consumable(cid))
+	row.add_child(btn)
+	return row
+
+
+## M13b storm trader: why the storm legendary `id` can't be bought right
+## now; "" when it can.
+static func storm_deny_reason(p: Player, id: StringName) -> String:
+	var def := AffixPool.storm_def(id)
+	if def.is_empty() or def.get("class", &"") != p.class_data.id:
+		return Texts.t("ui.storm_trader.not_yours")
+	if p.equipment.is_full():
+		return Texts.t("ui.storm_trader.bag_full")
+	if p.storm_shards < AffixPool.STORM_PRICE:
+		return Texts.t("ui.storm_trader.need", [AffixPool.STORM_PRICE - p.storm_shards])
+	return ""
+
+
+## Buys the storm legendary `id`: the shards go, the item (at the hero's
+## level) goes into the bag.
+func try_buy_storm(id: StringName) -> bool:
+	if storm_deny_reason(player, id) != "" or not player.spend_storm_shards(AffixPool.STORM_PRICE):
+		Sfx.play_ui("ui_denied", -8.0)
+		return false
+	var item := ItemGenerator.make_storm_legendary(id, player.class_data.id, player.progression.level)
+	player.equipment.add_item(item)
+	Sfx.play_ui("ability_learned", -4.0)
+	var scene := get_tree().current_scene
+	VFX.flash(scene, player.global_position + Vector3(0, 1.2, 0), ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF")), 1.8, 0.25)
+	var zone := scene as ZoneBase
+	if zone != null and zone.hud != null:
+		zone.hud.toast(Texts.t("ui.storm_trader.bought", [item.title()]), ItemData.rarity_color(item.rarity))
+	SaveGame.save_now()
+	_refresh()
+	return true
+
+
+## M13b: one row of the storm trader's shelf (icon, name + slot, power, price, Buy).
+func _storm_row(def: Dictionary) -> Control:
+	var id: StringName = def["id"]
+	var reason := storm_deny_reason(player, id)
+	var preview := ItemData.new()
+	preview.slot = def["slot"]
+	preview.rarity = ItemData.Rarity.LEGENDARY
+	preview.legendary_id = id
+	preview.display_name = def["name"]
+	preview.legendary_text = def["text"]
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 12)
+	var slot := Control.new()
+	slot.custom_minimum_size = Vector2(44, 44)
+	row.add_child(slot)
+	var frame := TextureRect.new()
+	frame.texture = load(UiTheme.UI_DIR + "slot.png")
+	slot.add_child(frame)
+	var icon := TextureRect.new()
+	icon.texture = UiTheme.item_icon(preview)
+	icon.position = Vector2(6, 6)
+	slot.add_child(icon)
+	var text := VBoxContainer.new()
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text.add_theme_constant_override("separation", 0)
+	row.add_child(text)
+	var name_label := Label.new()
+	name_label.text = "%s   %s" % [preview.title(), ItemData.slot_title(preview.slot)]
+	name_label.add_theme_color_override("font_color", ItemData.rarity_color(ItemData.Rarity.LEGENDARY))
+	text.add_child(name_label)
+	var desc := Label.new()
+	desc.text = preview.power_text()
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.custom_minimum_size = Vector2(520, 0)
+	desc.add_theme_color_override("font_color", UiTheme.TEXT)
+	text.add_child(desc)
+	var price := Label.new()
+	price.custom_minimum_size = Vector2(150, 0)
+	price.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	price.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	price.text = Texts.t("ui.storm_trader.price", [AffixPool.STORM_PRICE])
+	price.add_theme_color_override("font_color", ArtKit.color("palettes.stormwatch.lightning", Color("#B9A8FF")))
+	row.add_child(price)
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(150, 0)
+	btn.text = Texts.t("ui.storm_trader.buy") if reason == "" else reason
+	btn.disabled = reason != ""
+	btn.pressed.connect(func() -> void: try_buy_storm(id))
 	row.add_child(btn)
 	return row
 

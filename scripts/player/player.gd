@@ -22,6 +22,8 @@ signal action_started(action: StringName)
 signal abilities_changed
 signal ability_learned(id: StringName)
 signal gold_changed(total: int, delta: int)
+## M13b: storm shards (the co-op dungeon's currency for the storm trader).
+signal storm_shards_changed(total: int, delta: int)
 ## M08: a waypoint shrine was attuned ("<zone>:<id>").
 signal waypoint_discovered(id: String)
 ## M10: the four free slots (RMB, 1, 2, 3) changed.
@@ -91,6 +93,7 @@ var known_abilities: Array[StringName] = []
 ## and dodge) fire. Saved per character.
 var loadout: Array[StringName] = []
 var gold: int = 0
+var storm_shards: int = 0
 ## M10b: consumable id -> count in the bag (Consumables.DEFS; saved per character).
 var consumables: Dictionary = {}
 ## M10b: health a draught still has to restore, and how fast (owner only).
@@ -101,6 +104,17 @@ var _heal_rate: float = 0.0
 var _hots: Dictionary = {}
 ## M13 Cinder Ward: the heal the ward gives when it catches a deadly blow.
 var _cinder_heal: float = 0.0
+## M13b Storm Tether (the tank's Stormwatch tome) on this hero: the tank that
+## bound it (a hero ref), the seconds left, the share of each enemy blow the
+## tank carries; Lightning Rod (the tank's legendary) carries a whole blow
+## every ROD_EVERY s. The tether snaps beyond TETHER_SNAP.
+var _tether_ref: int = -1
+var _tether_left: float = 0.0
+var _tether_share: float = 0.0
+var _tether_rod: bool = false
+var _tether_rod_cd: float = 0.0
+const TETHER_SNAP := 16.0
+const ROD_EVERY := 4.0
 ## M12: the heal-over-time id of a meal (separate from ally heals).
 const FOOD_HOT := &"food"
 ## M12: a slow on this hero (the strongest one wins; the druid's Rootwalk
@@ -571,6 +585,21 @@ func spend_gold(amount: int) -> bool:
 	return true
 
 
+func add_storm_shards(amount: int) -> void:
+	if amount == 0:
+		return
+	storm_shards = maxi(storm_shards + amount, 0)
+	storm_shards_changed.emit(storm_shards, amount)
+
+
+func spend_storm_shards(amount: int) -> bool:
+	if amount < 0 or storm_shards < amount:
+		return false
+	storm_shards -= amount
+	storm_shards_changed.emit(storm_shards, -amount)
+	return true
+
+
 # ---------------------------------------------------------------------------
 # M10b: consumables (Consumables.DEFS) - counted in the bag, used from the
 # inventory. No regeneration out of combat (user, 2026-09-30).
@@ -709,6 +738,8 @@ func clear_slow() -> void:
 
 
 func _tick_support(delta: float) -> void:
+	_tether_left = maxf(_tether_left - delta, 0.0)
+	_tether_rod_cd = maxf(_tether_rod_cd - delta, 0.0)
 	if _slow_left > 0.0:
 		_slow_left -= delta
 		if _slow_left <= 0.0:
@@ -1469,6 +1500,7 @@ func take_hit(hit: HitInfo) -> bool:
 	var striker := instance_from_id(hit.source_id) as EnemyBase if hit.source_id != 0 else null
 	if striker != null and is_instance_valid(striker) and striker.status.is_branded():
 		hit.damage *= StatusEffectComponent.BRAND_WEAKEN  # M13 Forge Brand: the branded strike weaker
+	_tether_carry(hit, striker)
 	if barrier > 0.0 and not health.invulnerable and not health.is_dead:
 		var absorbed := minf(barrier, hit.damage)
 		barrier -= absorbed
@@ -1510,6 +1542,48 @@ func _cinder_ward_rise() -> void:
 	_cinder_heal = 0.0
 	hero_fx(&"cinder_save", [global_position])
 	feel_shake(0.3)
+
+
+## M13b Storm Tether, on the bound hero's owner (HeroFx "ally_tether").
+func bind_tether(tank_ref: int, seconds: float, share: float, rod: bool) -> void:
+	_tether_ref = tank_ref
+	_tether_left = seconds
+	_tether_share = share
+	_tether_rod = rod
+
+
+func tethered() -> bool:
+	return _tether_left > 0.0
+
+
+## A share of an enemy blow on this bound hero goes to its tank (HeroFx
+## "tether_carry"; the tank's owner takes it and lashes the striker). The
+## striker travels as its net id (co-op) and its instance id (offline).
+func _tether_carry(hit: HitInfo, striker: EnemyBase) -> void:
+	if _tether_left <= 0.0 or hit.from_player or hit.ability == &"storm_tether" or hit.damage <= 0.0 \
+			or health.invulnerable or health.is_dead:
+		return
+	var zone := ZoneBase.zone_of(self)
+	var tank := zone.hero_by_ref(_tether_ref) if zone != null else null
+	if tank == null or tank == self or tank.health.is_dead or tank.global_position.distance_to(global_position) > TETHER_SNAP:
+		_tether_left = 0.0  # snapped
+		return
+	var share := _tether_share
+	var whole := _tether_rod and _tether_rod_cd <= 0.0
+	if whole:
+		share = 1.0
+		_tether_rod_cd = ROD_EVERY
+	var carried := hit.damage * share
+	hit.damage -= carried
+	var valid := striker != null and is_instance_valid(striker)
+	hero_fx(&"tether_carry", [_tether_ref, carried, striker.net_id if valid else 0,
+		striker.get_instance_id() if valid else 0, whole])
+
+
+## M13b Storm Tether, on the tank's owner: a blow carried for a bound ally
+## (only the Runebreaker binds; RunebreakerHero takes it and lashes back).
+func carry_for_ally(_amount: float, _striker: EnemyBase) -> void:
+	pass
 
 
 ## M10: the share of an enemy hit this hero still takes: talents and gear

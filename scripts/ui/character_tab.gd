@@ -86,7 +86,7 @@ func refresh() -> void:
 		var item: ItemData = player.equipment.equipped.get(slot)
 		var label := Label.new()
 		if item != null:
-			label.text = "%s: %s" % [ItemData.slot_name(slot), item.display_name]
+			label.text = "%s: %s" % [ItemData.slot_name(slot), item.title()]
 			label.add_theme_color_override("font_color", ItemData.rarity_color(item.rarity))
 		else:
 			label.text = "%s: —" % ItemData.slot_name(slot)
