@@ -364,8 +364,10 @@
     -11
    ],
    "width": 5.0,
-   "kind": "open",
-   "inputs": [],
+   "kind": "gate",
+   "inputs": [
+    "sw_coils_sync"
+   ],
    "rect": [
     -2.5,
     -12,
@@ -448,8 +450,13 @@
     -65
    ],
    "width": 5.0,
-   "kind": "open",
-   "inputs": [],
+   "kind": "gate",
+   "inputs": [
+    [
+     "sw_plate_turbines",
+     "sw_lever_bridge"
+    ]
+   ],
    "rect": [
     -36.5,
     -66,
@@ -469,8 +476,13 @@
     -65
    ],
    "width": 5.0,
-   "kind": "open",
-   "inputs": [],
+   "kind": "gate",
+   "inputs": [
+    [
+     "sw_plate_archive",
+     "sw_lever_bridge"
+    ]
+   ],
    "rect": [
     31.5,
     -66,
@@ -555,8 +567,10 @@
     -87
    ],
    "width": 5.0,
-   "kind": "open",
-   "inputs": [],
+   "kind": "gate",
+   "inputs": [
+    "sw_plates_hall"
+   ],
    "rect": [
     56.5,
     -88,
@@ -706,8 +720,10 @@
     25
    ],
    "width": 6.0,
-   "kind": "open",
-   "inputs": [],
+   "kind": "gate",
+   "inputs": [
+    "sw_chain"
+   ],
    "rect": [
     95.0,
     24,
@@ -748,8 +764,10 @@
     -89
    ],
    "width": 4.0,
-   "kind": "open",
-   "inputs": [],
+   "kind": "gate",
+   "inputs": [
+    "sw_orrery_beam"
+   ],
    "rect": [
     -66.0,
     -90,
@@ -1788,6 +1806,19 @@
    "y": 0.0
   },
   {
+   "id": "sw_lore_forecourt",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.stormwatch.gate_notice",
+   "pos": [
+    8,
+    52
+   ],
+   "yaw": -1.5708,
+   "room": "sw_forecourt",
+   "y": 0.0
+  },
+  {
    "id": "sw_camp_coils",
    "type": "camp",
    "pos": [
@@ -1823,11 +1854,77 @@
    ]
   },
   {
+   "id": "sw_coils_sync",
+   "type": "sync",
+   "pos": [
+    0,
+    12
+   ],
+   "look": "coil",
+   "window": 2.0,
+   "levers": [
+    [
+     -16,
+     20,
+     3.14159
+    ],
+    [
+     16,
+     20,
+     3.14159
+    ],
+    [
+     8,
+     -6,
+     0.0
+    ]
+   ],
+   "room": "sw_coils",
+   "y": 0.0
+  },
+  {
+   "id": "sw_lore_coils",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.stormwatch.coil_plaque",
+   "pos": [
+    -17,
+    8
+   ],
+   "yaw": 1.5708,
+   "room": "sw_coils",
+   "y": 0.0
+  },
+  {
+   "id": "sw_lore_crossing",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.stormwatch.two_keepers",
+   "pos": [
+    0,
+    -41
+   ],
+   "yaw": 0.0,
+   "room": "sw_crossing",
+   "y": 0.0
+  },
+  {
+   "id": "sw_plate_archive",
+   "type": "plate",
+   "pos": [
+    -27,
+    -31
+   ],
+   "station": true,
+   "room": "sw_archive",
+   "y": 0.0
+  },
+  {
    "id": "sw_camp_archive",
    "type": "camp",
    "pos": [
     -34,
-    -45
+    -47
    ],
    "radius": 8.0,
    "composition": [
@@ -1837,11 +1934,11 @@
    "spots": [
     [
      -37,
-     -47
+     -49
     ],
     [
      -31,
-     -43
+     -45
     ]
    ],
    "room": "sw_archive",
@@ -1864,11 +1961,35 @@
    "y": 0.0
   },
   {
+   "id": "sw_lore_archive",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.stormwatch.star_charts",
+   "pos": [
+    -43,
+    -56
+   ],
+   "yaw": 1.5708,
+   "room": "sw_archive",
+   "y": 0.0
+  },
+  {
+   "id": "sw_plate_turbines",
+   "type": "plate",
+   "pos": [
+    27,
+    -31
+   ],
+   "station": true,
+   "room": "sw_turbines",
+   "y": 0.0
+  },
+  {
    "id": "sw_camp_turbines",
    "type": "camp",
    "pos": [
     34,
-    -45
+    -47
    ],
    "radius": 8.0,
    "composition": [
@@ -1878,11 +1999,11 @@
    "spots": [
     [
      31,
-     -47
+     -49
     ],
     [
      37,
-     -43
+     -45
     ]
    ],
    "room": "sw_turbines",
@@ -1893,11 +2014,35 @@
    ]
   },
   {
+   "id": "sw_lore_turbines",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.stormwatch.turbine_log",
+   "pos": [
+    43,
+    -56
+   ],
+   "yaw": -1.5708,
+   "room": "sw_turbines",
+   "y": 0.0
+  },
+  {
    "id": "sw_rune_bridge",
    "type": "rune",
    "pos": [
     0,
     -70
+   ],
+   "yaw": 0.0,
+   "room": "sw_bridge",
+   "y": 0.0
+  },
+  {
+   "id": "sw_lever_bridge",
+   "type": "lever",
+   "pos": [
+    8,
+    -81
    ],
    "yaw": 0.0,
    "room": "sw_bridge",
@@ -1933,6 +2078,19 @@
    ]
   },
   {
+   "id": "sw_lore_bridge",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.stormwatch.bridge_words",
+   "pos": [
+    -38,
+    -81
+   ],
+   "yaw": 0.0,
+   "room": "sw_bridge",
+   "y": 0.0
+  },
+  {
    "id": "sw_arena_sworn",
    "type": "arena",
    "pos": [
@@ -1945,6 +2103,32 @@
    "reward": "mid",
    "room": "sw_sworn",
    "y": 0.0
+  },
+  {
+   "id": "sw_plates_hall",
+   "type": "plates",
+   "pos": [
+    58,
+    -100
+   ],
+   "plates": [
+    [
+     46,
+     -118
+    ],
+    [
+     70,
+     -118
+    ],
+    [
+     58,
+     -94
+    ]
+   ],
+   "hold": 1.0,
+   "open_for": 20.0,
+   "room": "sw_plates",
+   "y": 4.0
   },
   {
    "id": "sw_camp_plates",
@@ -1970,7 +2154,7 @@
     ],
     [
      58,
-     -106
+     -107
     ]
    ],
    "room": "sw_plates",
@@ -1985,10 +2169,23 @@
    "id": "sw_rune_plates",
    "type": "rune",
    "pos": [
-    58,
+    67,
     -92
    ],
    "yaw": 0.0,
+   "room": "sw_plates",
+   "y": 4.0
+  },
+  {
+   "id": "sw_lore_plates",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.stormwatch.plate_rule",
+   "pos": [
+    44,
+    -100
+   ],
+   "yaw": 1.5708,
    "room": "sw_plates",
    "y": 4.0
   },
@@ -2029,6 +2226,19 @@
    "y": 0.0
   },
   {
+   "id": "sw_lore_landing",
+   "type": "lore",
+   "kind": "note",
+   "text": "lore.stormwatch.last_entry",
+   "pos": [
+    78,
+    16
+   ],
+   "yaw": -1.5708,
+   "room": "sw_landing",
+   "y": 0.0
+  },
+  {
    "id": "sw_camp_conductors",
    "type": "camp",
    "pos": [
@@ -2064,6 +2274,41 @@
    ]
   },
   {
+   "id": "sw_chain",
+   "type": "chain",
+   "pos": [
+    98,
+    10
+   ],
+   "source": [
+    87,
+    0
+   ],
+   "receiver": [
+    109,
+    20
+   ],
+   "link": 8.0,
+   "heroes": 3,
+   "hold": 2.0,
+   "damage": 4.0,
+   "room": "sw_conductors",
+   "y": 0.0
+  },
+  {
+   "id": "sw_lore_conductors",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.stormwatch.conductors",
+   "pos": [
+    86,
+    18
+   ],
+   "yaw": 1.5708,
+   "room": "sw_conductors",
+   "y": 0.0
+  },
+  {
    "id": "sw_arena_caller",
    "type": "arena",
    "pos": [
@@ -2090,6 +2335,79 @@
    "label": "ASHEN HIGHLANDS",
    "unlock_flag": "sw_caller_down",
    "room": "sw_heart",
+   "y": 0.0
+  },
+  {
+   "id": "sw_orrery_coils",
+   "type": "sync",
+   "pos": [
+    -62,
+    -74
+   ],
+   "look": "coil",
+   "window": 2.0,
+   "levers": [
+    [
+     -75,
+     -85,
+     0.0
+    ],
+    [
+     -50,
+     -62,
+     3.14159
+    ]
+   ],
+   "room": "sw_orrery",
+   "y": 0.0
+  },
+  {
+   "id": "sw_orrery_beam",
+   "type": "beam",
+   "look": "storm",
+   "pos": [
+    -74,
+    -64
+   ],
+   "dir": 2,
+   "mirrors": [
+    [
+     -56,
+     -64,
+     0
+    ],
+    [
+     -56,
+     -82,
+     0
+    ],
+    [
+     -65,
+     -73,
+     0
+    ]
+   ],
+   "receiver": [
+    -70,
+    -82
+   ],
+   "inputs": [
+    "sw_orrery_coils"
+   ],
+   "room": "sw_orrery",
+   "y": 0.0
+  },
+  {
+   "id": "sw_lore_orrery",
+   "type": "lore",
+   "kind": "inscription",
+   "text": "lore.stormwatch.dome_words",
+   "pos": [
+    -76,
+    -74
+   ],
+   "yaw": 1.5708,
+   "room": "sw_orrery",
    "y": 0.0
   },
   {

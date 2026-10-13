@@ -395,6 +395,14 @@
   and bots a human may be "given" a place it never takes (a bot then waits).
 - `run_godot coop` companions keep the level and gear `--level=auto` gave
   them in their own saves (`companion_<i>.json`).
+- **The Stormwatch's look to judge (phase 4, shots `m13b_stormwatch`):**
+  the slate interior may read dark; the copper grid is every 4 m now (2 m
+  was busy); the puzzle parts (coils, plates, pylons) are code-built.
+- **Dungeon interiors on the dev iGPU (UHD 770, 1600 x 900):** the
+  Stormwatch's coil hall 48.6 FPS, the Warrens' kilns 48.1, the Cistern's
+  hall 45.3 - all GPU-bound (18-20 ms) under the 60 FPS budget; the RTX
+  2070 runs them at 400+. Not an M13b regression; candidates if it
+  matters: fewer room lights, a shorter light fade, cheaper fog.
 
 ## M13 open items (built 2026-10-10, the user's playtest is the gate)
 - **Playtest list:** group "M13: Dungeons" on J (18 points, ids `m13_*`).
@@ -441,9 +449,9 @@
   until the next flood (the planes follow the Deepmaw's fx); the bites
   still land correctly.
 - **Cistern look to judge:** 48 lamps (one omni each, faded at 38 m) and 83
-  relief arches; the halls may read dark or busy. The perf scenario
-  `cistern_hall` still needs its iGPU run (RTX 2070: 443 FPS, like the
-  Spire). Puzzle numbers to feel: the ice holds 12 s, the frost crystal's
+  relief arches; the halls may read dark or busy. Perf `cistern_hall`:
+  RTX 2070 443 FPS, the dev iGPU 45.3 FPS (2026-10-13, GPU-bound; see
+  the M13b note on dungeon interiors). Puzzle numbers to feel: the ice holds 12 s, the frost crystal's
   charge 8 s.
 - Element charges are personal and local: a druid charged with fire lights
   a kiln, but the charge does not change its hits on enemies (puzzles

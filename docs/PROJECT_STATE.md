@@ -111,6 +111,37 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
     struck with the leader, a revive, the split plate and following into
     the end room) three runs green, about a minute each; `companions`,
     `coop_puzzles`, `puzzle_kit`, `revive` still green.
+- **Phase 4 (built): the Stormwatch's content, look and lore.**
+  - Every co-op puzzle in its place: three coils in the coil hall (struck
+    within 2 s open the way north); the wings - the archive's plate opens
+    the turbine hall's way to the bridge while held and the other way
+    round, the bridge's lever opens both; three plates in the plate hall
+    hold the way on for 20 s; three heroes carry the lightning across the
+    conductor hall (8 m a link, 4 damage a second to the conductors); the
+    orrery behind the bridge's cracked wall - two coils struck together
+    wake its lightning, two of three crystals turned bend it to the
+    receiver, the tome room opens. Three runes (bridge, plate hall,
+    landing), the landing's shortcut lever, a chest in the archive and one
+    in the tome room. Camps and arenas still field placeholders (phase 5).
+  - The look: palette `stormwatch`, textures `sw_floor` / `sw_wall` /
+    `sw_wall_top` (slate on a copper grounding grid, scorch), roles
+    `stormwatch_floor` / `stormwatch_wall`, the stormwatch prop kit (brass
+    lantern with a caught spark, a slate arch with a lightning rod, copper
+    cables on insulators, grounding grates, rubble, broken instruments;
+    398 pieces placed, no collision), the beam's `storm` look, the wind
+    ambience (`stormwatch_wind_loop`).
+  - Ten lore texts (DE/EN, `resources/i18n/m13b_lore.json`): the gate
+    notice, the coil plaque, the two keepers, the blank star charts (the
+    one quiet meta wink), the turbine log, the bridge's words (the cracked
+    wall), the plate rule, the last stormcaller's entry, the conductors'
+    warning, the dome's words (the orrery).
+  - Shots `m13b_stormwatch` (17). Perf `stormwatch_coils` on the dev iGPU
+    (UHD 770, 1600 x 900): 48.6 FPS, GPU 18.5 ms, 414 draw calls - level
+    with the Warrens (48.1) and the Cistern (45.3) on the same iGPU, all
+    GPU-bound under the 60 FPS budget.
+  - Smoke 889 green (every door input names a puzzle, the kinds and ten
+    lore texts, the look and wind, the wings with plate and lever, the
+    orrery played through).
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

@@ -404,6 +404,24 @@ size so they read at the camera's distance.
     galleries, 3 m up; ember grates flush in the hall floors; spout frames
     where the lava runs into a wall; slag and ore at the walls' feet. Ore
     carts (timber tubs heaped with copper ore) roll on rails with sleepers.
+- **Interior kit (the Stormwatch, M13b):**
+  - Palette `stormwatch`: cold blue-grey slate (floor and wall ramps),
+    verdigris copper, old brass, violet-white lightning (#B9A8FF /
+    #F2EEFF), violet lamps (#C8C0FF). The colour lives in the lamps, the
+    copper and the caught lightning; the slate stays dark and calm.
+  - Floors are dressed slate slabs on a copper grounding grid (a riveted
+    strip every 4 m; 2 m read busy in the shots) with dithered scorch;
+    walls are coursed slate with one riveted copper band and scorch.
+  - Brass lanterns on iron arms with a caught spark (a violet crystal);
+    pointed slate arches bound in copper with a lightning rod on the crown
+    every 8 m on the halls' walls; copper cables on ceramic insulators
+    along the galleries, 3 m up; round grounding grates flush in the hall
+    floors (a faint charge under them); split slate and broken instruments
+    (brass ring segments, a cog, a cracked lens) at the walls' feet.
+  - The co-op puzzles' parts are code-built: coils (a copper post with a
+    glowing cap), plates with a violet rune, the chain's two pylons; the
+    orrery's beam has the `storm` look (violet crystals, a white-violet
+    bolt).
 - **Common kit (every zone):**
   - Portal v2 is a flush octagonal rune plate, an upright swirling gate
     oval (`portal_gate.gdshader`) and floating arch stones (all >= 2.2 m).

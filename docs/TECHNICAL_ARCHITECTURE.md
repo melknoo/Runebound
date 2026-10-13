@@ -982,6 +982,13 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
     take `--level=auto`: their leader's level, in a co-op dungeon at least
     its `min_level`.
   - The lab has `revive` on (its tests revive there).
+- **Content and look (phase 4):** `StormwatchZone` dresses with the
+  stormwatch kit (`DungeonDressing`: arch `sw_arch`, pipe `sw_cable`,
+  grate `sw_grate`, scatter `sw_rubble` / `sw_shard`; lamps `sw_lamp`),
+  roles `stormwatch_floor` / `stormwatch_wall`, ambience
+  `stormwatch_wind_loop`. `BeamPuzzle` look `storm` (the orrery: its
+  inputs are two synchronised coils). Split paths in the wings are two
+  `station` plates and the bridge's lever (`[[plate, lever]]` inputs).
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
   NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`,
   `coop_bots` (the real companion driver helps a scripted leader through

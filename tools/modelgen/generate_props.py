@@ -1688,6 +1688,156 @@ def wa_ore_chunk():
 WARRENS_PROPS = (wa_lamp, wa_timber, wa_ore_vein, wa_ember_grate, wa_lava_spout, wa_slag, wa_ore_chunk)
 
 
+# ---------------------------------------------------------------------------
+# M13b stormwatch kit (sw_*): the shattered observatory's slate, copper and
+# brass - lamps with a caught spark, relief arches with a lightning rod,
+# copper cables on insulators, grounding grates, rubble and broken
+# instruments. The cistern kit's rules: hug the walls (<= 0.3 m proud),
+# hang above head height or lie flush in the floor.
+# ---------------------------------------------------------------------------
+
+SW = SPEC["palettes"]["stormwatch"]
+CERAMIC = ["#4A4F58", "#6E737C", "#979CA6", "#C3C8D0"]
+
+
+def sw_lamp():
+    """A brass lantern on an iron arm (origin = the lantern's centre, the arm
+    runs back 1 m to a plate on the wall, +Y); a caught spark - a violet
+    crystal - glows in the cage."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    iron = pm.paint(IRON, 2, "plate")
+    brass = pm.paint(SW["brass"], 2)
+    brass_hi = pm.paint(SW["brass"], 3)
+    pm.box(None, (0.06, 0.98, 0.06), (0.0, 0.5, 0.28), paint=iron)                    # the arm
+    pm.box(None, (0.05, 0.05, 0.32), (0.0, 0.84, 0.13), rot=(0.6, 0, 0), paint=iron)   # its brace
+    pm.box(None, (0.3, 0.05, 0.42), (0.0, 1.0, 0.2), paint=iron)                       # wall plate
+    pm.box(None, (0.03, 0.03, 0.12), (0.0, 0.0, 0.27), paint=brass)                    # hook
+    pm.loft(None, [(-0.21, 0.12, 0.12, 0, 0), (-0.17, 0.15, 0.15, 0, 0)], sides=8, paint=brass_hi)   # base
+    for k in range(6):
+        a = k * math.tau / 6
+        pm.box(None, (0.025, 0.025, 0.34), (math.cos(a) * 0.13, math.sin(a) * 0.13, -0.02), paint=brass)
+    pm.loft(None, [(0.15, 0.15, 0.15, 0, 0), (0.22, 0.09, 0.09, 0, 0), (0.3, 0.02, 0.02, 0, 0)], sides=8, paint=brass_hi)
+    pm.box(None, (0.1, 0.1, 0.24), (0.0, 0.0, -0.02), rot=(0.0, 0.0, math.pi / 4), taper=0.4, mat_index=GLOW)  # the spark
+    finish(pm, "sw_lamp", SW["lamp"], 1.6, kit="stormwatch")
+
+
+def sw_arch():
+    """Relief for a hall's wall face (0.26 m deep, front -Y): slate pilasters
+    bound in copper, a pointed arch, a copper lightning rod on its crown,
+    a riveted copper band across. 3.2 m wide, 5.2 m tall."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    slate = pm.paint(SW["wall"], 3, "masonry")
+    trim = pm.paint(SW["wall"], 4)
+    copper = pm.paint(SW["copper"], 1)
+    copper_hi = pm.paint(SW["copper"], 3)
+    for sx in (-1, 1):
+        pm.box(None, (0.46, 0.24, 3.6), (sx * 1.38, -0.12, 1.8), paint=slate)
+        pm.box(None, (0.52, 0.27, 0.12), (sx * 1.38, -0.13, 1.2), paint=copper)          # bindings
+        pm.box(None, (0.52, 0.27, 0.12), (sx * 1.38, -0.13, 2.6), paint=copper)
+        pm.box(None, (0.58, 0.28, 0.2), (sx * 1.38, -0.14, 3.68), paint=trim)
+    for k in range(7):  # a pointed arch: two straight-ish legs meeting at the crown
+        t = (k + 0.5) / 7
+        for sx in (-1, 1):
+            x = sx * 1.38 * (1.0 - t)
+            z = 3.78 + math.sin(t * math.pi * 0.5) * 1.1
+            pm.box(None, (0.42, 0.24, 0.32), (x, -0.12, z), rot=(0.0, sx * (0.9 - t * 0.6), 0.0), paint=slate)
+    pm.box(None, (0.24, 0.26, 0.34), (0.0, -0.13, 4.95), paint=trim)                      # keystone
+    pm.box(None, (0.05, 0.05, 0.62), (0.0, -0.2, 5.4), paint=copper_hi)                   # the rod
+    pm.box(None, (0.14, 0.05, 0.05), (0.0, -0.2, 5.3), paint=copper)                      # its cross-tie
+    pm.box(None, (3.2, 0.06, 0.1), (0.0, -0.25, 3.3), paint=copper)                       # the band
+    for k in range(9):
+        pm.box(None, (0.05, 0.03, 0.05), (-1.5 + k * 0.375, -0.28, 3.3), paint=copper_hi)  # rivets
+    finish(pm, "sw_arch", kit="stormwatch", sizes=(64, 128, 256, 512), axis_aligned=True)
+
+
+def sw_cable():
+    """A 4 m copper cable along a wall (local X) on three ceramic insulators
+    with iron brackets back to the wall (+Y); it sags a little between them."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    copper = pm.paint(SW["copper"], 2)
+    ceramic = pm.paint(CERAMIC, 2)
+    iron = pm.paint(IRON, 2)
+    for x in (-1.8, 0.0, 1.8):
+        pm.box(None, (0.05, 0.2, 0.05), (x, 0.1, 0.0), paint=iron)                       # bracket
+        pm.loft(None, [(-0.07, 0.06, 0.06, 0, 0), (0.0, 0.08, 0.08, 0, 0), (0.07, 0.05, 0.05, 0, 0)], sides=6,
+                rot=(0.0, 0.0, 0.0), center=(x, -0.02, 0.0), paint=ceramic)
+    segs = 10
+    for k in range(segs):
+        x0 = -2.0 + 4.0 * k / segs
+        x1 = -2.0 + 4.0 * (k + 1) / segs
+        sag = lambda x: -0.06 * math.sin(((x + 1.8) % 1.8) / 1.8 * math.pi)
+        z0, z1 = sag(x0), sag(x1)
+        pm.box(None, (x1 - x0 + 0.02, 0.035, 0.035), ((x0 + x1) * 0.5, -0.02, (z0 + z1) * 0.5 + 0.07),
+               rot=(0.0, math.atan2(z1 - z0, x1 - x0), 0.0), paint=copper)
+    finish(pm, "sw_cable", kit="stormwatch", sizes=(64, 128, 256, 512), axis_aligned=True)
+
+
+def sw_grate():
+    """A grounding grate set in the floor (flush, 4 cm): a copper ring, eight
+    spokes to a hub, a faint charge under it."""
+    rig.reset_scene()
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    copper = pm.paint(SW["copper"], 2)
+    copper_hi = pm.paint(SW["copper"], 3)
+    pm.loft(None, [(0.0, 0.62, 0.62, 0, 0), (0.008, 0.62, 0.62, 0, 0)], sides=16, mat_index=GLOW)
+    segs = 16
+    for k in range(segs):
+        a = k * math.tau / segs
+        pm.box(None, (0.25, 0.08, 0.04), (math.cos(a) * 0.66, math.sin(a) * 0.66, 0.02), rot=(0, 0, a + math.pi / 2),
+               paint=copper)
+    for k in range(8):
+        a = k * math.tau / 8
+        pm.box(None, (0.6, 0.05, 0.035), (math.cos(a) * 0.32, math.sin(a) * 0.32, 0.018), rot=(0, 0, a), paint=copper)
+    pm.box(None, (0.16, 0.16, 0.045), (0.0, 0.0, 0.022), paint=copper_hi)
+    finish(pm, "sw_grate", SW["lightning"], 0.9, kit="stormwatch")
+
+
+def sw_rubble():
+    """Scatter item: split slate and a broken copper strip (<= 0.22 m)."""
+    rig.reset_scene()
+    rnd = random.Random(331)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    slate = pm.paint(SW["wall"], 2)
+    slate_hi = pm.paint(SW["wall"], 4)
+    copper = pm.paint(SW["copper"], 2)
+    for k in range(4):
+        a = k * math.tau / 4 + rnd.uniform(-0.5, 0.5)
+        r = 0.0 if k == 0 else rnd.uniform(0.12, 0.24)
+        s = rnd.uniform(0.06, 0.1) * (1.4 if k == 0 else 1.0)
+        pm.box(None, (s * 2.4, s * 1.6, s * 0.7), (math.cos(a) * r, math.sin(a) * r, s * 0.35),
+               rot=(rnd.uniform(-0.25, 0.25), rnd.uniform(-0.25, 0.25), rnd.uniform(0, math.pi)),
+               paint=(slate_hi if k == 1 else slate))
+    pm.box(None, (0.3, 0.04, 0.02), (0.05, -0.12, 0.03), rot=(0, 0.2, 0.6), paint=copper)
+    finish(pm, "sw_rubble", kit="stormwatch")
+
+
+def sw_shard():
+    """Scatter item: broken instruments - a bent brass ring segment, a cog,
+    a cracked lens that still holds a little light (<= 0.2 m)."""
+    rig.reset_scene()
+    rnd = random.Random(337)
+    pm = rig.PartMesh(px_per_m=ENV_DENSITY)
+    brass = pm.paint(SW["brass"], 2)
+    brass_hi = pm.paint(SW["brass"], 3)
+    for k in range(5):  # the ring segment
+        a = k * 0.32
+        pm.box(None, (0.09, 0.03, 0.025), (math.cos(a) * 0.18 - 0.1, math.sin(a) * 0.18 - 0.05, 0.012),
+               rot=(0, 0, a + math.pi / 2), paint=brass)
+    for k in range(8):  # the cog
+        a = k * math.tau / 8
+        pm.box(None, (0.04, 0.03, 0.02), (0.12 + math.cos(a) * 0.06, 0.08 + math.sin(a) * 0.06, 0.01),
+               rot=(0, 0, a), paint=brass_hi)
+    pm.loft(None, [(0.0, 0.045, 0.045, 0, 0), (0.02, 0.045, 0.045, 0, 0)], sides=8, center=(0.12, 0.08, 0.0), paint=brass)
+    pm.box(None, (0.07, 0.07, 0.015), (-0.02, 0.12, 0.008), rot=(0, 0, rnd.uniform(0, 1)), mat_index=GLOW)  # the lens
+    finish(pm, "sw_shard", SW["lightning"], 0.7, kit="stormwatch")
+
+
+STORMWATCH_PROPS = (sw_lamp, sw_arch, sw_cable, sw_grate, sw_rubble, sw_shard)
+
+
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     for fn in (bonfire, rune_monolith, banner_pole, charred_tree, bone_pile, ash_tuft, stone_cluster, log_seat,
@@ -1696,7 +1846,7 @@ if __name__ == "__main__":
                sp_crystal_pillar, sp_wall_arch, sp_beacon, sp_shard, sp_crystal_cluster, sp_rubble,
                portal_arch, portal_plate, treasure_chest, loot_blade, loot_armor, loot_relic,
                loot_helm, loot_gloves, loot_boots, loot_ring,
-               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS + CISTERN_PROPS + WARRENS_PROPS:
+               legendary_cindermaw, legendary_conductors_oath, legendary_glacier_heart, waypoint_shrine) + M12_PROPS + CISTERN_PROPS + WARRENS_PROPS + STORMWATCH_PROPS:
         if not only or fn.__name__ in only:
             fn()
     print("props done.")

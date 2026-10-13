@@ -27,8 +27,8 @@ as a ring:
 Rooms stand 2 m apart (the wall); a connector cuts a doorway through that
 gap. Every id carries the prefix "sw_" (SaveGame keys are flat; a fresh run
 clears every key with it). Rules: see dungeon_bake.py.
-Phase 0 is the greybox: the rooms, the doors, placeholder camps and arena
-wardens; the co-op puzzles, the storm family and the bosses follow.
+Phase 4 places every co-op puzzle and the lore; the camps and the arenas
+still field placeholders until the storm family and its bosses (phases 5-6).
 """
 
 LAYOUT = {
@@ -73,17 +73,22 @@ LAYOUT = {
     "connectors": [
         {"id": "sw_d_fore_c1", "a": "sw_forecourt", "b": "sw_c1", "at": [0, 39], "width": 5.0},
         {"id": "sw_d_c1_coils", "a": "sw_c1", "b": "sw_coils", "at": [0, 25], "width": 5.0},
-        {"id": "sw_d_coils_c2", "a": "sw_coils", "b": "sw_c2", "at": [0, -11], "width": 5.0},
+        {"id": "sw_d_coils_c2", "a": "sw_coils", "b": "sw_c2", "at": [0, -11], "width": 5.0,
+         "kind": "gate", "inputs": ["sw_coils_sync"]},
         {"id": "sw_d_c2_crossing", "a": "sw_c2", "b": "sw_crossing", "at": [0, -27], "width": 5.0},
         {"id": "sw_d_crossing_archive", "a": "sw_crossing", "b": "sw_archive", "at": [-21, -36], "width": 5.0},
         {"id": "sw_d_crossing_turbines", "a": "sw_crossing", "b": "sw_turbines", "at": [21, -36], "width": 5.0},
-        {"id": "sw_d_archive_bridge", "a": "sw_archive", "b": "sw_bridge", "at": [-34, -65], "width": 5.0},
-        {"id": "sw_d_turbines_bridge", "a": "sw_turbines", "b": "sw_bridge", "at": [34, -65], "width": 5.0},
+        # split paths: each wing's way on waits on the other wing's plate - or the bridge's lever
+        {"id": "sw_d_archive_bridge", "a": "sw_archive", "b": "sw_bridge", "at": [-34, -65], "width": 5.0,
+         "kind": "gate", "inputs": [["sw_plate_turbines", "sw_lever_bridge"]]},
+        {"id": "sw_d_turbines_bridge", "a": "sw_turbines", "b": "sw_bridge", "at": [34, -65], "width": 5.0,
+         "kind": "gate", "inputs": [["sw_plate_archive", "sw_lever_bridge"]]},
         {"id": "sw_d_bridge_sworn", "a": "sw_bridge", "b": "sw_sworn", "at": [0, -85], "width": 6.0},
         {"id": "sw_d_sworn_c3", "a": "sw_sworn", "b": "sw_c3", "at": [21, -106], "width": 5.0,
          "kind": "gate", "inputs": ["flag:sw_sworn_down"]},
         {"id": "sw_d_c3_plates", "a": "sw_c3", "b": "sw_plates", "at": [41, -106], "width": 5.0},
-        {"id": "sw_d_plates_c4", "a": "sw_plates", "b": "sw_c4", "at": [59, -87], "width": 5.0},
+        {"id": "sw_d_plates_c4", "a": "sw_plates", "b": "sw_c4", "at": [59, -87], "width": 5.0,
+         "kind": "gate", "inputs": ["sw_plates_hall"]},
         {"id": "sw_d_c4_gale", "a": "sw_c4", "b": "sw_gale", "at": [59, -61], "width": 5.0},
         {"id": "sw_d_gale_c5", "a": "sw_gale", "b": "sw_c5", "at": [68, -21], "width": 5.0,
          "kind": "gate", "inputs": ["flag:sw_gale_down"]},
@@ -92,47 +97,87 @@ LAYOUT = {
         {"id": "sw_d_gallery_coils", "a": "sw_gallery", "b": "sw_coils", "at": [21, 7], "width": 4.0,
          "kind": "shortcut", "inputs": ["sw_lever_short"]},
         {"id": "sw_d_landing_conductors", "a": "sw_landing", "b": "sw_conductors", "at": [83, 9], "width": 5.0},
-        {"id": "sw_d_conductors_heart", "a": "sw_conductors", "b": "sw_heart", "at": [98, 25], "width": 6.0},
+        {"id": "sw_d_conductors_heart", "a": "sw_conductors", "b": "sw_heart", "at": [98, 25], "width": 6.0,
+         "kind": "gate", "inputs": ["sw_chain"]},
         {"id": "sw_d_bridge_orrery", "a": "sw_bridge", "b": "sw_orrery", "at": [-47, -75], "width": 4.0,
          "kind": "secret"},
-        {"id": "sw_d_orrery_tome", "a": "sw_orrery", "b": "sw_tome_room", "at": [-64, -89], "width": 4.0},
+        {"id": "sw_d_orrery_tome", "a": "sw_orrery", "b": "sw_tome_room", "at": [-64, -89], "width": 4.0,
+         "kind": "gate", "inputs": ["sw_orrery_beam"]},
     ],
     "pois": [
-        # --- the forecourt: the way out ---
+        # --- the forecourt: the way out, the gatekeeper's notice ---
         {"id": "sw_exit", "type": "portal", "pos": [0, 59], "yaw": 3.14159, "dest": "highlands",
          "arrival": "dungeon_se", "label": "ASHEN HIGHLANDS"},
-        # --- the coil hall ---
+        {"id": "sw_lore_forecourt", "type": "lore", "kind": "note", "text": "lore.stormwatch.gate_notice",
+         "pos": [8, 52], "yaw": -1.5708},
+        # --- the coil hall: three coils far apart, struck within two seconds ---
         {"id": "sw_camp_coils", "type": "camp", "pos": [0, 4], "radius": 10.0,
          "composition": ["rusher", "caster", "rusher"], "spots": [[-4, 2], [4, 2], [0, -2]]},
-        # --- the wings ---
-        {"id": "sw_camp_archive", "type": "camp", "pos": [-34, -45], "radius": 8.0,
-         "composition": ["caster", "rusher"], "spots": [[-37, -47], [-31, -43]]},
+        {"id": "sw_coils_sync", "type": "sync", "pos": [0, 12], "look": "coil", "window": 2.0,
+         "levers": [[-16, 20, 3.14159], [16, 20, 3.14159], [8, -6, 0.0]]},
+        {"id": "sw_lore_coils", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.coil_plaque",
+         "pos": [-17, 8], "yaw": 1.5708},
+        # --- the crossing and the two wings (split paths) ---
+        {"id": "sw_lore_crossing", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.two_keepers",
+         "pos": [0, -41], "yaw": 0.0},
+        {"id": "sw_plate_archive", "type": "plate", "pos": [-27, -31], "station": True},
+        {"id": "sw_camp_archive", "type": "camp", "pos": [-34, -47], "radius": 8.0,
+         "composition": ["caster", "rusher"], "spots": [[-37, -49], [-31, -45]]},
         {"id": "sw_chest_archive", "type": "chest", "pos": [-42, -30], "yaw": 0.0, "rarity_bias": 1},
-        {"id": "sw_camp_turbines", "type": "camp", "pos": [34, -45], "radius": 8.0,
-         "composition": ["rusher", "caster"], "spots": [[31, -47], [37, -43]]},
-        # --- the bridge (a rune) and the hall of the Sworn (mid-boss 1) ---
+        {"id": "sw_lore_archive", "type": "lore", "kind": "note", "text": "lore.stormwatch.star_charts",
+         "pos": [-43, -56], "yaw": 1.5708},
+        {"id": "sw_plate_turbines", "type": "plate", "pos": [27, -31], "station": True},
+        {"id": "sw_camp_turbines", "type": "camp", "pos": [34, -47], "radius": 8.0,
+         "composition": ["rusher", "caster"], "spots": [[31, -49], [37, -45]]},
+        {"id": "sw_lore_turbines", "type": "lore", "kind": "note", "text": "lore.stormwatch.turbine_log",
+         "pos": [43, -56], "yaw": -1.5708},
+        # --- the bridge (a rune, the lever that opens both wings from this side) ---
         {"id": "sw_rune_bridge", "type": "rune", "pos": [0, -70], "yaw": 0.0},
+        {"id": "sw_lever_bridge", "type": "lever", "pos": [8, -81], "yaw": 0.0},
         {"id": "sw_camp_bridge", "type": "camp", "pos": [30, -75], "radius": 7.0,
          "composition": ["warden", "caster"], "spots": [[27, -77], [33, -73]]},
+        {"id": "sw_lore_bridge", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.bridge_words",
+         "pos": [-38, -81], "yaw": 0.0},
+        # --- the hall of the Sworn (mid-boss 1) ---
         {"id": "sw_arena_sworn", "type": "arena", "pos": [0, -105], "boss": "dungeon_boss",
          "flag": "sw_sworn_down", "trigger": 9.0, "reward": "mid"},
-        # --- the plate hall (a rune) and the gale hall (mid-boss 2) ---
+        # --- the plate hall: three plates held at once - the way on stands 20 s ---
+        {"id": "sw_plates_hall", "type": "plates", "pos": [58, -100], "plates": [[46, -118], [70, -118], [58, -94]],
+         "hold": 1.0, "open_for": 20.0},
         {"id": "sw_camp_plates", "type": "camp", "pos": [58, -110], "radius": 8.0,
-         "composition": ["warden", "rusher", "caster"], "spots": [[54, -112], [62, -112], [58, -106]]},
-        {"id": "sw_rune_plates", "type": "rune", "pos": [58, -92], "yaw": 0.0},
+         "composition": ["warden", "rusher", "caster"], "spots": [[54, -112], [62, -112], [58, -107]]},
+        {"id": "sw_rune_plates", "type": "rune", "pos": [67, -92], "yaw": 0.0},
+        {"id": "sw_lore_plates", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.plate_rule",
+         "pos": [44, -100], "yaw": 1.5708},
+        # --- the gale hall (mid-boss 2) ---
         {"id": "sw_arena_gale", "type": "arena", "pos": [69, -41], "boss": "dungeon_boss",
          "flag": "sw_gale_down", "trigger": 9.0, "reward": "mid"},
-        # --- the landing (a rune, the shortcut's lever) ---
+        # --- the landing (a rune, the shortcut's lever, the last stormcaller's entry) ---
         {"id": "sw_rune_landing", "type": "rune", "pos": [64, 6], "yaw": 0.0},
         {"id": "sw_lever_short", "type": "lever", "pos": [57, 14], "yaw": 1.5708},
-        # --- the conductor hall and the heart of the storm (the end boss) ---
+        {"id": "sw_lore_landing", "type": "lore", "kind": "note", "text": "lore.stormwatch.last_entry",
+         "pos": [78, 16], "yaw": -1.5708},
+        # --- the conductor hall: three heroes carry the lightning coil to receiver ---
         {"id": "sw_camp_conductors", "type": "camp", "pos": [98, 10], "radius": 8.0,
          "composition": ["warden", "caster", "caster"], "spots": [[94, 8], [102, 8], [98, 14]]},
+        {"id": "sw_chain", "type": "chain", "pos": [98, 10], "source": [87, 0], "receiver": [109, 20],
+         "link": 8.0, "heroes": 3, "hold": 2.0, "damage": 4.0},
+        {"id": "sw_lore_conductors", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.conductors",
+         "pos": [86, 18], "yaw": 1.5708},
+        # --- the heart of the storm (the end boss) and the way out ---
         {"id": "sw_arena_caller", "type": "arena", "pos": [98, 46], "boss": "dungeon_boss",
          "flag": "sw_caller_down", "trigger": 10.0, "reward": "end"},
         {"id": "sw_exit_heart", "type": "portal", "pos": [98, 67], "yaw": 3.14159, "dest": "highlands",
          "arrival": "dungeon_se", "label": "ASHEN HIGHLANDS", "unlock_flag": "sw_caller_down"},
-        # --- the orrery and the tome room (secret) ---
+        # --- the orrery (secret): two coils struck together wake the dome's lightning;
+        # three crystals turned bend it to the receiver - the tome room opens ---
+        {"id": "sw_orrery_coils", "type": "sync", "pos": [-62, -74], "look": "coil", "window": 2.0,
+         "levers": [[-75, -85, 0.0], [-50, -62, 3.14159]]},
+        {"id": "sw_orrery_beam", "type": "beam", "look": "storm", "pos": [-74, -64], "dir": 2,
+         "mirrors": [[-56, -64, 0], [-56, -82, 0], [-65, -73, 0]], "receiver": [-70, -82],
+         "inputs": ["sw_orrery_coils"]},
+        {"id": "sw_lore_orrery", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.dome_words",
+         "pos": [-76, -74], "yaw": 1.5708},
         {"id": "sw_chest_tome", "type": "chest", "pos": [-64, -96], "yaw": 0.0, "rarity_bias": 2},
     ],
 }

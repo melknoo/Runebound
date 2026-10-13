@@ -132,6 +132,12 @@ static func material(role: StringName) -> Material:
 		&"warrens_wall":
 			mat = terrain_material("wa_wall_top", "wa_floor", "wa_wall", {
 				"layer_b_amount": 0.12, "ember_density": 0.0, "slope_top": 0.6})
+		&"stormwatch_floor":  # M13b: slate slabs on a copper grounding grid, old scorch
+			mat = terrain_material("sw_floor", "sw_wall_top", "sw_wall", {
+				"layer_b_amount": 0.1, "ember_density": 0.0})
+		&"stormwatch_wall":
+			mat = terrain_material("sw_wall_top", "sw_floor", "sw_wall", {
+				"layer_b_amount": 0.12, "ember_density": 0.0, "slope_top": 0.6})
 		_:
 			push_warning("ArtKit: unknown material role '%s'" % role)
 			mat = StandardMaterial3D.new()

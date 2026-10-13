@@ -773,6 +773,33 @@ def steam_hiss():
     save(pad(hiss * 0.8, crack), "steam_hiss_01")
 
 
+def stormwatch_wind_loop():
+    """M13b the Stormwatch: wind keening through a broken dome in slow gusts,
+    the hum of old charged copper, far thunder twice, a static tick now and
+    then (loops)."""
+    dur = 12.0
+    x = t(dur)
+    gust = 0.55 + 0.45 * np.sin(2 * np.pi * x / dur * 2 + 0.7) * np.sin(2 * np.pi * x / dur * 3 + 1.9)
+    wind = highpass(lowpass(noise(dur), 0.08), 0.02) * gust
+    whistle = np.sin(2 * np.pi * (620 + 80 * np.sin(2 * np.pi * x / dur * 4)) * x) * 0.05 * gust ** 2
+    hum = (np.sin(2 * np.pi * 50 * x) + np.sin(2 * np.pi * 100 * x) * 0.4) * 0.045
+    thunder = np.zeros(len(x))
+    for k in range(2):
+        at = rng.uniform(1.0, dur - 3.0)
+        d = 2.4
+        roll = lowpass(noise(d), 0.01) * env_exp(d, 0.9, 0.08) * rng.uniform(0.5, 0.8)
+        start = int(at * SR)
+        thunder[start:start + len(roll)] += roll
+    ticks = np.zeros(len(x))
+    for k in range(14):
+        at = rng.uniform(0.1, dur - 0.1)
+        d = rng.uniform(0.003, 0.008)
+        tick = highpass(noise(d), 0.6) * env_exp(d, d * 0.3, 0.0003) * rng.uniform(0.08, 0.2)
+        start = int(at * SR)
+        ticks[start:start + len(tick)] += tick
+    save(_loopable(pad(wind * 0.6, whistle, hum, thunder, ticks), 0.8), "stormwatch_wind_loop_01")
+
+
 def brood_shriek():
     """M13 the Ember Broodmother: a grinding, chittering shriek."""
     dur = 1.0
@@ -827,4 +854,5 @@ if __name__ == "__main__":
     for i in range(1, 3):
         chitter(i)
     imp_cackle(); steam_hiss(); brood_shriek()  # M13 phase 7
+    stormwatch_wind_loop()  # M13b phase 4
     print("done.")

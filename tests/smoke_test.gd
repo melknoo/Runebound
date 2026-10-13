@@ -5310,6 +5310,62 @@ func _run() -> void:
 			sw_lp.queue_free()
 		sw.run_level = 0
 		await _wait_frames(4)
+		# --- M13b phase 4: every puzzle in its place and wired, the look, the lore ---
+		var sw_kinds: Dictionary = {}
+		for swk: String in sw.puzzles:
+			var sw_kind: String = (sw.puzzles[swk] as Node).get_script().get_global_name()
+			sw_kinds[sw_kind] = int(sw_kinds.get(sw_kind, 0)) + 1
+		var sw_wired := true
+		for swd in sw.layout.doors:
+			for sw_in in PuzzleInputs.ids(PuzzleInputs.parse(swd.get("inputs", []))):
+				if not sw.puzzles.has(sw_in):
+					sw_wired = false
+		var sw_lore := 0
+		for swp4 in sw.layout.pois.pois:
+			if String(swp4.get("type", "")) == "lore":
+				sw_lore += 1
+				if Texts.t(String(swp4["text"]) + ".body") == String(swp4["text"]) + ".body":
+					sw_wired = false
+		_check(sw_wired and int(sw_kinds.get("SyncLevers", 0)) == 2 and int(sw_kinds.get("CoopPlates", 0)) == 1
+			and int(sw_kinds.get("ChainPuzzle", 0)) == 1 and int(sw_kinds.get("BeamPuzzle", 0)) == 1
+			and int(sw_kinds.get("PressurePlate", 0)) == 2 and int(sw_kinds.get("PuzzleLever", 0)) == 2
+			and int(sw_kinds.get("SecretWall", 0)) == 1 and int(sw_kinds.get("DungeonRune", 0)) == 3 and sw_lore == 10,
+			"M13b: coils, plates, the chain, the orrery's beam, split plates, levers, the cracked wall, runes, ten lore texts - all wired (%s)" % sw_kinds)
+		var sw_wind := false
+		for swn in sw.world.get_children():
+			if swn is AudioStreamPlayer and (swn as AudioStreamPlayer).stream != null \
+					and (swn as AudioStreamPlayer).stream.resource_path.contains("stormwatch_wind_loop"):
+				sw_wind = true
+		_check(sw_wind and ArtKit.material(&"stormwatch_floor") is ShaderMaterial and ArtKit.material(&"stormwatch_wall") is ShaderMaterial
+			and sw.dressing().get_child_count() > 40 and sw.dressing().find_children("*", "CollisionObject3D", true, false).is_empty(),
+			"M13b: its own slate and copper, the wind, the kit dresses it without collision (%d pieces)" % sw.dressing().get_child_count())
+		# split paths: the archive's plate held opens the turbines' way; the bridge's lever opens both
+		var sw_pa := sw.puzzles["sw_plate_archive"] as PressurePlate
+		var sw_ga := sw.gates["sw_d_archive_bridge"] as DungeonGate
+		var sw_gt := sw.gates["sw_d_turbines_bridge"] as DungeonGate
+		var sw_shut_both := not sw_ga.is_open and not sw_gt.is_open
+		swh.global_position = sw_pa.global_position + Vector3(0, 0.2, 0)
+		swh.velocity = Vector3.ZERO
+		await _wait_frames(12)
+		var sw_one_way := sw_gt.is_open and not sw_ga.is_open
+		(sw.puzzles["sw_lever_bridge"] as PuzzleLever).request("pull", 0, swh)
+		swh.global_position = Vector3(0, 0.2, -36)
+		await _wait_frames(12)
+		_check(sw_shut_both and sw_one_way and sw_ga.is_open and sw_gt.is_open,
+			"M13b: the wings - the archive's plate opens the turbines' way while held, the bridge's lever opens both")
+		# the orrery: nothing flows until both coils are struck together; three crystals bend it home
+		var sw_beam := sw.puzzles["sw_orrery_beam"] as BeamPuzzle
+		var sw_oc := sw.puzzles["sw_orrery_coils"] as SyncLevers
+		var sw_dry := not sw_beam.flowing()
+		sw_oc.request("pull", 0, swh)
+		sw_oc.request("pull", 1, swh)
+		for sw_turn in 4:
+			sw_beam.request("turn", 0, swh)
+		for sw_turn2 in 6:
+			sw_beam.request("turn", 1, swh)
+		await _wait_frames(10)
+		_check(sw_dry and sw_oc.is_solved() and sw_beam.flowing() and sw_beam.is_solved() and (sw.gates["sw_d_orrery_tome"] as DungeonGate).is_open,
+			"M13b: the orrery - two coils wake its lightning, two crystals turned send it home, the tome room opens")
 		# --- M13b phase 3: bots' ways through the rooms ---
 		var wp_fore := sw.layout.next_waypoint(Vector3(0, 0, 55), Vector3(0, 0, 5), sw.door_passable)
 		var wp_door := sw.layout.next_waypoint(Vector3(0, 0, 39), Vector3(0, 0, 5), sw.door_passable)

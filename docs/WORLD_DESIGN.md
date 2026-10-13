@@ -325,3 +325,12 @@ below 60 % a thunderclap that only a lightning chain over grounding coils
 drains). Secret: the orrery with the tome. Enemies: the Stormsworn Acolyte
 (its bolt jumps to a second hero) and the Coil Sentinel (charges up, then
 discharges a ring).
+
+Built in M13b phase 4 (`tools/worldgen/stormwatch_layout.py`): the coil
+hall's three coils (2 s), the archive and the turbine hall (each wing's
+plate holds the other's way to the bridge; the bridge's lever opens both),
+the bridge's rune and cracked wall, the plate hall's three plates (the way
+on stands 20 s), the landing's rune and shortcut, the conductor hall's
+chain (three conductors, 8 m a link), the orrery (two coils wake the
+lightning, three crystals bend it to the receiver, the tome room opens).
+Ten lore texts; the meta wink is the archive's blank star charts.

@@ -5,12 +5,19 @@ extends DungeonZone
 ## slate, verdigris copper, violet-white lightning against the dark (layout:
 ## tools/worldgen/stormwatch_layout.py, palette: art_spec "stormwatch"). The
 ## co-op dungeon: 3-5 heroes, every run fresh, a fallen hero can be revived
-## (DungeonRegistry "stormwatch"). Phase 0 is the greybox (the Spire's
-## materials, code-built lamps).
+## (DungeonRegistry "stormwatch").
 
 
 func _dungeon_id() -> String:
 	return "stormwatch"
+
+
+func _floor_role() -> StringName:
+	return &"stormwatch_floor"
+
+
+func _wall_role() -> StringName:
+	return &"stormwatch_wall"
 
 
 ## Interior: blue-black slate, a cold faint top light, a violet haze.
@@ -32,5 +39,24 @@ func _light_color() -> Color:
 	return ArtKit.color("palettes.stormwatch.lamp", Color(0.78, 0.75, 1.0))
 
 
+func _lamp_prop() -> String:
+	return "sw_lamp"
+
+
+## The stormwatch kit: slate arches with a lightning rod on the halls'
+## walls, copper cables on insulators along the galleries, grounding grates
+## in the floors, split slate and broken instruments at the walls' feet
+## (visual only; none on the server).
 func _build_dungeon() -> void:
-	_add_ambience("spire_drone_loop", Vector3.INF, -13.0)
+	if Net.has_view() and look != null and look.art_pass:
+		DungeonDressing.dress(self, {
+			"arch": "sw_arch", "pipe": "sw_cable", "grate": "sw_grate",
+			"scatter": [
+				{"prop": "sw_rubble", "per_m": 0.2, "band": Vector2(0.2, 0.9), "scale": Vector2(0.8, 1.4),
+					"cluster": Vector2i(1, 3), "spread": 0.35},
+				{"prop": "sw_shard", "per_m": 0.08, "band": Vector2(0.1, 0.6), "scale": Vector2(0.9, 1.3),
+					"cluster": Vector2i(1, 2), "spread": 0.3},
+			],
+		}, 7417)
+	_add_ambience("stormwatch_wind_loop" if ResourceLoader.exists("res://assets/sfx/stormwatch_wind_loop_01.wav")
+		else "spire_drone_loop", Vector3.INF, -12.0)

@@ -1,0 +1,83 @@
+{
+	"_note": "M13b lore: the Stormwatch's notes and inscriptions (DE/EN, written, never machine-translated). Loaded by scripts/systems/texts.gd.",
+	"lore.stormwatch.gate_notice.title": {
+		"en": "Notice at the gate",
+		"de": "Aushang am Tor"
+	},
+	"lore.stormwatch.gate_notice.body": {
+		"en": "BY ORDER OF THE CIRCLE\nNo one climbs to the Stormwatch alone. The dome answers a single voice with a single bolt.\n\nGo three, or go home.",
+		"de": "AUF BESCHLUSS DES ZIRKELS\nNiemand steigt allein zur Sturmwarte hinauf. Die Kuppel antwortet einer einzelnen Stimme mit einem einzelnen Blitz.\n\nGeht zu dritt, oder geht nach Hause."
+	},
+	"lore.stormwatch.coil_plaque.title": {
+		"en": "Plaque in the coil hall",
+		"de": "Tafel in der Spulenhalle"
+	},
+	"lore.stormwatch.coil_plaque.body": {
+		"en": "THE THREE WHO WAKE THE HALL\nStrike the coils together, and the door will hear you. Strike them one by one, and you will only hear yourselves.",
+		"de": "DIE DREI, DIE DIE HALLE WECKEN\nSchlagt die Spulen zugleich an, und die Tür wird euch hören. Schlagt sie nacheinander an, und ihr hört nur euch selbst."
+	},
+	"lore.stormwatch.two_keepers.title": {
+		"en": "Words over the crossing",
+		"de": "Worte über der Kreuzung"
+	},
+	"lore.stormwatch.two_keepers.body": {
+		"en": "Two wings, two keepers. Each holds the other's door.\nWhoever reaches the bridge first lets the other one out.",
+		"de": "Zwei Flügel, zwei Hüter. Jeder hält die Tür des anderen.\nWer zuerst über die Brücke kommt, lässt den anderen heraus."
+	},
+	"lore.stormwatch.star_charts.title": {
+		"en": "Star charts, blank",
+		"de": "Sternkarten, leer"
+	},
+	"lore.stormwatch.star_charts.body": {
+		"en": "Shelf after shelf of star charts - and not one star on them. Only the lines where the stars should go, ruled with great care.\n\nSomeone forgot to fill them in. Most likely the same someone who wrote this note, and me. We are working on it.",
+		"de": "Regal um Regal voller Sternkarten - und kein einziger Stern darauf. Nur die Linien, auf denen die Sterne stehen sollten, sorgfältig gezogen.\n\nJemand hat vergessen, sie einzutragen. Vermutlich derselbe Jemand, der diese Notiz geschrieben hat, und mich. Wir arbeiten daran."
+	},
+	"lore.stormwatch.turbine_log.title": {
+		"en": "The turbine keeper's log",
+		"de": "Logbuch des Turbinenwärters"
+	},
+	"lore.stormwatch.turbine_log.body": {
+		"en": "Day 40. The blades turn without wind again. Master Vey says the dome is drinking the sky.\nDay 41. The copper sings at night. Nobody sleeps in the east wing any more.\nDay 43. Vey went up to the heart. The blades have stopped. I think that is worse.",
+		"de": "Tag 40. Die Flügel drehen sich wieder ohne Wind. Meister Vey sagt, die Kuppel trinke den Himmel.\nTag 41. Das Kupfer singt nachts. Im Ostflügel schläft niemand mehr.\nTag 43. Vey ist hinauf ins Herz gegangen. Die Flügel stehen still. Ich glaube, das ist schlimmer."
+	},
+	"lore.stormwatch.bridge_words.title": {
+		"en": "Inscription at the bridge's end",
+		"de": "Inschrift am Brückenende"
+	},
+	"lore.stormwatch.bridge_words.body": {
+		"en": "Here the orrery turned the heavens for us.\nWe walled it up the night it turned against us.\nOnly a crack is left. Do not strike it.",
+		"de": "Hier drehte das Planetarium den Himmel für uns.\nWir haben es zugemauert in der Nacht, als es sich gegen uns drehte.\nNur ein Riss ist geblieben. Schlagt nicht dagegen."
+	},
+	"lore.stormwatch.plate_rule.title": {
+		"en": "The plate hall's rule",
+		"de": "Die Regel der Plattenhalle"
+	},
+	"lore.stormwatch.plate_rule.body": {
+		"en": "The way stands while three stand.\nIt does not wait for stragglers.",
+		"de": "Der Weg steht, solange drei stehen.\nAuf Nachzügler wartet er nicht."
+	},
+	"lore.stormwatch.last_entry.title": {
+		"en": "The last stormcaller's entry",
+		"de": "Der letzte Eintrag des Sturmrufers"
+	},
+	"lore.stormwatch.last_entry.body": {
+		"en": "I bound the storm into the runes as the Circle taught me. I never asked whether the storm agreed.\n\nIt did not. Now it wears me, like a coat. If you come up here, do not call me by my name. I no longer answer to it.",
+		"de": "Ich habe den Sturm in die Runen gebunden, wie der Zirkel es mich lehrte. Ich habe nie gefragt, ob der Sturm einverstanden ist.\n\nEr war es nicht. Jetzt trägt er mich, wie einen Mantel. Wenn ihr heraufkommt, ruft mich nicht bei meinem Namen. Ich höre nicht mehr darauf."
+	},
+	"lore.stormwatch.conductors.title": {
+		"en": "Warning at the conductor hall",
+		"de": "Warnung an der Leiterhalle"
+	},
+	"lore.stormwatch.conductors.body": {
+		"en": "From the coil to the crown, no gap wider than eight paces.\nThe lightning bites those who carry it. Carry it anyway.",
+		"de": "Von der Spule bis zur Krone keine Lücke weiter als acht Schritte.\nDer Blitz beißt, wer ihn trägt. Tragt ihn trotzdem."
+	},
+	"lore.stormwatch.dome_words.title": {
+		"en": "Words under the dome",
+		"de": "Worte unter der Kuppel"
+	},
+	"lore.stormwatch.dome_words.body": {
+		"en": "Two hands wake the sky. Three mirrors teach it the way home.\nWhat it reaches, it keeps: the book of the last storm.",
+		"de": "Zwei Hände wecken den Himmel. Drei Spiegel lehren ihn den Heimweg.\nWas er erreicht, behält er: das Buch des letzten Sturms."
+	}
+}

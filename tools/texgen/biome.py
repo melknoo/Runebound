@@ -570,6 +570,71 @@ def generate_warrens() -> None:
     ash_surface("wa_wall_top", pal["wall"], 2, pebbles=6, cracks=True)
 
 
+def copper_inlay(rgba: np.ndarray, copper: list[str], step: int, rng: np.random.Generator) -> None:
+    """M13b stormwatch: verdigris copper strips inlaid along every `step`-th
+    joint line (both ways), two pixels wide, with a lit rivet every 8 px and
+    a few spots where the green bloom eats the metal."""
+    size = rgba.shape[0]
+    strip = np.zeros((size, size), dtype=bool)
+    for k in range(0, size, step):
+        strip[k, :] = True
+        strip[(k + 1) % size, :] = True
+        strip[:, k] = True
+        strip[:, (k + 1) % size] = True
+    rgba[strip] = paint(np.full(int(strip.sum()), 1), copper)
+    for k in range(0, size, step):
+        for t in range(4, size, 8):
+            rgba[k, t] = paint(np.array([3]), copper)[0]
+            rgba[t, k] = paint(np.array([3]), copper)[0]
+    bloom = fbm(size, rng, ((8, 0.6), (16, 0.4))) > 0.7
+    rgba[strip & bloom] = paint(np.full(int((strip & bloom).sum()), 2), copper)
+
+
+def scorch(rgba: np.ndarray, ramp: list[str], rng: np.random.Generator, share: float) -> None:
+    """M13b stormwatch: old lightning scorch - dithered patches a step darker."""
+    size = rgba.shape[0]
+    patch = fbm(size, rng, ((4, 0.6), (8, 0.4))) + dither((size, size), 0.2)
+    dark = paint(np.array([0]), ramp)[0]
+    burnt = patch > 1.0 - share
+    rgba[burnt] = (rgba[burnt] * 0.55 + dark * 0.45)
+
+
+def stormwatch_floor(name: str, ramp: list[str], copper: list[str]) -> None:
+    """M13b stormwatch floor: dressed slate slabs (floor_tiles) with copper
+    strips along the 4 m tile's joints - the observatory's grounding grid."""
+    floor_tiles(name, ramp)
+    path = os.path.join(OUT_DIR, name + ".png")
+    rgba = np.array(Image.open(path).convert("RGBA")).astype(np.float32)
+    scorch(rgba, ramp, rng_for(name + ":scorch"), 0.12)
+    copper_inlay(rgba, copper, 128, rng_for(name + ":copper"))  # every 4 m (2 m read busy in the shots)
+    save(name, rgba)
+
+
+def stormwatch_wall(name: str, ramp: list[str], copper: list[str]) -> None:
+    """M13b stormwatch wall: coursed slate (masonry) with one riveted copper
+    band and lightning scorch."""
+    masonry(name, ramp)
+    path = os.path.join(OUT_DIR, name + ".png")
+    rgba = np.array(Image.open(path).convert("RGBA")).astype(np.float32)
+    scorch(rgba, ramp, rng_for(name + ":scorch"), 0.18)
+    size = rgba.shape[0]
+    band = size // 2
+    rgba[band:band + 2, :] = paint(np.full(2 * size, 1), copper).reshape(2, size, 4)
+    rgba[band + 2, :] = paint(np.full(size, 0), copper)
+    for t in range(3, size, 8):
+        rgba[band, t] = paint(np.array([3]), copper)[0]
+    save(name, rgba)
+
+
+def generate_stormwatch() -> None:
+    spec = load_spec()
+    pal = spec["palettes"]["stormwatch"]
+    print("Biome textures (M13b the Stormwatch):")
+    stormwatch_floor("sw_floor", pal["floor"], pal["copper"])
+    stormwatch_wall("sw_wall", pal["wall"], pal["copper"])
+    ash_surface("sw_wall_top", pal["wall"], 2, pebbles=6, cracks=True)
+
+
 if __name__ == "__main__":
     import sys
     only = sys.argv[1:]
@@ -585,4 +650,6 @@ if __name__ == "__main__":
         generate_cistern()
     if not only or "warrens" in only:
         generate_warrens()
+    if not only or "stormwatch" in only:
+        generate_stormwatch()
     print("done.")

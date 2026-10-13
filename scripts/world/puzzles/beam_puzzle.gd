@@ -100,11 +100,13 @@ func _process(delta: float) -> void:
 
 func _build() -> void:
 	var melt := look == "melt"
+	var storm := look == "storm"  # M13b: the orrery's caught lightning, violet-white
 	var hot := ArtKit.color("palettes.warrens.lava_hi", Color(1.0, 0.69, 0.25))
+	var bolt := ArtKit.color("palettes.stormwatch.lightning", Color(0.73, 0.66, 1.0))
 	# the source: a lamp on a pedestal (the melt: the crucibles' pouring lip)
-	_pedestal(Vector3.ZERO, hot if melt else Color(0.95, 0.9, 0.6))
+	_pedestal(Vector3.ZERO, hot if melt else (bolt if storm else Color(0.95, 0.9, 0.6)))
 	for i in mirrors.size():
-		var holder := _pedestal(mirrors[i] - source, Color(0.5, 0.36, 0.2) if melt else Color(0.6, 0.9, 1.0))
+		var holder := _pedestal(mirrors[i] - source, Color(0.5, 0.36, 0.2) if melt else (Color(0.55, 0.5, 0.8) if storm else Color(0.6, 0.9, 1.0)))
 		var crystal := MeshInstance3D.new()
 		var plate := BoxMesh.new()
 		if melt:  # an iron chute: the trough's mouth points where the melt goes on
@@ -113,7 +115,7 @@ func _build() -> void:
 			crystal.position = Vector3(0, BEAM_Y - 0.12, 0.3)
 		else:
 			plate.size = Vector3(0.9, 1.0, 0.12)
-			plate.material = EnemyBase.flat_material(Color(0.55, 0.85, 0.95), true, 0.6)
+			plate.material = EnemyBase.flat_material(Color(0.72, 0.66, 1.0) if storm else Color(0.55, 0.85, 0.95), true, 0.6)
 			crystal.position = Vector3(0, BEAM_Y, 0)
 		crystal.mesh = plate
 		holder.add_child(crystal)
@@ -127,7 +129,7 @@ func _build() -> void:
 		add_child(sw)
 		sw.position = mirrors[i] - source + Vector3(0, 0.2, 0)
 	var socket := _pedestal(receiver - source, Color(0.3, 0.3, 0.32))
-	_receiver_mat = EnemyBase.flat_material(hot if melt else Color(0.95, 0.85, 0.5), true, 0.2)
+	_receiver_mat = EnemyBase.flat_material(hot if melt else (bolt if storm else Color(0.95, 0.85, 0.5)), true, 0.2)
 	var ring := MeshInstance3D.new()
 	if melt:  # the mould: an open stone box the melt fills
 		var mould := BoxMesh.new()
@@ -143,7 +145,7 @@ func _build() -> void:
 		ring.mesh = orb
 		ring.position = Vector3(0, BEAM_Y, 0)
 	socket.add_child(ring)
-	var glow := EnemyBase.flat_material(hot if melt else Color(1.0, 0.92, 0.6), true, 3.0)
+	var glow := EnemyBase.flat_material(hot if melt else (Color(0.9, 0.86, 1.0) if storm else Color(1.0, 0.92, 0.6)), true, 3.0)
 	for k in MAX_LEGS + 1:
 		var seg := MeshInstance3D.new()
 		var box := BoxMesh.new()

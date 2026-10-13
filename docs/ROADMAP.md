@@ -448,6 +448,9 @@ Phase 3 gebaut (Bots finden ihren Weg Raum für Raum durch offene Türen, belebe
 freien Plätze des Rätsels, an dem du stehst: Platten, Spulen (sie schlagen mit dir an), Plätze in der Blitzkette, die
 ferne Platte bei getrennten Wegen; `tools\run_godot.cmd coop 2` bringt die Gefährten auf deine Stufe, in der
 Sturmwarte mindestens 7, mit passender Ausrüstung).
+Phase 4 gebaut (alle Koop-Rätsel an ihrem Platz: Spulenhalle, die beiden Flügel mit Platte und Brückenhebel,
+Plattenhalle, Leiterhalle, das Planetarium hinter dem Riss mit Spulen und drehbaren Kristallen; eigener Look aus Schiefer,
+Kupfer und violettem Blitzlicht, Wind-Ambience, zehn Lore-Texte DE/EN; Gegner und Bosse sind noch Platzhalter).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
