@@ -177,6 +177,31 @@ func hero_fx(kind: StringName, args: Array) -> void:
 ## puppets snap instead of sliding across the map when it changes.
 var teleports: int = 0
 
+## M13b (the co-op dungeon): this hero lies downed - dead (`health.is_dead`)
+## but waiting for a revive; set by the owner's ReviveSystem, the hero then
+## neither moves nor acts. Every machine lays a dead hero down (`set_lying`).
+var downed: bool = false
+var _lying: bool = false
+var _lie_tween: Tween
+
+
+## M13b: the downed pose - the hero tips onto its back (visual only; the
+## gameplay facing stays on `_visual`'s yaw) and stands up again.
+func set_lying(value: bool) -> void:
+	if value == _lying or _visual == null:
+		return
+	_lying = value
+	if _lie_tween != null and _lie_tween.is_valid():
+		_lie_tween.kill()
+	_lie_tween = create_tween().set_parallel(true)
+	_lie_tween.tween_property(_visual, "rotation:x", -PI * 0.47 if value else 0.0, 0.28 if value else 0.22) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN if value else Tween.EASE_OUT)
+	_lie_tween.tween_property(_visual, "position:y", 0.22 if value else 0.0, 0.28 if value else 0.22)
+
+
+func is_lying() -> bool:
+	return _lying
+
 ## M07 barrier (Runic Guard, Unbroken): absorbs damage before health.
 var barrier: float = 0.0
 var _barrier_time: float = 0.0
@@ -1010,6 +1035,14 @@ func _physics_process(delta: float) -> void:
 	if _hitstop_left > 0.0:
 		_hitstop_left -= delta
 		_poll_during_hitstop()
+		return
+	if downed:  # M13b: on the ground until an ally helps or the time runs out (ReviveSystem)
+		intent.clear()
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if not is_on_floor():
+			velocity.y -= GRAVITY * delta
+		move_and_slide()
 		return
 	for key: StringName in _cooldowns.keys():
 		_cooldowns[key] = maxf(_cooldowns[key] - delta, 0.0)

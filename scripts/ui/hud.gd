@@ -352,6 +352,34 @@ func trial_status(text: String) -> void:
 	_trial_label.visible = true
 
 
+## M13b: the downed hero's line in the middle of the screen ("" hides it).
+var _downed_label: Label = null
+
+
+func downed_status(text: String) -> void:
+	if text == "":
+		if is_instance_valid(_downed_label):
+			_downed_label.visible = false
+		return
+	if not is_instance_valid(_downed_label):
+		_downed_label = Label.new()
+		_downed_label.set_anchors_preset(Control.PRESET_CENTER)
+		_downed_label.offset_left = -420.0
+		_downed_label.offset_right = 420.0
+		_downed_label.offset_top = -120.0
+		_downed_label.offset_bottom = -40.0
+		_downed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_downed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_downed_label.add_theme_font_size_override("font_size", UiTheme.BIG)
+		_downed_label.add_theme_constant_override("outline_size", UiTheme.OUTLINE)
+		_downed_label.add_theme_color_override("font_outline_color", UiTheme.INK)
+		_downed_label.add_theme_color_override("font_color", Color(0.78, 0.7, 1.0))
+		_downed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		get_child(0).add_child(_downed_label)
+	_downed_label.text = text
+	_downed_label.visible = true
+
+
 func toast(text: String, color: Color = Color.WHITE) -> void:
 	var label := Label.new()
 	label.text = text

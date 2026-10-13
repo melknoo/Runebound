@@ -638,6 +638,111 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
+			"revive":
+				# M13b phase 1: c2 falls and lies downed (dead and lying on every
+				# machine, its proxy dead on the server); c1 holds [E] beside it and
+				# c2 gets up with 30 %; then c3 and c1 fall and c2 last - after a
+				# moment on the floor a wipe wakes all three at the entrance.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as StormwatchZone
+				if zone == null or zone.revive_system == null:
+					_finish("fail: not in the Stormwatch (or no revives there)")
+					return
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				var rv := zone.revive_system
+				if not await _until(func() -> bool: return zone.party_size() >= 3, 40.0, "all three heroes"):
+					return
+				var spots := {"c1": Vector3(-3, 0.2, -3), "c2": Vector3(0, 0.2, -3), "c3": Vector3(3, 0.2, -3)}
+				hero.global_position = zone._player_spawn_point() + (spots[role] as Vector3)
+				hero.velocity = Vector3.ZERO
+				await _seconds(2.0)
+				var mate := func(who: String) -> Player:
+					for peer: int in zone.net_world.heroes:
+						if str((Net.roster.get(peer, {}) as Dictionary).get("name", "")) == who:
+							return zone.net_world.heroes[peer] as Player
+					return null
+				var fall := func() -> void:
+					hero.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hero.global_position))
+				var c2: Player = mate.call("C2")
+				var standing := func() -> int:
+					var n := 0
+					for h in zone.party():
+						if not h.health.is_dead:
+							n += 1
+					return n
+				if role == "c2":
+					fall.call()
+					await _seconds(1.0)
+					if not hero.downed or not hero.is_lying():
+						_finish("fail: c2 did not lie downed")
+						return
+					if not await _until(func() -> bool: return not hero.health.is_dead, 30.0, "c1's revive"):
+						return
+					if absf(hero.health.current_health - hero.health.max_health * ReviveSystem.REVIVE_HEALTH) > 1.5 or hero.downed:
+						_finish("fail: revived with %.0f of %.0f" % [hero.health.current_health, hero.health.max_health])
+						return
+					if not await _until(func() -> bool: return int(standing.call()) == 1, 40.0, "c1 and c3 on the floor"):
+						return
+					fall.call()
+				elif role == "c1":
+					if c2 == null:
+						_finish("fail: no puppet of c2")
+						return
+					if not await _until(func() -> bool: return c2.health.is_dead and c2.is_lying(), 20.0, "c2 lying downed here"):
+						return
+					hero.global_position = c2.global_position + Vector3(0, 0.2, 1.0)
+					hero.velocity = Vector3.ZERO
+					await _seconds(0.5)
+					Input.action_press(&"interact")
+					var up: bool = await _until(func() -> bool: return not c2.health.is_dead, 12.0, "c2 back up after [E] held")
+					Input.action_release(&"interact")
+					if not up:
+						return
+					if rv.revives_sent != 1:
+						_finish("fail: %d revives sent" % rv.revives_sent)
+						return
+					if not await _until(func() -> bool: return int(standing.call()) == 2, 30.0, "c3 on the floor"):
+						return
+					await _seconds(1.0)
+					fall.call()
+				else:
+					if c2 == null:
+						_finish("fail: no puppet of c2")
+						return
+					if not await _until(func() -> bool: return c2.health.is_dead, 20.0, "c2 falling"):
+						return
+					if not await _until(func() -> bool: return not c2.health.is_dead, 30.0, "c2 revived (seen here)"):
+						return
+					await _seconds(1.0)
+					fall.call()
+				# everyone wakes at the entrance after the wipe (no rune is lit)
+				if not await _until(func() -> bool: return rv.wipes >= 1 and not hero.health.is_dead and not hero.downed,
+						40.0, "waking after the wipe"):
+					return
+				if hero.global_position.distance_to(zone._player_spawn_point()) > 3.0:
+					_finish("fail: woke %.1f m from the entrance" % hero.global_position.distance_to(zone._player_spawn_point()))
+					return
+				var all_up := false
+				for i in 150:
+					if int(standing.call()) == 3:
+						all_up = true
+						break
+					if i % 5 == 0:
+						var diag: Array[String] = []
+						for h in zone.party():
+							diag.append("%s %.0f%s" % [h.name, h.health.current_health, " dead" if h.health.is_dead else ""])
+						print("[test %s] waiting for all up: %s" % [role, ", ".join(diag)])
+					await _seconds(0.1)
+				if not all_up:
+					var states: Array[String] = []
+					for h in zone.party():
+						states.append("%s hp %.0f dead %s downed %s" % [h.name, h.health.current_health, h.health.is_dead, h.downed])
+					_finish("fail: not all three standing again: " + ", ".join(states))
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"coop_gate":
 				# M13b phase 0: c1 and c2 are two - the server refuses the Stormwatch
 				# (a notice in our language); c3 joins, c1 starts the travel and c3

@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -22,6 +22,9 @@ var _ready_peers := 0
 var _coop_refused := 0
 var _coop_in := false
 var _coop_marked := false
+## M13b revive: c2's proxy seen dead (downed), then alive again.
+var _rv_saw_down := false
+var _rv_saw_up := false
 
 
 func _ready() -> void:
@@ -351,6 +354,27 @@ func _update() -> void:
 					verdict = "fail: no crypt chest on the server"
 				else:
 					verdict = "ok"
+		"revive":  # M13b: the proxy of a downed hero is dead on the server (enemies leave it), then up again
+			var rz := get_tree().current_scene as StormwatchZone
+			var c2_peer := _roster_peer("C2")
+			if rz != null and rz.net_world != null and rz.net_world.heroes.has(c2_peer):
+				var c2_proxy := rz.net_world.heroes[c2_peer] as Player
+				if c2_proxy.health.is_dead:
+					_rv_saw_down = true
+					if rz.nearest_player(c2_proxy.global_position) == c2_proxy:
+						_rv_saw_down = false  # an enemy would still pick it
+				elif _rv_saw_down:
+					_rv_saw_up = true
+			if _rv_saw_up:
+				verdict = "ok"  # kept after everyone left (the server then goes back to the Highlands)
+			elif rz == null:
+				verdict = "fail: the server is not in the Stormwatch"
+			elif not _rv_saw_down:
+				verdict = "fail: c2's proxy was never dead (downed) on the server"
+			elif not _rv_saw_up:
+				verdict = "fail: c2's proxy never stood up again"
+			else:
+				verdict = "ok"
 		"coop_gate":  # M13b: refusals, the run inside, back out (and the run forgotten) once all left
 			var cz := get_tree().current_scene as ZoneBase
 			if cz is StormwatchZone:

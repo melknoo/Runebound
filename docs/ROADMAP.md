@@ -440,6 +440,8 @@ Graubox, PROTOCOL 15), 1 Niederschlag + Wiederbeleben, 2 Koop-Rätsel-Kit + Puzz
 **Stand:** Phase 0 gebaut (die Sturmwarte als Graubox mit 20 Räumen samt Gängen, das Tor östlich der Cinder Flats
 mit Pfad; Sperre ab 3 Helden an Tor, Reise, Server und Countdown-Ende, Hinweis in deiner Sprache; jeder Lauf frisch;
 Stufe = Durchschnitt der Gruppe, mindestens 7; ist niemand mehr auf dem Server, reist er zurück in die Highlands).
+Phase 1 gebaut (Niederschlag: 30 s am Boden mit Ring und Sekunden, Gegner lassen dich liegen; [E] 3 s halten holt den
+Verbündeten mit 30 % zurück; Zeit um: an der Rune; liegen alle, wachen alle nach einem Moment an der Rune auf).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

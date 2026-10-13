@@ -373,6 +373,14 @@
 - A server with nobody left goes back to the Highlands; a party that
   leaves the Stormwatch through its exit does too. A lone player cannot
   enter (the gate says how many heroes it wants).
+- **Revive numbers to feel:** 30 s on the floor, 3 s of [E] held, back with
+  30 %; damage does not break a revive (moving off or letting go does).
+  Downed heroes cannot give up early (a wipe or the time wakes them).
+- A hero who is carried along by a party travel while downed arrives with
+  1 health (vitals keep at least 1); the Stormwatch's exits are far from
+  its fights, so this should be rare.
+- The downed pose tips the whole rig onto its back (no fall clip); the
+  idle loop keeps playing on the floor.
 
 ## M13 open items (built 2026-10-10, the user's playtest is the gate)
 - **Playtest list:** group "M13: Dungeons" on J (18 points, ids `m13_*`).

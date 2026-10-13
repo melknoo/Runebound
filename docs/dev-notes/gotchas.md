@@ -55,6 +55,8 @@ Hard-won, one line each. Dates are when it bit. Architecture rules are in CLAUDE
 - `ENetMultiplayerPeer` silently resets connections whose connect data (the peer id) is < 2: raw `ENetConnection` test clients must pass a random id >= 2.
 - The server probe writes its result file aside and renames it (a read once caught it empty).
 - Bots have no camera: zone abilities need an aim point (`_bot_aim_point` of the druid), else they land at full reach.
+- A state another machine must notice for N seconds is seen there for N seconds minus jitter: latch the decision after a short confirm instead of requiring the state to last (the M13b wipe raced: 2026-10-13).
+- In headless clients `InputSetup.key_label` logs "Not supported by this display server" on every call: never look the key up per frame (cache it per use).
 
 ## Tests
 - A test standing in the bone field wakes the elite patrol (55 m) and breaks later camp counts: test the brood enemies in trial_f's clearing.

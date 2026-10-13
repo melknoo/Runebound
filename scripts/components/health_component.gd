@@ -57,6 +57,13 @@ func heal_full() -> void:
 	health_changed.emit(current_health, max_health)
 
 
+## M13b: back on the feet at `fraction` of the maximum (a revive).
+func revive(fraction: float) -> void:
+	current_health = maxf(max_health * clampf(fraction, 0.01, 1.0), 1.0)
+	is_dead = false
+	health_changed.emit(current_health, max_health)
+
+
 ## M10b: restores up to `amount` (never past the maximum, never the dead);
 ## returns what it actually healed.
 func heal(amount: float) -> float:

@@ -54,6 +54,25 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
     are gone (other dungeons keep theirs), POIs on their floors, camps that
     never re-arm, arenas, runes, gates, the cracked wall, the party level,
     out again (the run forgotten). Net scenario `coop_gate`.
+- **Phase 1 (built): downed and revived.**
+  - A hero who falls in the Stormwatch lies downed for 30 s where it fell
+    (on its back, a pulsing ring, the seconds over it; enemies and boss
+    arenas count it out). An ally who holds [E] beside it for 3 s brings it
+    back with 30 % health; the downed hero sees its seconds and how to be
+    helped. Time up: it wakes at the nearest lit rune (else the entrance),
+    healed. When nobody of the party stands, a wipe wakes everyone there
+    after a moment on the floor.
+  - Smoke 876 green (downed where it fell, marked, ignored by enemies; [E]
+    held 3 s revives with 30 %; the local hero's line, no movement; a
+    revive by HeroFx; the time running out; the wipe). Net scenario
+    `revive` (c2 down and revived by c1's held [E], its proxy dead on the
+    server meanwhile; then all three fall: everyone wakes at the entrance),
+    four runs green after a wipe race was fixed (below); `coop_gate` green.
+  - Found on the way: the last hero to fall woke after 1.2 s, and the other
+    machines, seeing that fall a network delay late, saw it on the floor for
+    a little less than their own 1.2 s and missed the wipe (they waited out
+    their 30 s). Now a wipe is set going after 0.3 s with nobody standing
+    and runs to its end.
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

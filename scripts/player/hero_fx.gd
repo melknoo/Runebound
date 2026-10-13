@@ -182,6 +182,17 @@ static func play(hero: Player, kind: StringName, a: Array) -> void:
 			Sfx.play("barkskin", target.global_position, -3.0, 0.08)
 			if target.net_role == Player.NetRole.OWNER:
 				target.grant_barrier(float(a[1]), float(a[2]))
+		&"ally_revive":  # [ref, health] - M13b: a downed ally gets up; only its owner applies it
+			var target := _ally(hero, a[0])
+			if target == null:
+				return
+			VFX.heal_motes(target, 0.8)
+			VFX.light_pop(scene, target.global_position + Vector3(0, 0.6, 0), ReviveSystem.MARK_COLOR, 3.0, 5.0, 0.3)
+			Sfx.play("mend", target.global_position, -1.0, 0.05, 0.8)
+			if target.net_role == Player.NetRole.OWNER:
+				var rz := ZoneBase.zone_of(target) as DungeonZone
+				if rz != null and rz.revive_system != null:
+					rz.revive_system.revived(target, float(a[1]), hero)
 		&"ally_cleanse":  # [ref] - M12 Rootwalk: the target's owner drops its slows
 			var target := _ally(hero, a[0])
 			if target != null and target.net_role == Player.NetRole.OWNER:

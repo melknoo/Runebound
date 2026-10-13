@@ -5191,6 +5191,89 @@ func _run() -> void:
 			sw_lp.queue_free()
 		sw.run_level = 0
 		await _wait_frames(4)
+		# --- M13b phase 1: downed, revived by [E] held, by HeroFx, timed out, a wipe ---
+		var rv := sw.revive_system
+		_check(rv != null and bool(DungeonRegistry.info("stormwatch").get("revive", false)),
+			"M13b: the Stormwatch lays its fallen down for a revive")
+		swh.god_mode = false
+		swh.health.heal_full()
+		var rv_mates: Array[Player] = []
+		for rv_class: StringName in [&"runebreaker", &"druid"]:
+			var rv_mate := Player.create(ClassData.load_by_id(rv_class))
+			rv_mate.is_local = false
+			rv_mate.input_source = InputSource.new()
+			sw.add_player(rv_mate)
+			rv_mate.global_position = swh.global_position + Vector3(2.5 + 3.0 * rv_mates.size(), 0, -2.0)
+			rv_mates.append(rv_mate)
+		await _wait_frames(6)
+		var rv_a := rv_mates[0]
+		var rv_b := rv_mates[1]
+		var rv_at := rv_a.global_position
+		rv_a.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, rv_a.global_position))
+		await _wait_frames(24)
+		_check(rv_a.downed and rv_a.health.is_dead and rv_a.is_lying() and rv_a.global_position.distance_to(rv_at) < 0.6
+			and rv_a.find_child("DownedMarker", false, false) != null and rv.seconds_left(rv_a) > 25.0,
+			"M13b: a fallen hero lies downed where it fell, marked, its 30 s running")
+		_check(sw.nearest_player(rv_a.global_position) != rv_a and not (rv_a in sw.players_within(rv_a.global_position, 3.0)),
+			"M13b: enemies look past a downed hero")
+		swh.global_position = rv_a.global_position + Vector3(0, 0.1, 1.2)
+		swh.velocity = Vector3.ZERO
+		await _wait_frames(4)
+		Input.action_press(&"interact")
+		await _wait_frames(60)
+		var rv_half := rv.progress
+		await _wait_frames(150)
+		Input.action_release(&"interact")
+		await _wait_frames(24)
+		_check(rv_half > 0.4 and rv_half < 2.6 and not rv_a.health.is_dead and not rv_a.downed and not rv_a.is_lying()
+			and rv.revives_sent == 1 and absf(rv_a.health.current_health - rv_a.health.max_health * ReviveSystem.REVIVE_HEALTH) < 1.0
+			and rv_a.find_child("DownedMarker", false, false) == null,
+			"M13b: [E] held 3 s beside it brings the ally back with 30 %% health (%.0f after %.1f s)" % [rv_a.health.current_health, rv_half])
+		# the local hero falls: the line on the screen; an ally's revive (HeroFx) gets it up
+		swh.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, swh.global_position))
+		await _wait_frames(6)
+		var rv_line: Label = sw.hud.get(&"_downed_label")
+		_check(swh.downed and rv_line != null and rv_line.visible and rv_line.text.contains("DOWNED"),
+			"M13b: downed, the hero sees its seconds and how to be helped")
+		var rv_pos := swh.global_position
+		swh.velocity = Vector3(5, 0, 0)
+		await _wait_frames(10)
+		_check(swh.global_position.distance_to(rv_pos) < 0.3, "M13b: a downed hero does not move")
+		rv_a.hero_fx(&"ally_revive", [sw.hero_ref(swh), ReviveSystem.REVIVE_HEALTH])
+		await _wait_frames(4)
+		_check(not swh.downed and not swh.health.is_dead and rv.revives_taken >= 2 and not rv_line.visible,
+			"M13b: an ally's revive (HeroFx ally_revive) gets the hero up; the line goes")
+		# no help: the time runs out, the hero wakes at the rune (else the entrance), healed
+		rv_b.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, rv_b.global_position))
+		await _wait_frames(4)
+		var rv_b_at := rv_b.global_position
+		_check(rv_b.downed, "M13b: the second ally lies downed")
+		rv._down_left[rv_b.get_instance_id()] = 0.05
+		await _wait_frames(10)
+		_check(not rv_b.downed and not rv_b.health.is_dead and is_equal_approx(rv_b.health.current_health, rv_b.health.max_health)
+			and rv_b.global_position.distance_to(sw.respawn_point(rv_b_at)) < 1.0,
+			"M13b: when its time runs out the hero wakes at the rune (else the entrance), healed")
+		# everyone falls: a wipe - all wake at once
+		for rv_h: Player in [rv_a, rv_b]:
+			rv_h.global_position = swh.global_position + Vector3(2.0, 0.1, 0)
+		await _wait_frames(4)
+		var rv_wipes := rv.wipes
+		for rv_k: Player in [rv_a, rv_b]:
+			rv_k.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, rv_k.global_position))
+			await _wait_frames(3)
+		var rv_two_down := rv_a.downed and rv_b.downed and not swh.health.is_dead
+		swh.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, swh.global_position))
+		await _wait_frames(6)
+		var rv_grace := swh.downed and rv_a.downed and rv_b.downed and rv.wipes == rv_wipes
+		await _wait_frames(int(ReviveSystem.WIPE_DELAY * 60.0) + 12)
+		_check(rv_grace and rv_two_down and rv.wipes > rv_wipes and not rv_a.health.is_dead and not rv_b.health.is_dead
+			and not swh.health.is_dead and not swh.downed and not rv_a.downed and not rv_b.downed,
+			"M13b: the last one falls - a moment on the floor, then a wipe: everyone wakes at the rune")
+		for rv_q: Player in [rv_a, rv_b]:
+			sw.remove_player(rv_q)
+			rv_q.queue_free()
+		swh.god_mode = true
+		await _wait_frames(4)
 		# out through the forecourt: the run is forgotten, the hero stands at the gate
 		SaveGame.set_flag(&"sw_probe_run")
 		sw.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_se")

@@ -75,5 +75,33 @@
 	"area.sw_orrery": {
 		"en": "The Orrery",
 		"de": "Das Planetarium"
+	},
+	"ui.revive.downed": {
+		"en": "DOWNED - %d",
+		"de": "NIEDERGESCHLAGEN - %d"
+	},
+	"ui.revive.wait": {
+		"en": "An ally can bring you back: [%s] held beside you",
+		"de": "Ein Verbündeter kann dich zurückholen: [%s] neben dir halten"
+	},
+	"ui.revive.prompt": {
+		"en": "Revive (hold)",
+		"de": "Wiederbeleben (halten)"
+	},
+	"ui.revive.progress": {
+		"en": "Reviving %d%%",
+		"de": "Wiederbeleben %d%%"
+	},
+	"ui.revive.back": {
+		"en": "Back on your feet",
+		"de": "Wieder auf den Beinen"
+	},
+	"ui.revive.timeout": {
+		"en": "You wake at the rune",
+		"de": "Du erwachst an der Rune"
+	},
+	"ui.revive.wiped": {
+		"en": "The party has fallen - back to the rune",
+		"de": "Die Gruppe ist gefallen - zurück zur Rune"
 	}
 }

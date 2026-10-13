@@ -11,6 +11,7 @@ extends Object
 ##                   layout's prefix are cleared, camps never re-arm in a run
 ##   level_mode "party", min_level - enemy and loot level = the party's
 ##                   average level on entry (at least min_level), bosses +1
+##   revive        - a fallen hero lies downed and can be revived (ReviveSystem)
 
 const DUNGEONS := {
 	"cistern": {
@@ -59,6 +60,7 @@ const DUNGEONS := {
 		"name_key": "zone.stormwatch",
 		"min_party": 3,
 		"fresh_runs": true,
+		"revive": true,
 		"level_mode": "party",
 		"min_level": 7,
 	},

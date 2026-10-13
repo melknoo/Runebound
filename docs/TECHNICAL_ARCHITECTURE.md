@@ -908,8 +908,28 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
   spur `spur_dungeon_se` from the east loop); label, seal toast and map
   name the party (`ui.dungeon.gate_coop`, `seal_broken_coop`,
   `map.dungeon_coop`). Texts: `resources/i18n/m13b_ui.json`.
+- **Downed and revived (phase 1, registry `revive`):** `ReviveSystem`
+  (scripts/world/dungeon/, a child of the DungeonZone) replaces the instant
+  rune respawn there. `DungeonZone._on_player_died` -> `on_died`: the owner
+  sets `Player.downed` (the hero's `_physics_process` then only falls; no
+  move, no action, no interact) and runs its 30 s (`DOWNED_SECONDS`); the
+  hero's health stays 0, so the server's proxy and the puppets are dead:
+  `nearest_player` / `players_within` / threat skip it, BossArena counts it
+  out. Every machine with a view lays dead heroes down
+  (`Player.set_lying`: `_visual` tips onto its back, only rotation.x, the
+  yaw stays the facing) and gives them a `Marker` (pulsing ring, seconds
+  left, an InteractPrompt). The local living hero holding [E]
+  (`InteractPrompt.held`) beside the nearest one for 3 s sends HeroFx
+  `ally_revive` [ref, 0.3]; the target's owner applies it
+  (`ReviveSystem.revived` -> `HealthComponent.revive`). Time up: `_wake` ->
+  `DungeonZone.respawn_at_rune` (the M13 rule). **Wipe:** nobody standing
+  for `WIPE_CONFIRM` 0.3 s sets a wipe going; `WIPE_DELAY` 1.2 s after the
+  fall each machine wakes its own heroes, even if the last one already
+  stood up elsewhere (each machine sees the others' falls a network delay
+  late - waiting for the whole party on the floor until the end raced).
+  HUD: `downed_status` (the seconds and the bound key). No new message.
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
-  NOTICE with a key). Net scenario `coop_gate`.
+  NOTICE with a key). Net scenarios `coop_gate`, `revive`.
 
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**

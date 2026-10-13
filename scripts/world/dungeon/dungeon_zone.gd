@@ -34,6 +34,8 @@ var tomes: Dictionary = {}
 ## M13b: the run's enemy level when the registry's `level_mode` is "party"
 ## (0 until the first enemy asks; then fixed for the run).
 var run_level: int = 0
+## M13b: downed heroes and revives (registry "revive"; null elsewhere).
+var revive_system: ReviveSystem = null
 var _map_texture: Texture2D
 var _discover_left: float = 0.0
 var _room_seen: Dictionary = {}
@@ -190,6 +192,8 @@ func _build_zone() -> void:
 	var map_path := String(info.get("layout", "")).path_join("map.png")
 	if ResourceLoader.exists(map_path):
 		_map_texture = load(map_path) as Texture2D
+	if bool(info.get("revive", false)):
+		revive_system = ReviveSystem.create(self)
 	_build_dungeon()
 
 
@@ -260,8 +264,16 @@ func apply_world_flag(flag: StringName) -> void:
 
 
 ## Death: back at the nearest lit rune (else the entrance), healed. Runs on
-## the hero's own machine; the runes' lit state is shared.
+## the hero's own machine; the runes' lit state is shared. M13b: where
+## heroes can be revived, the ReviveSystem lays the hero down first.
 func _on_player_died(p: Player) -> void:
+	if revive_system != null:
+		revive_system.on_died(p)
+		return
+	respawn_at_rune(p)
+
+
+func respawn_at_rune(p: Player) -> void:
 	p.health.heal_full()
 	p.global_position = respawn_point(p.global_position)
 	p.velocity = Vector3.ZERO
