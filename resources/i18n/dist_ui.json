@@ -1,0 +1,15 @@
+{
+	"_note": "Player builds (2026-10-13): the update hint on the title screen and its setting. Keys are dotted ids; every key needs en + de. Loaded by scripts/systems/texts.gd.",
+	"ui.update.available": {
+		"en": "New version %s - download",
+		"de": "Neue Version %s - herunterladen"
+	},
+	"ui.update.download": {
+		"en": "Download the newest version",
+		"de": "Neueste Version herunterladen"
+	},
+	"ui.settings.update_check": {
+		"en": "Look for new versions at start (asks GitHub)",
+		"de": "Beim Start nach neuen Versionen suchen (fragt GitHub)"
+	}
+}

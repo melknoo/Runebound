@@ -5,7 +5,7 @@ Original third-person co-op ARPG (2-5 players), Godot 4.6.3, typed GDScript. Pub
 ## The user (every machine)
 - Reply in **German**, **extremely concise** (grammar may go). If a request is ambiguous, ask **one** clarifying question before doing anything.
 - Commit and **push `main` after every finished piece of work** (standing rule since 2026-09-24).
-- Never push or ship `release` unasked: the laptop server deploys it automatically (`tools\run_godot.cmd release` = main -> release fast-forward + deploy now). After a `Net.PROTOCOL` bump remind the user that a release must follow before co-op.
+- Never push or ship `release` unasked: the laptop server deploys it automatically (`tools\run_godot.cmd release` = main -> release fast-forward + deploy now + tag `v0.<protocol>.<n>`, from which GitHub Actions builds and publishes the Windows player build: `docs/dev-notes/release-builds.md`). After a `Net.PROTOCOL` bump remind the user that a release must follow before co-op.
 - The user **playtests every milestone** (the gate): the in-game list is on key J (J and F1 need developer tools: `run_godot play` / `coop` pass `--dev`, otherwise Settings -> Gameplay -> Developer tools); results land in `%APPDATA%\Godot\app_userdata\RUNEBOUND\playtest.json` on the PC where they play (not in git). When KNOWN_ISSUES gains or resolves a playtest point, update `resources/playtest/checklist.json` too (stable ids).
 - The user models nothing by hand: the `tools/modelgen` scripts are the only source of 3D assets (live Blender = trying things + screenshots, port every result back into the script).
 - Per milestone: plan first, with questions to the user; build in phases, each ending with smoke green + docs + commit/push. Numbers are data, tuned after playtest feedback.
@@ -18,9 +18,9 @@ Original third-person co-op ARPG (2-5 players), Godot 4.6.3, typed GDScript. Pub
 
 ## Commands
 Godot must be exactly **4.6.3-stable** (a 4.6.1 client crashed on an RTX 2070: a GPU TDR while the game ran embedded in the editor, see KNOWN_ISSUES; play and test standalone). Set `GODOT` to the **`_console`** exe (the plain exe prints no stdout); `tools/run_godot.ps1` falls back to a path on the owner's main PC.
-- `tools\run_godot.cmd <mode>` (the `.cmd` bypasses the PowerShell execution policy). Modes: `import`, `smoke`, `play`, `capture`, `worldcapture`, `shots <list>`, `perf <scenario> [label]`, `stress`, `net [scenario]`, `server [port]`, `coop [bots]`, `serverperf [heroes]`, `solocheck [class] [level]`, `partycheck [party] [level]`, `reset` (deletes the real save), `wsspike`, `release`, `deploy`; the header of `tools/run_godot.ps1` explains each. From the Bash tool: `cmd //c "tools\run_godot.cmd smoke"`.
+- `tools\run_godot.cmd <mode>` (the `.cmd` bypasses the PowerShell execution policy). Modes: `import`, `smoke`, `play`, `capture`, `worldcapture`, `shots <list>`, `perf <scenario> [label]`, `stress`, `net [scenario]`, `server [port]`, `coop [bots]`, `serverperf [heroes]`, `solocheck [class] [level]`, `partycheck [party] [level]`, `reset` (deletes the real save), `wsspike`, `release`, `deploy`, `dist [version]` (a local player build in `build\dist`); the header of `tools/run_godot.ps1` explains each. From the Bash tool: `cmd //c "tools\run_godot.cmd smoke"`.
 - Linux (server laptop): `tools/server/run_godot.sh import|ensure-import|smoke|serve|serverperf|net` (`GODOT` default `~/godot/godot`).
-- Tests are **scenes** (`tests/*.tscn`), never `--script` MainLoops (autoloads do not load there). `smoke` is headless and takes minutes (the test's own watchdog exits 2 after 420 s, the wrapper's hard limit is 8 minutes, exit 3). From the Bash tool pass `timeout: 600000` or run it in the background: the default 2-minute tool timeout is shorter. Last result: 911 checks green (2026-10-13, M13b phase 8, on the main PC's iGPU). `run_godot` imports by itself when project files are newer than the import stamp (fresh clone, after a pull).
+- Tests are **scenes** (`tests/*.tscn`), never `--script` MainLoops (autoloads do not load there). `smoke` is headless and takes minutes (the test's own watchdog exits 2 after 420 s, the wrapper's hard limit is 8 minutes, exit 3). From the Bash tool pass `timeout: 600000` or run it in the background: the default 2-minute tool timeout is shorter. Last result: 913 checks green (2026-10-13, player builds, on the main PC's iGPU). `run_godot` imports by itself when project files are newer than the import stamp (fresh clone, after a pull).
 
 ## Hard rules
 - **Secrets:** `.env` (git-ignored, `PIXELLAB_API_KEY`) is never printed or committed. MCP servers are registered `-s local` (key-free) or `-s user` (key-bearing), **never** project scope or a `.mcp.json`. The repo is public: no IPs, address prefixes or keys in docs.
@@ -50,6 +50,7 @@ Godot must be exactly **4.6.3-stable** (a 4.6.1 client crashed on an RTX 2070: a
 | Set up a machine | `docs/HANDOFF.md` |
 | Toolchain, tests, perf A/B, shell/git quirks | `docs/dev-notes/workflow.md` |
 | Writing GDScript, scenes, tests | `docs/dev-notes/gotchas.md`, TECHNICAL_ARCHITECTURE |
+| Player builds, installer, GitHub releases | `docs/dev-notes/release-builds.md` |
 | Net, server, deploy | `docs/dev-notes/server-ops.md`, `docs/SERVER_SETUP.md`, TECHNICAL_ARCHITECTURE "Co-op (M09)" |
 | Classes, abilities, loadout | CLASS_DESIGN, TECHNICAL_ARCHITECTURE "Classes and the loadout (M10)" and "Healing and allies (M11)" |
 | World, biomes, POIs | WORLD_DESIGN, TECHNICAL_ARCHITECTURE "Open world (M08)" and "Sub-biomes (M12)" |

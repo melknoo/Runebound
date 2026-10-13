@@ -21,7 +21,7 @@ const DEFAULTS := {
 	"video/max_fps": 0, "video/show_fps": false,
 	"controls/sensitivity": 1.0, "controls/invert_y": false, "controls/zoom_speed": 1.0,
 	"gameplay/shake": 1.0, "gameplay/hurt_flash": true, "gameplay/damage_numbers": true,
-	"gameplay/pause_on_focus_loss": true, "gameplay/dev_tools": false,
+	"gameplay/pause_on_focus_loss": true, "gameplay/dev_tools": false, "gameplay/update_check": true,
 	# M12: the language of the new texts (Texts); "auto" follows the system.
 	# Its own section, so the Gameplay tab's Reset leaves it alone.
 	"general/language": "auto",
@@ -172,6 +172,11 @@ func hurt_flash() -> bool:
 
 func pause_on_focus_loss() -> bool:
 	return bool(value("gameplay/pause_on_focus_loss"))
+
+
+## Player builds: the title screen asks GitHub for a newer release (UpdateCheck).
+func update_check() -> bool:
+	return bool(value("gameplay/update_check"))
 
 
 ## F1 debug panel, the J playtest list and its line on the title screen.

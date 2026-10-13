@@ -7,6 +7,7 @@ Know-how for whoever works on RUNEBOUND (human or Claude) that the architecture 
 | [workflow.md](workflow.md) | setting up a machine, running tests or perf A/B, using MCP servers, editing files from a shell, committing |
 | [gotchas.md](gotchas.md) | writing GDScript, scenes, UI, net code or tests |
 | [server-ops.md](server-ops.md) | touching the server, releases, deploys, the net suite |
+| [release-builds.md](release-builds.md) | the Windows player builds: export, installer, the GitHub release workflow, pinned tools |
 
 Rules for these notes:
 - This repo is public: no secrets, IPs or address prefixes. (The laptop's host name is already in `resources/net/servers.json` by the user's decision, do not spread it further.)

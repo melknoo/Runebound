@@ -331,6 +331,23 @@
   material is null" from the dummy renderer when the old rig is freed
   (cosmetic, like the lab's initial wave).
 
+## Player builds (built 2026-10-13, needs the user's playtest)
+Installer + ZIP from GitHub Releases ([dev-notes/release-builds.md](dev-notes/release-builds.md)).
+- **Unsigned on purpose** (the user's decision 2026-10-13): Windows SmartScreen
+  shows "Windows protected your PC" until a player clicks "More info -> Run
+  anyway"; the release text and README.txt explain it. A free signature
+  through SignPath Foundation needs an OSI licence for everything, assets
+  included (the repo has no licence yet).
+- Playtest point `c_release_build`: install from a release, start, Highlands,
+  Play online, the DirectX 12 entry, the version in the title footer, the
+  update hint once a newer release exists. The first release tag (`v0.15.0`)
+  comes with the next `tools\run_godot.cmd release`.
+- The update check asks `api.github.com` once per start (60 requests/hour per
+  IP without a token; silent when it fails). It sends no data but the
+  User-Agent `RUNEBOUND/<version>`; the setting is under Gameplay.
+- The release exe is about 100 MB (Godot's template; the game's data is the
+  16 MB .pck). Music is QOA-compressed WAV already; OGG would save little.
+
 ## Technical
 - Two game instances at once on the dev iGPU crashed the one in the
   background with "Vulkan device was lost" (Windows GPU resets,

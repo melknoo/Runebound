@@ -6510,6 +6510,15 @@ func _run() -> void:
 	_check(Net.version_reason(8, 12).contains("older RUNEBOUND") and Net.version_reason(8, 12).contains("release")
 		and Net.version_reason(12, 8).contains("Update your game") and not Net.version_reason(12, 8).contains("older RUNEBOUND"),
 		"a protocol refusal says which side is behind (a newer game: the host updates the server)")
+	# Player builds (2026-10-13): the version, the update check, the download hint
+	_check(UpdateCheck.is_newer("v0.15.2", "0.15.1") and UpdateCheck.is_newer("0.16.0", "0.15.9-local")
+		and not UpdateCheck.is_newer("v0.15.0", "0.15.0-local") and not UpdateCheck.is_newer("v0.15.1", "0.15.2")
+		and UpdateCheck.is_newer("v0.15.0", "dev") and not UpdateCheck.is_newer("nonsense", "0.1.0"),
+		"release versions compare by their numbers (a -local suffix is the same release, \"dev\" the oldest)")
+	var dist_update_btn := title.get(&"_update_btn") as Button
+	_check(Net.game_version() == "dev" and not UpdateCheck.enabled() and dist_update_btn != null and not dist_update_btn.visible
+		and Net.version_reason(12, 8).contains("github.com/melknoo/Runebound/releases"),
+		"a source run is version dev, never asks GitHub and shows no download button; a too-old game learns where to download")
 	# M17a: character first, then solo or online; the campfire scene behind
 	var backdrop := title.get(&"_backdrop") as TitleBackdrop
 	_check(backdrop != null and backdrop.hero != null and backdrop.camera != null and backdrop.camera.current

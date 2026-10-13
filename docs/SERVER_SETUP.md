@@ -77,16 +77,23 @@ tools/server/invites.sh list          # wer hat einen Code (ohne Codes)
 - Meldet sich derselbe Code ein zweites Mal an, fliegt die ältere Sitzung.
 
 ## Für Freunde (zum Weiterleiten)
-> **RUNEBOUND mitspielen:**
-> 1. Godot **4.6.x** installieren (godotengine.org, „Standard“, nicht .NET).
-> 2. Das Spiel holen: `git clone -b release https://github.com/melknoo/Runebound.git`. Ohne git: auf GitHub den Branch **release** wählen, dann „Code → Download ZIP“. Danach in Godot den Ordner importieren und starten (F5). Updates: `git pull` im Ordner (oder die ZIP neu laden), wenn ich Bescheid sage.
-> 3. Im Titel „Join co-op“ wählen und:
->    - deinen Namen eintragen
+> **RUNEBOUND mitspielen (Windows):**
+> 1. Das Spiel laden: https://github.com/melknoo/Runebound/releases/latest
+>    - **`Runebound-…-setup.exe`** installiert es (ohne Adminrechte, mit Startmenü-Eintrag und Deinstallation), oder
+>    - **`Runebound-…-windows.zip`** entpacken und `Runebound.exe` starten (keine Installation).
+> 2. Windows meldet „Der Computer wurde durch Windows geschützt“? Das Spiel hat keine kostenpflichtige Signatur. **Weitere Informationen → Trotzdem ausführen.** Gebaut wird es nur von GitHub aus dem öffentlichen Code; wie man das prüft, steht auf der Download-Seite.
+> 3. Im Titel einen Charakter anlegen oder wählen, dann **„Play online“**:
 >    - als Server **„Acer“** im Dropdown wählen
 >    - deinen Einladungscode eintragen
 >
 >    Das Spiel merkt sich alles.
 > 4. Den Code nicht weitergeben, er gehört nur dir.
+> 5. Updates: Das Titelmenü zeigt „Neue Version … herunterladen“, wenn es eine gibt. Neue Version drüber installieren (oder die neue ZIP entpacken), Spielstände bleiben.
+> 6. Stürzt es ab oder bleibt das Bild schwarz: im Startmenü **„RUNEBOUND (DirectX 12)“** nehmen.
+
+Ohne Windows (oder zum Mitentwickeln) geht weiter der alte Weg: Godot **4.6.3** installieren, `git clone -b release https://github.com/melknoo/Runebound.git`, `tools\run_godot.cmd play` (nicht aus dem Editor mit F5, siehe KNOWN_ISSUES).
+
+**Wie die Downloads entstehen:** `tools\run_godot.cmd release` setzt nach dem Server-Update ein Tag `v0.<Protokoll>.<n>`; GitHub baut daraus Installer und ZIP und veröffentlicht sie (`docs/dev-notes/release-builds.md`). Fertig nach wenigen Minuten (Testlauf 13.10.: 2 Min.), Fortschritt unter github.com/melknoo/Runebound/actions.
 
 ## Was ist von außen erreichbar?
 - **Nur die Funnel-Adresse** (HTTPS über die Tailscale-Relais). Dahinter liegt nur der Spielserver auf `127.0.0.1:7780`.

@@ -5,13 +5,17 @@ Original third-person co-op action RPG (2-5 players) in a stylised pixel-fantasy
 - **Status and next steps:** [docs/HANDOFF.md](docs/HANDOFF.md) (German), [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md), [docs/ROADMAP.md](docs/ROADMAP.md)
 - **Known problems:** [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
 
-## Run it
+## Play it
+Windows: download the installer or the ZIP from the [latest release](https://github.com/melknoo/Runebound/releases/latest) (German instructions: [SERVER_SETUP](docs/SERVER_SETUP.md) "Für Freunde"). The builds come only from GitHub Actions out of this repository, with pinned tools, checksums and a provenance attestation ([release-builds](docs/dev-notes/release-builds.md)).
+
+## Run it from source
 Godot **4.6.3-stable** exactly. On Windows point the environment variable `GODOT` at the `Godot_v4.6.3-stable_win64_console.exe`, then:
 
 ```
 tools\run_godot.cmd import
 tools\run_godot.cmd smoke    # headless tests, must end green
 tools\run_godot.cmd play     # the game
+tools\run_godot.cmd dist     # a player build (ZIP + installer) in build\dist
 ```
 
 Linux: `tools/server/run_godot.sh import|smoke|serve`. All modes: header of [tools/run_godot.ps1](tools/run_godot.ps1). Setting up a second machine: [docs/HANDOFF.md](docs/HANDOFF.md).

@@ -86,7 +86,7 @@ const DEPLOY_NOTICES := [[300, "Server update: restart in 5 minutes."], [60, "Se
 const DEPLOY_KICK_REASON := "The server is restarting for an update. Join again in a minute - your character is saved."
 const REFUSAL_LOG_PER_MIN := 5
 ## Protocol-7 games read the challenge's reason as their refusal.
-const UPDATE_REASON := "This server runs a newer version of RUNEBOUND. Update your game (git pull)."
+const UPDATE_REASON := "This server runs a newer version of RUNEBOUND. Update your game: github.com/melknoo/Runebound/releases (or git pull)."
 ## Zone builds block the main loop for seconds (the laptop: ~1.5 s); ENet
 ## must not drop a peer for that.
 const PEER_TIMEOUT_MIN_MS := 15000
@@ -617,8 +617,14 @@ static func version_reason(server_protocol: int, game_protocol: int) -> String:
 		return ("Version mismatch: this server runs an older RUNEBOUND (protocol %d) than your game (%d). " +
 			"The host has to update the server (tools\\run_godot.cmd release) - or play the release branch.") % [
 			server_protocol, game_protocol]
-	return "Version mismatch: your game is older (protocol %d) than this server (%d). Update your game (git pull)." % [
-		game_protocol, server_protocol]
+	return ("Version mismatch: your game is older (protocol %d) than this server (%d). " +
+		"Update your game: github.com/melknoo/Runebound/releases (or git pull).") % [game_protocol, server_protocol]
+
+
+## Player builds carry their version (tools/dist sets config/version, e.g.
+## 0.15.2: the middle number is PROTOCOL); "dev" when run from the source.
+static func game_version() -> String:
+	return str(ProjectSettings.get_setting("application/config/version", "dev"))
 
 
 ## Server: say no (the reason is what the player reads) and drop the peer.

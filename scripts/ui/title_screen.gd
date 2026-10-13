@@ -59,6 +59,10 @@ var _connect_btn: Button
 var _back_btn: Button
 var _status: Label
 var _main_status: Label
+## Player builds: "New version ... - download" (UpdateCheck) on the main page,
+## "Download the newest version" under a version refusal on the join page.
+var _update_btn: Button
+var _join_update_btn: Button
 ## M17a: the settings window while it is open (null otherwise).
 var _settings: SettingsUI
 ## `--connect=` joins (run_godot coop) keep the player's saved settings.
@@ -91,6 +95,10 @@ func _ready() -> void:
 	_show_main()
 	if Net.last_reason != "" and Net.last_reason != Net.LEFT_REASON:  # M17a: leaving on purpose is no warning
 		_say(_main_status, Net.last_reason, WARN)
+		_offer_download_for(_update_btn, Net.last_reason)
+	var update := UpdateCheck.new()
+	update.found.connect(_on_update_found)
+	add_child(update)
 	var broken := Net.broken_scripts()
 	if not broken.is_empty():
 		_continue_btn.disabled = true
@@ -228,7 +236,7 @@ func _build() -> void:
 	_build_character_pages(pages)
 	_build_join_page(pages)
 
-	var footer := UiTheme.caption("Net protocol %d" % Net.PROTOCOL)
+	var footer := UiTheme.caption("Version %s - net protocol %d" % [Net.game_version(), Net.PROTOCOL])
 	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	footer.offset_left = 16
 	footer.offset_top = -40
@@ -251,6 +259,9 @@ func _build_main_page(pages: Control) -> void:
 	_main_page.add_child(_button("Quit", func() -> void: get_tree().quit()))
 	_main_status = _status_label()
 	_main_page.add_child(_main_status)
+	_update_btn = _button("", func() -> void: _open_download(_update_btn))
+	_update_btn.visible = false
+	_main_page.add_child(_update_btn)
 	# The playtest checklist (PlaytestLog): how much is left to try.
 	var todo := PlaytestLog.counts()
 	if int(todo["total"]) > 0 and GameSettings.dev_tools():  # M17a: a developer tool
@@ -323,6 +334,9 @@ func _build_join_page(pages: Control) -> void:
 	row.add_child(_back_btn)
 	_status = _status_label()
 	_join_page.add_child(_status)
+	_join_update_btn = _button("", func() -> void: _open_download(_join_update_btn))
+	_join_update_btn.visible = false
+	_join_page.add_child(_join_update_btn)
 	_select_server(_initial_server())
 
 
@@ -793,6 +807,28 @@ func _on_failed(reason: String) -> void:
 	if not _join_page.visible:
 		_show_join()
 	_say(_status, reason, WARN)
+	_offer_download_for(_join_update_btn, reason)
+
+
+## UpdateCheck found a newer release: the main page offers its page.
+func _on_update_found(version: String, url: String) -> void:
+	_update_btn.text = Texts.t("ui.update.available", [version])
+	_update_btn.set_meta(&"url", url)
+	_update_btn.visible = true
+
+
+## A refusal because this game is too old: a player build offers the
+## download page (a source checkout pulls instead).
+func _offer_download_for(button: Button, reason: String) -> void:
+	var wanted := OS.has_feature("template") and reason.contains("Update your game")
+	if wanted:
+		button.text = Texts.t("ui.update.download")
+		button.set_meta(&"url", UpdateCheck.RELEASES_PAGE)
+	button.visible = wanted
+
+
+func _open_download(button: Button) -> void:
+	OS.shell_open(str(button.get_meta(&"url", UpdateCheck.RELEASES_PAGE)))
 
 
 ## Progress in the muted tone, problems in `color`; an empty line takes no

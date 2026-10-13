@@ -218,7 +218,8 @@
 			"id": "coop",
 			"title": "Koop",
 			"items": [
-				{"id": "c_friend_join", "src": "M09b", "title": "Freund tritt ohne Tailscale bei", "hint": "Nur mit Spiel (Branch release), „Acer“ im Dropdown und seinem Code. Klappt das auf Anhieb?"},
+				{"id": "c_friend_join", "src": "M09b", "title": "Freund tritt ohne Tailscale bei", "hint": "Nur mit dem Installer oder der ZIP von GitHub Releases, „Acer“ im Dropdown und seinem Code. Klappt das auf Anhieb?"},
+				{"id": "c_release_build", "src": "Release", "title": "Spieler-Build von GitHub", "hint": "Setup.exe oder ZIP von github.com/melknoo/Runebound/releases: Ist die SmartScreen-Warnung verständlich erklärt? Start, Highlands, Play online, Eintrag RUNEBOUND (DirectX 12), Version unten links, Update-Hinweis im Titel bei einer neueren Version?"},
 				{"id": "c_second_pc", "src": "neu", "title": "Zweiter PC: online in die Highlands", "hint": "Auf dem RTX-2070-PC mit Godot 4.6.3, ohne Editor (run_godot coop, dann Play online -> Acer): aus Runehold in die Highlands, ein paar Minuten bleiben. Kein Black Screen, kein Absturz?"},
 				{"id": "c_server_pick", "src": "neu", "title": "Server im Dropdown", "hint": "Characters -> Play online: „Acer“ wählen, Code eintragen, verbinden. Steht nirgends die Adresse? „Other address …“ für LAN oder run_godot server (127.0.0.1)?"},
 				{"id": "c_deploy", "src": "neu", "title": "Server-Update per Push", "hint": "Während ihr spielt: kommen die Hinweise (5 min, 1 min, 10 s), und klappt der Wiedereinstieg?"},

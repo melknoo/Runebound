@@ -1367,6 +1367,28 @@ never `DisplayServer` (headless bot clients are clients).
   drops its materials (else the renderer logged "material is null").
   Look review: `-- --snap=<png> --snap-page=<page>` (a test-run flag).
 
+## Player builds (2026-10-13)
+Windows installer + ZIP on GitHub Releases; the pipeline, pins and pitfalls
+are in [dev-notes/release-builds.md](dev-notes/release-builds.md). In the code:
+- **Export rules:** `export_presets.cfg` (preset `Windows`) leaves `tests/`,
+  `tools/`, `docs/` out and adds raw `*.r16`. An export packs only imported
+  copies: PNG pixels come from `ArtKit.png_image()` (imported texture ->
+  `get_image()`), never `FileAccess` on a `.png`; test scripts load through
+  `ZoneBase.test_node()` (null in a build).
+- **ExportCheck** (`scripts/systems/export_check.gd`): `-- --export-check
+  --out=<json>`, handed over by the title screen (a test-run flag); reads
+  what an export can lose, boots the Highlands, counts errors through a
+  `Logger`, exits 0/1.
+- **Version:** `config/version` is `dev` in the repo; `build_windows.ps1`
+  sets `0.<protocol>.<n>` for the export only. `Net.game_version()`, the
+  title footer.
+- **UpdateCheck** (`scripts/net/update_check.gd`): in an exported build
+  (`OS.has_feature("template")`), not headless or in tests, setting
+  `gameplay/update_check` on: one `HTTPRequest` per process to GitHub's
+  latest release, `found(version, url)` when newer (`is_newer` compares the
+  numbers). The title screen shows it as a button; a refusal containing
+  "Update your game" shows a download button in a player build.
+
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
 M12: 7 foliage (forest trunks; heroes and enemies mask it, the camera does not)

@@ -137,6 +137,23 @@ Phasen:
 Nicht in M09b: direktes UDP per Hole-Punching (nur falls Funnel zu langsam ist), IPv6 direkt,
 Accounts.
 
+### Spieler-Builds für Windows — gebaut 2026-10-13, dein Playtest offen
+Deine Entscheidungen (2026-10-13): unsigniert, aber nachprüfbar (keine kostenpflichtige Signatur);
+Installer **und** portable ZIP; GitHub Releases, gekoppelt an das Server-Release; Update-Hinweis im
+Titelmenü. Umgesetzt:
+- `tools\run_godot.cmd release` setzt nach dem Server-Update ein Tag `v0.<Protokoll>.<n>`; GitHub
+  Actions baut daraus Installer (Inno Setup, ohne Adminrechte, Eintrag „RUNEBOUND (DirectX 12)“)
+  und ZIP, prüft den fertigen Build selbst (Export-Check bis in die Highlands) und veröffentlicht
+  beides mit Prüfsummen und Herkunftsnachweis (Attestation).
+- Nur offizielle Werkzeuge mit festgeschriebenen Prüfsummen (`tools/dist/pins.json`), nur
+  GitHub-eigene Actions.
+- Im Spiel: Version unten links, „Neue Version … herunterladen“ im Titel, bei zu altem Spiel ein
+  Download-Knopf; abschaltbar unter Gameplay.
+- Lokal: `tools\run_godot.cmd dist` baut dasselbe nach `build\dist`.
+Gate: Freunde installieren vom ersten Release (`v0.15.0`, kommt mit dem nächsten `release`) und
+treten bei (J-Punkt „Spieler-Build von GitHub“). Später möglich: kostenlose Signatur über SignPath
+Foundation (braucht eine Open-Source-Lizenz für alles, auch die Assets).
+
 ### M08 — Open World I: Ashen Highlands, offen (angespielt; Notizen am 28.09. umgesetzt)
 Sichtbar:
 - **Heightmap-Terrain 384 × 384 m** aus einem deklarativen Layout gebacken (`tools/worldgen`):
