@@ -801,9 +801,9 @@ func _on_enemy_fx(fx: StringName, e: EnemyBase) -> void:
 
 
 ## Server: a ground hazard appeared (FirePatch / ShadowRune _ready).
-func register_hazard(kind: StringName, pos: Vector3) -> void:
+func register_hazard(kind: StringName, pos: Vector3, extra: Array = []) -> void:
 	if Net.is_dedicated():
-		Net.broadcast_zone(NetMsg.HAZARD, [String(kind), pos])
+		Net.broadcast_zone(NetMsg.HAZARD, [String(kind), pos] if extra.is_empty() else [String(kind), pos, extra])
 
 
 func _hp_scale() -> float:
@@ -875,6 +875,16 @@ func _on_hazard_msg(_from: int, payload: Array) -> void:
 			burst.visual_only = true
 			burst.position = pos
 			zone.add_child(burst)
+		"storm_strike":  # M13b the Stormwatch: [radius, delay, chain_range, chains]
+			var extra: Array = payload[2] if payload.size() > 2 and payload[2] is Array else [1.4, 0.8, 0.0, 0]
+			var bolt := StormStrike.new()
+			bolt.visual_only = true
+			bolt.target = pos
+			bolt.radius = float(extra[0])
+			bolt.delay = float(extra[1])
+			bolt.chain_range = float(extra[2])
+			bolt.chains = int(extra[3])
+			zone.add_child(bolt)
 
 
 func _on_enemy_scale_msg(_from: int, payload: Array) -> void:

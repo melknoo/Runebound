@@ -1827,9 +1827,9 @@
    ],
    "radius": 10.0,
    "composition": [
-    "rusher",
-    "caster",
-    "rusher"
+    "coil_sentinel",
+    "storm_acolyte",
+    "storm_acolyte"
    ],
    "spots": [
     [
@@ -1928,8 +1928,8 @@
    ],
    "radius": 8.0,
    "composition": [
-    "caster",
-    "rusher"
+    "storm_acolyte",
+    "coil_sentinel"
    ],
    "spots": [
     [
@@ -1993,8 +1993,8 @@
    ],
    "radius": 8.0,
    "composition": [
-    "rusher",
-    "caster"
+    "coil_sentinel",
+    "storm_acolyte"
    ],
    "spots": [
     [
@@ -2057,8 +2057,8 @@
    ],
    "radius": 7.0,
    "composition": [
-    "warden",
-    "caster"
+    "storm_acolyte",
+    "storm_acolyte"
    ],
    "spots": [
     [
@@ -2097,7 +2097,7 @@
     0,
     -105
    ],
-   "boss": "dungeon_boss",
+   "boss": "stormsworn",
    "flag": "sw_sworn_down",
    "trigger": 9.0,
    "reward": "mid",
@@ -2139,9 +2139,9 @@
    ],
    "radius": 8.0,
    "composition": [
-    "warden",
-    "rusher",
-    "caster"
+    "coil_sentinel",
+    "storm_acolyte",
+    "storm_acolyte"
    ],
    "spots": [
     [
@@ -2196,7 +2196,7 @@
     69,
     -41
    ],
-   "boss": "dungeon_boss",
+   "boss": "galebinder",
    "flag": "sw_gale_down",
    "trigger": 9.0,
    "reward": "mid",
@@ -2247,9 +2247,9 @@
    ],
    "radius": 8.0,
    "composition": [
-    "warden",
-    "caster",
-    "caster"
+    "coil_sentinel",
+    "coil_sentinel",
+    "storm_acolyte"
    ],
    "spots": [
     [

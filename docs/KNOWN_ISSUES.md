@@ -395,6 +395,15 @@
   and bots a human may be "given" a place it never takes (a bot then waits).
 - `run_godot coop` companions keep the level and gear `--level=auto` gave
   them in their own saves (`companion_<i>.json`).
+- **Storm family and mid-boss numbers to feel (phase 5):** the acolyte's
+  bolt 12 (+8 leaping 4 m), every 3.2 s; the sentinel's punch 14, its ring
+  18 in 5 m every 9 s (2.4 s charge), the taunted bolt 22; a wraith's dive
+  9. The Stormsworn: 1100 base health, three blows of 18, bolts 14 (+12
+  leaping 5 m) every 13 s on one hero in two; the Galebinder: 950, blades
+  15, the gust 6 with a big push every 15 s. Both are first numbers; the
+  party check (phase 6) tunes them.
+- The storm family's rigs and both bosses read dark in the dim halls in the
+  shots (contact sheets show them clearly); judge them in the playtest.
 - **The Stormwatch's look to judge (phase 4, shots `m13b_stormwatch`):**
   the slate interior may read dark; the copper grid is every 4 m now (2 m
   was busy); the puzzle parts (coils, plates, pylons) are code-built.

@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots", "stormsworn",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -27,6 +27,9 @@ var _rv_saw_down := false
 var _rv_saw_up := false
 ## M13b coop_puzzles: the plates seen open on the server.
 var _cp_saw_open := false
+## M13b stormsworn: the boss's largest health seen on the server.
+var _sw_max_hp := 0.0
+var _sw_done := false
 
 
 func _ready() -> void:
@@ -356,6 +359,21 @@ func _update() -> void:
 					verdict = "fail: no crypt chest on the server"
 				else:
 					verdict = "ok"
+		"stormsworn":  # M13b: the Stormsworn scaled for three on the server, felled: the flag in its world
+			var szone := get_tree().current_scene as ZoneBase
+			if szone != null and szone.net_world != null:
+				for sid: int in szone.net_world.enemies:
+					var se := szone.net_world.enemies[sid] as EnemyBase
+					if se != null and is_instance_valid(se) and se is Stormsworn:
+						_sw_max_hp = maxf(_sw_max_hp, se.health.max_health)
+			if _sw_max_hp >= 3500.0 and SaveGame.has_flag(&"sw_sworn_down"):
+				_sw_done = true  # kept: once all have left, the server goes back out and forgets the run
+			if _sw_done:
+				verdict = "ok"
+			elif _sw_max_hp < 3500.0:
+				verdict = "fail: the Stormsworn was not scaled for three (%.0f)" % _sw_max_hp
+			else:
+				verdict = "fail: no sw_sworn_down in the server's world"
 		"coop_bots":  # M13b: the bots' work, judged on the server like a person's
 			if not bool(SaveGame.poi_state("lab_coop_sync").get("solved", false)):
 				verdict = "fail: the coils are not solved in the server's world"

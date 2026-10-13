@@ -717,6 +717,36 @@ func strike_circle(center: Vector3, radius: float, damage: float, type: HitInfo.
 	return victims
 
 
+## M13b: one hit for every hero whose feet stand in the lane from `start`
+## along `dir` (`length` long, `half_width` to each side; the hit carries the
+## point of the lane beside the hero, so its owner judges it where it stood).
+func strike_lane(start: Vector3, dir: Vector3, length: float, half_width: float, damage: float,
+		type: HitInfo.DamageType, weight: HitInfo.Weight, knockback: float) -> Array[Player]:
+	var victims: Array[Player] = []
+	var zone := ZoneBase.zone_of(self)
+	if zone == null:
+		return victims
+	var d := Vector3(dir.x, 0.0, dir.z).normalized()
+	for hero in zone.party():
+		if hero.health.is_dead:
+			continue
+		var rel := hero.global_position - start
+		if absf(rel.y) > STRIKE_HEIGHT:
+			continue
+		rel.y = 0.0
+		var along := rel.dot(d)
+		if along < -0.3 or along > length + STRIKE_TOLERANCE or (rel - d * along).length() > half_width + STRIKE_TOLERANCE:
+			continue
+		var hit := HitInfo.create(damage, type, weight, start)
+		hit.knockback = knockback
+		hit.area_center = start + d * along
+		hit.area_radius = half_width + STRIKE_TOLERANCE
+		hit.source_id = get_instance_id()
+		hero.take_hit(hit)
+		victims.append(hero)
+	return victims
+
+
 func face_player(delta: float, turn_speed: float = 10.0) -> void:
 	var dir := dir_to_player()
 	var target_yaw := atan2(-dir.x, -dir.z)

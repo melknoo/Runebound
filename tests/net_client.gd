@@ -658,6 +658,68 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
+			"stormsworn":
+				# M13b phase 5: the three wake the Stormsworn in her hall (scaled for
+				# three, the bar shows); her called lightning reaches every client
+				# as bolts; they strike her down - the flag and the gate on all.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as StormwatchZone
+				if zone == null:
+					_finish("fail: not in the Stormwatch")
+					return
+				var world := zone.net_world
+				var gate := zone.gates["sw_d_sworn_c3"] as DungeonGate
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				var spots := {"c1": Vector3(-4, 0.2, -98), "c2": Vector3(0, 0.2, -97), "c3": Vector3(4, 0.2, -98)}
+				hero.global_position = Vector3(0, 0.2, -72) + Vector3(float(int(role.trim_prefix("c")) - 2) * 3.0, 0, 0)
+				if not await _until(func() -> bool: return Net.roster.size() >= 3, 30.0, "all three heroes"):
+					return
+				await _seconds(2.0)
+				var find_boss := func() -> EnemyBase:
+					for id: int in world.enemies:
+						var e := world.enemies[id] as EnemyBase
+						if e != null and is_instance_valid(e) and e is Stormsworn and e.ai_state != EnemyBase.AIState.DEAD:
+							return e
+					return null
+				hero.global_position = spots[role] as Vector3
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return find_boss.call() != null, 20.0, "the Stormsworn"):
+					return
+				var boss := find_boss.call() as EnemyBase
+				if not await _until(func() -> bool: return is_instance_valid(boss) and boss.health.max_health > 3500.0, 10.0,
+						"her health scaled for three heroes"):
+					return
+				if zone.hud._boss_root == null or not zone.hud._boss_root.visible:
+					_finish("fail: no boss bar")
+					return
+				var saw_bolt := {"yes": false}
+				var bolt_seen := func() -> bool:
+					for child in zone.get_children():
+						if child is StormStrike:
+							saw_bolt["yes"] = true
+					return bool(saw_bolt["yes"])
+				if not await _until(bolt_seen, 25.0, "her called lightning (a bolt) here"):
+					return
+				var struck_at := {"t": 0}
+				var felled := func() -> bool:
+					if SaveGame.has_flag(&"sw_sworn_down"):
+						return true
+					var b := find_boss.call() as EnemyBase
+					if b != null and Time.get_ticks_msec() - int(struck_at["t"]) > 300:
+						struck_at["t"] = Time.get_ticks_msec()
+						var hit := hero.roll_ability_hit(hero.ability(&"rune_cleave"))
+						hit.damage = 300.0
+						b.take_hit(hit)
+					return false
+				if not await _until(felled, 60.0, "the Stormsworn felled (the flag)"):
+					return
+				if not await _until(func() -> bool: return gate.is_open, 10.0, "the gate behind her open"):
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"coop_bots":
 				# M13b phase 3: c1 is the leader, c2 and c3 the real companion
 				# bots. The leader takes one plate (the bots the others), one place

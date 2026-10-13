@@ -142,6 +142,31 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
   - Smoke 889 green (every door input names a puzzle, the kinds and ten
     lore texts, the look and wind, the wings with plate and lever, the
     orrery played through).
+- **Phase 5 (built): the storm family and the two mid-bosses.**
+  - The Stormsworn Acolyte (keeps its distance, calls a bolt on its prey's
+    spot that leaps to one more hero within 4 m) and the Coil Sentinel (a
+    construct that punches and every 9 s charges and discharges a 5 m ring -
+    taunted, one bolt into its taunter only) fill the camps; gale wraiths
+    (a short lane, a dive) come with the Galebinder.
+  - The Stormsworn (the hall of the Sworn): a three-blow combo on her
+    target, every 13 s lightning on one hero in two (at most three) that
+    leaps from hero to hero within 5 m, acolytes at half health (one fewer
+    than the heroes). The Galebinder (the gale hall): wind blades down a
+    lane, a gust that throws everyone near back, wraith waves at 75 / 50 /
+    25 % (one per hero).
+  - Rigs: the wraith on the wisp template, the acolyte and the Galebinder
+    on the robed caster template (halo, wind tails), the sentinel (a coil
+    on its back) and the Stormsworn (plate, a violet tabard, a halberd) on
+    the humanoid one; contact sheets in captures_contact/. Five new sounds.
+  - Smoke 894 green (a bolt's single leap and the Stormsworn's chain, the
+    rigs, the sentinel's ring and its taunted bolt, five heroes: three bolts
+    and four acolytes, a wave of five wraiths). Net scenario `stormsworn`
+    (scaled for three, the bar, her bolts reach the clients, felled: the
+    flag and the gate) two runs green; `coop_gate`, `revive` green. Shots
+    `m13b_stormwatch` (21) now with the family and both bosses.
+  - Found on the way: a test standing in the real arena's trigger woke its
+    Stormsworn, and killing it set the run's flag; the test now stands
+    outside the trigger.
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

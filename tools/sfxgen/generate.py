@@ -773,6 +773,63 @@ def steam_hiss():
     save(pad(hiss * 0.8, crack), "steam_hiss_01")
 
 
+def storm_bolt():
+    """M13b: a bolt from the dome - a white crack, a short tearing sizzle, the
+    first roll of thunder close behind."""
+    d = 1.1
+    crack = highpass(noise(d), 0.45) * env_exp(d, 0.03, 0.0005)
+    sizzle = highpass(noise(d), 0.2) * env_exp(d, 0.18, 0.002) * 0.5
+    sizzle *= 0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 70 * t(d)))
+    roll = lowpass(noise(d), 0.02) * env_exp(d, 0.45, 0.04) * 0.9
+    save(normalize(crack + sizzle + roll, 0.9), "storm_bolt_01")
+
+
+def coil_charge():
+    """M13b: a coil charging - a whine rising over 2.4 s with a buzzing hum
+    under it, tightening at the end."""
+    d = 2.4
+    x = t(d)
+    whine = sine_sweep(d, 180.0, 1400.0) * (0.2 + 0.8 * (x / d) ** 2)
+    buzz = np.sign(np.sin(2 * np.pi * (60 + 40 * x / d) * x)) * 0.12 * (x / d)
+    hiss = highpass(noise(d), 0.3) * 0.08 * (x / d) ** 3
+    fade = np.minimum(1.0, (d - x) / 0.05)
+    save(normalize((whine * 0.5 + buzz + hiss) * fade, 0.75), "coil_charge_01")
+
+
+def coil_discharge():
+    """M13b: a coil letting go - a heavy zap, a burst of crackle, a falling
+    whine as the charge drains."""
+    d = 0.9
+    zap = highpass(noise(d), 0.35) * env_exp(d, 0.06, 0.0005) * 1.2
+    crackle = np.zeros(len(t(d)))
+    for k in range(18):
+        at = rng.uniform(0.0, 0.5)
+        dd = rng.uniform(0.003, 0.01)
+        pop = highpass(noise(dd), 0.5) * env_exp(dd, dd * 0.4, 0.0005) * rng.uniform(0.2, 0.5)
+        start = int(at * SR)
+        crackle[start:start + len(pop)] += pop
+    fall = sine_sweep(d, 900.0, 120.0) * env_exp(d, 0.3, 0.005) * 0.4
+    save(normalize(zap + crackle + fall, 0.9), "coil_discharge_01")
+
+
+def gale_gust():
+    """M13b: a gust of bound wind - a band of noise swelling and passing."""
+    d = 0.9
+    x = t(d)
+    swell = np.sin(np.pi * np.clip(x / d, 0.0, 1.0)) ** 1.5
+    whoosh = lowpass(highpass(noise(d), 0.05), 0.25) * swell
+    save(normalize(whoosh, 0.8), "gale_gust_01")
+
+
+def wraith_shriek():
+    """M13b: a gale wraith - a thin, airy shriek that bends down."""
+    d = 0.6
+    x = t(d)
+    voice = np.sin(2 * np.pi * (1500.0 - 600.0 * x / d) * x) * env_exp(d, 0.25, 0.02)
+    air = highpass(noise(d), 0.3) * env_exp(d, 0.2, 0.01) * 0.5
+    save(normalize(voice * 0.4 + air, 0.7), "wraith_shriek_01")
+
+
 def stormwatch_wind_loop():
     """M13b the Stormwatch: wind keening through a broken dome in slow gusts,
     the hum of old charged copper, far thunder twice, a static tick now and
@@ -855,4 +912,5 @@ if __name__ == "__main__":
         chitter(i)
     imp_cackle(); steam_hiss(); brood_shriek()  # M13 phase 7
     stormwatch_wind_loop()  # M13b phase 4
+    storm_bolt(); coil_charge(); coil_discharge(); gale_gust(); wraith_shriek()  # M13b phase 5
     print("done.")

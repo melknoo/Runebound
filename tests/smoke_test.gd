@@ -5366,6 +5366,93 @@ func _run() -> void:
 		await _wait_frames(10)
 		_check(sw_dry and sw_oc.is_solved() and sw_beam.flowing() and sw_beam.is_solved() and (sw.gates["sw_d_orrery_tome"] as DungeonGate).is_open,
 			"M13b: the orrery - two coils wake its lightning, two crystals turned send it home, the tome room opens")
+		# --- M13b phase 5: the storm family and the two mid-bosses ---
+		var sf_at := Vector3(0, 0.2, -36)  # the crossing: no camp near
+		swh.global_position = sf_at
+		swh.velocity = Vector3.ZERO
+		var sf_mates: Array[Player] = []
+		for sf_i in 4:
+			var sf_mate := Player.create(ClassData.load_by_id(&"elementalist"))
+			sf_mate.is_local = false
+			sf_mate.input_source = InputSource.new()
+			sf_mate.god_mode = true
+			sw.add_player(sf_mate)
+			sf_mates.append(sf_mate)
+		var sf_park := func() -> void:  # every extra hero far off, out of every strike
+			for sf_j in sf_mates.size():
+				sf_mates[sf_j].global_position = Vector3(-14 + sf_j * 3.0, 0.2, -30)
+				sf_mates[sf_j].velocity = Vector3.ZERO
+		sf_park.call()
+		# a bolt with one leap: the hero beside the struck one, not the one 8 m off
+		sf_mates[0].global_position = sf_at + Vector3(3.0, 0, 0)
+		sf_mates[1].global_position = sf_at + Vector3(-8.0, 0, 0)
+		await _wait_frames(3)
+		var sf_bolt := StormStrike.cast(sw, sf_at, 1.4, 0.0, 12.0, 4.0, 8.0, 1)
+		await _wait_frames(4)
+		var sf_leap_ok := sf_bolt.struck.size() == 2 and sf_bolt.struck.has(swh) and sf_bolt.struck.has(sf_mates[0])
+		# a bolt that leaps on and on: three heroes 4.5 m apart in a line
+		sf_mates[1].global_position = sf_at + Vector3(7.5, 0, 0)
+		await _wait_frames(3)
+		var sf_bolt2 := StormStrike.cast(sw, sf_at, 1.4, 0.0, 12.0, 5.0, 8.0, -1)
+		await _wait_frames(4)
+		_check(sf_leap_ok and sf_bolt2.struck.size() == 3,
+			"M13b storm: a bolt leaps once to the hero beside its mark (not the one 8 m off); the Stormsworn's leaps on along a line")
+		sf_park.call()
+		# the Coil Sentinel: a ring around itself - or, taunted, one bolt into its taunter
+		var sf_sent := sw.spawn_by_id("coil_sentinel", sf_at + Vector3(0, 0, -3))
+		var sf_acol := sw.spawn_by_id("storm_acolyte", sf_at + Vector3(4, 0, -3))
+		var sf_wraith := sw.spawn_by_id("gale_wraith", sf_at + Vector3(-4, 0, -3))
+		await _wait_frames(6)
+		_check(sf_sent.rig_root() != null and sf_acol.rig_root() != null and sf_wraith.rig_root() != null
+			and sf_sent.display_name == "Coil Sentinel" and sf_acol.display_name == "Stormsworn Acolyte",
+			"M13b storm: the acolyte, the sentinel and the wraith stand in their own rigs")
+		(sf_sent as CoilSentinel).lock_strike()
+		(sf_sent as CoilSentinel)._discharge()
+		var sf_ring := (sf_sent as CoilSentinel).last_discharge == "ring"
+		sf_sent.taunt(swh, 3.0)
+		(sf_sent as CoilSentinel)._discharge()
+		_check(sf_ring and (sf_sent as CoilSentinel).last_discharge == "bolt" and (sf_sent as CoilSentinel).last_bolt_to == swh,
+			"M13b storm: a Coil Sentinel discharges a ring - taunted, one bolt into its taunter")
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		# the Stormsworn: bolts on every second hero, acolytes one fewer than the heroes
+		var sf_hall := sw.layout.room("sw_sworn")
+		var sf_rect := DungeonLayout.rect_of(sf_hall)
+		for sf_k in 2:
+			sf_mates[sf_k].global_position = Vector3(-14 + sf_k * 28.0, 0.2, -90)  # in the hall, out of its arena's trigger
+		swh.global_position = Vector3(0, 0.2, -88)
+		await _wait_frames(3)
+		var sf_boss := ZoneBase.make_enemy("stormsworn") as Stormsworn  # bosses come like their arena spawns them
+		sw._spawn_enemy(sf_boss, Vector3(0, 0.2, -110))
+		sf_boss.setup_arena(sf_rect, {})
+		await _wait_frames(4)
+		sf_boss._call_lightning()
+		var sf_three := sf_boss.party_count() == 5 and sf_boss.last_bolts.size() == 3
+		sf_boss._summon()
+		await _wait_frames(4)
+		_check(sf_three and sf_boss.acolytes_called == 4 and sf_boss.display_name == "The Stormsworn" and sf_boss.rig_root() != null,
+			"M13b Stormsworn: with five heroes three bolts and four acolytes (one bolt for every two, one acolyte fewer than the heroes)")
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		# the Galebinder: a wave of wraiths at three quarters of his health, one for every hero
+		var sf_gale_rect := DungeonLayout.rect_of(sw.layout.room("sw_gale"))
+		swh.global_position = Vector3(69, 4.2, -30)
+		await _wait_frames(3)
+		var sf_gb := ZoneBase.make_enemy("galebinder") as Galebinder
+		sw._spawn_enemy(sf_gb, Vector3(69, 4.2, -45))
+		sf_gb.setup_arena(sf_gale_rect, {})
+		await _wait_frames(4)
+		sf_gb.health.current_health = sf_gb.health.max_health * 0.7
+		await _wait_frames(4)
+		_check(sf_gb.wraiths_called == 5 and sf_gb.rig_root() != null and sf_gb.display_name == "The Galebinder",
+			"M13b Galebinder: at three quarters a wave of wraiths, one for every hero (%d)" % sf_gb.wraiths_called)
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		for sf_m: Player in sf_mates:
+			sw.remove_player(sf_m)
+			sf_m.queue_free()
+		swh.global_position = sf_at
+		await _wait_frames(4)
 		# --- M13b phase 3: bots' ways through the rooms ---
 		var wp_fore := sw.layout.next_waypoint(Vector3(0, 0, 55), Vector3(0, 0, 5), sw.door_passable)
 		var wp_door := sw.layout.next_waypoint(Vector3(0, 0, 39), Vector3(0, 0, 5), sw.door_passable)

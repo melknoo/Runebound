@@ -2290,8 +2290,8 @@ def build_wisp(sheets=False):
     finish(body, arm, "smoulder_wisp", "smoulder_wisp", (1,), sheets)
 
 
-def wisp_clips(arm):
-    windup = f(const_from("enemies/smoulder_wisp.gd", "WINDUP_TIME"))
+def wisp_clips(arm, script="enemies/smoulder_wisp.gd"):
+    windup = f(const_from(script, "WINDUP_TIME"))  # M13b: the gale wraith reads its own
     stance = {"body": {"rot": (0, 0, 0), "loc": (0, 0, 0)}, "head": (0.0, 0, 0), "tail": (0.0, 0, 0),
               "arm.L": (0.0, 0, 0), "arm.R": (0.0, 0, 0)}
     k = keyed(stance)
@@ -3507,6 +3507,372 @@ def reeve_clips(arm):
            {0: EXPO_OUT, 4: QUART_OUT, 16: QUART_OUT})
 
 
+# ---------------------------------------------------------------------------
+# M13b THE STORM FAMILY (the Stormwatch): the gale wraith on the wisp
+# template, the acolyte and the Galebinder on the robed caster template, the
+# coil sentinel and the Stormsworn on the humanoid one. Timings are read from
+# the enemy scripts.
+# ---------------------------------------------------------------------------
+
+def build_gale_wraith(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("gale_wraith", wisp_bones())
+    gw = PAL["gale_wraith"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    wind = pm.paint(gw["wind"], 2, "plain")
+    wind_hi = pm.paint(gw["wind"], 3, "plain")
+    husk = pm.paint(gw["husk"], 1)
+    # a thin dark husk wrapped in pale streamers, a long ragged tail
+    pm.loft("body", [(0.8, 0.13, 0.12, 0, 0), (0.96, 0.17, 0.15, 0, 0), (1.12, 0.13, 0.12, 0, 0)], sides=7, paint=husk)
+    for k in range(3):
+        a = k * 2.1
+        pm.loft("body", [(0.84 + k * 0.08, 0.19, 0.17, 0.02 * math.cos(a), 0.02 * math.sin(a)),
+                         (0.9 + k * 0.08, 0.2, 0.18, 0.03 * math.cos(a), 0.03 * math.sin(a))], sides=7, paint=wind)
+    pm.loft("head", [(1.12, 0.1, 0.1, 0, 0), (1.24, 0.12, 0.11, 0, 0), (1.34, 0.06, 0.06, 0, 0.02)], sides=6, paint=husk)
+    pm.box("head", (0.12, 0.03, 0.025), (0, -0.11, 1.24), mat_index=1)                     # eyes
+    for (a, ln) in ((0.4, 0.42), (2.5, 0.36), (4.4, 0.38)):                               # swept-back streamers
+        pm.loft("head", [(1.3, 0.04, 0.04, 0.04 * math.cos(a), 0.04 + 0.04 * math.sin(a)),
+                         (1.3 + ln * 0.4, 0.005, 0.005, 0.1 * math.cos(a), 0.12 + ln)], sides=4, paint=wind_hi)
+    pm.loft("tail", [(0.82, 0.13, 0.11, 0, 0), (0.6, 0.08, 0.07, 0, 0.06), (0.36, 0.015, 0.015, 0, 0.16)], sides=6, paint=wind)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        pm.loft("arm." + side, [(1.06, 0.04, 0.04, 0.18 * x, 0), (0.86, 0.02, 0.02, 0.44 * x, 0.04)], sides=5, paint=wind_hi)
+    mats = [rig.make_material("gw_body", "#FFFFFF"),
+            rig.make_material("gw_eyes", gw["eyes"], emission_hex=gw["eyes"], strength=3.0)]
+    body = pm.to_object("gale_wraith", mats, arm)
+    wisp_clips(arm, "enemies/gale_wraith.gd")
+    finish(body, arm, "gale_wraith", "gale_wraith", (1,), sheets)
+
+
+def build_storm_acolyte(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("storm_acolyte", caster_bones())
+    sa = PAL["storm_acolyte"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    robe = pm.paint(sa["robe"], 3, "cloth")
+    robe_dark = pm.paint(sa["robe"], 1, "cloth")
+    skin = pm.paint(sa["skin"], 1, "hide")
+    copper = pm.paint(sa["copper"], 2)
+    # a burnt robe, scorched hem, a copper belt
+    pm.loft("hips", [(0.36, 0.33, 0.29, 0, 0.01), (0.7, 0.27, 0.23, 0, 0.0), (0.98, 0.21, 0.17, 0, 0.0)], paint=robe)
+    pm.loft("hem", [(0.06, 0.44, 0.4, 0, 0.02), (0.24, 0.41, 0.37, 0, 0.02), (0.46, 0.34, 0.3, 0, 0.01)], paint=robe)
+    pm.loft("hem", [(0.04, 0.45, 0.41, 0, 0.02), (0.12, 0.445, 0.405, 0, 0.02)], paint=robe_dark)   # the scorched hem
+    pm.loft("hips", [(0.9, 0.23, 0.19, 0, 0.0), (0.96, 0.225, 0.185, 0, 0.0)], paint=copper)       # belt
+    pm.loft("spine", [(0.96, 0.2, 0.16, 0, 0.0), (1.22, 0.21, 0.16, 0, -0.01)], paint=robe)
+    pm.loft("chest", [(1.2, 0.22, 0.17, 0, -0.01), (1.34, 0.2, 0.15, 0, -0.02), (1.42, 0.13, 0.11, 0, -0.03)], paint=robe)
+    pm.loft("chest", [(1.3, 0.25, 0.2, 0, -0.01), (1.42, 0.15, 0.13, 0, -0.02)], paint=robe_dark)  # the cowl, down
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        sx = 0.2 * x
+        pm.loft("upper_arm." + side, [(1.38, 0.065, 0.065, sx, -0.02), (1.1, 0.075, 0.075, sx * 1.1, -0.02)], paint=robe)
+        pm.loft("forearm." + side, [(1.12, 0.075, 0.075, sx * 1.1, -0.02), (0.9, 0.1, 0.09, sx * 1.15, -0.02)], paint=robe)
+        pm.loft("forearm." + side, [(0.98, 0.062, 0.062, sx * 1.15, -0.02), (0.9, 0.065, 0.065, sx * 1.15, -0.02)], paint=copper)  # bracers
+        pm.box("hand." + side, (0.07, 0.08, 0.1), (sx * 1.15, -0.03, 0.83), paint=skin)
+        pm.box("hand." + side, (0.05, 0.05, 0.05), (sx * 1.15, -0.06, 0.78), mat_index=1)          # the storm in its hands
+    # a bare, gaunt head under a copper circlet; violet eyes
+    pm.loft("head", [(1.4, 0.1, 0.1, 0, 0.0), (1.52, 0.12, 0.13, 0, -0.01), (1.66, 0.11, 0.12, 0, 0.0), (1.74, 0.06, 0.06, 0, 0.01)], paint=skin)
+    pm.loft("head", [(1.62, 0.125, 0.135, 0, 0.0), (1.66, 0.125, 0.135, 0, 0.0)], paint=copper)
+    for x in (1.0, -1.0):
+        pm.box("head", (0.035, 0.02, 0.02), (0.04 * x, -0.125, 1.56), mat_index=1)
+    mats = [rig.make_material("sa_body", "#FFFFFF"),
+            rig.make_material("sa_glow", sa["glow"], emission_hex=sa["glow"], strength=3.0)]
+    body = pm.to_object("storm_acolyte", mats, arm)
+    robed_clips(arm, "enemies/storm_acolyte.gd", "WINDUP_TIME")
+    finish(body, arm, "storm_acolyte", "storm_acolyte", (1,), sheets)
+
+
+def build_galebinder(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("galebinder", caster_bones())
+    gb = PAL["galebinder"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    robe = pm.paint(gb["robe"], 3, "cloth")
+    robe_dark = pm.paint(gb["robe"], 1, "cloth")
+    sash = pm.paint(gb["sash"], 1, "cloth")
+    mask = pm.paint(gb["mask"], 1)
+    copper = pm.paint(gb["copper"], 3)
+    # a tall pale robe ending in long wind tails (the hem hangs from the hips)
+    pm.loft("hips", [(0.4, 0.34, 0.3, 0, 0.01), (0.72, 0.28, 0.24, 0, 0.0), (0.98, 0.22, 0.18, 0, 0.0)], paint=robe)
+    for k in range(5):
+        a = -0.9 + k * 0.45
+        pm.loft("hem", [(0.5, 0.09, 0.05, 0.3 * math.sin(a), 0.3 * math.cos(a) * 0.4 + 0.05),
+                        (0.2, 0.07, 0.03, 0.36 * math.sin(a), 0.36 * math.cos(a) * 0.4 + 0.12),
+                        (-0.05, 0.015, 0.01, 0.38 * math.sin(a), 0.38 * math.cos(a) * 0.4 + 0.24)], sides=4,
+                paint=robe if k % 2 else robe_dark)
+    pm.loft("hips", [(0.88, 0.235, 0.195, 0, 0.0), (0.97, 0.23, 0.19, 0, 0.0)], paint=sash)        # the sash
+    pm.box("hips", (0.08, 0.04, 0.42), (0.1, -0.21, 0.72), paint=sash)                              # its hanging end
+    pm.loft("spine", [(0.96, 0.21, 0.17, 0, 0.0), (1.22, 0.22, 0.17, 0, -0.01)], paint=robe)
+    pm.loft("chest", [(1.2, 0.24, 0.18, 0, -0.01), (1.34, 0.22, 0.17, 0, -0.02), (1.42, 0.15, 0.12, 0, -0.03)], paint=robe)
+    pm.loft("chest", [(1.22, 0.3, 0.25, 0, 0.0), (1.38, 0.24, 0.2, 0, -0.01)], paint=robe_dark)     # mantle
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        sx = 0.2 * x
+        pm.loft("upper_arm." + side, [(1.38, 0.07, 0.07, sx, -0.02), (1.1, 0.085, 0.085, sx * 1.1, -0.02)], paint=robe)
+        pm.loft("forearm." + side, [(1.12, 0.085, 0.085, sx * 1.1, -0.02), (0.88, 0.15, 0.13, sx * 1.15, -0.02)], paint=robe)
+        pm.box("hand." + side, (0.07, 0.08, 0.1), (sx * 1.15, -0.03, 0.83), paint=mask)
+    # a hood with a pale mask, eyes of light; a copper halo floating behind it
+    pm.loft("head", [(1.38, 0.16, 0.16, 0, 0.01), (1.52, 0.19, 0.2, 0, 0.0), (1.68, 0.15, 0.16, 0, 0.02),
+                     (1.82, 0.07, 0.08, 0, 0.06)], paint=robe_dark)
+    pm.box("head", (0.2, 0.05, 0.2), (0, -0.18, 1.55), paint=mask)
+    for x in (1.0, -1.0):
+        pm.box("head", (0.05, 0.02, 0.02), (0.05 * x, -0.21, 1.58), mat_index=1)
+    for k in range(10):
+        a = k * math.tau / 10
+        pm.box("head", (0.12, 0.03, 0.05), (math.cos(a) * 0.32, 0.22, 1.6 + math.sin(a) * 0.32),
+               rot=(0.0, -a, 0.0), paint=copper)
+    pm.box("head", (0.05, 0.02, 0.05), (0.0, 0.22, 1.92), mat_index=1)                              # the halo's spark
+    mats = [rig.make_material("gb_body", "#FFFFFF"),
+            rig.make_material("gb_glow", gb["glow"], emission_hex=gb["glow"], strength=3.0)]
+    body = pm.to_object("galebinder", mats, arm)
+    robed_clips(arm, "enemies/galebinder.gd", "BLADE_WINDUP", gust="GUST_WINDUP")
+    finish(body, arm, "galebinder", "galebinder", (1,), sheets)
+
+
+def robed_clips(arm, script, windup_const, gust=None):
+    """The robed casters (no staff): idle hover, glide, charge (both hands
+    up, calling), cast (thrust), stagger; with `gust` a gust clip (arms flung
+    wide, rising). Built on the Duskweaver's motions."""
+    windup = f(const_from(script, windup_const))
+    hand_out = way(fwd=-0.2, left=0.6, up=-0.6)
+    stance = {"hips": {"rot": (0, 0, 0), "loc": (0, 0, 0)}, "hem": (0.0, 0, 0),
+              "spine": (0.04, 0, 0), "chest": (0.06, 0, 0), "head": (-0.05, 0, 0),
+              "upper_arm.L": (-0.2, 0, -0.18), "forearm.L": (-0.5, 0, 0), "hand.L": (0.0, 0, 0),
+              "upper_arm.R": (-0.2, 0, 0.18), "forearm.R": (-0.5, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+
+    def hover(y):
+        return {"hips": {"rot": (0, 0, 0), "loc": (0, y, 0)}}
+
+    action(arm, "idle", [
+        (0, k()),
+        (30, k({**hover(0.025), "hem": (0.06, 0, 0.03), "chest": (0.03, 0, 0)})),
+        (60, k({**hover(0.04), "chest": (0.08, 0, 0), "upper_arm.L": (-0.26, 0, -0.22), "upper_arm.R": (-0.26, 0, 0.22)})),
+        (90, k({**hover(0.015), "hem": (-0.04, 0, -0.03)})),
+        (120, k()),
+    ], sheet=[0, 30, 60, 90])
+    glide = k({"spine": (0.12, 0, 0), "chest": (0.1, 0, 0), "hem": (0.24, 0, 0),
+               "upper_arm.L": (0.1, 0, -0.3), "upper_arm.R": (0.1, 0, 0.3)})
+    action(arm, "glide", [
+        (0, glide), (12, {**glide, **hover(0.02), "hem": (0.3, 0, 0.05)}), (24, glide),
+        (36, {**glide, **hover(0.02), "hem": (0.18, 0, -0.05)}), (48, glide),
+    ], sheet=[0, 12, 24, 36])
+    raised = k({**hover(0.06), "chest": (-0.22, 0, 0), "head": (-0.25, 0, 0), "hem": (0.15, 0, 0),
+                "_reach.L": (pos(fwd=0.12, left=0.3, up=1.95), way(left=0.4, up=1.0)),
+                "_reach.R": (pos(fwd=0.12, left=-0.3, up=1.95), way(left=-0.4, up=1.0))})
+    hold = int(windup * 0.6)
+    action(arm, "charge", [
+        (0, k()),
+        (6, k({"chest": (0.15, 0, 0), "head": (0.05, 0, 0), "hem": (-0.08, 0, 0),
+               "upper_arm.L": (0.2, 0, -0.35), "upper_arm.R": (0.2, 0, 0.35)})),
+        (hold, raised),
+        (hold + 8, {**raised, **hover(0.07), "chest": (-0.25, 0, 0)}),
+        (windup, raised),
+    ], {6: QUART_OUT, hold: QUART_OUT})
+    thrust = k({**hover(0.02), "chest": (0.3, 0, 0), "spine": (0.1, 0, 0), "head": (-0.15, 0, 0), "hem": (-0.2, 0, 0),
+                "_reach.L": (pos(fwd=0.55, left=0.12, up=1.25), way(fwd=1.0, up=-0.6)),
+                "_reach.R": (pos(fwd=0.55, left=-0.12, up=1.25), way(fwd=1.0, up=-0.6))})
+    action(arm, "cast", [(0, raised), (3, thrust), (10, {**thrust, "chest": (0.24, 0, 0)}), (30, k())],
+           {0: EXPO_OUT, 3: QUART_OUT})
+    if gust is not None:
+        gwind = f(const_from(script, gust))
+        spread = k({**hover(0.12), "chest": (-0.15, 0, 0), "head": (-0.1, 0, 0), "hem": (0.3, 0, 0.1),
+                    "_reach.L": (pos(fwd=0.0, left=0.85, up=1.55), way(left=1.0, up=0.2)),
+                    "_reach.R": (pos(fwd=0.0, left=-0.85, up=1.55), way(left=-1.0, up=0.2))})
+        burst = k({**hover(0.04), "chest": (0.25, 0, 0), "hem": (-0.25, 0, -0.1),
+                   "_reach.L": (pos(fwd=0.4, left=0.7, up=1.1), hand_out),
+                   "_reach.R": (pos(fwd=0.4, left=-0.7, up=1.1), way(fwd=-0.2, left=-0.6, up=-0.6))})
+        action(arm, "gust", [(0, k()), (int(gwind * 0.7), spread), (gwind, spread), (gwind + 4, burst), (gwind + 24, k())],
+               {int(gwind * 0.7): QUART_OUT, gwind: EXPO_IN, gwind + 4: QUART_OUT})
+    recoil = k({**hover(-0.03), "chest": (-0.3, 0.12, 0), "head": (-0.4, 0.15, 0.1), "hem": (-0.3, 0, 0),
+                "upper_arm.L": (0.5, 0, -0.6), "upper_arm.R": (0.5, 0, 0.6)})
+    action(arm, "stagger", [(0, k()), (3, recoil), (12, {**recoil, "chest": (-0.18, 0.06, 0)}), (34, k())],
+           {0: EXPO_OUT, 3: QUART_OUT, 12: QUART_OUT})
+
+
+# --- THE COIL SENTINEL: a slate-and-copper construct, a coil on its back ------
+
+SENTINEL_LEG = 0.95 - 0.1
+
+
+def build_coil_sentinel(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("coil_sentinel", humanoid_bones(
+        hip=0.95, chest_top=1.75, shoulder_x=0.48, arm_len=0.95, leg_x=0.22, head_base=1.7, head_top=1.95, lean=-0.08))
+    cs = PAL["coil_sentinel"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    slate = pm.paint(cs["slate"], 3, "plate")
+    slate_dark = pm.paint(cs["slate"], 1, "plate")
+    copper = pm.paint(cs["copper"], 2, "plate")
+    brass = pm.paint(cs["brass"], 2)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.22 * x
+        pm.box("foot." + side, (0.26, 0.38, 0.14), (lx, -0.08, 0.07), paint=slate_dark)
+        pm.loft("shin." + side, [(0.12, 0.12, 0.12, lx, 0), (0.52, 0.14, 0.14, lx, 0)], sides=6, paint=slate)
+        pm.loft("thigh." + side, [(0.52, 0.15, 0.15, lx, 0), (0.95, 0.17, 0.17, lx, 0)], sides=6, paint=slate_dark)
+        pm.box("shin." + side, (0.3, 0.3, 0.1), (lx, -0.02, 0.55), paint=copper)                          # knee bands
+        sx = 0.48 * x
+        pm.box("chest", (0.42, 0.42, 0.36), (sx * 0.95, -0.06, 1.72), paint=slate)                        # pauldrons
+        pm.loft("upper_arm." + side, [(1.66, 0.12, 0.12, sx * 1.02, -0.08), (1.24, 0.11, 0.11, sx * 1.1, -0.08)], sides=6, paint=slate_dark)
+        pm.loft("forearm." + side, [(1.24, 0.12, 0.12, sx * 1.1, -0.08), (0.84, 0.14, 0.14, sx * 1.14, -0.08)], sides=6, paint=slate)
+        pm.box("forearm." + side, (0.32, 0.32, 0.08), (sx * 1.12, -0.08, 1.2), paint=copper)               # elbow bands
+        pm.box("hand." + side, (0.26, 0.28, 0.26), (sx * 1.14, -0.09, 0.74), paint=slate_dark)             # block fists
+    pm.loft("hips", [(0.8, 0.32, 0.24, 0, 0), (1.04, 0.34, 0.26, 0, -0.03)], sides=6, paint=slate_dark)
+    pm.loft("spine", [(1.04, 0.38, 0.28, 0, -0.04), (1.36, 0.44, 0.32, 0, -0.06)], sides=6, paint=slate)
+    pm.loft("chest", [(1.34, 0.46, 0.32, 0, -0.06), (1.62, 0.44, 0.3, 0, -0.07), (1.76, 0.3, 0.22, 0, -0.07)], sides=6, paint=slate)
+    pm.box("chest", (0.5, 0.06, 0.1), (0, -0.37, 1.5), paint=copper)                                      # the chest band
+    for k in range(3):
+        pm.box("chest", (0.06, 0.04, 0.06), (-0.16 + k * 0.16, -0.4, 1.5), paint=brass)                    # rivets
+    # a small head with a violet visor slit
+    pm.box("head", (0.3, 0.32, 0.28), (0, -0.1, 1.84), paint=slate_dark)
+    pm.box("head", (0.24, 0.04, 0.05), (0, -0.27, 1.86), mat_index=1)
+    # the coil on its back: a copper-wound drum, brass rings, a glowing cap
+    pm.loft("chest", [(1.2, 0.17, 0.17, 0, 0.36), (1.95, 0.17, 0.17, 0, 0.36)], sides=10, paint=copper)
+    for z in (1.25, 1.5, 1.75, 1.95):
+        pm.loft("chest", [(z, 0.2, 0.2, 0, 0.36), (z + 0.04, 0.2, 0.2, 0, 0.36)], sides=10, paint=brass)
+    pm.loft("chest", [(1.99, 0.12, 0.12, 0, 0.36), (2.12, 0.07, 0.07, 0, 0.36)], sides=8, mat_index=1)
+    mats = [rig.make_material("cs_body", "#FFFFFF"),
+            rig.make_material("cs_glow", cs["glow"], emission_hex=cs["glow"], strength=3.0)]
+    body = pm.to_object("coil_sentinel", mats, arm)
+    sentinel_clips(arm)
+    finish(body, arm, "coil_sentinel", "coil_sentinel", (1,), sheets)
+
+
+def sentinel_clips(arm):
+    windup = f(const_from("enemies/coil_sentinel.gd", "PUNCH_WINDUP"))
+    recover = f(const_from("enemies/coil_sentinel.gd", "PUNCH_RECOVER"))
+    charge = f(const_from("enemies/coil_sentinel.gd", "CHARGE_TIME"))
+    stance = {**crouch(0.05, SENTINEL_LEG), "spine": (0.06, 0, 0), "chest": (0.05, 0, 0), "head": (0.05, 0, 0),
+              "upper_arm.L": (-0.1, 0, -0.2), "upper_arm.R": (-0.1, 0, 0.2),
+              "forearm.L": (-0.35, 0, 0), "forearm.R": (-0.35, 0, 0), "hand.L": (0.0, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()), (50, k({"chest": (0.08, 0.05, 0), "head": (0.08, -0.1, 0)})), (100, k()),
+    ], sheet=[0, 50])
+    run_keys = []
+    for frame, sgn in ((0, 1.0), (28, -1.0), (56, 1.0)):
+        base = crouch(0.07, SENTINEL_LEG, (0.0, 0.0, 0.06 * sgn))
+        run_keys.append((frame, k({**base,
+            "thigh.L": (-0.1 - 0.34 * sgn, 0, 0), "thigh.R": (-0.1 + 0.34 * sgn, 0, 0),
+            "shin.L": (0.2 + 0.3 * max(-sgn, 0), 0, 0), "shin.R": (0.2 + 0.3 * max(sgn, 0), 0, 0),
+            "upper_arm.L": (-0.1 + 0.25 * sgn, 0, -0.22), "upper_arm.R": (-0.1 - 0.25 * sgn, 0, 0.22),
+            "spine": (0.1, 0.04 * sgn, 0.05 * sgn)})))
+    for frame in (14, 42):
+        run_keys.append((frame, {"hips": {"rot": (0, 0, 0), "loc": (0, -0.05, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 14, 28, 42])
+    cocked = k({"spine": (-0.1, -0.35, 0), "chest": (-0.1, -0.3, 0),
+                "_reach.R": (pos(fwd=-0.3, left=-0.55, up=1.45), way(fwd=-0.8, left=-0.4))})
+    punched = k({**crouch(0.12, SENTINEL_LEG, (0.1, 0, 0)), "spine": (0.25, 0.3, 0), "chest": (0.2, 0.25, 0),
+                 "_reach.R": (pos(fwd=1.25, left=-0.1, up=1.2), way(fwd=1.0, up=-0.1))})
+    action(arm, "punch", [(0, k()), (int(windup * 0.8), cocked), (windup, punched), (windup + 6, punched),
+                          (windup + recover, k())],
+           {int(windup * 0.8): BACK_OUT, windup: EXPO_IN})
+    braced = k({**crouch(0.18, SENTINEL_LEG), "spine": (-0.2, 0, 0), "chest": (-0.25, 0, 0), "head": (-0.3, 0, 0),
+                "upper_arm.L": (0.2, 0, -1.1), "upper_arm.R": (0.2, 0, 1.1),
+                "forearm.L": (-0.9, 0, 0), "forearm.R": (-0.9, 0, 0)})
+    action(arm, "charge", [(0, k()), (int(charge * 0.25), braced),
+                           (int(charge * 0.6), {**braced, "chest": (-0.3, 0.05, 0)}), (charge, braced),
+                           (charge + 4, k({"chest": (0.25, 0, 0), "spine": (0.15, 0, 0)})), (charge + 26, k())],
+           {int(charge * 0.25): QUART_OUT, charge: EXPO_IN})
+    recoil = k({"spine": (-0.15, 0, 0), "chest": (-0.22, 0.12, 0), "head": (-0.3, 0.12, 0.08),
+                "upper_arm.L": (0.3, 0, -0.5), "upper_arm.R": (0.3, 0, 0.5)})
+    action(arm, "stagger", [(0, k()), (4, recoil), (16, {**recoil, "chest": (-0.12, 0.06, 0)}), (40, k())],
+           {0: EXPO_OUT, 4: QUART_OUT, 16: QUART_OUT})
+
+
+# --- THE STORMSWORN: the Circle's oathbound guardian, a charged halberd -------
+
+SWORN_LEG = 1.05 - 0.1
+
+
+def build_stormsworn(sheets=False):
+    rig.reset_scene()
+    arm = rig.build_armature("stormsworn", humanoid_bones(
+        hip=1.05, chest_top=1.9, shoulder_x=0.42, arm_len=0.95, leg_x=0.2, head_base=1.88, head_top=2.15, lean=-0.06))
+    ss = PAL["stormsworn"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    plate = pm.paint(ss["armor"], 3, "plate")
+    plate_dark = pm.paint(ss["armor"], 1, "plate")
+    plate_hi = pm.paint(ss["armor"], 4)
+    cloth = pm.paint(ss["cloth"], 2, "cloth")
+    copper = pm.paint(ss["copper"], 2)
+    copper_hi = pm.paint(ss["copper"], 3)
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        lx = 0.2 * x
+        pm.loft("foot." + side, [(0.0, 0.11, 0.18, lx, -0.05), (0.13, 0.1, 0.13, lx, -0.02)], paint=plate_dark)
+        pm.loft("shin." + side, [(0.12, 0.1, 0.1, lx, 0), (0.58, 0.12, 0.12, lx, 0)], paint=plate)
+        pm.loft("thigh." + side, [(0.58, 0.13, 0.13, lx, 0), (1.05, 0.15, 0.15, lx, 0)], paint=plate_dark)
+        sx = 0.42 * x
+        pm.box("chest", (0.36, 0.36, 0.22), (sx * 0.98, -0.06, 1.88), rot=(0, 0.25 * x, 0), paint=plate_hi)   # pauldrons
+        pm.box("chest", (0.38, 0.04, 0.04), (sx * 0.98, -0.25, 1.82), rot=(0, 0.25 * x, 0), paint=copper)
+        pm.loft("upper_arm." + side, [(1.82, 0.1, 0.1, sx * 1.02, -0.06), (1.4, 0.09, 0.09, sx * 1.1, -0.06)], paint=plate)
+        pm.loft("forearm." + side, [(1.4, 0.1, 0.1, sx * 1.1, -0.06), (0.95, 0.1, 0.1, sx * 1.14, -0.06)], paint=plate_dark)
+        pm.box("hand." + side, (0.12, 0.14, 0.13), (sx * 1.14, -0.07, 0.86), paint=plate_dark)
+    # plate over a long violet tabard
+    pm.loft("hips", [(0.82, 0.27, 0.22, 0, 0), (1.12, 0.28, 0.23, 0, -0.02)], paint=plate_dark)
+    pm.box("hips", (0.38, 0.06, 0.82), (0, -0.22, 0.62), paint=cloth)                                     # tabard front
+    pm.box("hips", (0.38, 0.06, 0.82), (0, 0.22, 0.62), paint=cloth)                                      # and back
+    pm.loft("spine", [(1.12, 0.3, 0.24, 0, -0.03), (1.48, 0.34, 0.26, 0, -0.05)], paint=plate)
+    pm.loft("chest", [(1.46, 0.36, 0.27, 0, -0.05), (1.74, 0.34, 0.25, 0, -0.06), (1.9, 0.22, 0.18, 0, -0.06)], paint=plate)
+    pm.box("chest", (0.06, 0.04, 0.36), (0, -0.3, 1.6), paint=copper_hi)                                  # the oath's rune line
+    # a closed helm, a copper crest, eyes of storm light
+    pm.loft("head", [(1.88, 0.14, 0.15, 0, -0.07), (2.02, 0.16, 0.17, 0, -0.08), (2.16, 0.12, 0.13, 0, -0.07)], paint=plate_hi)
+    pm.box("head", (0.04, 0.3, 0.12), (0, -0.04, 2.22), paint=copper)                                     # crest
+    pm.box("head", (0.18, 0.03, 0.03), (0, -0.24, 2.03), mat_index=1)
+    # the halberd in the right hand: a long haft, an axe blade, a spike, a glowing edge
+    hx = -0.42 * 1.14
+    pm.box("hand.R", (0.06, 0.06, 2.2), (hx, -0.1, 1.2), paint=copper)
+    for z in (0.5, 1.3, 2.0):
+        pm.box("hand.R", (0.09, 0.09, 0.05), (hx, -0.1, z), paint=copper_hi)
+    pm.box("hand.R", (0.06, 0.46, 0.4), (hx, -0.34, 2.1), paint=plate_hi)                                 # the blade
+    pm.box("hand.R", (0.07, 0.04, 0.38), (hx, -0.58, 2.1), mat_index=1)                                   # its charged edge
+    pm.box("hand.R", (0.05, 0.05, 0.32), (hx, -0.1, 2.44), taper=0.2, paint=plate_hi)                    # spike
+    mats = [rig.make_material("ss_body", "#FFFFFF"),
+            rig.make_material("ss_glow", ss["glow"], emission_hex=ss["glow"], strength=3.0)]
+    body = pm.to_object("stormsworn", mats, arm)
+    stormsworn_clips(arm)
+    finish(body, arm, "stormsworn", "stormsworn", (1,), sheets)
+
+
+def stormsworn_clips(arm):
+    windup = f(const_from("enemies/stormsworn.gd", "STRIKE_WINDUP"))
+    call = f(const_from("enemies/stormsworn.gd", "CALL_TIME"))
+    stance = {**crouch(0.05, SWORN_LEG), "spine": (0.04, 0, 0), "chest": (0.04, 0, 0), "head": (0.05, 0, 0),
+              "upper_arm.L": (-0.15, 0, -0.18), "upper_arm.R": (-0.2, 0, 0.12),
+              "forearm.L": (-0.4, 0, 0), "forearm.R": (-0.3, 0, 0), "hand.L": (0.0, 0, 0), "hand.R": (0.0, 0, 0)}
+    k = keyed(stance)
+    action(arm, "idle", [
+        (0, k()), (60, k({"spine": (0.07, 0.03, 0.02), "chest": (0.06, 0, 0.03), "head": (0.1, -0.06, 0.04)})), (120, k()),
+    ], sheet=[0, 60])
+    run_keys = []
+    for frame, sgn in ((0, 1.0), (24, -1.0), (48, 1.0)):
+        base = crouch(0.07, SWORN_LEG, (0.06, 0.0, 0.06 * sgn))
+        run_keys.append((frame, k({**base,
+            "thigh.L": (-0.15 - 0.4 * sgn, 0, 0), "thigh.R": (-0.15 + 0.4 * sgn, 0, 0),
+            "shin.L": (0.25 + 0.35 * max(-sgn, 0), 0, 0), "shin.R": (0.25 + 0.35 * max(sgn, 0), 0, 0),
+            "upper_arm.L": (-0.15 + 0.3 * sgn, 0, -0.2), "spine": (0.12, 0.05 * sgn, 0.04 * sgn)})))
+    for frame in (12, 36):
+        run_keys.append((frame, {"hips": {"rot": (0.06, 0, 0), "loc": (0, -0.05, 0)}}))
+    run_keys.sort(key=lambda key: key[0])
+    action(arm, "run", run_keys, sheet=[0, 12, 24, 36])
+    raised = k({"spine": (-0.16, 0, 0), "chest": (-0.24, 0, 0), "head": (-0.08, 0, 0),
+                "_reach.L": (pos(fwd=0.0, left=0.24, up=2.45), way(left=0.3, up=0.9)),
+                "_reach.R": (pos(fwd=0.0, left=-0.24, up=2.55), way(left=-0.3, up=0.9))})
+    chopped = k({**crouch(0.22, SWORN_LEG, (0.2, 0, 0)), "spine": (0.42, 0, 0), "chest": (0.36, 0, 0), "head": (0.12, 0, 0),
+                 "_reach.L": (pos(fwd=1.0, left=0.12, up=0.95), way(fwd=1.0, up=-0.4)),
+                 "_reach.R": (pos(fwd=1.05, left=-0.12, up=1.05), way(fwd=1.0, up=-0.4))})
+    action(arm, "strike", [
+        (0, k()), (int(windup * 0.7), raised), (windup - 2, {**raised, "chest": (-0.3, 0, 0)}), (windup, chopped),
+        (windup + 8, {**chopped, "chest": (0.4, 0, 0)}), (windup + 22, k()),
+    ], {int(windup * 0.7): BACK_OUT, windup - 2: EXPO_IN, windup + 8: QUART_OUT})
+    skyward = k({"spine": (-0.25, 0, 0), "chest": (-0.35, 0, 0), "head": (-0.45, 0, 0),
+                 "_reach.R": (pos(fwd=0.05, left=-0.3, up=2.55), way(left=-0.3, up=0.9)),  # the raised pose's reach (2.75 was out of it)
+                 "upper_arm.L": (-0.3, 0, -0.9), "forearm.L": (-0.3, 0, 0)})
+    action(arm, "call", [(0, k()), (int(call * 0.6), skyward), (call, skyward), (call + 24, k())],
+           {int(call * 0.6): QUART_OUT})
+    recoil = k({"spine": (-0.15, 0, 0), "chest": (-0.25, 0.14, 0), "head": (-0.32, 0.14, 0.1),
+                "upper_arm.L": (0.35, 0, -0.55), "upper_arm.R": (0.3, 0, 0.5)})
+    action(arm, "stagger", [(0, k()), (4, recoil), (14, {**recoil, "chest": (-0.14, 0.07, 0)}), (40, k())],
+           {0: EXPO_OUT, 4: QUART_OUT, 14: QUART_OUT})
+
+
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
@@ -3518,7 +3884,9 @@ if __name__ == "__main__":
                 "wisp": build_wisp, "jackal": build_jackal, "vulture": build_vulture,
                 "hare": build_hare, "crow": build_crow,
                 "thrall": build_thrall, "lurker": build_lurker, "keeper": build_keeper, "deepmaw": build_deepmaw,
-                "beetle": build_cinder_beetle, "imp": build_imp, "reeve": build_reeve, "broodmother": build_broodmother}
+                "beetle": build_cinder_beetle, "imp": build_imp, "reeve": build_reeve, "broodmother": build_broodmother,
+                "gale_wraith": build_gale_wraith, "acolyte": build_storm_acolyte, "sentinel": build_coil_sentinel,
+                "stormsworn": build_stormsworn, "galebinder": build_galebinder}
     only = [a for a in args if not a.startswith("--")] or list(builders)
     for name in only:
         builders[name](want_sheets)

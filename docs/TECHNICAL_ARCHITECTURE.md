@@ -989,8 +989,41 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
   `stormwatch_wind_loop`. `BeamPuzzle` look `storm` (the orrery: its
   inputs are two synchronised coils). Split paths in the wings are two
   `station` plates and the bridge's lever (`[[plate, lever]]` inputs).
+- **The storm family and the mid-bosses (phase 5, scripts/enemies/):**
+  - `StormStrike` (`StormStrike.cast(node, at, radius, delay, damage,
+    chain_range, chain_damage, chains, source)`): a disc for `delay`, then
+    a bolt that hits every hero within `radius` and leaps from each struck
+    hero to every unstruck one within `chain_range` (`chains` leaps, -1 =
+    on and on); hits carry a circle around the hero's own feet. HAZARD
+    `storm_strike` now carries extra numbers (`register_hazard(kind, pos,
+    extra)`; a client's copy draws the disc and the leaps between the
+    heroes it sees). It lingers a second after the strike (`struck` for
+    tests).
+  - `EnemyBase.strike_lane(start, dir, length, half_width, ...)`: every
+    hero whose feet stand in the lane (the hit's circle is the lane point
+    beside the hero).
+  - `StormAcolyte` (`storm_acolyte`): keeps 6-11 m, a bolt on its prey's
+    spot that leaps once (4 m). `CoilSentinel` (`coil_sentinel`): punches;
+    every 9 s `start_charge` (CIRCLE 2.4 s, a 5 m disc) then `_discharge` -
+    a ring, or one bolt into `taunted_by()`. `GaleWraith` (`gale_wraith`):
+    a short lane, then a dive down it.
+  - `Stormsworn` (`stormsworn`, DungeonBoss): a three-blow combo on her
+    target (WINDUP re-entered per blow, a disc each), every 13 s CIRCLE
+    `_call_lightning` - StormStrikes on `ceil(party / 2)` heroes in her
+    hall (at most 3) that leap on within 5 m - and at half health
+    `party - 1` acolytes. `Galebinder` (`galebinder`): keeps 7-11 m, a wind
+    blade down a 13 m lane, every 15 s a gust (a 7 m ring that throws
+    heroes back), wraith waves at 75 / 50 / 25 % (`party` wraiths).
+    `party_count()` = `ZoneBase.party_size()`: the mechanics grow with the
+    party, health grows by NetWorld's +70 %.
+  - Rigs (generate_characters_v2.py): `gale_wraith` on the wisp template
+    (`wisp_clips(arm, script)`), `storm_acolyte` and `galebinder` on the
+    robed caster template (`robed_clips`: idle, glide, charge, cast,
+    stagger, the Galebinder's gust), `coil_sentinel` and `stormsworn` on
+    the humanoid one. Sounds: storm_bolt, coil_charge, coil_discharge,
+    gale_gust, wraith_shriek.
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
-  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`,
+  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`, `stormsworn`,
   `coop_bots` (the real companion driver helps a scripted leader through
   the lab's co-op rooms and revives it; companions take `--until-alone=`
   in tests).

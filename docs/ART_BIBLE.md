@@ -418,6 +418,13 @@ size so they read at the camera's distance.
     along the galleries, 3 m up; round grounding grates flush in the hall
     floors (a faint charge under them); split slate and broken instruments
     (brass ring segments, a cog, a cracked lens) at the walls' feet.
+  - The storm family (M13b phase 5): the acolyte in a burnt slate-violet
+    robe with a copper circlet and glowing hands; the Coil Sentinel, a
+    slate-and-copper construct with a violet visor and a charge coil on its
+    back; gale wraiths, pale streamers around a dark husk. The Stormsworn
+    in slate-violet plate with a violet tabard and a copper-bound halberd
+    (a glowing edge); the Galebinder in a pale storm-grey robe with long
+    wind tails, a violet sash, a pale mask and a floating copper halo.
   - The co-op puzzles' parts are code-built: coils (a copper post with a
     glowing cap), plates with a violet rune, the chain's two pylons; the
     orrery's beam has the `storm` look (violet crystals, a white-violet

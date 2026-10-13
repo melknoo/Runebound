@@ -100,6 +100,26 @@
 		"en": "You wake at the rune",
 		"de": "Du erwachst an der Rune"
 	},
+	"enemy.storm_acolyte": {
+		"en": "Stormsworn Acolyte",
+		"de": "Sturmgeweihter"
+	},
+	"enemy.coil_sentinel": {
+		"en": "Coil Sentinel",
+		"de": "Spulenwächter"
+	},
+	"enemy.gale_wraith": {
+		"en": "Gale Wraith",
+		"de": "Windgeist"
+	},
+	"enemy.stormsworn": {
+		"en": "The Stormsworn",
+		"de": "Die Sturmgeschworene"
+	},
+	"enemy.galebinder": {
+		"en": "The Galebinder",
+		"de": "Der Windbinder"
+	},
 	"ui.coop.coil": {
 		"en": "Strike the coil",
 		"de": "Spule anschlagen"

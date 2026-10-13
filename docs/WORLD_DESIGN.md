@@ -334,3 +334,16 @@ on stands 20 s), the landing's rune and shortcut, the conductor hall's
 chain (three conductors, 8 m a link), the orrery (two coils wake the
 lightning, three crystals bend it to the receiver, the tome room opens).
 Ten lore texts; the meta wink is the archive's blank star charts.
+Phase 5 brought the storm family and the mid-bosses:
+- **Stormsworn Acolyte:** keeps 6-11 m away and calls a bolt on its prey's
+  spot (a disc); the bolt leaps to one more hero within 4 m.
+- **Coil Sentinel:** a construct that punches what stands before it and
+  every 9 s charges (a 5 m disc) and discharges a ring - a taunted one
+  sends a single bolt into its taunter instead.
+- **Gale wraith:** the Galebinder's wind given a shape - a short lane, a
+  dive down it; few blows end it.
+- **The Stormsworn** (mid-boss 1): three halberd blows in a row on her
+  target, the dome's lightning on one hero in two every 13 s (each bolt
+  leaps from hero to hero within 5 m), acolytes at half health.
+- **The Galebinder** (mid-boss 2): wind blades down a lane, a gust that
+  throws everyone near back, wraith waves at 75 / 50 / 25 % health.

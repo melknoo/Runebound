@@ -27,8 +27,9 @@ as a ring:
 Rooms stand 2 m apart (the wall); a connector cuts a doorway through that
 gap. Every id carries the prefix "sw_" (SaveGame keys are flat; a fresh run
 clears every key with it). Rules: see dungeon_bake.py.
-Phase 4 places every co-op puzzle and the lore; the camps and the arenas
-still field placeholders until the storm family and its bosses (phases 5-6).
+Phase 5 brings the storm family into the camps (Stormsworn Acolytes and Coil
+Sentinels) and the two mid-bosses (the Stormsworn, the Galebinder); the end
+boss's arena keeps the placeholder until phase 6.
 """
 
 LAYOUT = {
@@ -112,7 +113,7 @@ LAYOUT = {
          "pos": [8, 52], "yaw": -1.5708},
         # --- the coil hall: three coils far apart, struck within two seconds ---
         {"id": "sw_camp_coils", "type": "camp", "pos": [0, 4], "radius": 10.0,
-         "composition": ["rusher", "caster", "rusher"], "spots": [[-4, 2], [4, 2], [0, -2]]},
+         "composition": ["coil_sentinel", "storm_acolyte", "storm_acolyte"], "spots": [[-4, 2], [4, 2], [0, -2]]},
         {"id": "sw_coils_sync", "type": "sync", "pos": [0, 12], "look": "coil", "window": 2.0,
          "levers": [[-16, 20, 3.14159], [16, 20, 3.14159], [8, -6, 0.0]]},
         {"id": "sw_lore_coils", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.coil_plaque",
@@ -122,35 +123,35 @@ LAYOUT = {
          "pos": [0, -41], "yaw": 0.0},
         {"id": "sw_plate_archive", "type": "plate", "pos": [-27, -31], "station": True},
         {"id": "sw_camp_archive", "type": "camp", "pos": [-34, -47], "radius": 8.0,
-         "composition": ["caster", "rusher"], "spots": [[-37, -49], [-31, -45]]},
+         "composition": ["storm_acolyte", "coil_sentinel"], "spots": [[-37, -49], [-31, -45]]},
         {"id": "sw_chest_archive", "type": "chest", "pos": [-42, -30], "yaw": 0.0, "rarity_bias": 1},
         {"id": "sw_lore_archive", "type": "lore", "kind": "note", "text": "lore.stormwatch.star_charts",
          "pos": [-43, -56], "yaw": 1.5708},
         {"id": "sw_plate_turbines", "type": "plate", "pos": [27, -31], "station": True},
         {"id": "sw_camp_turbines", "type": "camp", "pos": [34, -47], "radius": 8.0,
-         "composition": ["rusher", "caster"], "spots": [[31, -49], [37, -45]]},
+         "composition": ["coil_sentinel", "storm_acolyte"], "spots": [[31, -49], [37, -45]]},
         {"id": "sw_lore_turbines", "type": "lore", "kind": "note", "text": "lore.stormwatch.turbine_log",
          "pos": [43, -56], "yaw": -1.5708},
         # --- the bridge (a rune, the lever that opens both wings from this side) ---
         {"id": "sw_rune_bridge", "type": "rune", "pos": [0, -70], "yaw": 0.0},
         {"id": "sw_lever_bridge", "type": "lever", "pos": [8, -81], "yaw": 0.0},
         {"id": "sw_camp_bridge", "type": "camp", "pos": [30, -75], "radius": 7.0,
-         "composition": ["warden", "caster"], "spots": [[27, -77], [33, -73]]},
+         "composition": ["storm_acolyte", "storm_acolyte"], "spots": [[27, -77], [33, -73]]},
         {"id": "sw_lore_bridge", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.bridge_words",
          "pos": [-38, -81], "yaw": 0.0},
         # --- the hall of the Sworn (mid-boss 1) ---
-        {"id": "sw_arena_sworn", "type": "arena", "pos": [0, -105], "boss": "dungeon_boss",
+        {"id": "sw_arena_sworn", "type": "arena", "pos": [0, -105], "boss": "stormsworn",
          "flag": "sw_sworn_down", "trigger": 9.0, "reward": "mid"},
         # --- the plate hall: three plates held at once - the way on stands 20 s ---
         {"id": "sw_plates_hall", "type": "plates", "pos": [58, -100], "plates": [[46, -118], [70, -118], [58, -94]],
          "hold": 1.0, "open_for": 20.0},
         {"id": "sw_camp_plates", "type": "camp", "pos": [58, -110], "radius": 8.0,
-         "composition": ["warden", "rusher", "caster"], "spots": [[54, -112], [62, -112], [58, -107]]},
+         "composition": ["coil_sentinel", "storm_acolyte", "storm_acolyte"], "spots": [[54, -112], [62, -112], [58, -107]]},
         {"id": "sw_rune_plates", "type": "rune", "pos": [67, -92], "yaw": 0.0},
         {"id": "sw_lore_plates", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.plate_rule",
          "pos": [44, -100], "yaw": 1.5708},
         # --- the gale hall (mid-boss 2) ---
-        {"id": "sw_arena_gale", "type": "arena", "pos": [69, -41], "boss": "dungeon_boss",
+        {"id": "sw_arena_gale", "type": "arena", "pos": [69, -41], "boss": "galebinder",
          "flag": "sw_gale_down", "trigger": 9.0, "reward": "mid"},
         # --- the landing (a rune, the shortcut's lever, the last stormcaller's entry) ---
         {"id": "sw_rune_landing", "type": "rune", "pos": [64, 6], "yaw": 0.0},
@@ -159,7 +160,7 @@ LAYOUT = {
          "pos": [78, 16], "yaw": -1.5708},
         # --- the conductor hall: three heroes carry the lightning coil to receiver ---
         {"id": "sw_camp_conductors", "type": "camp", "pos": [98, 10], "radius": 8.0,
-         "composition": ["warden", "caster", "caster"], "spots": [[94, 8], [102, 8], [98, 14]]},
+         "composition": ["coil_sentinel", "coil_sentinel", "storm_acolyte"], "spots": [[94, 8], [102, 8], [98, 14]]},
         {"id": "sw_chain", "type": "chain", "pos": [98, 10], "source": [87, 0], "receiver": [109, 20],
          "link": 8.0, "heroes": 3, "hold": 2.0, "damage": 4.0},
         {"id": "sw_lore_conductors", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.conductors",

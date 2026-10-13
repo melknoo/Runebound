@@ -650,6 +650,41 @@
 			"ambient": "#3A3C58",
 			"background": "#08090E"
 		},
+		"storm_acolyte": {
+			"comment": "M13b the storm family: an acolyte in a burnt slate-violet robe, a copper circlet and bracers, pale skin, the storm in its hands",
+			"robe": ["#1E1C2A", "#2A2738", "#383349", "#48425C", "#5A5372"],
+			"skin": ["#6E6A72", "#8C8790", "#ABA6AE"],
+			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
+			"glow": "#B9A8FF"
+		},
+		"coil_sentinel": {
+			"comment": "M13b the storm family: a slate-and-copper construct, a charge coil on its back, a violet visor",
+			"slate": ["#1A1D24", "#262A33", "#333844", "#424856", "#525A6A"],
+			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
+			"brass": ["#3A2E1C", "#5C4A2A", "#84693A", "#B08F50"],
+			"glow": "#C8C0FF"
+		},
+		"stormsworn": {
+			"comment": "M13b mid-boss: the Circle's oathbound guardian in slate-violet plate, a violet tabard, a copper-bound halberd that holds the storm",
+			"armor": ["#1C1E27", "#2A2D3A", "#3A3E50", "#4C5166", "#62687F"],
+			"cloth": ["#24163A", "#33204F", "#452C66", "#5A3A80"],
+			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
+			"glow": "#D8CCFF"
+		},
+		"galebinder": {
+			"comment": "M13b mid-boss: the weather-keeper on the wind - a pale storm-grey robe with long tails, a violet sash, a pale mask, a floating copper halo",
+			"robe": ["#4A5064", "#646B82", "#8088A0", "#A0A8BE", "#C4CAD8"],
+			"sash": ["#2E2148", "#3F2D62", "#53407C"],
+			"mask": ["#8A8E99", "#B4B8C2", "#D8DCE4"],
+			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
+			"glow": "#E2DCFF"
+		},
+		"gale_wraith": {
+			"comment": "M13b the storm family: a scrap of wind with a shape - pale blue-white streamers around a dark husk, bright eyes",
+			"wind": ["#5C6684", "#7E89A8", "#A6B0CC", "#CDD5EA"],
+			"husk": ["#2A2F40", "#3A4156", "#4C556E"],
+			"eyes": "#F2EEFF"
+		},
 		"drowned_thrall": {
 			"comment": "M13 the Drowned: a bloated keeper, waterlogged grey-green skin, dark rags, kelp, pale phosphor eyes",
 			"skin": ["#3E4A44", "#4F5D55", "#61716A", "#77877F"],

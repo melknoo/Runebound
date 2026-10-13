@@ -451,6 +451,9 @@ Sturmwarte mindestens 7, mit passender Ausrüstung).
 Phase 4 gebaut (alle Koop-Rätsel an ihrem Platz: Spulenhalle, die beiden Flügel mit Platte und Brückenhebel,
 Plattenhalle, Leiterhalle, das Planetarium hinter dem Riss mit Spulen und drehbaren Kristallen; eigener Look aus Schiefer,
 Kupfer und violettem Blitzlicht, Wind-Ambience, zehn Lore-Texte DE/EN; Gegner und Bosse sind noch Platzhalter).
+Phase 5 gebaut (die Sturm-Familie: Sturmgeweihter mit springendem Blitz, Spulenwächter mit Entlade-Ring – verspottet nur
+auf den Spötter –, Windgeister; die Sturmgeschworene mit Dreierkombo, Kettenblitz und Akolythen; der Windbinder mit
+Windklingen, Böe und Windgeist-Wellen; alles wächst mit der Gruppe; eigene Rigs und Sounds).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

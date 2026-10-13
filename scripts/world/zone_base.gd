@@ -865,9 +865,10 @@ const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "ward
 	"grave_shambler", "mourner", "cinderbark", "smoulder_wisp", "ash_jackal", "carrion_vulture",
 	"curse_lantern", "wisp_nest", "jackal_den", "dungeon_boss",
 	"drowned_thrall", "channel_lurker", "bloated_keeper", "deepmaw",
-	"cinder_beetle", "kiln_imp", "slag_reeve", "broodmother"]
+	"cinder_beetle", "kiln_imp", "slag_reeve", "broodmother",
+	"storm_acolyte", "coil_sentinel", "gale_wraith", "stormsworn", "galebinder"]
 const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss", "bloated_keeper", "deepmaw",
-	"slag_reeve", "broodmother"]
+	"slag_reeve", "broodmother", "stormsworn", "galebinder"]
 
 
 static func _enemy_script(id: String) -> GDScript:
@@ -896,6 +897,11 @@ static func _enemy_script(id: String) -> GDScript:
 		"kiln_imp": return KilnImp
 		"slag_reeve": return SlagReeve
 		"broodmother": return Broodmother
+		"storm_acolyte": return StormAcolyte  # M13b the Stormwatch
+		"coil_sentinel": return CoilSentinel
+		"gale_wraith": return GaleWraith
+		"stormsworn": return Stormsworn
+		"galebinder": return Galebinder
 	return MeleeRusher
 
 
