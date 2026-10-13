@@ -1,6 +1,6 @@
 # RUNEBOUND — Handoff: von einem anderen Rechner weiterarbeiten
 
-Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat danach nur Doku-Commits, darunter diesen Handoff. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
+Stand: 2026-10-13 · `release` steht auf `f2da9a6` (PROTOCOL 13), `main` trägt M13 (PROTOCOL 14) und den M13b-Plan. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
 **Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). **M13 Dungeons gebaut** (2026-10-10, alle zehn Phasen: Dungeon-Technik, die Cistern als Graubox, das Tor öffnet sich; Runen, Tod, Boss-Arenen, Truhen einmalig; Mechanik-Rätsel und das Puzzle Lab; Element-Rätsel und Fallen; die Cistern mit allen Rätseln, eigenem Look und Lore; ihre Gegner, der Aufgedunsene Wärter und der Tiefenschlund; die Ember Warrens mit allen Rätseln, Lava und eigenem Look; ihre Glutbrut, der Schlackenvogt und die Glutbrutmutter; die Folianten beider Dungeons mit je drei neuen Fähigkeiten). Letzter Smoke-Lauf: 849 Checks grün (2026-10-10, M13 Phase 9, auf dem RTX-2070-PC mit Godot 4.6.3).
@@ -13,13 +13,13 @@ Stand: 2026-10-09 · letzter Code-Commit `f2da9a6` (= `release`); `main` hat dan
 - Solo-Check Cistern L5: Elementar-Magier und Druide 6/6, der Runebreaker-Bot stirbt an beiden Bossen (weicht Telegraphen nie aus). Warrens L6: alle drei Klassen 6/6, knapp.
 - Net-Suite: `heal`, `handshake@ws`, `travel@ws` stürzen bei wenig freiem RAM ab, einzeln laufen sie grün.
 
-**Server:** `release` steht auf dem letzten Code-Commit `f2da9a6` (Protokoll 13); `main` ist nur um Doku-Commits weiter, die brauchen kein Release. Das Server-Journal vom 2026-10-02 zeigt Join und Zonenwechsel sauber. Heutiger Stand ungeprüft (ssh vom Haupt-PC lief am 2026-10-09 in ein Timeout: Tailscale aus oder Laptop aus).
+**Server:** `release` steht auf `f2da9a6` (Protokoll 13); `main` hat mit M13 Protokoll 14, vor dem nächsten Koop braucht der Server ein Release. Das Server-Journal vom 2026-10-02 zeigt Join und Zonenwechsel sauber. Heutiger Stand ungeprüft (ssh vom Haupt-PC lief am 2026-10-09 in ein Timeout: Tailscale aus oder Laptop aus).
 
 **Wie es weitergeht:**
 1. Playtest-Feedback einsammeln (die J-Liste liegt als `playtest.json` auf deinem Spiel-PC) und fixen.
 2. RTX-2070-PC: dein Online-Lauf ohne Editor (der automatische Retest lief am 09.10. sauber).
 3. **Release für den Server** (`tools\run_godot.cmd release`), wenn du willst: M13 hat **PROTOCOL 14**, ohne Release kommt niemand mehr auf den Laptop-Server. Danach dein M13-Playtest (Gate-Walk in `docs/PROJECT_STATE.md`, J-Gruppe „M13: Dungeons“), gern auch zu zweit.
-4. **M13b** der Koop-Dungeon (3–5 Spieler, solo gesperrt) mit eigenem Plan.
+4. **M13b** die Sturmwarte, der Koop-Dungeon (3–5 Spieler, solo gesperrt): Plan mit deinen Antworten vom 13.10. in `docs/ROADMAP.md`, in Arbeit.
 5. M14 Story & RPG (Dialoge, Quests, Meta-Würze, UI zweisprachig), M15 zwei weitere Zonen, M16 Endgame, M17 Politur.
 
 Reihenfolge, Leitlinien und deine Entscheidungen: `docs/ROADMAP.md`.

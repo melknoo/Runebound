@@ -1,9 +1,9 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-10-09 · M01–M12 gebaut, dazu M09b, M10b und M17a (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
-Offene Playtest-Gates beim Spieler: M10/M10b, M11, M12, M17a. Nächster Meilenstein: M13. Status und Einrichtung
-eines zweiten Rechners: `docs/HANDOFF.md`. Lesehilfe: Unter „Aktuell“ und „Geplant“ stehen auch schon gebaute Meilensteine
-(M09, M09b, M10–M12, M17a); noch nicht gebaut sind M13–M17.
+Stand: 2026-10-13 · M01–M13 gebaut, dazu M09b, M10b und M17a (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
+Offene Playtest-Gates beim Spieler: M10/M10b, M11, M12, M17a, M13. In Arbeit: **M13b** (die Sturmwarte, Plan vom 13.10.).
+Status und Einrichtung eines zweiten Rechners: `docs/HANDOFF.md`. Lesehilfe: Unter „Aktuell“ und „Geplant“ stehen auch
+schon gebaute Meilensteine (M09, M09b, M10–M13, M17a); noch nicht gebaut sind M13b–M17.
 **M09 Co-op ist gebaut und mit einem Freund angespielt.** Server-Laptop steht
 (`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve. **M09b (Freunde
 ohne Tailscale) ist eingerichtet** (28.09.; Gate: ein Freund spielt ohne Tailscale, offen). Am 29.09. hat der Spieler die Richtung nach M09b festgelegt
@@ -398,6 +398,45 @@ Boss-Spezialangriffen behoben – im Nahkampf-Takt kamen Welle, Schlacke, Graben
 Netz-Szenario für den Schlackenvogt, komplette Netz-Suite grün, Solo-Checks, Shots, Perf, Playtest-
 Gruppe „M13: Dungeons“ auf J).
 **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
+
+### M13b — Die Sturmwarte, der Koop-Dungeon (Plan 2026-10-13, in Arbeit)
+**Entscheidungen des Spielers (2026-10-13, vier Runden):**
+- **Thema Sturm:** die Sturmwarte, ein zerborstenes Runen-Observatorium im östlichen Randgebirge; das Tor steht östlich
+  der Cinder Flats.
+- **~25 min, 3 Bosse:** 8–10 Räume, zwei Zwischenbosse und ein Endboss, Koop-Rätsel, ein Geheimnis, eine Abkürzung.
+- **Sperre:** hinein nur ab 3 Helden (solo bleibt das Tor versiegelt); wer drin ist, darf weiterspielen, auch wenn
+  jemand geht.
+- **Jeder Lauf frisch:** verlässt die Gruppe den Dungeon, setzen sich Bosse, Rätsel und Truhen zurück; die
+  Boss-Beute gibt es jeden Lauf.
+- **Rollen weich, aber spürbar:** keine Klassen-Sperre. Bosse schlagen ihr Bedrohungsziel hart, Gruppen-Schaden kommt
+  in Wellen, Add-Wellen fordern Spott und Flächenschaden. Ohne Tank oder Heiler deutlich schwerer, aber machbar.
+- **Wiederbeleben nur hier:** ein gefallener Held liegt 30 s am Boden; ein Verbündeter hält [E] 3 s und holt ihn mit
+  30 % Leben zurück, sonst wacht er an der Rune auf.
+- **Koop-Rätsel, alle vier Arten:** Platten gleichzeitig, getrennte Wege, Blitzkette (Helden als Leiter zwischen
+  Spulen), Synchron-Hebel.
+- **Skalierung:** Leben +70 % je weiterem Helden wie überall online, dazu wächst die Mechanik mit (mehr Adds, mehr
+  Ziele, größere Flächen).
+- **Eigene Beute:** Sturmsplitter von jedem Boss für jeden Helden, ein Händler in Runehold tauscht sie gegen
+  **6 neue Sturm-Legendaries** (2 je Klasse, nur dort); ein **Foliant im Geheimnis** lehrt jede Klasse eine vierte
+  Folianten-Fähigkeit (dann 12 im Pool; diese gibt es nur im Koop).
+- **Stufe wächst mit:** Gegner- und Beutestufe = Durchschnitt der Gruppe beim Betreten, mindestens 7.
+- **Bots lösen mit:** damit du ihn allein mit `tools\run_godot.cmd coop 2` testen kannst, folgen Bots durch Türen
+  (Raum-Graph statt Luftlinie), drücken [E], besetzen freie Platten, Kettenpunkte und Hebel und beleben wieder;
+  Gefährten bekommen im Dev-Modus Stufe und Ausrüstung des Dungeons.
+
+**Vorschlag für den Inhalt** (Namen und Zahlen sind Daten): Vorhof → Spulenhalle (Synchron) → Gabelung in Archiv und
+Turbinenhalle (getrennte Wege) → Brücke → Zwischenboss **die Sturmgeschworene** (Tank-Prüfung: geladene Hiebe aufs
+Bedrohungsziel, Kettenblitz zwischen eng stehenden Helden) → Plattenhalle → Zwischenboss **der Windbinder**
+(Add-Wellen, Böen) → Rune + Abkürzung → Leiterhalle (Blitzkette) → Endboss **der letzte Sturmrufer** (harte Schläge
+aufs Bedrohungsziel, Statik-Pulse auf alle, ab 60 % ein Donnerschlag, den nur eine Blitzkette über Erdungsspulen
+ableitet). Geheimnis: das Planetarium mit dem Folianten. Gegner: Sturmgeweihter (Blitz springt auf einen zweiten
+Helden) und Spulenwächter (lädt auf, entlädt einen Ring). Folianten-Fähigkeiten: Sturmband (Tank trägt einen Teil des
+Schadens eines Verbündeten), Gewitterwolke (Magier), Wolkenbruch (Druide, Gruppenheilung im Regen).
+
+Phasen (jede endet mit Smoke grün, Doku, Commit + Push): 0 Rahmen (Tor, Sperre, frischer Lauf, mitwachsende Stufe,
+Graubox, PROTOCOL 15), 1 Niederschlag + Wiederbeleben, 2 Koop-Rätsel-Kit + Puzzle Lab, 3 Bots für den Koop,
+4 Sturmwarte Inhalt + Look + Lore, 5 Sturm-Familie + Zwischenbosse, 6 Endboss + Party-Check (mit und ohne Rollen),
+7 Sturmsplitter + Händler + Legendaries, Foliant + 3 Fähigkeiten, 8 Abschluss.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

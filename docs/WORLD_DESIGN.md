@@ -288,6 +288,40 @@ bosses:
 - for **3–5 players**, locked for fewer; extra content with their own loot,
   the story is complete without them;
 - built for the roles (CLASS_DESIGN "Three roles"): without a tank or a
-  healer they get clearly harder; real co-op puzzles are allowed here;
-- proposal, not decided: scaling from 3 to 5 like today's enemy health
-  (+70 % per extra hero), plus mechanics that use the group.
+  healer they get clearly harder; real co-op puzzles are allowed here.
+
+**The Stormwatch** (M13b, the user's decisions of 2026-10-13, ROADMAP M13b):
+a shattered rune observatory in the eastern rim mountains where stormcallers
+once bound lightning into runes; its gate stands east of the Cinder Flats.
+- About 25 minutes: 8-10 rooms, two mid-bosses and an end boss, co-op
+  puzzles, one secret, a shortcut.
+- **Lock:** a party enters with 3 heroes or more (alone the gate stays
+  sealed); whoever is inside may go on when someone leaves.
+- **Every run is fresh:** bosses, puzzles and chests reset when the party
+  leaves; boss loot drops on every run.
+- **Roles, soft but felt:** no class lock. Bosses strike their threat target
+  hard, party damage comes in waves, add waves call for taunts and area
+  damage.
+- **Revive here only:** a fallen hero lies down for 30 s; an ally holding [E]
+  for 3 s brings them back at 30 % health, else they wake at the rune.
+- **Co-op puzzles, all four kinds:** plates held at once, split paths, a
+  lightning chain (heroes as conductors between coils), synchronised levers.
+- **Scaling:** health +70 % per extra hero as everywhere online, and the
+  mechanics grow with the party (more adds, more targets, wider areas).
+- **Own loot:** storm shards from every boss for every hero, a trader in
+  Runehold sells six new storm legendaries for them (two per class, only
+  there); a tome in the secret teaches each class a fourth tome ability.
+- **Level grows with the party:** enemy and loot level = the party's average
+  on entry, at least 7.
+
+Proposal (names and numbers are data): forecourt -> coil hall (synchronised
+coils) -> a fork into the archive and the turbine hall (split paths) -> the
+bridge -> mid-boss **the Stormsworn** (a tank check: charged blows on the
+threat target, chain lightning between heroes standing close) -> the plate
+hall -> mid-boss **the Galebinder** (add waves, gusts) -> a rune and the
+shortcut -> the conductor hall (lightning chain) -> end boss **the Last
+Stormcaller** (heavy blows on the threat target, static pulses on everyone,
+below 60 % a thunderclap that only a lightning chain over grounding coils
+drains). Secret: the orrery with the tome. Enemies: the Stormsworn Acolyte
+(its bolt jumps to a second hero) and the Coil Sentinel (charges up, then
+discharges a ring).
