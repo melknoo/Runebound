@@ -425,6 +425,11 @@ size so they read at the camera's distance.
     in slate-violet plate with a violet tabard and a copper-bound halberd
     (a glowing edge); the Galebinder in a pale storm-grey robe with long
     wind tails, a violet sash, a pale mask and a floating copper halo.
+    The Last Stormcaller (phase 6): a tall figure in a ragged storm-cloud
+    cloak over violet robes, a crown of copper tines with sparks, a gaunt
+    face with eyes of white lightning and a floating staff with a caught
+    bolt at its head;
+    the arena's two grounding coils are copper pylons with a violet cap.
   - The co-op puzzles' parts are code-built: coils (a copper post with a
     glowing cap), plates with a violet rune, the chain's two pylons; the
     orrery's beam has the `storm` look (violet crystals, a white-violet

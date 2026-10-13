@@ -114,7 +114,8 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 		_heal_party(intent, player)
 	_pull_left -= dt
 	var fighting := target != null and target.global_position.distance_to(player.global_position) < 14.0
-	if not duty.is_empty() and (not fighting or String(duty["kind"]) == "revive") and _do_duty(intent, player):
+	var urgent := String(duty.get("kind", "")) == "revive" or duty.get("puzzle") is EnemyBase  # a boss's chain beats the fight
+	if not duty.is_empty() and (not fighting or urgent) and _do_duty(intent, player):
 		return
 	if target == null:
 		_follow(intent, player)
@@ -313,6 +314,14 @@ func _find_duty(player: Player) -> Dictionary:
 			pick_d = d
 			pick = p
 			stations = s
+	for e in EnemyBase.all_enemies:  # a boss may want places too (the Last Stormcaller's chain)
+		if _alive(e) and e.has_method(&"bot_stations"):
+			var es: Array[Dictionary] = e.call(&"bot_stations", leader)
+			var ed := e.global_position.distance_to(leader.global_position)
+			if not es.is_empty() and ed - 1000.0 < pick_d:  # a gathering boss outranks any puzzle
+				pick_d = ed - 1000.0
+				pick = e
+				stations = es
 	if pick == null:
 		return {}
 	# the leader's own place (the one it stands at) is not handed out

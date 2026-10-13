@@ -454,6 +454,9 @@ Kupfer und violettem Blitzlicht, Wind-Ambience, zehn Lore-Texte DE/EN; Gegner un
 Phase 5 gebaut (die Sturm-Familie: Sturmgeweihter mit springendem Blitz, Spulenwächter mit Entlade-Ring – verspottet nur
 auf den Spötter –, Windgeister; die Sturmgeschworene mit Dreierkombo, Kettenblitz und Akolythen; der Windbinder mit
 Windklingen, Böe und Windgeist-Wellen; alles wächst mit der Gruppe; eigene Rigs und Sounds).
+Phase 6 gebaut (der letzte Sturmrufer: harte Schläge, Statik-Pulse durch die ganze Halle, ab 60 % der Donnerschlag, den nur
+eine Kette aus allen Helden außer einem zwischen den Erdungsspulen ableitet, ab 30 % Adds; Party-Check mit Bots: mit allen
+drei Rollen 9/9 ohne Ausfall, ohne Tank oder ohne Heiler 8/9 mit einem Wipe, drei Magier 7/9 mit zwei Wipes).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

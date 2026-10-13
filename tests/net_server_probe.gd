@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots", "stormsworn",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots", "stormsworn", "stormcaller",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -30,6 +30,9 @@ var _cp_saw_open := false
 ## M13b stormsworn: the boss's largest health seen on the server.
 var _sw_max_hp := 0.0
 var _sw_done := false
+## M13b stormcaller: the server's grounded claps, the run won.
+var _lc_grounded := 0
+var _lc_done := false
 
 
 func _ready() -> void:
@@ -359,6 +362,21 @@ func _update() -> void:
 					verdict = "fail: no crypt chest on the server"
 				else:
 					verdict = "ok"
+		"stormcaller":  # M13b: the server grounded his thunder through the clients' proxies, then he fell
+			var czone := get_tree().current_scene as ZoneBase
+			if czone != null and czone.net_world != null:
+				for cid: int in czone.net_world.enemies:
+					var ce := czone.net_world.enemies[cid] as LastStormcaller
+					if ce != null and is_instance_valid(ce):
+						_lc_grounded = maxi(_lc_grounded, ce.grounded_claps)
+			if _lc_grounded >= 1 and SaveGame.has_flag(&"sw_caller_down"):
+				_lc_done = true
+			if _lc_done:
+				verdict = "ok"
+			elif _lc_grounded < 1:
+				verdict = "fail: the server never grounded his thunder"
+			else:
+				verdict = "fail: no sw_caller_down in the server's world"
 		"stormsworn":  # M13b: the Stormsworn scaled for three on the server, felled: the flag in its world
 			var szone := get_tree().current_scene as ZoneBase
 			if szone != null and szone.net_world != null:

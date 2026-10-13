@@ -252,6 +252,7 @@ func _process(delta: float) -> void:
 		m.prompt.update(m.hero == best, text)
 		m.ring_mat.albedo_color = Color(MARK_COLOR, 0.7 + (0.3 * progress / HOLD_SECONDS if _progress_target == id else 0.0))
 	_tick_revive(local, best, delta)
+	_tick_bot_revives(delta)
 	if zone.hud != null:
 		if local != null and local.downed:
 			if _wait_text == "":  # the bound key, looked up once per fall
@@ -260,6 +261,33 @@ func _process(delta: float) -> void:
 		elif _wait_text != "":
 			_wait_text = ""
 			zone.hud.downed_status("")
+
+
+## Offline helper bots (the party check; co-op bots are their machine's local
+## hero): an owned, non-local hero whose bot holds interact beside a downed
+## ally revives it like a person would.
+var _bot_progress: Dictionary = {}
+
+
+func _tick_bot_revives(delta: float) -> void:
+	for h in zone.party():
+		if h.is_local or h.net_role != Player.NetRole.OWNER or h.health.is_dead or not h.intent.interact_held:
+			_bot_progress.erase(h.get_instance_id())
+			continue
+		var target: Player = null
+		for other in zone.party():
+			if other != h and other.health.is_dead and other.global_position.distance_to(h.global_position) <= RANGE:
+				target = other
+				break
+		if target == null:
+			_bot_progress.erase(h.get_instance_id())
+			continue
+		var held := float(_bot_progress.get(h.get_instance_id(), 0.0)) + delta
+		if held >= HOLD_SECONDS:
+			held = 0.0
+			revives_sent += 1
+			h.hero_fx(&"ally_revive", [zone.hero_ref(target), REVIVE_HEALTH])
+		_bot_progress[h.get_instance_id()] = held
 
 
 ## The local hero holds [E] beside a downed ally: after HOLD_SECONDS the

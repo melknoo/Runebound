@@ -120,6 +120,18 @@
 		"en": "The Galebinder",
 		"de": "Der Windbinder"
 	},
+	"enemy.last_stormcaller": {
+		"en": "The Last Stormcaller",
+		"de": "Der letzte Sturmrufer"
+	},
+	"ui.storm.clap": {
+		"en": "He gathers the thunder - link up between the coils!",
+		"de": "Er sammelt den Donner - bildet eine Kette zwischen den Spulen!"
+	},
+	"ui.storm.grounded": {
+		"en": "The chain holds - the thunder goes to ground",
+		"de": "Die Kette hält - der Donner geht in die Erde"
+	},
 	"ui.coop.coil": {
 		"en": "Strike the coil",
 		"de": "Spule anschlagen"

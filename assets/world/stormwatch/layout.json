@@ -2315,10 +2315,20 @@
     98,
     46
    ],
-   "boss": "dungeon_boss",
+   "boss": "last_stormcaller",
    "flag": "sw_caller_down",
    "trigger": 10.0,
    "reward": "end",
+   "grounds": [
+    [
+     80,
+     32
+    ],
+    [
+     116,
+     64
+    ]
+   ],
    "room": "sw_heart",
    "y": 0.0
   },

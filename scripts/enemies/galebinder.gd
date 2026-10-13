@@ -14,11 +14,11 @@ const BLADE_EVERY := 2.6
 const BLADE_WINDUP := 0.8
 const BLADE_LENGTH := 13.0
 const BLADE_HALF_WIDTH := 0.9
-const BLADE_DAMAGE := 15.0
+const BLADE_DAMAGE := 20.0
 const GUST_EVERY := 15.0
 const GUST_WINDUP := 1.1
 const GUST_RADIUS := 7.0
-const GUST_DAMAGE := 6.0
+const GUST_DAMAGE := 10.0
 const GUST_PUSH := 14.0
 const WAVES: Array[float] = [0.75, 0.5, 0.25]
 const GALE_RECOVER := 0.8
@@ -36,7 +36,7 @@ func _init() -> void:
 	super()
 	xp_value = 450
 	display_name = "The Galebinder"
-	max_health = 950.0
+	max_health = 2800.0
 	move_speed = 2.9
 	body_color = Color(0.4, 0.42, 0.55)
 

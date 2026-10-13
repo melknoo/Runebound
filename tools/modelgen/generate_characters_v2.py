@@ -3873,6 +3873,59 @@ def stormsworn_clips(arm):
            {0: EXPO_OUT, 4: QUART_OUT, 14: QUART_OUT})
 
 
+def build_stormcaller(sheets=False):
+    """M13b the Stormwatch's end boss: the last stormcaller, worn by the
+    storm - a ragged storm-cloud cloak over violet robes, a crown of copper
+    tines with sparks, a floating staff with a caught bolt."""
+    rig.reset_scene()
+    arm = rig.build_armature("last_stormcaller", caster_bones())
+    lc = PAL["last_stormcaller"]
+    pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
+    cloak = pm.paint(lc["cloak"], 3, "cloth")
+    cloak_dark = pm.paint(lc["cloak"], 1, "cloth")
+    robe = pm.paint(lc["robe"], 2, "cloth")
+    copper = pm.paint(lc["copper"], 3)
+    skin = pm.paint(lc["skin"], 1, "hide")
+    # violet robes under a ragged cloak that hangs in storm-cloud tatters
+    pm.loft("hips", [(0.36, 0.34, 0.3, 0, 0.01), (0.7, 0.28, 0.24, 0, 0.0), (0.98, 0.22, 0.18, 0, 0.0)], paint=robe)
+    pm.loft("hem", [(0.06, 0.48, 0.44, 0, 0.04), (0.24, 0.45, 0.41, 0, 0.03), (0.46, 0.36, 0.32, 0, 0.02)], paint=cloak)
+    for k in range(7):
+        a = k * math.tau / 7
+        pm.box("hem", (0.12, 0.05, 0.3), (0.46 * math.cos(a), 0.44 * math.sin(a) + 0.04, -0.06),
+               rot=(0.0, 0.0, a), taper=0.3, paint=cloak_dark)                                       # tatters
+    pm.loft("spine", [(0.96, 0.21, 0.17, 0, 0.0), (1.22, 0.23, 0.18, 0, -0.01)], paint=robe)
+    pm.loft("chest", [(1.2, 0.25, 0.19, 0, -0.01), (1.36, 0.23, 0.17, 0, -0.02), (1.44, 0.15, 0.12, 0, -0.03)], paint=robe)
+    pm.loft("chest", [(1.12, 0.36, 0.3, 0, 0.04), (1.32, 0.34, 0.28, 0, 0.02), (1.46, 0.22, 0.19, 0, 0.0)], paint=cloak)  # the cloak's shoulders
+    for side, x in (("L", 1.0), ("R", -1.0)):
+        sx = 0.2 * x
+        pm.loft("upper_arm." + side, [(1.38, 0.075, 0.075, sx, -0.02), (1.1, 0.09, 0.09, sx * 1.1, -0.02)], paint=cloak)
+        pm.loft("forearm." + side, [(1.12, 0.09, 0.09, sx * 1.1, -0.02), (0.88, 0.14, 0.13, sx * 1.15, -0.02)], paint=cloak_dark)
+        pm.box("hand." + side, (0.07, 0.08, 0.1), (sx * 1.15, -0.03, 0.83), paint=skin)
+        pm.box("hand." + side, (0.04, 0.04, 0.04), (sx * 1.15, -0.06, 0.78), mat_index=1)          # sparks at his fingers
+    # a gaunt face under the hood's edge, eyes of white lightning, a crown of copper tines
+    pm.loft("head", [(1.4, 0.11, 0.11, 0, 0.0), (1.53, 0.13, 0.14, 0, -0.01), (1.68, 0.12, 0.13, 0, 0.0), (1.76, 0.07, 0.07, 0, 0.01)], paint=skin)
+    pm.loft("head", [(1.5, 0.17, 0.18, 0, 0.02), (1.66, 0.16, 0.17, 0, 0.03), (1.8, 0.09, 0.1, 0, 0.06)], paint=cloak_dark)  # hood
+    for x in (1.0, -1.0):
+        pm.box("head", (0.04, 0.02, 0.02), (0.045 * x, -0.135, 1.58), mat_index=1)
+    pm.loft("head", [(1.7, 0.14, 0.15, 0, 0.0), (1.74, 0.14, 0.15, 0, 0.0)], paint=copper)
+    for k in range(6):
+        a = -0.9 + k * 0.36
+        pm.box("head", (0.025, 0.025, 0.2), (0.15 * math.sin(a), -0.15 * math.cos(a), 1.84), rot=(0.25 * math.cos(a), 0.25 * math.sin(a), 0), taper=0.2, paint=copper)
+        pm.box("head", (0.03, 0.03, 0.03), (0.17 * math.sin(a), -0.17 * math.cos(a), 1.95), mat_index=1)
+    # the floating staff (root bone): copper shaft, a ring cage holding a caught bolt
+    ox, oy, _ = ORB
+    pm.loft("root", [(0.3, 0.03, 0.03, ox, oy), (1.5, 0.034, 0.034, ox, oy)], sides=6, paint=copper)
+    for k in range(4):
+        a = k * math.tau / 4
+        pm.box("root", (0.025, 0.025, 0.36), (ox + 0.13 * math.cos(a), oy + 0.13 * math.sin(a), 1.7), paint=copper)
+    pm.box("root", (0.08, 0.08, 0.3), (ox, oy, 1.7), rot=(0, 0, 0.5), taper=0.5, mat_index=1)        # the caught bolt
+    mats = [rig.make_material("lc_body", "#FFFFFF"),
+            rig.make_material("lc_glow", lc["glow"], emission_hex=lc["glow"], strength=3.0)]
+    body = pm.to_object("last_stormcaller", mats, arm)
+    robed_clips(arm, "enemies/last_stormcaller.gd", "BLOW_WINDUP", gust="PULSE_WINDUP")
+    finish(body, arm, "last_stormcaller", "last_stormcaller", (1,), sheets)
+
+
 if __name__ == "__main__":
     args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     want_sheets = "--sheets" in args
@@ -3886,7 +3939,7 @@ if __name__ == "__main__":
                 "thrall": build_thrall, "lurker": build_lurker, "keeper": build_keeper, "deepmaw": build_deepmaw,
                 "beetle": build_cinder_beetle, "imp": build_imp, "reeve": build_reeve, "broodmother": build_broodmother,
                 "gale_wraith": build_gale_wraith, "acolyte": build_storm_acolyte, "sentinel": build_coil_sentinel,
-                "stormsworn": build_stormsworn, "galebinder": build_galebinder}
+                "stormsworn": build_stormsworn, "galebinder": build_galebinder, "stormcaller": build_stormcaller}
     only = [a for a in args if not a.startswith("--")] or list(builders)
     for name in only:
         builders[name](want_sheets)

@@ -27,6 +27,7 @@
 		{"name": "storm_family", "player": [0, 0.2, -30], "yaw": 0.0, "pitch": -0.3, "zoom": 6.5, "spawn": [{"id": "storm_acolyte", "at": [-2.5, 0.2, -37], "face": 0.4, "freeze": true}, {"id": "coil_sentinel", "at": [1.5, 0.2, -38], "face": -0.3, "freeze": true}, {"id": "gale_wraith", "at": [4, 1.2, -35], "face": -0.8, "freeze": true}], "settle": 0.8},
 		{"name": "sentinel_charge", "player": [0, 0.2, 14], "yaw": 0.0, "pitch": -0.35, "zoom": 7.0, "spawn": [{"id": "coil_sentinel", "at": [0, 0.2, 6], "face": 3.14159, "call": "start_charge"}], "settle": 1.2},
 		{"name": "stormsworn", "player": [-4, 0.2, -92], "yaw": -0.35, "pitch": -0.22, "zoom": 6.5, "spawn": [{"id": "stormsworn", "at": [0, 0.2, -100], "face": 3.14159, "freeze": true}], "settle": 0.6},
-		{"name": "galebinder", "player": [66, 4.2, -30], "yaw": -0.3, "pitch": -0.2, "zoom": 6.5, "spawn": [{"id": "galebinder", "at": [69, 4.2, -38], "face": 0.0, "freeze": true}], "settle": 0.6}
+		{"name": "galebinder", "player": [66, 4.2, -30], "yaw": -0.3, "pitch": -0.2, "zoom": 6.5, "spawn": [{"id": "galebinder", "at": [69, 4.2, -38], "face": 0.0, "freeze": true}], "settle": 0.6},
+		{"name": "stormcaller", "player": [93, 0.2, 35], "yaw": 2.85, "pitch": -0.22, "zoom": 7.0, "spawn": [{"id": "last_stormcaller", "at": [98, 0.2, 45], "face": 3.14159, "freeze": true}], "settle": 0.6}
 	]
 }

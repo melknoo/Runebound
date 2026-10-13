@@ -34,6 +34,7 @@ Dev-environment and agent know-how that the architecture docs do not carry. Fact
   - A sky shader that uses TIME costs ~4 ms unless `Sky.process_mode = QUALITY` (see gotchas).
 - **Playtest log:** the user ticks points in game (J). Read `%APPDATA%/Godot/app_userdata/RUNEBOUND/playtest.json` (`{items: {id: {state ok|problem, note, at}}}`, an `open` tick is erased) on their PC to pick up problems. Keep `resources/playtest/checklist.json` (German items, stable ids, one group per milestone) in step with KNOWN_ISSUES.
 - **Solo check** (`solocheck [class] [level]`): bots never read telegraphs, so it is a floor for a player, not a verdict. `--only=<camp>` traces one fight (`-- --trace`).
+- **Party check** (`partycheck [party] [level]`, M13b): a bot party offline through the Stormwatch's camps and three bosses with the server's health for the party; per fight clear / wipe / timeout, seconds, downs, damage taken per hero. Compare a party with all three roles against one without a tank or a healer; `--only=` and `--trace` as in the solo check. Bots never drink and never dodge.
 
 ## Process hygiene
 - Before perf runs, or when crashes look random, list Godot processes: `Get-CimInstance Win32_Process -Filter "Name like 'Godot%'"`. Hung headless runs (once four, up to 22 h old) burn CPU, which throttles the iGPU (shared power budget). A second windowed game made the first die with "Vulkan device was lost" (Windows GPU resets).

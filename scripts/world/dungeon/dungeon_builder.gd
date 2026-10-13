@@ -387,7 +387,48 @@ static func arena(z: ZoneBase, l: DungeonLayout, poi: Dictionary) -> BossArena:
 	a.set_meta(&"poi_id", a.arena_id)
 	z.world.add_child(a)
 	a.global_position = ZoneLayout.pos_of(poi)
+	for g: Array in poi.get("grounds", []):  # M13b: the Last Stormcaller's grounding coils
+		ground_coil(z, Vector3(float(g[0]), a.global_position.y, float(g[1])))
 	return a
+
+
+## M13b: a grounding coil - a copper pylon with a cap that glows when the
+## thunder gathers (the Last Stormcaller's chain runs between two). Heroes
+## bump it; the camera passes.
+static func ground_coil(z: ZoneBase, at: Vector3) -> Node3D:
+	var holder := Node3D.new()
+	holder.name = "GroundCoil"
+	z.world.add_child(holder, true)
+	holder.global_position = at
+	var body := StaticBody3D.new()
+	body.collision_layer = Grove.FOLIAGE_LAYER
+	body.collision_mask = 0
+	var col := CollisionShape3D.new()
+	var shape := CylinderShape3D.new()
+	shape.radius = 0.6
+	shape.height = 2.6
+	col.shape = shape
+	col.position = Vector3(0, 1.3, 0)
+	body.add_child(col)
+	holder.add_child(body)
+	var pylon := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.3
+	cyl.bottom_radius = 0.6
+	cyl.height = 2.4
+	cyl.material = EnemyBase.flat_material(Color(0.25, 0.42, 0.36))
+	pylon.mesh = cyl
+	pylon.position = Vector3(0, 1.2, 0)
+	holder.add_child(pylon)
+	var cap := MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.4
+	sphere.height = 0.8
+	sphere.material = EnemyBase.flat_material(Color(0.78, 0.7, 1.0), true, 0.8)
+	cap.mesh = sphere
+	cap.position = Vector3(0, 2.6, 0)
+	holder.add_child(cap)
+	return holder
 
 
 ## A camp inside a room: fixed spots (the default ring could land in a wall),

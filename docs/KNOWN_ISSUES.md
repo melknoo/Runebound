@@ -402,6 +402,17 @@
   leaping 5 m) every 13 s on one hero in two; the Galebinder: 950, blades
   15, the gust 6 with a big push every 15 s. Both are first numbers; the
   party check (phase 6) tunes them.
+- **Boss numbers after the party check (phase 6):** health 3200 / 2800 /
+  4800 base (x the level, x the party); the Stormsworn's blows 22 and her
+  lunge 24, bolts 18 (+14 leaping); the Galebinder's blades 20, gust 10;
+  the Stormcaller's blows 34, pulses 14 (9 s, then 6 s), the thunderclap
+  60 (11 s to ground it, every 32 s), a bolt of 22 on a kiting target.
+  With all three roles the bots lost nobody - players who dodge may find
+  it easy; without a tank or a healer a wipe came. Tune after the
+  playtest (the party check: `tools\run_godot.cmd partycheck`).
+- The party check has no draughts (bots never drink) and its fights all
+  start at full health; a real run is harder in that and easier in
+  dodging.
 - The storm family's rigs and both bosses read dark in the dim halls in the
   shots (contact sheets show them clearly); judge them in the playtest.
 - **The Stormwatch's look to judge (phase 4, shots `m13b_stormwatch`):**

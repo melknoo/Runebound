@@ -1022,8 +1022,31 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
     stagger, the Galebinder's gust), `coil_sentinel` and `stormsworn` on
     the humanoid one. Sounds: storm_bolt, coil_charge, coil_discharge,
     gale_gust, wraith_shriek.
+- **The end boss and the party check (phase 6):**
+  - `LastStormcaller` (`last_stormcaller`, DungeonBoss): phase 1 staff
+    blows on his target (a disc) and static pulses through the hall
+    (CIRCLE, `_hit_hall`; every 9 s, 6 s in phase 3); below 60 % every
+    32 s he gathers the thunder (ATTACK, 11 s): `_chain_closed` -
+    `ChainPuzzle.trace` between the arena's two `grounds` with a link of
+    `distance / party x 1.06` (so all heroes but one stand in it) - held
+    1.5 s grounds it (he reels 4 s and takes x1.5), else the thunderclap
+    hits the hall; below 30 % adds (`party - 1` acolytes and a sentinel).
+    A target that kites gets a bolt every 4 s (`StormStrike`, leaping once).
+    `is_gathering()` runs on every machine from the `clap_charge` fx (the
+    chain's arcs in `_process`, `bot_stations` for helper bots).
+    `DungeonBuilder.ground_coil` builds the arena's `grounds` as copper
+    pylons. The Stormsworn got a lunge down a lane when her mark keeps
+    more than 7 m away for 1.5 s.
+  - Bots: `_find_duty` also asks living enemies for `bot_stations` (a
+    gathering boss outranks any puzzle); a boss's station and a revive
+    are urgent - done even mid-fight. `ReviveSystem._tick_bot_revives`
+    lets an owned, non-local bot revive offline (the party check).
+  - `tests/party_check.tscn` (`run_godot partycheck [party] [level]`): a
+    bot party offline through every camp and the three bosses; enemies get
+    the server's health for the party; per fight the result (clear / wipe
+    / timeout), the seconds, the downs and each hero's damage taken.
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
-  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`, `stormsworn`,
+  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`, `stormsworn`, `stormcaller`,
   `coop_bots` (the real companion driver helps a scripted leader through
   the lab's co-op rooms and revives it; companions take `--until-alone=`
   in tests).

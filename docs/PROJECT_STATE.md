@@ -167,6 +167,40 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
   - Found on the way: a test standing in the real arena's trigger woke its
     Stormsworn, and killing it set the run's flag; the test now stands
     outside the trigger.
+- **Phase 6 (built): the Last Stormcaller and the party check.**
+  - The end boss (the heart of the storm): heavy staff blows on his
+    target, static pulses through the whole hall (the healer's test);
+    below 60 % the thunder - 11 s to link up from one grounding coil to
+    the other (all heroes but one; the link is the coils' distance split
+    by the party), which grounds it (he reels, open to every blow), or the
+    thunderclap hits everyone; below 30 % acolytes and a sentinel; a bolt
+    on a target that kites. His own rig (a storm cloak, a copper crown, a
+    floating staff with a caught bolt).
+  - The party check (`tools\run_godot.cmd partycheck [party] [level]`,
+    level 8, rolled gear, bots that never read telegraphs, the server's
+    health for the party):
+
+    | Party | Fights | Wipes | Downs |
+    |---|---|---|---|
+    | tank, druid, Elementalist | 9/9 | 0 | 0 |
+    | three Elementalists | 7/9 | 2 | 10 |
+    | tank and two Elementalists (no healer) | 8/9 | 1 | 10 |
+    | druid and two Elementalists (no tank) | 8/9 | 1 | 5 |
+
+    Boss fights with the roles: the Stormsworn 103 s, the Galebinder 86 s,
+    the Stormcaller 160 s (the thunder grounded twice by the bots).
+  - Tuned on it: the first numbers let both parties win everything in
+    ~30 s per boss - roles did not matter (a ranged hero holding a melee
+    boss's attention just kept away). Health about x3 (3200 / 2800 / 4800
+    base), heavier blows, bolts and pulses (14), the Stormsworn's lunge
+    and the Stormcaller's bolt on a kiting target.
+  - Bots take a boss's places (the chain) and revive even mid-fight; an
+    offline bot can revive too (the party check).
+  - Smoke 897 green (two grounding coils, the link, a pulse, the thunder
+    grounded by two heroes, struck without them, the adds below 30 %).
+    Net scenario `stormcaller` (two clients link up, the server grounds
+    the thunder through their proxies, he falls, the flag); `coop_bots`,
+    `stormsworn` green. Shot `stormcaller` (22).
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

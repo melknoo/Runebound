@@ -679,6 +679,14 @@
 			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
 			"glow": "#E2DCFF"
 		},
+		"last_stormcaller": {
+			"comment": "M13b end boss: the last stormcaller, worn by the storm - a ragged storm-cloud cloak over old violet robes, a crown of copper tines that spark, a floating staff with a caught bolt, eyes of white lightning",
+			"cloak": ["#1A1B26", "#262838", "#34364C", "#444862", "#575C7C"],
+			"robe": ["#2A1E40", "#3A2A58", "#4C3870", "#62488C"],
+			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
+			"skin": ["#5E5A66", "#7A7684", "#9894A2"],
+			"glow": "#F2EEFF"
+		},
 		"gale_wraith": {
 			"comment": "M13b the storm family: a scrap of wind with a shape - pale blue-white streamers around a dark husk, bright eyes",
 			"wind": ["#5C6684", "#7E89A8", "#A6B0CC", "#CDD5EA"],

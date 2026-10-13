@@ -28,8 +28,8 @@ Rooms stand 2 m apart (the wall); a connector cuts a doorway through that
 gap. Every id carries the prefix "sw_" (SaveGame keys are flat; a fresh run
 clears every key with it). Rules: see dungeon_bake.py.
 Phase 5 brings the storm family into the camps (Stormsworn Acolytes and Coil
-Sentinels) and the two mid-bosses (the Stormsworn, the Galebinder); the end
-boss's arena keeps the placeholder until phase 6.
+Sentinels) and the two mid-bosses (the Stormsworn, the Galebinder); phase 6
+the end boss, the Last Stormcaller, and his two grounding coils.
 """
 
 LAYOUT = {
@@ -166,8 +166,8 @@ LAYOUT = {
         {"id": "sw_lore_conductors", "type": "lore", "kind": "inscription", "text": "lore.stormwatch.conductors",
          "pos": [86, 18], "yaw": 1.5708},
         # --- the heart of the storm (the end boss) and the way out ---
-        {"id": "sw_arena_caller", "type": "arena", "pos": [98, 46], "boss": "dungeon_boss",
-         "flag": "sw_caller_down", "trigger": 10.0, "reward": "end"},
+        {"id": "sw_arena_caller", "type": "arena", "pos": [98, 46], "boss": "last_stormcaller",
+         "flag": "sw_caller_down", "trigger": 10.0, "reward": "end", "grounds": [[80, 32], [116, 64]]},
         {"id": "sw_exit_heart", "type": "portal", "pos": [98, 67], "yaw": 3.14159, "dest": "highlands",
          "arrival": "dungeon_se", "label": "ASHEN HIGHLANDS", "unlock_flag": "sw_caller_down"},
         # --- the orrery (secret): two coils struck together wake the dome's lightning;

@@ -658,6 +658,76 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
+			"stormcaller":
+				# M13b phase 6: the three wake the Last Stormcaller and wear him down
+				# under 60 %; when he gathers the thunder (seen here from his fx) c2
+				# and c3 stand at the chain's places between the coils, c1 keeps him
+				# busy; the server grounds it (the "grounded" fx reaches every
+				# client); then they strike him down - the way out opens.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as StormwatchZone
+				if zone == null:
+					_finish("fail: not in the Stormwatch")
+					return
+				var world := zone.net_world
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				var spots := {"c1": Vector3(98, 0.2, 40), "c2": Vector3(90, 0.2, 52), "c3": Vector3(106, 0.2, 52)}
+				hero.global_position = Vector3(98, 0.2, 18) + Vector3(float(int(role.trim_prefix("c")) - 2) * 3.0, 0, 0)
+				if not await _until(func() -> bool: return Net.roster.size() >= 3, 30.0, "all three heroes"):
+					return
+				await _seconds(2.0)
+				var find_boss := func() -> LastStormcaller:
+					for id: int in world.enemies:
+						var e := world.enemies[id] as LastStormcaller
+						if e != null and is_instance_valid(e) and e.ai_state != EnemyBase.AIState.DEAD:
+							return e
+					return null
+				hero.global_position = spots[role] as Vector3
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return find_boss.call() != null, 20.0, "the Last Stormcaller"):
+					return
+				var boss := find_boss.call() as LastStormcaller
+				if boss.grounds.size() != 2:
+					_finish("fail: his puppet knows %d grounding coils" % boss.grounds.size())
+					return
+				var struck_at := {"t": 0}
+				var wear := func(limit: float) -> bool:
+					var b := find_boss.call() as LastStormcaller
+					if b == null:
+						return true
+					if b.health.current_health <= b.health.max_health * limit:
+						return true
+					if Time.get_ticks_msec() - int(struck_at["t"]) > 300:
+						struck_at["t"] = Time.get_ticks_msec()
+						var hit := hero.roll_ability_hit(hero.ability(&"rune_cleave"))
+						hit.damage = 400.0
+						b.take_hit(hit)
+					return false
+				if not await _until(func() -> bool: return bool(wear.call(0.5)), 40.0, "him under 60 %"):
+					return
+				if not await _until(func() -> bool: return boss.is_gathering(), 25.0, "him gathering the thunder"):
+					return
+				if role != "c1":
+					var places := boss.bot_stations(hero)
+					if places.size() != 2:
+						_finish("fail: %d chain places for three heroes" % places.size())
+						return
+					hero.global_position = (places[0 if role == "c2" else 1]["pos"] as Vector3) + Vector3(0, 0.2, 0)
+					hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return not boss.is_gathering(), 20.0, "the thunder grounded or struck"):
+					return
+				hero.global_position = spots[role] as Vector3
+				hero.velocity = Vector3.ZERO
+				if not await _until(func() -> bool: return bool(wear.call(0.0)) or SaveGame.has_flag(&"sw_caller_down"), 60.0,
+						"the Last Stormcaller felled"):
+					return
+				if not await _until(func() -> bool: return SaveGame.has_flag(&"sw_caller_down"), 15.0, "the flag"):
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"stormsworn":
 				# M13b phase 5: the three wake the Stormsworn in her hall (scaled for
 				# three, the bar shows); her called lightning reaches every client

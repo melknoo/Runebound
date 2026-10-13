@@ -12,21 +12,34 @@ extends DungeonBoss
 const STRIKE_AHEAD := 2.2
 const STRIKE_RADIUS := 2.4
 const STRIKE_WINDUP := 0.6
-const STRIKE_DAMAGE := 18.0
+const STRIKE_DAMAGE := 22.0
 const COMBO := 3
 const COMBO_RECOVER := 1.8
 const CHAIN_EVERY := 13.0
 const CALL_TIME := 0.7
 const BOLT_RADIUS := 1.4
 const BOLT_DELAY := 1.1
-const BOLT_DAMAGE := 14.0
+const BOLT_DAMAGE := 18.0
 const LEAP_RANGE := 5.0
-const LEAP_DAMAGE := 12.0
+const LEAP_DAMAGE := 14.0
+## Her mark keeps away: she lunges after it down a lane (the party check:
+## kiting her without a tank cost nothing).
+const LUNGE_AFTER := 1.5
+const LUNGE_MIN := 7.0
+const LUNGE_WINDUP := 0.6
+const LUNGE_TIME := 0.35
+const LUNGE_LENGTH := 10.0
+const LUNGE_RADIUS := 2.4
+const LUNGE_DAMAGE := 24.0
+const LUNGE_COOLDOWN := 6.0
 const SUMMON_AT := 0.5
 
 const RIG_PATH := "res://assets/models/chars/stormsworn.glb"
 
 var _combo_left: int = 0
+var _far_for: float = 0.0
+var _lunge_cd: float = 0.0
+var _lunge_dir := Vector3.FORWARD
 var _chain_left: float = CHAIN_EVERY * 0.5
 var _summoned: bool = false
 ## Tests: the bolts of her last call and how many acolytes she called.
@@ -38,7 +51,7 @@ func _init() -> void:
 	super()
 	xp_value = 450
 	display_name = "The Stormsworn"
-	max_health = 1100.0
+	max_health = 3200.0
 	move_speed = 2.7
 	body_color = Color(0.3, 0.3, 0.38)
 
@@ -47,6 +60,7 @@ func _build_body() -> void:
 	if _setup_rigged_visual(RIG_PATH, "stormsworn", {
 		"idle": &"idle", "run": &"run", "run_speed": move_speed,
 		"states": {AIState.WINDUP: &"strike", AIState.CIRCLE: &"call", AIState.STAGGER: &"stagger",
+			AIState.RETREAT: &"call", AIState.ATTACK: &"strike",
 			AIState.CHASE: &"@loco", AIState.IDLE: &"@loco", AIState.DEAD: &"@dead"},
 	}, ArtKit.color("palettes.stormsworn.glow")) != null:
 		visual.scale = Vector3.ONE * 1.15
@@ -72,6 +86,7 @@ func _physics_process(delta: float) -> void:
 
 func _ai_process(delta: float) -> void:
 	_chain_left -= delta  # counts in every state: a combo never starves the call
+	_lunge_cd -= delta
 	match ai_state:
 		AIState.IDLE:
 			brake(delta)
@@ -85,11 +100,36 @@ func _ai_process(delta: float) -> void:
 				_enter_state(AIState.CIRCLE)
 				play_fx(&"call")
 			elif distance_to_player() <= STRIKE_AHEAD + STRIKE_RADIUS * 0.6:
+				_far_for = 0.0
 				_combo_left = COMBO
 				lock_strike()
 				_enter_state(AIState.WINDUP)
 			else:
-				move_towards(dir_to_player(), move_speed, delta)
+				_far_for = _far_for + delta if distance_to_player() > LUNGE_MIN else 0.0
+				if _far_for >= LUNGE_AFTER and _lunge_cd <= 0.0:
+					_far_for = 0.0
+					_lunge_cd = LUNGE_COOLDOWN
+					face_player(1.0, 30.0)
+					lock_strike()
+					_lunge_dir = _strike_forward
+					_enter_state(AIState.RETREAT)  # the lunge's windup (a lane marks it)
+					play_fx(&"lunge_tell")
+				else:
+					move_towards(dir_to_player(), move_speed, delta)
+		AIState.RETREAT:
+			brake(delta)
+			if _state_timer >= LUNGE_WINDUP:
+				_enter_state(AIState.ATTACK)
+		AIState.ATTACK:  # down the lane, then the blow where it ends
+			velocity.x = _lunge_dir.x * LUNGE_LENGTH / LUNGE_TIME
+			velocity.z = _lunge_dir.z * LUNGE_LENGTH / LUNGE_TIME
+			if _state_timer >= LUNGE_TIME:
+				velocity.x = 0.0
+				velocity.z = 0.0
+				play_fx(&"strike")
+				strike_circle(global_position + _lunge_dir * 1.2, LUNGE_RADIUS, LUNGE_DAMAGE, HitInfo.DamageType.LIGHTNING,
+					HitInfo.Weight.HEAVY, 6.0)
+				_enter_state(AIState.RECOVER)
 		AIState.WINDUP:
 			brake(delta)
 			if _state_timer >= STRIKE_WINDUP:
@@ -173,6 +213,10 @@ func _present_fx(fx: StringName) -> void:
 			VFX.ground_ring(scene, at, Color(0.78, 0.7, 1.0), STRIKE_RADIUS, 0.25)
 			Sfx.play("storm_bolt", at, -4.0, 0.1, 1.2)
 			GameFeel.camera_shake(0.18)
+		&"lunge_tell":
+			_telegraph_disc = VFX.telegraph_lane(scene, present_origin(), present_forward(), LUNGE_LENGTH + 1.2,
+				LUNGE_RADIUS * 2.0, LUNGE_WINDUP + LUNGE_TIME)
+			Sfx.play("gale_gust", global_position, -6.0, 0.05, 0.7)
 		&"call":
 			VFX.flash(scene, present_origin() + Vector3(0, 3.4, 0), Color(0.85, 0.8, 1.0), 1.6, CALL_TIME)
 			Sfx.play("coil_charge", global_position, -2.0, 0.05, 0.8)

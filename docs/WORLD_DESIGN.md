@@ -347,3 +347,11 @@ Phase 5 brought the storm family and the mid-bosses:
   leaps from hero to hero within 5 m), acolytes at half health.
 - **The Galebinder** (mid-boss 2): wind blades down a lane, a gust that
   throws everyone near back, wraith waves at 75 / 50 / 25 % health.
+- **The Last Stormcaller** (end boss, phase 6): heavy staff blows on his
+  target and static pulses through the whole hall (the healer's test);
+  below 60 % he gathers the thunder - 11 s for the party to link up from
+  one grounding coil to the other (all heroes but one: the link is the
+  coils' distance split by the party), which grounds it (he reels 4 s,
+  open to every blow), or the thunderclap hits everyone hard; below 30 %
+  acolytes and a sentinel, faster pulses; a hero who keeps away draws a
+  bolt.

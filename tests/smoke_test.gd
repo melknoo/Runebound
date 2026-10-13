@@ -5453,6 +5453,80 @@ func _run() -> void:
 			sf_m.queue_free()
 		swh.global_position = sf_at
 		await _wait_frames(4)
+		# --- M13b phase 6: the Last Stormcaller - blows, pulses, the thunder and its ground ---
+		var lc_coils := 0
+		for lc_n in sw.world.get_children():
+			if lc_n.name.begins_with("GroundCoil"):
+				lc_coils += 1
+		var lc_mates: Array[Player] = []
+		for lc_i in 2:
+			var lc_mate := Player.create(ClassData.load_by_id(&"druid"))
+			lc_mate.is_local = false
+			lc_mate.input_source = InputSource.new()
+			lc_mate.god_mode = true
+			sw.add_player(lc_mate)
+			lc_mates.append(lc_mate)
+		var lc_poi := sw.layout.pois.find("sw_arena_caller")
+		var lc_rect := DungeonLayout.rect_of(sw.layout.room("sw_heart"))
+		swh.global_position = Vector3(78, 0.2, 62)  # in the hall, out of its arena's trigger
+		lc_mates[0].global_position = Vector3(118, 0.2, 30)
+		lc_mates[1].global_position = Vector3(76, 0.2, 28)
+		await _wait_frames(3)
+		var lc := ZoneBase.make_enemy("last_stormcaller") as LastStormcaller
+		sw._spawn_enemy(lc, Vector3(98, 0.2, 46))
+		lc.setup_arena(lc_rect, lc_poi)
+		await _wait_frames(4)
+		_check(lc_coils == 2 and lc.grounds.size() == 2 and lc.rig_root() != null and lc.display_name == "The Last Stormcaller"
+			and absf(lc.link_length() - lc.grounds[0].distance_to(lc.grounds[1]) / 3.0 * LastStormcaller.LINK_SLACK) < 0.01,
+			"M13b Stormcaller: in his rig between two grounding coils; a link is their distance split by the party")
+		# a static pulse reaches every hero in the hall
+		lc_mates[0].god_mode = false
+		var lc_hp := lc_mates[0].health.current_health
+		lc._hit_hall(LastStormcaller.PULSE_DAMAGE, 0.0)
+		await _wait_frames(2)
+		var lc_pulsed := lc_mates[0].health.current_health < lc_hp
+		lc_mates[0].god_mode = true
+		lc_mates[0].health.heal_full()
+		# below 60 % he gathers the thunder; a chain of the two helpers between the coils grounds it
+		lc.health.current_health = lc.health.max_health * 0.55
+		await _wait_frames(3)
+		lc._clap_cd = 0.0
+		lc._enter_state(EnemyBase.AIState.CHASE)
+		await _wait_frames(4)
+		var lc_gathering := lc.phase == 2 and lc.clap_left > 0.0 and lc.is_gathering() and lc.bot_stations(swh).size() == 2
+		var lc_spots := lc.bot_stations(swh)
+		for lc_k in 2:
+			lc_mates[lc_k].global_position = (lc_spots[lc_k]["pos"] as Vector3) + Vector3(0, 0.2, 0)
+			lc_mates[lc_k].velocity = Vector3.ZERO
+		await _wait_frames(int(LastStormcaller.GROUND_HOLD * 60.0) + 20)
+		_check(lc_pulsed and lc_gathering and lc.grounded_claps == 1 and lc.claps == 0 and lc.grounded_left > 0.0,
+			"M13b Stormcaller: a pulse through the hall; below 60 % he gathers the thunder and two heroes linked coil to coil ground it")
+		# without the chain the thunderclap strikes the hall
+		lc_mates[0].global_position = Vector3(118, 0.2, 30)
+		lc_mates[1].global_position = Vector3(76, 0.2, 28)
+		lc.grounded_left = 0.0
+		lc._clap_cd = 0.0
+		lc._enter_state(EnemyBase.AIState.CHASE)
+		await _wait_frames(4)
+		lc.clap_left = 0.1
+		await _wait_frames(10)
+		var lc_struck := lc.claps == 1 and lc.grounded_claps == 1
+		# below 30 % his acolytes (one fewer than the heroes) and a sentinel
+		lc.health.current_health = lc.health.max_health * 0.25
+		await _wait_frames(4)
+		var lc_adds := {"storm_acolyte": 0, "coil_sentinel": 0}
+		for lc_e in EnemyBase.all_enemies:
+			if is_instance_valid(lc_e) and lc_adds.has(lc_e.type_id) and lc_e.ai_state != EnemyBase.AIState.DEAD:
+				lc_adds[lc_e.type_id] = int(lc_adds[lc_e.type_id]) + 1
+		_check(lc_struck and lc.phase == 3 and int(lc_adds["storm_acolyte"]) == 2 and int(lc_adds["coil_sentinel"]) == 1,
+			"M13b Stormcaller: no chain - the thunderclap; below 30 %% two acolytes and a sentinel for three heroes (%s)" % lc_adds)
+		sw.kill_all_enemies()
+		await _wait_frames(20)
+		for lc_m: Player in lc_mates:
+			sw.remove_player(lc_m)
+			lc_m.queue_free()
+		swh.global_position = Vector3(0, 0.2, -36)
+		await _wait_frames(4)
 		# --- M13b phase 3: bots' ways through the rooms ---
 		var wp_fore := sw.layout.next_waypoint(Vector3(0, 0, 55), Vector3(0, 0, 5), sw.door_passable)
 		var wp_door := sw.layout.next_waypoint(Vector3(0, 0, 39), Vector3(0, 0, 5), sw.door_passable)
