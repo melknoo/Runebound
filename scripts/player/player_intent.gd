@@ -16,6 +16,8 @@ var held: Array[StringName] = []
 var sprint: bool = false
 ## M10: where a source without a camera aims (bots); ZERO = the camera / facing.
 var aim_dir: Vector3 = Vector3.ZERO
+## M13b: a bot holds the interact key (a revive), as a person holds [E].
+var interact_held: bool = false
 
 
 func clear() -> void:
@@ -24,3 +26,4 @@ func clear() -> void:
 	held.clear()
 	sprint = false
 	aim_dir = Vector3.ZERO
+	interact_held = false

@@ -294,6 +294,46 @@ func respawn_point(died_at: Vector3) -> Vector3:
 
 
 # ---------------------------------------------------------------------------
+# M13b: ways and duties for bots
+# ---------------------------------------------------------------------------
+
+## Can a hero walk through this doorway right now? (Bars down, a cracked wall
+## still standing: no.)
+func door_passable(door: Dictionary) -> bool:
+	var id := String(door.get("id", ""))
+	match String(door.get("kind", "open")):
+		"secret":
+			var wall := puzzles.get(id) as PoiPuzzle
+			return wall != null and wall.is_solved()
+		"gate", "shortcut":
+			var g := gates.get(id) as DungeonGate
+			return g == null or g.is_open
+	return true
+
+
+## The next point a bot walks to on its way from `from` to `to` (room by
+## room through the open doors; `to` itself when no way is known).
+func bot_waypoint(from: Vector3, to: Vector3) -> Vector3:
+	if layout == null:
+		return to
+	var w := layout.next_waypoint(from, to, door_passable)
+	return to if w == Vector3.INF else w
+
+
+## Is this plate still needed to hold a gate open (some gate waiting on it
+## would be shut without it)? A split path's plate stops being needed once
+## the lever beyond opens its gate on its own.
+func plate_needed(plate_id: String) -> bool:
+	var without := puzzles.duplicate()
+	without.erase(plate_id)
+	for id: String in gates:
+		var g := gates[id] as DungeonGate
+		if plate_id in PuzzleInputs.ids(g.inputs) and not PuzzleInputs.holds(g.inputs, without):
+			return true
+	return false
+
+
+# ---------------------------------------------------------------------------
 # Ground seam, spawn, arrival
 # ---------------------------------------------------------------------------
 

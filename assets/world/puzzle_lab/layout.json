@@ -2116,7 +2116,7 @@
     ]
    ],
    "hold": 1.0,
-   "open_for": 6.0,
+   "open_for": 12.0,
    "room": "lab_room_plates",
    "y": 0.0
   },
@@ -2178,6 +2178,7 @@
     -5,
     110
    ],
+   "station": true,
    "room": "lab_split_w",
    "y": 0.0
   },
@@ -2188,6 +2189,7 @@
     20,
     110
    ],
+   "station": true,
    "room": "lab_split_e",
    "y": 0.0
   },

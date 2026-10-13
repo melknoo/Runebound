@@ -12,6 +12,8 @@ const SIZE := 2.0
 const CHECK_EVERY := 0.1
 const HEIGHT_BAND := 1.5
 const OPEN_XP := 40
+## Bots help while their leader is this close (m).
+const BOT_REACH := 30.0
 
 var plate_pos: Array[Vector3] = []
 var hold: float = 1.0
@@ -50,6 +52,17 @@ func now_msec() -> int:
 ## Open right now (for good, or until the time runs out).
 func is_active() -> bool:
 	return is_solved() or now_msec() < int(state.get("until", 0))
+
+
+## M13b bots: where helpers stand - every plate, while the group is shut and
+## the leader is about.
+func bot_stations(leader: Player) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if is_active() or leader == null or leader.global_position.distance_to(global_position) > BOT_REACH:
+		return out
+	for at in plate_pos:
+		out.append({"pos": at, "pull": -1})
+	return out
 
 
 func held_count() -> int:

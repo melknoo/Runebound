@@ -954,8 +954,39 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
     window x 14 m/s`, sprint plus a dash); a chain takes exactly `heroes`
     conductors (`ceil(d / link) - 1`, at least 2).
   - The puzzle lab's co-op rooms (south of its entry) hold one of each.
+- **Bots that help (phase 3, `BotInputSource`):**
+  - Ways: `DungeonLayout.next_waypoint(from, to, passable)` - the same
+    room: straight (rooms are rectangles); else the middle of the next
+    doorway on the fewest-doors way (BFS over the doors); in a doorway a
+    step out on the shorter side; INF with no way.
+    `DungeonZone.door_passable` (bars down or a cracked wall standing:
+    no) and `bot_waypoint` (falls back to the straight line). Bots steer
+    by it when following and closing in, refresh it every 0.25 s and
+    sidestep after 1 s stuck.
+  - Duties (`_find_duty` every 0.3 s; done unless fighting something
+    within 14 m, a revive always): a downed ally within 40 m with no enemy
+    within 5 m of it -> walk there, `PlayerIntent.interact_held` (read by
+    `InteractPrompt.held`, so the ReviveSystem revives as for a person);
+    else the stations of the co-op puzzle nearest the leader:
+    `bot_stations(leader)` on CoopPlates (every plate), SyncLevers (in
+    front of every lever, `pull` = its index; a bot pulls the moment any
+    other one is pulled), ChainPuzzle (evenly on the line, as many as it
+    needs conductors) and a PressurePlate marked `station` (a split path's,
+    while a gate it holds would be shut without it -
+    `DungeonZone.plate_needed` - and the leader waits within 16 m of that
+    gate). The station the leader stands at is not handed out; the others
+    go to the helpers in hero-ref order, so every bot's machine deals the
+    same places without a message.
+  - `BotInputSource.outfit(hero, level)`: XP up to `level` and a rolled
+    set of gear at that item level. The companions (`run_godot coop`)
+    take `--level=auto`: their leader's level, in a co-op dungeon at least
+    its `min_level`.
+  - The lab has `revive` on (its tests revive there).
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
-  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`.
+  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`,
+  `coop_bots` (the real companion driver helps a scripted leader through
+  the lab's co-op rooms and revives it; companions take `--until-alone=`
+  in tests).
 
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**

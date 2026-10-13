@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -356,6 +356,13 @@ func _update() -> void:
 					verdict = "fail: no crypt chest on the server"
 				else:
 					verdict = "ok"
+		"coop_bots":  # M13b: the bots' work, judged on the server like a person's
+			if not bool(SaveGame.poi_state("lab_coop_sync").get("solved", false)):
+				verdict = "fail: the coils are not solved in the server's world"
+			elif not bool(SaveGame.poi_state("lab_split_lever").get("on", false)):
+				verdict = "fail: the far lever is not pulled in the server's world"
+			else:
+				verdict = "ok"
 		"coop_puzzles":  # M13b: the server judged every co-op puzzle from its proxies and keeps them
 			var lz := get_tree().current_scene as PuzzleLabZone
 			if lz != null and (lz.puzzles.get("lab_coop_plates") as CoopPlates) != null \

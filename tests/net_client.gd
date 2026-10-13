@@ -216,6 +216,9 @@ class Driver extends Node:
 				var end := Time.get_ticks_msec() + int(_arg_float("--duration=", 7200.0) * 1000.0)
 				var bound: ZoneBase = null
 				var bot: BotInputSource = null
+				var had_leader := false
+				var alone_for := 0.0
+				var until_alone := _arg_float("--until-alone=", 0.0)  # tests: done once the leader has gone
 				while Net.is_client() and Time.get_ticks_msec() < end:
 					var zone := get_tree().current_scene as ZoneBase
 					if zone != null and zone != bound and zone.player != null and zone.net_world != null:
@@ -227,12 +230,29 @@ class Driver extends Node:
 						zone.player.targeting = null
 						zone.player.debug_learn_all()
 					if bound != null and is_instance_valid(bound) and bot != null:
+						if bot.leader != null:
+							had_leader = true
 						bot.leader = null
+						var leader_level := 0
 						for peer: int in bound.net_world.heroes:
 							var hero_name := str((Net.roster.get(peer, {}) as Dictionary).get("name", ""))
 							if not NetClient.COMPANION_NAMES.has(hero_name.get_slice(" ", 0)):
 								bot.leader = bound.net_world.heroes[peer] as Player
+								leader_level = int((Net.roster.get(peer, {}) as Dictionary).get("level", 1))
 								break
+						# M13b `--level=auto` (run_godot coop): up to the leader's level, in a
+						# co-op dungeon at least its level, with gear of that level
+						if _arg("--level=", "") == "auto" and bot.leader != null:
+							var want := leader_level
+							var dz := bound as DungeonZone
+							if dz != null and String(dz.info.get("level_mode", "")) == "party":
+								want = maxi(want, int(dz.info.get("min_level", 1)))
+							if want > bound.player.progression.level:
+								BotInputSource.outfit(bound.player, want)
+								print("[companion %s] up to level %d with gear of that level" % [player_name, want])
+						alone_for = alone_for + 0.5 if had_leader and bot.leader == null else 0.0
+						if until_alone > 0.0 and alone_for >= until_alone:
+							break
 					await _seconds(0.5)
 				_finish("ok")
 			"lead":
@@ -637,6 +657,79 @@ class Driver extends Node:
 						return
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(3.0)
+				_finish("ok")
+			"coop_bots":
+				# M13b phase 3: c1 is the leader, c2 and c3 the real companion
+				# bots. The leader takes one plate (the bots the others), one place
+				# in the chain, one coil (it strikes once the bots stand at theirs;
+				# they strike with it), falls (a bot revives it), then waits at the
+				# east wing's gate (a bot holds the west plate) and pulls the far
+				# lever (the bot leaves the plate and follows it).
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as PuzzleLabZone
+				if zone == null:
+					_finish("fail: not in the puzzle lab")
+					return
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				if not await _until(func() -> bool: return zone.party_size() >= 3, 40.0, "the two companions"):
+					return
+				var put := func(at: Vector3) -> void:
+					hero.global_position = at + Vector3(0, 0.2, 0)
+					hero.velocity = Vector3.ZERO
+				var bots_near := func(at: Vector3, r: float) -> int:
+					var n := 0
+					for peer: int in zone.net_world.heroes:
+						var h := zone.net_world.heroes[peer] as Player
+						if is_instance_valid(h) and Vector2(h.global_position.x - at.x, h.global_position.z - at.z).length() <= r:
+							n += 1
+					return n
+				var plates := zone.puzzles["lab_coop_plates"] as CoopPlates
+				put.call(plates.plate_pos[0])
+				if not await _until(func() -> bool: return plates.is_active(), 90.0, "the bots on the other two plates"):
+					return
+				var chain := zone.puzzles["lab_coop_chain"] as ChainPuzzle
+				var places := chain.bot_stations(hero)
+				put.call(places[0]["pos"] as Vector3)
+				if not await _until(func() -> bool: return chain.is_solved(), 60.0, "the bots closing the chain"):
+					return
+				var sync := zone.puzzles["lab_coop_sync"] as SyncLevers
+				put.call(sync.levers[0] + Vector3(0, 0, 1.2))
+				await _seconds(0.5)
+				var spots := sync.bot_stations(hero)
+				if not await _until(func() -> bool:
+					return int(bots_near.call(spots[1]["pos"] as Vector3, 1.0)) + int(bots_near.call(spots[2]["pos"] as Vector3, 1.0)) >= 2,
+					60.0, "the bots at the other coils"):
+					return
+				sync.request("pull", 0, hero)
+				if not await _until(func() -> bool: return sync.is_solved(), 10.0, "the bots striking with the leader"):
+					return
+				hero.god_mode = false
+				hero.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, hero.global_position))
+				if not await _until(func() -> bool: return hero.downed, 5.0, "the leader downed"):
+					return
+				if not await _until(func() -> bool: return not hero.health.is_dead, 40.0, "a bot reviving the leader"):
+					return
+				if zone.revive_system.revives_taken < 1:
+					_finish("fail: the leader got up without a revive (%d)" % zone.revive_system.revives_taken)
+					return
+				hero.god_mode = true
+				var gate_e := zone.gates["lab_d_split_e_end"] as DungeonGate
+				put.call(Vector3(20, 0, 112))
+				if not await _until(func() -> bool: return gate_e.is_open, 60.0, "a bot holding the west wing's plate"):
+					return
+				var lever := zone.puzzles["lab_split_lever"] as PuzzleLever
+				put.call(lever.global_position + Vector3(0, 0, -1.5))
+				await _seconds(0.6)
+				lever.request("pull", 0, hero)
+				if not await _until(func() -> bool: return int(bots_near.call(lever.global_position, 12.0)) >= 2, 60.0,
+						"both bots following into the end room"):
+					return
+				await _seconds(1.0)
+				Net.leave()
+				await _seconds(1.0)
 				_finish("ok")
 			"coop_puzzles":
 				# M13b phase 2: the three stand on the three plates (the chain room

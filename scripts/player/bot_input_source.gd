@@ -36,9 +36,54 @@ var _wait: Dictionary = {}
 ## M10: action id -> seconds the bot keeps holding its key (Rune Wall).
 var _hold: Dictionary = {}
 
+## M13b, the co-op dungeon: bots walk room by room (DungeonZone.bot_waypoint)
+## and take on duties - a downed ally to revive (hold [E] beside it), a
+## station of a co-op puzzle their leader stands at (a plate, a lever or
+## coil - pulled the moment another one is, a place in the lightning chain).
+## Helpers share the free stations in a fixed order (hero refs), so every
+## bot's machine hands out the same places without talking.
+const STATION_ARRIVE := 0.45
+const DUTY_EVERY := 0.3
+const WAYPOINT_EVERY := 0.25
+const STUCK_AFTER := 1.0
+## No revive while an enemy stands this close to the fallen ally.
+const REVIVE_SAFE := 5.0
+const REVIVE_SEEK := 40.0
+var duty: Dictionary = {}
+var _duty_left: float = 0.0
+var _waypoint := Vector3.INF
+var _waypoint_to := Vector3.INF
+var _waypoint_left: float = 0.0
+var _stuck_for: float = 0.0
+var _last_pos := Vector3.INF
+var _side_step := Vector3.ZERO
+var _side_left: float = 0.0
+var _pull_left: float = 0.0
+
 
 func _init(seed_value: int = 0) -> void:
 	_rng.seed = seed_value
+
+
+## M13b: a bot hero brought up to `level` (the XP from where it stands) with a
+## full set of rolled gear at that item level - dev companions in the co-op
+## dungeon (`run_godot coop`), the party check. Never on a player's hero.
+static func outfit(hero: Player, level: int, rarity_bias: int = 1) -> void:
+	var xp := 0
+	for lvl in range(hero.progression.level, level):
+		xp += Progression.xp_to_next(lvl)
+	if xp > 0:
+		hero.progression.add_xp(xp)
+	for slot in ItemData.SLOT_COUNT:
+		var item := ItemGenerator.generate(rarity_bias, hero.class_data.id)
+		for tries in 200:  # the generator rolls the slot: keep rolling until it fits
+			if int(item.slot) == slot:
+				break
+			item = ItemGenerator.generate(rarity_bias, hero.class_data.id)
+		ItemGenerator.apply_item_level(item, level)
+		if hero.equipment.add_item(item):  # equip() takes from the bag
+			hero.equipment.equip(item)
+	hero.health.heal_full()
 
 
 func poll(intent: PlayerIntent, player: Player) -> void:
@@ -58,11 +103,19 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 		_retarget_left = RETARGET_EVERY
 		target = _nearest_enemy(player.global_position)
 		_blocked = _alive(target) and _wall_between(player, target)
+	_duty_left -= dt
+	if _duty_left <= 0.0:
+		_duty_left = DUTY_EVERY
+		duty = _find_duty(player)
 	if leader != null and is_instance_valid(leader) and leader != player \
 			and leader.global_position.distance_to(player.global_position) > LEADER_LEASH:
 		target = null  # too far from the leader: catch up first
 	if player.class_data.role == "Healer":
 		_heal_party(intent, player)
+	_pull_left -= dt
+	var fighting := target != null and target.global_position.distance_to(player.global_position) < 14.0
+	if not duty.is_empty() and (not fighting or String(duty["kind"]) == "revive") and _do_duty(intent, player):
+		return
 	if target == null:
 		_follow(intent, player)
 		return
@@ -72,12 +125,12 @@ func poll(intent: PlayerIntent, player: Player) -> void:
 	var dir := to_target / dist if dist > 0.01 else player.facing()
 	intent.aim_dir = (target.global_position + Vector3(0, 1.0, 0) - player.muzzle_position()).normalized()
 	if player.class_data.preferred_range > MELEE_REACH:
-		_ranged(intent, player, dir, dist, player.class_data.preferred_range)
+		_ranged(intent, player, _steer(player, target.global_position, dir), dist, player.class_data.preferred_range)
 		if player.class_data.role == "Healer":
 			_druid_fight(intent, player, dist)
 		return
 	if dist > STAND_OFF:
-		intent.move_dir = dir
+		intent.move_dir = _steer(player, target.global_position, dir)
 	if dist <= MELEE_REACH:
 		_press(intent, player, &"rune_cleave", 0.35)
 		_press(intent, player, &"earthbreaker", 3.0)
@@ -186,7 +239,137 @@ func _follow(intent: PlayerIntent, player: Player) -> void:
 	var to_leader := leader.global_position - player.global_position
 	to_leader.y = 0.0
 	if to_leader.length() > FOLLOW_DISTANCE:
-		intent.move_dir = to_leader.normalized()
+		intent.move_dir = _steer(player, leader.global_position, to_leader.normalized())
+
+
+# ---------------------------------------------------------------------------
+# M13b: ways and duties
+# ---------------------------------------------------------------------------
+
+## Which way to walk toward `to`: room by room in a dungeon (`fallback` - the
+## straight line - elsewhere), with a sidestep when stuck against something.
+func _steer(player: Player, to: Vector3, fallback: Vector3) -> Vector3:
+	var dt := player.get_physics_process_delta_time()
+	if _side_left > 0.0:
+		_side_left -= dt
+		return _side_step
+	var zone := ZoneBase.zone_of(player) as DungeonZone
+	var dir := fallback
+	if zone != null and zone.layout != null:
+		_waypoint_left -= dt
+		if _waypoint_left <= 0.0 or _waypoint_to.distance_to(to) > 1.0:
+			_waypoint_left = WAYPOINT_EVERY
+			_waypoint_to = to
+			_waypoint = zone.bot_waypoint(player.global_position, to)
+		var d := _waypoint - player.global_position
+		d.y = 0.0
+		if d.length() > 0.05:
+			dir = d.normalized()
+	# stuck (a prop, a corner): a short step aside
+	if _last_pos != Vector3.INF and player.global_position.distance_to(_last_pos) < 0.02:
+		_stuck_for += dt
+		if _stuck_for >= STUCK_AFTER:
+			_stuck_for = 0.0
+			_side_step = Vector3(-dir.z, 0.0, dir.x) * (1.0 if _rng.randf() < 0.5 else -1.0)
+			_side_left = 0.6
+	else:
+		_stuck_for = 0.0
+	_last_pos = player.global_position
+	return dir
+
+
+## The duty for now ({} = none): a downed ally first, then a free station of
+## the co-op puzzle the leader is at.
+func _find_duty(player: Player) -> Dictionary:
+	var zone := ZoneBase.zone_of(player) as DungeonZone
+	if zone == null or player.health.is_dead:
+		return {}
+	if zone.revive_system != null:
+		var best: Player = null
+		var best_d := REVIVE_SEEK
+		for h in zone.party():
+			if h == player or not h.health.is_dead:
+				continue
+			var d := h.global_position.distance_to(player.global_position)
+			if d < best_d and _enemies_within(h.global_position, REVIVE_SAFE) == 0:
+				best_d = d
+				best = h
+		if best != null:
+			return {"kind": "revive", "hero": best}
+	if leader == null or not is_instance_valid(leader) or leader == player or leader.health.is_dead:
+		return {}
+	var pick: Node3D = null
+	var stations: Array[Dictionary] = []
+	var pick_d := INF
+	for id: String in zone.puzzles:
+		var p := zone.puzzles[id] as Node3D
+		if p == null or not p.has_method(&"bot_stations"):
+			continue
+		var s: Array[Dictionary] = p.call(&"bot_stations", leader)
+		if s.is_empty():
+			continue
+		var d := p.global_position.distance_to(leader.global_position)
+		if d < pick_d:
+			pick_d = d
+			pick = p
+			stations = s
+	if pick == null:
+		return {}
+	# the leader's own place (the one it stands at) is not handed out
+	var free: Array[Dictionary] = []
+	var leader_at := -1
+	var leader_d := 2.5
+	for i in stations.size():
+		var d := (stations[i]["pos"] as Vector3).distance_to(leader.global_position)
+		if d < leader_d:
+			leader_d = d
+			leader_at = i
+	for i in stations.size():
+		if i != leader_at:
+			free.append(stations[i])
+	var helpers: Array[Player] = []
+	for h in zone.party():
+		if h != leader and not h.health.is_dead:
+			helpers.append(h)
+	helpers.sort_custom(func(a: Player, b: Player) -> bool: return zone.hero_ref(a) < zone.hero_ref(b))
+	var rank := helpers.find(player)
+	if rank < 0 or rank >= free.size():
+		return {}
+	return {"kind": "station", "puzzle": pick, "station": free[rank]}
+
+
+## Walks to the duty and does it; false when there is nothing to do after all.
+func _do_duty(intent: PlayerIntent, player: Player) -> bool:
+	if String(duty["kind"]) == "revive":
+		var h := duty.get("hero") as Player
+		if h == null or not is_instance_valid(h) or not h.health.is_dead:
+			duty = {}
+			return false
+		var to := h.global_position - player.global_position
+		to.y = 0.0
+		if to.length() > 1.4:
+			intent.move_dir = _steer(player, h.global_position, to.normalized())
+		else:
+			intent.interact_held = true
+		return true
+	var p := duty.get("puzzle") as Node3D
+	if p == null or not is_instance_valid(p):
+		duty = {}
+		return false
+	var st: Dictionary = duty["station"]
+	var at := st["pos"] as Vector3
+	var off := at - player.global_position
+	off.y = 0.0
+	if off.length() > STATION_ARRIVE:
+		intent.move_dir = _steer(player, at, off.normalized())
+		return true
+	var pull := int(st.get("pull", -1))
+	if pull >= 0 and _pull_left <= 0.0 and p is SyncLevers:
+		var sync := p as SyncLevers
+		if sync.pulled_count() > 0 and not sync.pulled_now(pull):  # someone struck one: now
+			_pull_left = 0.5
+			sync.request("pull", pull, player)
+	return true
 
 
 func _press(intent: PlayerIntent, player: Player, id: StringName, every: float) -> void:

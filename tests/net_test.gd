@@ -146,6 +146,17 @@ const SCENARIOS := {
 			{"role": "c3", "delay": 1.0}],
 		"timeout": 200.0,
 	},
+	# M13b phase 3: two companion bots (the run_godot coop driver) help their
+	# leader through the lab's co-op rooms and revive it.
+	"coop_bots": {
+		"server": ["--zone=res://scenes/puzzle_lab.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0},
+			{"role": "c2", "delay": 0.5, "args": ["--net-test=companion", "--name=Sigmund", "--class=runebreaker",
+				"--duration=300", "--until-alone=4"]},
+			{"role": "c3", "delay": 1.0, "args": ["--net-test=companion", "--name=Brynja", "--class=druid",
+				"--duration=300", "--until-alone=4"]}],
+		"timeout": 320.0,
+	},
 	"trial": {
 		# M12 phase 6: two heroes take the Charwood's trial; one is struck too often
 		"server": ["--zone=res://scenes/ashen_highlands.tscn"],

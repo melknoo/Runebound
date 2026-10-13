@@ -4626,6 +4626,44 @@ func _run() -> void:
 					_check(collapse.falls >= 1 and eh2.global_position.distance_to(collapse.back) < 1.0 and eh2.health.current_health < hp_before_fall,
 						"M13 traps: a fall into the pit hurts and sets the hero back at its edge")
 					eh2.god_mode = true
+					# --- M13b phase 3: a helper bot - its way through two doors to a free plate ---
+					var cb_lead := lab13.player
+					cb_lead.god_mode = true
+					var cb_plates := lab13.puzzles["lab_coop_plates"] as CoopPlates
+					var cb_sync := lab13.puzzles["lab_coop_sync"] as SyncLevers
+					var cb_chain := lab13.puzzles["lab_coop_chain"] as ChainPuzzle
+					cb_lead.global_position = cb_sync.global_position + Vector3(0, 0.2, 0)  # the coils want their leader close
+					var cb_st_sync := cb_sync.bot_stations(cb_lead)
+					var cb_st_chain := cb_chain.bot_stations(cb_lead)
+					cb_lead.global_position = cb_plates.plate_pos[0] + Vector3(0, 0.2, 0)
+					cb_lead.velocity = Vector3.ZERO
+					var cb_st_plates := cb_plates.bot_stations(cb_lead)
+					_check(cb_st_plates.size() == 3 and cb_st_sync.size() == 3 and int(cb_st_sync[2]["pull"]) == 2
+						and cb_st_chain.size() == 3 and absf((cb_st_chain[1]["pos"] as Vector3).x - 7.0) < 0.1
+						and cb_plates.bot_stations(null).is_empty(),
+						"M13b bots: the plates, the coils and the chain hand out their places (the chain's evenly on its line)")
+					var cb_bot := Player.create(ClassData.load_by_id(&"druid"))
+					cb_bot.is_local = false
+					var cb_src := BotInputSource.new(3)
+					cb_src.leader = cb_lead
+					cb_bot.input_source = cb_src
+					cb_bot.god_mode = true
+					lab13.add_player(cb_bot)
+					cb_bot.global_position = Vector3(-4, 0.2, 32)  # the lab's entry: two doors from the plates
+					var cb_at := -1
+					for cb_t in 50:
+						await _wait_frames(12)
+						for cb_i in cb_plates.plate_pos.size():
+							var cb_d := Vector2(cb_bot.global_position.x - cb_plates.plate_pos[cb_i].x, cb_bot.global_position.z - cb_plates.plate_pos[cb_i].z).length()
+							if cb_i > 0 and cb_d < 0.7:
+								cb_at = cb_i
+						if cb_at > 0:
+							break
+					_check(cb_at > 0 and String(cb_src.duty.get("kind", "")) == "station" and lab13.room_id_at(cb_bot.global_position) == "lab_room_plates",
+						"M13b bots: a helper walks room by room through two doors to a plate its leader left free (plate %d)" % cb_at)
+					lab13.remove_player(cb_bot)
+					cb_bot.queue_free()
+					await _wait_frames(4)
 					# --- M13b phase 2: the co-op kit - plates at once, the chain, coils in time, split paths ---
 					var ck_lead := lab13.player
 					ck_lead.god_mode = true
@@ -4693,8 +4731,12 @@ func _run() -> void:
 					ck_place.call([Vector3(-12, 0, 106), Vector3(24, 0, 106), Vector3(-10, 0, 106)])
 					await _wait_frames(15)
 					var ck_shut := not ck_gate_e.is_open
+					ck_heroes[0].global_position = Vector3(20, 0.2, 116)  # waiting at the east wing's gate
+					var ck_station_before := ck_pw.bot_stations(ck_heroes[0]).size() == 1
 					(lab13.puzzles["lab_split_lever"] as PuzzleLever).request("pull", 0, ck_heroes[0])
 					await _wait_frames(4)
+					_check(ck_station_before and ck_pw.bot_stations(ck_heroes[0]).is_empty(),
+						"M13b bots: the west wing's plate wants a helper while its leader waits at the east gate, not once the far lever holds it")
 					_check(ck_split and ck_shut and ck_gate_w.is_open and ck_gate_e.is_open
 						and PuzzleInputs.holds(PuzzleInputs.parse([["lab_split_plate_e", "lab_split_lever"]]), lab13.puzzles)
 						and not PuzzleInputs.holds(PuzzleInputs.parse(["lab_split_plate_e"]), lab13.puzzles),
@@ -5268,6 +5310,15 @@ func _run() -> void:
 			sw_lp.queue_free()
 		sw.run_level = 0
 		await _wait_frames(4)
+		# --- M13b phase 3: bots' ways through the rooms ---
+		var wp_fore := sw.layout.next_waypoint(Vector3(0, 0, 55), Vector3(0, 0, 5), sw.door_passable)
+		var wp_door := sw.layout.next_waypoint(Vector3(0, 0, 39), Vector3(0, 0, 5), sw.door_passable)
+		var wp_same := sw.layout.next_waypoint(Vector3(-5, 0, 50), Vector3(5, 0, 45), sw.door_passable)
+		var wp_shut := sw.layout.next_waypoint(Vector3(0, 0, -75), Vector3(58, 4, -100), sw.door_passable)
+		_check(wp_fore.distance_to(Vector3(0, 0, 39)) < 0.1 and wp_door.z < 38.0 and wp_door.z > 34.0
+			and wp_same.is_equal_approx(Vector3(5, 0, 45)) and wp_shut == Vector3.INF
+			and sw.bot_waypoint(Vector3(0, 0, -75), Vector3(58, 4, -100)).is_equal_approx(Vector3(58, 4, -100)),
+			"M13b bots: the way out of the forecourt is its doorway, in a doorway a step out, the same room straight, no way past a shut gate (%s %s)" % [wp_fore, wp_door])
 		# --- M13b phase 1: downed, revived by [E] held, by HeroFx, timed out, a wipe ---
 		var rv := sw.revive_system
 		_check(rv != null and bool(DungeonRegistry.info("stormwatch").get("revive", false)),

@@ -121,16 +121,16 @@ LAYOUT = {
          "lane": [[16, 30], [36, 30]], "strips": 5, "period": 3.0, "damage": 14.0},
         {"id": "lab_collapse", "type": "collapse", "pos": [48, 30], "channel": "lab_pit",
          "rows": 4, "period": 4.0, "down": 1.5, "back": [38, 30], "damage": 14.0},
-        # M13b phase 2: three plates at once (open 6 s), a chain of three, three coils in 2 s
+        # M13b phase 2: three plates at once (open 12 s), a chain of three, three coils in 2 s
         {"id": "lab_coop_plates", "type": "plates", "pos": [7, 66], "plates": [[-8, 62], [7, 70], [22, 62]],
-         "hold": 1.0, "open_for": 6.0},
+         "hold": 1.0, "open_for": 12.0},
         {"id": "lab_coop_chain", "type": "chain", "pos": [7, 89], "source": [-12, 89], "receiver": [26, 89],
          "link": 10.0, "heroes": 3, "hold": 1.5, "damage": 4.0},
         {"id": "lab_coop_sync", "type": "sync", "pos": [51, 89], "look": "coil", "window": 2.0,
          "levers": [[35, 81, 0.0], [67, 81, 0.0], [51, 97, 3.14159]]},
         # split paths: each wing's plate opens the other wing's way on; the far lever opens both
-        {"id": "lab_split_plate_w", "type": "plate", "pos": [-5, 110]},
-        {"id": "lab_split_plate_e", "type": "plate", "pos": [20, 110]},
+        {"id": "lab_split_plate_w", "type": "plate", "pos": [-5, 110], "station": True},
+        {"id": "lab_split_plate_e", "type": "plate", "pos": [20, 110], "station": True},
         {"id": "lab_split_lever", "type": "lever", "pos": [7, 126], "yaw": 3.14159},
     ],
 }

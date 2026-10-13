@@ -85,6 +85,18 @@ static func trace(heroes: Array[Player], from: Vector3, to: Vector3, reach: floa
 	return {"connected": order, "chain": chain, "closed": closed_at != null, "parent": parent}
 
 
+## M13b bots: evenly along the line from the coil to the receiver, as many
+## places as the chain needs conductors, while the leader is about.
+func bot_stations(leader: Player) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if is_solved() or leader == null or leader.global_position.distance_to(global_position) > act_range:
+		return out
+	var k := maxi(ceili(Vector2(receiver.x - source.x, receiver.z - source.z).length() / link) - 1, 1)
+	for i in k:
+		out.append({"pos": source.lerp(receiver, float(i + 1) / float(k + 1)), "pull": -1})
+	return out
+
+
 func is_active() -> bool:
 	return is_solved()
 

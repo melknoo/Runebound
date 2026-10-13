@@ -176,7 +176,7 @@ switch ($Mode) {
 		for ($i = 0; $i -lt [Math]::Min($bots, 4); $i++) {
 			$procs += Start-Process -FilePath $godot -PassThru -WindowStyle Hidden -ArgumentList "--headless", "--path", "`"$proj`"",
 				"res://tests/net_client.tscn", "--", "--connect=127.0.0.1:$port", "--net-test=companion", "--role=bot$i",
-				"--name=$($names[$i])", "--class=$($classes[$i])", "--duration=14400", "--save=user://companion_$i.json",
+				"--name=$($names[$i])", "--class=$($classes[$i])", "--duration=14400", "--level=auto", "--save=user://companion_$i.json",
 				"--result=user://companion_$i.result"
 		}
 		& $godot --path $proj -- "--connect=127.0.0.1:$port" --dev

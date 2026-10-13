@@ -69,7 +69,7 @@ func pressed(player: Player) -> bool:
 ## M13b: the interact key is held (a revive) while the prompt shows.
 func held(player: Player) -> bool:
 	return visible and player != null and player.is_local and not player.input_locked and not player.downed \
-		and InputMap.has_action(ACTION) and Input.is_action_pressed(ACTION)
+		and (player.intent.interact_held or (InputMap.has_action(ACTION) and Input.is_action_pressed(ACTION)))
 
 
 static func key_name() -> String:

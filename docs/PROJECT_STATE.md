@@ -93,6 +93,24 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
     `dungeon_boss`, `warrens_boss`, `revive` still green. The cracked
     wall's smoke check waited 50 ms past the wall's strike gap and failed
     once under load (smoothed deltas): it waits 200 ms now.
+- **Phase 3 (built): bots that help.**
+  - Bots find their way room by room through open doors (no more straight
+    lines into walls), sidestep when stuck, revive a downed ally (they hold
+    [E] like a person) and take the free places of the co-op puzzle their
+    leader stands at: the other plates, the other coils (struck the moment
+    the leader strikes one), the other places in the lightning chain, a
+    split path's far plate while the leader waits at its gate.
+  - `run_godot coop` companions come up to their leader's level (in the
+    Stormwatch at least 7) with gear of that level.
+  - The lab's plates stay open 12 s; the lab revives its fallen.
+  - Smoke 885 green (routing in the Stormwatch: a doorway, a step out of
+    one, the same room, no way past a shut gate; the stations of plates,
+    coils and chain; a helper walking through two doors to a free plate;
+    the split plate's station with and without the far lever). Net
+    scenario `coop_bots` (the real companion driver: plates, chain, coils
+    struck with the leader, a revive, the split plate and following into
+    the end room) three runs green, about a minute each; `companions`,
+    `coop_puzzles`, `puzzle_kit`, `revive` still green.
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

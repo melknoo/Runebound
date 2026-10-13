@@ -382,11 +382,19 @@
 - The downed pose tips the whole rig onto its back (no fall clip); the
   idle loop keeps playing on the floor.
 - **Co-op puzzle numbers to feel (phase 2, the lab's values; the
-  Stormwatch sets its own in phase 4):** plates held 1 s, open 6 s in the
+  Stormwatch sets its own in phase 4):** plates held 1 s, open 12 s in the
   lab; coils within 2 s; a chain link 10 m, its conductors take 4 a second.
   The puzzle parts are code-built shapes until the Stormwatch's props.
 - A hero dashing (Storm Step, Rootwalk) could in theory beat a sync window;
   the bake keeps levers out of reach at 14 m/s (sprint plus a dash).
+- **Bots (phase 3):** they route through doorways but steer straight inside
+  a room, so a prop in the way costs them a sidestep; they still never read
+  telegraphs. Timed plates that close again offer their places anew while
+  the leader stays within 30 m - bots may walk back onto them until the
+  leader moves on. Helpers share places by hero ref, so with two humans
+  and bots a human may be "given" a place it never takes (a bot then waits).
+- `run_godot coop` companions keep the level and gear `--level=auto` gave
+  them in their own saves (`companion_<i>.json`).
 
 ## M13 open items (built 2026-10-10, the user's playtest is the gate)
 - **Playtest list:** group "M13: Dungeons" on J (18 points, ids `m13_*`).

@@ -7,6 +7,8 @@ extends PoiPuzzle
 ## pulls are requests; the authority keeps the times on the server's clock.
 
 const SOLVE_XP := 60
+## Bots help while their leader is this close (m).
+const BOT_REACH := 34.0
 
 var levers: Array[Vector3] = []
 var yaws: Array[float] = []
@@ -51,6 +53,17 @@ func is_active() -> bool:
 func pulled_now(i: int) -> bool:
 	var pulled: Array = state.get("pulled", [])
 	return i < pulled.size() and int(pulled[i]) > 0 and now_msec() - int(pulled[i]) < int(window * 1000.0)
+
+
+## M13b bots: in front of every lever (`pull` its index) until it is solved,
+## while the leader is about.
+func bot_stations(leader: Player) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if is_solved() or leader == null or leader.global_position.distance_to(global_position) > BOT_REACH:
+		return out
+	for i in levers.size():
+		out.append({"pos": levers[i] + Vector3(sin(yaws[i]), 0.0, cos(yaws[i])) * 1.2, "pull": i})
+	return out
 
 
 func pulled_count() -> int:

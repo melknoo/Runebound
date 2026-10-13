@@ -85,6 +85,83 @@ func door_at(x: float, z: float) -> Dictionary:
 	return {}
 
 
+## M13b: bots find their way room by room (rooms are rectangles, so a
+## straight line inside one is clear). The next point to walk to from `from`
+## toward `to`: `to` itself in the same room, else the middle of the next
+## doorway on the fewest-doors way through doors `passable` (Callable(door)
+## -> bool) lets through; standing in a doorway, a step straight out into the
+## room on the way. Vector3.INF when no way is open.
+func next_waypoint(from: Vector3, to: Vector3, passable: Callable) -> Vector3:
+	var goal := String(room_at(to.x, to.z).get("id", ""))
+	if goal == "":
+		goal = String(room_at(clamp_inside(to).x, clamp_inside(to).z).get("id", ""))
+	var here := String(room_at(from.x, from.z).get("id", ""))
+	var in_door := door_at(from.x, from.z) if here == "" else {}
+	if here == "" and in_door.is_empty():
+		var c := clamp_inside(from)
+		here = String(room_at(c.x, c.z).get("id", ""))
+	if not in_door.is_empty():
+		# in a doorway: out into whichever side lies on the shorter way
+		var best_side := ""
+		var best_len := 1 << 20
+		for side: String in [String(in_door["a"]), String(in_door["b"])]:
+			var way := _door_path(side, goal, passable)
+			if side == goal:
+				way.clear()
+			elif way.is_empty():
+				continue
+			if way.size() < best_len:
+				best_len = way.size()
+				best_side = side
+		if best_side == "":
+			return Vector3.INF
+		var mid := rect_of(in_door).get_center()
+		var side_c := rect_of(room(best_side)).get_center()
+		var out := Vector2(side_c.x - mid.x, 0.0) if String(in_door.get("axis", "x")) == "x" \
+			else Vector2(0.0, side_c.y - mid.y)
+		out = out.normalized() * 2.5
+		return Vector3(mid.x + out.x, from.y, mid.y + out.y)
+	if here == goal or here == "" or goal == "":
+		return to
+	var path := _door_path(here, goal, passable)
+	if path.is_empty():
+		return Vector3.INF
+	var c2 := rect_of(path[0]).get_center()
+	return Vector3(c2.x, from.y, c2.y)
+
+
+## The doors on the fewest-doors way from room `start` to room `goal` ([]
+## when none, or when they are the same room).
+func _door_path(start: String, goal: String, passable: Callable) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	if start == goal:
+		return out
+	var came: Dictionary = {start: {}}
+	var queue: Array[String] = [start]
+	while not queue.is_empty():
+		var r: String = queue.pop_front()
+		if r == goal:
+			break
+		for d in doors:
+			var a := String(d["a"])
+			var b := String(d["b"])
+			if a != r and b != r:
+				continue
+			var other := b if a == r else a
+			if came.has(other) or not bool(passable.call(d)):
+				continue
+			came[other] = d
+			queue.append(other)
+	if not came.has(goal):
+		return out
+	var cur := goal
+	while cur != start:
+		var d: Dictionary = came[cur]
+		out.push_front(d)
+		cur = String(d["b"]) if String(d["a"]) == cur else String(d["a"])
+	return out
+
+
 ## Floor of a room at a point: flat, or a slope along x / z over a span.
 static func room_floor(r: Dictionary, x: float, z: float) -> float:
 	var slope: Dictionary = r.get("slope", {})

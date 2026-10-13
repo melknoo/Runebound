@@ -36,6 +36,7 @@ const DUNGEONS := {
 		"recommended": 1,
 		"name_key": "",
 		"min_party": 1,
+		"revive": true,  # M13b: the co-op kit's tests (bots revive here too)
 	},
 	"warrens": {
 		"scene": "res://scenes/ember_warrens.tscn",

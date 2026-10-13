@@ -9,8 +9,12 @@ extends PoiPuzzle
 const SIZE := 2.0
 const CHECK_EVERY := 0.1
 const HEIGHT_BAND := 1.5
+## Bots hold a station plate while their leader waits this close to its gate.
+const BOT_GATE_REACH := 16.0
 
 var latch: bool = false
+## M13b: a helper bot may hold it (split paths) - layout "station".
+var bot_station: bool = false
 var _plate: MeshInstance3D
 var _glow_mat: StandardMaterial3D
 var _check_left: float = 0.0
@@ -22,6 +26,7 @@ static func build(zone: ZoneBase, poi: Dictionary) -> PressurePlate:
 	p.id = String(poi.get("id", ""))
 	p.name = "Plate_" + p.id
 	p.latch = bool(poi.get("latch", false))
+	p.bot_station = bool(poi.get("station", false))
 	p.act_range = 4.0
 	p.state = {"down": false, "solved": false}
 	p.set_meta(&"poi_id", p.id)
@@ -29,6 +34,21 @@ static func build(zone: ZoneBase, poi: Dictionary) -> PressurePlate:
 	p._build()
 	zone.world.add_child(p)
 	return p
+
+
+## M13b bots: a station plate, while a gate it holds would be shut without it
+## and the leader waits near that gate (a split path's other wing).
+func bot_stations(leader: Player) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var zone := ZoneBase.zone_of(self) as DungeonZone
+	if not bot_station or zone == null or leader == null or not zone.plate_needed(id):
+		return out
+	for gid: String in zone.gates:
+		var g := zone.gates[gid] as DungeonGate
+		if id in PuzzleInputs.ids(g.inputs) and g.global_position.distance_to(leader.global_position) <= BOT_GATE_REACH:
+			out.append({"pos": global_position, "pull": -1})
+			break
+	return out
 
 
 func is_down() -> bool:

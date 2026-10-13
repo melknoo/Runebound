@@ -444,6 +444,10 @@ Phase 1 gebaut (Niederschlag: 30 s am Boden mit Ring und Sekunden, Gegner lassen
 Verbündeten mit 30 % zurück; Zeit um: an der Rune; liegen alle, wachen alle nach einem Moment an der Rune auf).
 Phase 2 gebaut (Koop-Rätsel: Platten gleichzeitig, Synchron-Hebel und -Spulen, Blitzkette aus Helden, getrennte Wege
 mit „eins von beiden“; die Regeln prüft der Bake; vier Koop-Räume im Puzzle Lab).
+Phase 3 gebaut (Bots finden ihren Weg Raum für Raum durch offene Türen, beleben Gefallene wieder und besetzen die
+freien Plätze des Rätsels, an dem du stehst: Platten, Spulen (sie schlagen mit dir an), Plätze in der Blitzkette, die
+ferne Platte bei getrennten Wegen; `tools\run_godot.cmd coop 2` bringt die Gefährten auf deine Stufe, in der
+Sturmwarte mindestens 7, mit passender Ausrüstung).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
