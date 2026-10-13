@@ -340,8 +340,8 @@ Installer + ZIP from GitHub Releases ([dev-notes/release-builds.md](dev-notes/re
   included (the repo has no licence yet).
 - Playtest point `c_release_build`: install from a release, start, Highlands,
   Play online, the DirectX 12 entry, the version in the title footer, the
-  update hint once a newer release exists. The first release tag (`v0.15.0`)
-  comes with the next `tools\run_godot.cmd release`.
+  update hint once a newer release exists. First release `v0.15.0`
+  (2026-10-13, from `c54dece`).
 - The update check asks `api.github.com` once per start (60 requests/hour per
   IP without a token; silent when it fails). It sends no data but the
   User-Agent `RUNEBOUND/<version>`; the setting is under Gameplay.

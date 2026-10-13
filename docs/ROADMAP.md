@@ -150,7 +150,7 @@ Titelmenü. Umgesetzt:
 - Im Spiel: Version unten links, „Neue Version … herunterladen“ im Titel, bei zu altem Spiel ein
   Download-Knopf; abschaltbar unter Gameplay.
 - Lokal: `tools\run_godot.cmd dist` baut dasselbe nach `build\dist`.
-Gate: Freunde installieren vom ersten Release (`v0.15.0`, kommt mit dem nächsten `release`) und
+Gate: Freunde installieren vom ersten Release (`v0.15.0`, seit 2026-10-13 online) und
 treten bei (J-Punkt „Spieler-Build von GitHub“). Später möglich: kostenlose Signatur über SignPath
 Foundation (braucht eine Open-Source-Lizenz für alles, auch die Assets).
 

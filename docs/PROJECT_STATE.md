@@ -5,8 +5,8 @@ installer and a portable ZIP on GitHub Releases, built by GitHub Actions
 from a `v0.<protocol>.<n>` tag that `run_godot release` sets; an export
 self-check, pinned tools, checksums, a provenance attestation, the version
 and an update hint on the title screen
-([dev-notes/release-builds.md](dev-notes/release-builds.md); the first
-release comes with the next `release`). Latest built milestone: **M13b the Stormwatch**, the
+([dev-notes/release-builds.md](dev-notes/release-builds.md); `v0.15.0`
+shipped with `release` at c54dece, checksums and attestation verified). Latest built milestone: **M13b the Stormwatch**, the
 co-op dungeon for 3-5 heroes (all nine phases built 2026-10-13, below; the
 user's playtest is the gate; **protocol 15**, shipped: `release` at
 71e8a71). Before it: **M13 Dungeons with puzzles**

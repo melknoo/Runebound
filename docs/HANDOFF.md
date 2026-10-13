@@ -1,6 +1,6 @@
 # RUNEBOUND — Handoff: von einem anderen Rechner weiterarbeiten
 
-Stand: 2026-10-13 · `release` steht auf `71e8a71` (M13 + M13b, PROTOCOL 15), der Laptop-Server läuft damit. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
+Stand: 2026-10-13 · `release` steht auf `c54dece` (M13 + M13b + Spieler-Builds, PROTOCOL 15), der Laptop-Server läuft damit; Spieler-Build `v0.15.0` auf GitHub Releases. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
 **Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). **M13 Dungeons gebaut** (2026-10-10, alle zehn Phasen: Dungeon-Technik, die Cistern als Graubox, das Tor öffnet sich; Runen, Tod, Boss-Arenen, Truhen einmalig; Mechanik-Rätsel und das Puzzle Lab; Element-Rätsel und Fallen; die Cistern mit allen Rätseln, eigenem Look und Lore; ihre Gegner, der Aufgedunsene Wärter und der Tiefenschlund; die Ember Warrens mit allen Rätseln, Lava und eigenem Look; ihre Glutbrut, der Schlackenvogt und die Glutbrutmutter; die Folianten beider Dungeons mit je drei neuen Fähigkeiten). **M13b Koop-Dungeon gebaut** (2026-10-13, alle neun Phasen: die Sturmwarte hinter dem Osttor, ab drei Helden; Niederschlag + Wiederbeleben; vier Koop-Rätsel; Bots, die mitlösen; Sturmfamilie, Sturmgeschworene, Windbinder, der letzte Sturmrufer; Party-Check mit Bots; Foliant mit Sturmband, Gewitterwolke, Wolkenbruch; Sturmsplitter und Tova mit sechs Sturm-Legendaries in Runehold). **Spieler-Builds für Windows gebaut** (2026-10-13): Installer + portable ZIP auf GitHub Releases, gebaut von GitHub Actions aus dem Tag, das `release` jetzt setzt; Version und Update-Hinweis im Titel (`docs/dev-notes/release-builds.md`). Letzter Smoke-Lauf: 913 Checks grün (2026-10-13, Spieler-Builds, auf dem Haupt-PC mit iGPU).
@@ -13,7 +13,7 @@ Stand: 2026-10-13 · `release` steht auf `71e8a71` (M13 + M13b, PROTOCOL 15), de
 - Solo-Check Cistern L5: Elementar-Magier und Druide 6/6, der Runebreaker-Bot stirbt an beiden Bossen (weicht Telegraphen nie aus). Warrens L6: alle drei Klassen 6/6, knapp.
 - Net-Suite: `heal`, `handshake@ws`, `travel@ws` stürzen bei wenig freiem RAM ab, einzeln laufen sie grün.
 
-**Server:** `release` steht auf `71e8a71` (Protokoll 15, M13 und M13b), am 2026-10-13 ausgeliefert: der Deploy meldete „live at 71e8a71“. Freunde laden das Spiel ab dem nächsten `tools\run_godot.cmd release` als Installer oder ZIP von GitHub Releases (erstes Tag `v0.15.0`; Anleitung `docs/SERVER_SETUP.md` „Für Freunde“).
+**Server:** `release` steht auf `c54dece` (Protokoll 15, M13, M13b, Spieler-Builds), am 2026-10-13 ausgeliefert: der Deploy meldete „live at c54dece“. Freunde laden das Spiel als Installer oder ZIP: https://github.com/melknoo/Runebound/releases/latest (`v0.15.0`, gebaut und attestiert von GitHub Actions; Anleitung `docs/SERVER_SETUP.md` „Für Freunde“).
 
 **Wie es weitergeht:**
 1. Playtest-Feedback einsammeln (die J-Liste liegt als `playtest.json` auf deinem Spiel-PC) und fixen.
