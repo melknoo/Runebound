@@ -1,10 +1,10 @@
 # RUNEBOUND — Project State
 
-Updated: 2026-10-13 · In progress: **M13b the Stormwatch**, the co-op
-dungeon for 3-5 heroes (planned 2026-10-13 with the user's answers: ROADMAP
-M13b, WORLD_DESIGN "The Stormwatch"). Latest built milestone: **M13 Dungeons with puzzles**
-(built 2026-10-10, below; the user's playtest is the gate; **protocol 14**:
-a release before the next co-op). Before it: **M12 Highlands with substance** (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
+Updated: 2026-10-13 · Latest built milestone: **M13b the Stormwatch**, the
+co-op dungeon for 3-5 heroes (all nine phases built 2026-10-13, below; the
+user's playtest is the gate; **protocol 15**: a release before the next
+co-op). Before it: **M13 Dungeons with puzzles**
+(built 2026-10-10, below; the user's playtest is the gate). Before it: **M12 Highlands with substance** (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
 Elementalist + loadout)** — all four phases built, plus **M10b Healing
@@ -16,7 +16,7 @@ user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
-## M13b the Stormwatch, the co-op dungeon (in progress)
+## M13b the Stormwatch, the co-op dungeon (built 2026-10-13, the user's playtest is the gate)
 Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -
 storm theme, ~25 min with three bosses, entry from 3 heroes (the party may
 shrink inside), every run fresh, soft role pressure, a revive in this
@@ -227,6 +227,32 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
     binds c2: c2 takes 70 %, c1 the rest on its own machine, the lash
     threatens the server's dummy); `rewards`, `heal`, `stormcaller` green.
     Shots `tome` (23), `m13b_trader`.
+- **Phase 8 (built): the wrap-up.** The playtest group "M13b: Koop-Dungeon"
+  on J (19 points, ids `m13b_*`); the whole net suite green (37 scenarios with the WebSocket ones); the party check with all three roles 9/9, no wipe, no down (412 s fighting, the thunder grounded twice); perf `stormwatch_coils` 47.3 FPS on the iGPU (48.6 in phase 4: noise; GPU-bound as noted); smoke 911 green; shots
+  `m13b_stormwatch` (23) and `m13b_trader`; docs (HANDOFF, ROADMAP).
+- **Net.PROTOCOL 15** (the Stormwatch, the downed state, the notice key,
+  shards in GRANT): the server needs a release before co-op
+  (`tools\run_godot.cmd release`).
+- **Gate walk (user):** the Stormwatch wants three heroes - solo:
+  `tools\run_godot.cmd coop 2` (you, a tank bot and a druid bot), with
+  friends after the release.
+  1. Out of Runehold into the Highlands, east past the Cinder Flats to the
+     Stormwatch's gate: its seal and the "three heroes" note; with the
+     party through.
+  2. The coil hall (three coils at once), the archive and the turbine hall
+     (one wing's plate holds the other's gate), the bridge's lever. Do the
+     bots take their places?
+  3. The cracked wall at the bridge's west end: the orrery (two coils,
+     three crystals), the tome room. Read the tome; put the new ability in
+     (K) and try it in the next fight.
+  4. The Stormsworn, the plate hall, the Galebinder, the rune and the
+     shortcut, the conductor hall (the chain), the Last Stormcaller: link
+     up between the grounding coils when he gathers the thunder.
+  5. Fall once on purpose: 30 s on the floor, a bot or a friend lifts you
+     with [E]. A wipe sends everyone to the rune.
+  6. Count the storm shards (HUD), go home to Runehold: Tova east of the
+     hearth, a storm legendary for 30.
+  7. Tick the points on J (group "M13b: Koop-Dungeon").
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

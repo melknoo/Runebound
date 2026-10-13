@@ -1,9 +1,9 @@
 # RUNEBOUND — Roadmap
 
-Stand: 2026-10-13 · M01–M13 gebaut, dazu M09b, M10b und M17a (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
-Offene Playtest-Gates beim Spieler: M10/M10b, M11, M12, M17a, M13. In Arbeit: **M13b** (die Sturmwarte, Plan vom 13.10.).
+Stand: 2026-10-13 · M01–M13 und M13b gebaut, dazu M09b, M10b und M17a (M07/M07b abgenommen am 24.09., M08-Notizen am 28.09. umgesetzt).
+Offene Playtest-Gates beim Spieler: M10/M10b, M11, M12, M17a, M13, M13b. Als Nächstes: **M14** Story & RPG.
 Status und Einrichtung eines zweiten Rechners: `docs/HANDOFF.md`. Lesehilfe: Unter „Aktuell“ und „Geplant“ stehen auch
-schon gebaute Meilensteine (M09, M09b, M10–M13, M17a); noch nicht gebaut sind M13b–M17.
+schon gebaute Meilensteine (M09, M09b, M10–M13b, M17a); noch nicht gebaut sind M14–M17.
 **M09 Co-op ist gebaut und mit einem Freund angespielt.** Server-Laptop steht
 (`docs/SERVER_SETUP.md`), gemessen: 4 kämpfende Spieler bei 60 Hz mit Reserve. **M09b (Freunde
 ohne Tailscale) ist eingerichtet** (28.09.; Gate: ein Freund spielt ohne Tailscale, offen). Am 29.09. hat der Spieler die Richtung nach M09b festgelegt
@@ -399,7 +399,7 @@ Netz-Szenario für den Schlackenvogt, komplette Netz-Suite grün, Solo-Checks, S
 Gruppe „M13: Dungeons“ auf J).
 **PROTOCOL 14:** vor dem Koop braucht der Server ein Release.
 
-### M13b — Die Sturmwarte, der Koop-Dungeon (Plan 2026-10-13, in Arbeit)
+### M13b — Die Sturmwarte, der Koop-Dungeon (Plan 2026-10-13, gebaut 2026-10-13, Playtest offen)
 **Entscheidungen des Spielers (2026-10-13, vier Runden):**
 - **Thema Sturm:** die Sturmwarte, ein zerborstenes Runen-Observatorium im östlichen Randgebirge; das Tor steht östlich
   der Cinder Flats.
@@ -460,6 +460,7 @@ drei Rollen 9/9 ohne Ausfall, ohne Tank oder ohne Heiler 8/9 mit einem Wipe, dre
 Phase 7 gebaut (Foliant im Geheimnis: Sturmband, Gewitterwolke, Wolkenbruch; Sturmsplitter 3 je Zwischenboss, 6 vom
 Sturmrufer; Tova in Runehold verkauft die 6 Sturm-Legendaries für je 30 Splitter: Blitzableiter, Donnerwall, Auge des Sturms,
 Wolkenhüter, Regenherz, Sturmsaat).
+Phase 8 gebaut (Abschluss: Playtest-Gruppe „M13b: Koop-Dungeon“ auf J, 19 Punkte; Netz-Suite, Party-Check, Shots, Perf).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

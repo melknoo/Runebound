@@ -3,6 +3,31 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m13b",
+			"title": "M13b: Koop-Dungeon",
+			"items": [
+				{"id": "m13b_gate", "src": "M13b", "title": "Das Tor der Sturmwarte", "hint": "Osttor hinter den Cinder Flats: allein versiegelt, ab drei Helden offen. Versteht man den Hinweis am Tor, kommt ihr nach dem Ausgang vor dem Tor heraus?"},
+				{"id": "m13b_flow", "src": "M13b", "title": "Weg & Länge", "hint": "Etwa 25 Minuten mit drei Bossen? Verläuft man sich? Findet ihr die Runen und die Abkürzung zurück zum Vorhof?"},
+				{"id": "m13b_level", "src": "M13b", "title": "Stufe des Laufs", "hint": "Gegner auf dem Gruppenschnitt (mindestens 7), Bosse eine Stufe drüber, Beute genauso: fühlt sich das richtig an, wenn die Stufen auseinanderliegen?"},
+				{"id": "m13b_fresh", "src": "M13b", "title": "Jeder Lauf frisch", "hint": "Nach dem Verlassen ist alles zurückgesetzt (Bosse, Rätsel, Truhen), die Bossbeute gibt es wieder: passt das?"},
+				{"id": "m13b_revive", "src": "M13b", "title": "Niederschlag & Wiederbeleben", "hint": "30 s am Boden, ein Verbündeter hält [E] 3 s, zurück mit 30 %; liegen alle, geht es zur Rune: Zeiten angenehm, Wipe verständlich?"},
+				{"id": "m13b_coils", "src": "M13b", "title": "Spulenhalle (gleichzeitig)", "hint": "Drei Spulen weit auseinander, alle in 2 s schlagen: machbar, zu leicht, gutes Gefühl?"},
+				{"id": "m13b_wings", "src": "M13b", "title": "Archiv & Turbinenhalle (getrennte Wege)", "hint": "Die Platte im einen Flügel hält das Tor des anderen offen, der Brückenhebel öffnet beide: versteht man das ohne Hilfe?"},
+				{"id": "m13b_plates", "src": "M13b", "title": "Plattenhalle", "hint": "Drei Platten gleichzeitig halten, dann steht die Brücke: klar, was zu tun ist?"},
+				{"id": "m13b_chain", "src": "M13b", "title": "Leiterhalle (Blitzkette)", "hint": "Eine Kette aus Helden zwischen den Spulen, die Leiter nehmen dabei Schaden: verständlich, zu teuer, zu billig?"},
+				{"id": "m13b_orrery", "src": "M13b", "title": "Planetarium (Geheimnis)", "hint": "Die Risswand an der Brücke, zwei Spulen zugleich, drei Kristalle drehen: findet man es, macht es Spaß, lohnt der Foliant?"},
+				{"id": "m13b_family", "src": "M13b", "title": "Die Sturmfamilie", "hint": "Akolyth (der Blitz springt auf den Helden daneben), Spulenwächter (lädt sichtbar, Ring; verspottet nur ein Blitz), Windgeister: lesbar und fair?"},
+				{"id": "m13b_sworn", "src": "M13b", "title": "Die Sturmgeschworene", "hint": "Dreierkombo aufs Ziel, Blitze auf jeden zweiten Helden, Ausfallschritt auf wer wegbleibt, Akolythen ab der Hälfte: spürt man die Tank-Prüfung?"},
+				{"id": "m13b_gale", "src": "M13b", "title": "Der Windbinder", "hint": "Windklingen, Böe, Wellen von Windgeistern bei 75/50/25 %: zu viel, zu wenig?"},
+				{"id": "m13b_caller", "src": "M13b", "title": "Der letzte Sturmrufer", "hint": "Schläge, Statik-Pulse, ab 60 % der Donnerschlag (11 s, um eine Kette zwischen den Erdungsspulen zu bilden), ab 30 % Adds: versteht man den Donner, ist er fair?"},
+				{"id": "m13b_roles", "src": "M13b", "title": "Rollen spürbar?", "hint": "Mit Tank, Heiler und Magier rund, ohne Tank oder Heiler deutlich schwerer (so der Bot-Check): merkt ihr das so?"},
+				{"id": "m13b_bots", "src": "M13b", "title": "Bots im Koop", "hint": "run_godot coop 2: laufen Tank- und Druiden-Bot mit, besetzen Spulen, Platten und die Kette des Sturmrufers, heben dich auf?"},
+				{"id": "m13b_tome", "src": "M13b", "title": "Foliant: drei Sturmkünste", "hint": "Sturmband (Tank trägt 30 % der Schläge), Gewitterwolke (Blitze + Tempo), Wolkenbruch (Regen heilt und reinigt, folgt dem Druiden): nützlich, Zahlen?"},
+				{"id": "m13b_trader", "src": "M13b", "title": "Tova & die Sturm-Legendaries", "hint": "12 Splitter pro Lauf, 30 pro Legendary bei Tova in Runehold: Tempo ok? Spürt man Blitzableiter, Donnerwall, Auge des Sturms, Wolkenhüter, Regenherz, Sturmsaat?"},
+				{"id": "m13b_look", "src": "M13b", "title": "Look der Sturmwarte", "hint": "Schiefer, Kupfer, violette Blitze: zu dunkel? Lesen sich Gegner und Bosse in den Hallen?"}
+			]
+		},
+		{
 			"id": "m13",
 			"title": "M13: Dungeons",
 			"items": [

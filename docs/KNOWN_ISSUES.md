@@ -362,12 +362,12 @@
 - Capture run asserts nothing automatically — it relies on eyeball review of
   captures/.
 
-## M13b open items (the Stormwatch, in progress)
+## M13b open items (built 2026-10-13, the user's playtest is the gate)
+- **Playtest list:** group "M13b: Koop-Dungeon" on J (19 points, ids
+  `m13b_*`). Solo the gate stays shut: `tools\run_godot.cmd coop 2` (you
+  + a tank bot + a druid bot) or friends after the release.
 - **Protocol 15:** ship a release before the next co-op session (the
   Stormwatch can only be played online with three heroes).
-- Phase 0 is a greybox: placeholder camps (raiders, wardens) and the
-  placeholder "Arena Warden" in all three arenas, the Spire's materials,
-  no puzzles yet. The playtest list (group "M13b") comes with the wrap-up.
 - The run's level is fixed when its first enemy asks (the party's average
   then); a late joiner does not change it, only the health scaling.
 - A server with nobody left goes back to the Highlands; a party that
