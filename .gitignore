@@ -11,3 +11,6 @@ __pycache__/
 # Local secrets (API keys such as PIXELLAB_API_KEY). The repo is public.
 .env
 .env.*
+
+# Player builds (tools/run_godot.cmd dist, tools/dist/build_windows.ps1).
+build/

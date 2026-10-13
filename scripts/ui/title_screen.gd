@@ -67,6 +67,9 @@ var _auto_name: String = ""
 
 
 func _ready() -> void:
+	if "--export-check" in OS.get_cmdline_user_args():  # a player build checks itself (tools/dist)
+		get_tree().root.add_child.call_deferred(preload("res://scripts/systems/export_check.gd").new())
+		return
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_backdrop = TitleBackdrop.new()

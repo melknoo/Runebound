@@ -116,8 +116,9 @@ func _ready() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 	if "--worldcapture" in OS.get_cmdline_user_args():
-		var capture: Node = (load("res://tests/world_capture.gd") as GDScript).new()
-		add_child(capture)
+		var capture := test_node("res://tests/world_capture.gd")
+		if capture != null:
+			add_child(capture)
 	_attach_test_runners()
 	Net.zone_entered(scene_file_path)  # M09: a client reports it has loaded the zone
 	if net_world != null:
@@ -243,13 +244,24 @@ func debug_hero_for(ability_id: StringName) -> Player:
 func _attach_test_runners() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shots="):
-			var runner: Node = (load("res://tests/shot_runner.gd") as GDScript).new()
-			runner.set(&"list_path", arg.trim_prefix("--shots="))
-			add_child(runner)
+			var runner := test_node("res://tests/shot_runner.gd")
+			if runner != null:
+				runner.set(&"list_path", arg.trim_prefix("--shots="))
+				add_child(runner)
 		elif arg.begins_with("--perf="):
-			var probe: Node = (load("res://tests/perf_probe.gd") as GDScript).new()
-			probe.set(&"scenario_path", arg.trim_prefix("--perf="))
-			add_child(probe)
+			var probe := test_node("res://tests/perf_probe.gd")
+			if probe != null:
+				probe.set(&"scenario_path", arg.trim_prefix("--perf="))
+				add_child(probe)
+
+
+## A node running a tests/ script, or null in a player build (the export
+## leaves tests/ out, see docs/dev-notes/release-builds.md).
+static func test_node(path: String) -> Node:
+	if not ResourceLoader.exists(path):
+		push_warning("test script missing (player build?): " + path)
+		return null
+	return (load(path) as GDScript).new()
 
 
 # ---------------------------------------------------------------------------

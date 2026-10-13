@@ -16,8 +16,9 @@
 #   .\tools\run_godot.ps1 server [port]         # M09: local dedicated server (join 127.0.0.1 from the title)
 #   .\tools\run_godot.ps1 coop [bots]           # M09: solo co-op playtest: local server + companion bots + this window
 #   .\tools\run_godot.ps1 wsspike <host> [secs]  # M09b: WebSocket echo + download through Tailscale Funnel (tests/ws_spike.gd)
-#   .\tools\run_godot.ps1 release               # ship: main -> release (fast-forward), then deploy it now
+#   .\tools\run_godot.ps1 release               # ship: main -> release (fast-forward), tag the player build v0.<protocol>.<n>, deploy now
 #   .\tools\run_godot.ps1 deploy                # roll the laptop server to the latest release now (runebound-deploy)
+#   .\tools\run_godot.ps1 dist [version]        # player build into build\dist: ZIP + installer (tools/dist/build_windows.ps1)
 param([string]$Mode = "smoke", [string]$Name = "", [string]$Label = "", [string]$Extra = "")
 
 $godot = $env:GODOT
@@ -45,6 +46,34 @@ function Show-OtherGodot {
 	if ($procs.Count -gt 0) {
 		Write-Warning "Close it first - two games on this iGPU can crash with 'device lost' and skew perf numbers."
 	}
+}
+
+# Net.PROTOCOL from the source: the middle number of a player build's version.
+function Get-Protocol {
+	$m = Select-String -Path (Join-Path $proj "scripts\net\net.gd") -Pattern "^const PROTOCOL := (\d+)" | Select-Object -First 1
+	if (-not $m) { Write-Error "Net.PROTOCOL not found in scripts/net/net.gd"; exit 1 }
+	return [int]$m.Matches[0].Groups[1].Value
+}
+
+# Player build (docs/dev-notes/release-builds.md): tag the commit just shipped
+# to the server v0.<protocol>.<n>. The tag starts .github/workflows/windows-release.yml,
+# which builds, attests and publishes the GitHub release. A commit that
+# already has a v* tag gets none (a re-release of the same code).
+function New-ReleaseTag([string]$commit) {
+	git -C $proj fetch -q --tags origin
+	$existing = @(git -C $proj tag --points-at $commit --list "v*")
+	if ($existing.Count -gt 0) { Write-Output "player build: $($commit.Substring(0, 7)) is already $($existing[0]), no new tag"; return }
+	$p = Get-Protocol
+	$n = 0
+	foreach ($t in @(git -C $proj tag --list "v0.$p.*")) {
+		if ($t -match "^v0\.$p\.(\d+)$") { $n = [Math]::Max($n, [int]$Matches[1] + 1) }
+	}
+	$tag = "v0.$p.$n"
+	git -C $proj tag -a $tag -m "RUNEBOUND 0.$p.$n" $commit
+	git -C $proj push -q origin $tag
+	if ($LASTEXITCODE -ne 0) { Write-Warning "push of tag $tag failed: no player build (push it by hand: git push origin $tag)"; return }
+	Write-Output "player build: tagged $tag, GitHub builds it now (https://github.com/melknoo/Runebound/actions)"
+	Write-Output "  release page when green: https://github.com/melknoo/Runebound/releases/tag/$tag"
 }
 
 # Zone scene named inside a shots/perf JSON file.
@@ -79,9 +108,9 @@ function Update-Import {
 		Invoke-Import | Out-Null
 	}
 }
-if ($Mode -notin @("import", "reset", "deploy", "release")) { Update-Import }
+if ($Mode -notin @("import", "reset", "deploy", "release", "dist")) { Update-Import }
 
-if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "solocheck", "partycheck", "wsspike", "deploy", "release")) { Show-OtherGodot }  # headless modes share no GPU
+if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "solocheck", "partycheck", "wsspike", "deploy", "release", "dist")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would
@@ -204,8 +233,17 @@ switch ($Mode) {
 		git -C $proj push -q origin main:release
 		if ($LASTEXITCODE -ne 0) { Write-Error "push to release refused (not a fast-forward?)"; exit 1 }
 		Write-Output ("release is now {0}: {1}" -f $localHead.Substring(0, 7), (git -C $proj log --format=%s -1 main))
+		New-ReleaseTag $localHead
 		$target = if ($env:RUNEBOUND_SERVER_SSH) { $env:RUNEBOUND_SERVER_SSH } else { "melvin@melvin-aspire-e5-573g" }
 		ssh $target "sudo -n systemctl start runebound-deploy.service; journalctl -u runebound-deploy -n 12 --no-pager -o cat"
+		exit $LASTEXITCODE
+	}
+	"dist" {
+		# A local player build (nothing is published): what the GitHub workflow
+		# builds for a release tag, with this PC's Godot and export templates.
+		# Version 0.<protocol>.0-local unless given. docs/dev-notes/release-builds.md
+		$version = if ($Name) { $Name } else { "0.{0}.0-local" -f (Get-Protocol) }
+		& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $proj "tools\dist\build_windows.ps1") -Version $version -Godot $godot
 		exit $LASTEXITCODE
 	}
 	"deploy" {

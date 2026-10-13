@@ -51,8 +51,9 @@ func _ready() -> void:
 		return
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--net-test="):  # tests/net_test.gd: the server's side of a scenario
-			var probe: Node = (load("res://tests/net_server_probe.gd") as GDScript).new()
-			get_tree().root.add_child.call_deferred(probe)
+			var probe := ZoneBase.test_node("res://tests/net_server_probe.gd")
+			if probe != null:
+				get_tree().root.add_child.call_deferred(probe)
 	var zone := SaveGame.current_zone
 	if DungeonRegistry.is_coop(DungeonRegistry.id_for_scene(zone)):  # M13b: never wake up alone in a co-op dungeon
 		zone = DungeonRegistry.HIGHLANDS_SCENE

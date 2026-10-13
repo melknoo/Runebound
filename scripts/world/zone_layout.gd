@@ -98,19 +98,20 @@ func route_points(id: String) -> PackedVector2Array:
 
 # --- M12 sub-biomes ----------------------------------------------------------
 
-## The baked weight mask (R, G, B = biome_ids[0..2]); read from the PNG's
-## bytes, so it works the same headless and on the dedicated server. Null
-## when the zone has none.
+## The baked weight mask (R, G, B = biome_ids[0..2]); the same pixels
+## headless, on the dedicated server and in a player build. Null when the
+## zone has none.
 func biome_image() -> Image:
 	if _biome_img != null or biome_ids.is_empty():
 		return _biome_img
 	var file := _dir.path_join(String(raw.get("baked", {}).get("biome_file", "biome_mask.png")))
-	if not FileAccess.file_exists(file):
+	if not ResourceLoader.exists(file):
 		return null
-	var img := Image.new()
-	if img.load_png_from_buffer(FileAccess.get_file_as_bytes(file)) != OK:
+	var img := ArtKit.png_image(file)
+	if img == null:
 		push_warning("ZoneLayout: cannot read " + file)
 		return null
+	img.convert(Image.FORMAT_RGBA8)
 	_biome_img = img
 	return _biome_img
 

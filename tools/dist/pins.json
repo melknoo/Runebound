@@ -1,0 +1,23 @@
+{
+  "_comment": "Pinned downloads for player builds (tools/dist/build_windows.ps1). Godot hashes: SHA512-SUMS.txt of github.com/godotengine/godot-builds release 4.6.3-stable; entry_sha256 is the Windows release template inside that .tpz (checked after every extraction, and against a locally installed template). Inno Setup hash: the winget manifest JRSoftware.InnoSetup 6.7.3 (matches the download; the exe is Authenticode-signed by Pyrsys B.V.). Upgrading: docs/dev-notes/release-builds.md.",
+  "godot": {
+    "version": "4.6.3-stable",
+    "template_dir": "4.6.3.stable",
+    "editor": {
+      "url": "https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_win64.exe.zip",
+      "sha512": "d44ea7ef5bab754cacd49d581b6062836b2eea12a82e1d183aebfad9cd8c7db2bd82513337bd657d6d2d5c04d46239c0570b029faf1343e81e8a2fa7b85dd83b",
+      "exe": "Godot_v4.6.3-stable_win64_console.exe"
+    },
+    "templates": {
+      "url": "https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz",
+      "sha512": "da606b61c10157844f8300172df374472665f95015495cb1a7cd132c40ede404faa96cc1016a4b9662db9909ddea69632c4948b2cd11163438dad4808881fb68",
+      "entry": "templates/windows_release_x86_64.exe",
+      "entry_sha256": "91724f15024a3a545e28ccd83134403d31ce2323a38e51c95e4dfa282f732ab6"
+    }
+  },
+  "inno_setup": {
+    "version": "6.7.3",
+    "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe",
+    "sha256": "9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732"
+  }
+}

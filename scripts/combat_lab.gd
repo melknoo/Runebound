@@ -130,8 +130,9 @@ func _zone_ready() -> void:
 	if Net.is_authority():  # M09: a co-op client sees the server's enemies
 		_spawn_initial_enemies()
 	if "--capture" in OS.get_cmdline_user_args():
-		var capture: Node = (load("res://tests/playtest_capture.gd") as GDScript).new()
-		add_child(capture)
+		var capture := ZoneBase.test_node("res://tests/playtest_capture.gd")
+		if capture != null:
+			add_child(capture)
 
 
 func _spawn_initial_enemies() -> void:

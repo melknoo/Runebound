@@ -1,0 +1,103 @@
+# Player builds for Windows (docs/dev-notes/release-builds.md).
+# - A tag v0.<protocol>.<n> (tools\run_godot.cmd release sets it on the commit
+#   it ships to the server) builds, attests and publishes a GitHub release.
+# - "Run workflow" builds a test version and only keeps it as a run artifact.
+# Only first-party GitHub actions, pinned by commit; every other tool is a
+# pinned download checked against tools/dist/pins.json.
+name: Windows release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Test version (nothing is published)"
+        required: true
+        default: "0.0.0-test"
+
+permissions: {}
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    permissions:
+      contents: write      # create the release
+      id-token: write      # sign the provenance attestation (Sigstore)
+      attestations: write  # store it on the repository
+    env:
+      EVENT: ${{ github.event_name }}
+      REF_NAME: ${{ github.ref_name }}
+      INPUT_VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:EVENT -eq "push") {
+            $m = [regex]::Match($env:REF_NAME, '^v(0\.(\d+)\.\d+)$')
+            if (-not $m.Success) { throw "release tags look like v0.<protocol>.<n>, got $env:REF_NAME" }
+            $protocol = (Select-String -Path scripts/net/net.gd -Pattern '^const PROTOCOL := (\d+)').Matches[0].Groups[1].Value
+            if ($m.Groups[2].Value -ne $protocol) { throw "tag $env:REF_NAME does not match Net.PROTOCOL $protocol" }
+            $version = $m.Groups[1].Value
+          } else {
+            $version = $env:INPUT_VERSION
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Tool cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: build/cache
+          key: dist-tools-${{ hashFiles('tools/dist/pins.json') }}
+
+      - name: Build
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./tools/dist/build_windows.ps1 -Version $env:VERSION -Pinned
+
+      - name: Keep the build
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: runebound-${{ steps.version.outputs.version }}-windows
+          path: |
+            build/dist/*.zip
+            build/dist/*-setup.exe
+            build/dist/SHA256SUMS.txt
+            build/dist/export_check.json
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Attest provenance
+        if: github.event_name == 'push'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: |
+            build/dist/*.zip
+            build/dist/*-setup.exe
+
+      - name: Publish release
+        if: github.event_name == 'push'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          ./tools/dist/release_notes.ps1 -Version $env:VERSION -Tag $env:REF_NAME -Repo $env:REPO -Sha $env:SHA -RunUrl $env:RUN_URL -Out build/release_notes.md
+          gh release create $env:REF_NAME --repo $env:REPO --verify-tag --title "RUNEBOUND $env:VERSION" --notes-file build/release_notes.md `
+            "build/dist/Runebound-$env:VERSION-setup.exe" "build/dist/Runebound-$env:VERSION-windows.zip" build/dist/SHA256SUMS.txt

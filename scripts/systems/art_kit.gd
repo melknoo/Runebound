@@ -386,15 +386,15 @@ static func biomed(role: StringName, mask: Texture2D, bounds: Rect2, base: Shade
 
 
 ## A Texture2DArray of biome textures (same size each), mipmapped like the
-## imported ones; read from the PNG bytes, cached by the names.
+## imported ones; cached by the names.
 static func texture_array(names: Array) -> Texture2DArray:
 	var key := ",".join(names)
 	if _arrays.has(key):
 		return _arrays[key]
 	var images: Array[Image] = []
 	for n: String in names:
-		var img := Image.new()
-		if img.load_png_from_buffer(FileAccess.get_file_as_bytes(BIOME_DIR + n + ".png")) != OK:
+		var img := png_image(BIOME_DIR + n + ".png")
+		if img == null:
 			push_warning("ArtKit: missing biome texture " + n)
 			img = Image.create(64, 64, false, Image.FORMAT_RGBA8)
 		img.convert(Image.FORMAT_RGBA8)
@@ -404,6 +404,21 @@ static func texture_array(names: Array) -> Texture2DArray:
 	arr.create_from_images(images)
 	_arrays[key] = arr
 	return arr
+
+
+## A PNG's pixels (no mipmaps) from its imported texture: a player build
+## packs only the imported copy, never the PNG itself. Headless runs read
+## the same pixels (checked 2026-10-13). Null when it is missing.
+static func png_image(path: String) -> Image:
+	var tex: Texture2D = load(path) as Texture2D if ResourceLoader.exists(path) else null
+	var img: Image = tex.get_image() if tex != null else null
+	if img == null:
+		return null
+	img = img.duplicate() as Image  # the dummy renderer hands out its own copy
+	if img.is_compressed():
+		img.decompress()
+	img.clear_mipmaps()
+	return img
 
 
 ## While a zone runs: `role` hands out `mat` instead of the shared material.
