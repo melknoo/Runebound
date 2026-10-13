@@ -461,7 +461,7 @@ Phase 7 gebaut (Foliant im Geheimnis: Sturmband, Gewitterwolke, Wolkenbruch; Stu
 Sturmrufer; Tova in Runehold verkauft die 6 Sturm-Legendaries für je 30 Splitter: Blitzableiter, Donnerwall, Auge des Sturms,
 Wolkenhüter, Regenherz, Sturmsaat).
 Phase 8 gebaut (Abschluss: Playtest-Gruppe „M13b: Koop-Dungeon“ auf J, 19 Punkte; Netz-Suite, Party-Check, Shots, Perf).
-**PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
+**PROTOCOL 15** ist ausgeliefert (`release` = 71e8a71, 13.10.).
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

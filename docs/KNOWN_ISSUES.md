@@ -366,8 +366,9 @@
 - **Playtest list:** group "M13b: Koop-Dungeon" on J (19 points, ids
   `m13b_*`). Solo the gate stays shut: `tools\run_godot.cmd coop 2` (you
   + a tank bot + a druid bot) or friends after the release.
-- **Protocol 15:** ship a release before the next co-op session (the
-  Stormwatch can only be played online with three heroes).
+- **Protocol 15** is live: `release` shipped at 71e8a71 on 2026-10-13
+  (friends need that build). The Stormwatch can only be played online
+  with three heroes (or offline with `coop 2` bots).
 - The run's level is fixed when its first enemy asks (the party's average
   then); a late joiner does not change it, only the health scaling.
 - A server with nobody left goes back to the Highlands; a party that

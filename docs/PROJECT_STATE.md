@@ -2,8 +2,8 @@
 
 Updated: 2026-10-13 · Latest built milestone: **M13b the Stormwatch**, the
 co-op dungeon for 3-5 heroes (all nine phases built 2026-10-13, below; the
-user's playtest is the gate; **protocol 15**: a release before the next
-co-op). Before it: **M13 Dungeons with puzzles**
+user's playtest is the gate; **protocol 15**, shipped: `release` at
+71e8a71). Before it: **M13 Dungeons with puzzles**
 (built 2026-10-10, below; the user's playtest is the gate). Before it: **M12 Highlands with substance** (built 2026-10-02, below; the user's playtest is the gate). **M17a Menus & settings** (pulled forward
 from M17, all five phases built, below; the user's playtest is the gate). **M11 Three roles II (the root druid,
 healer)** - all four phases built; the user's playtest is the gate. **M10 Three roles I (tank +
@@ -231,8 +231,8 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
   on J (19 points, ids `m13b_*`); the whole net suite green (37 scenarios with the WebSocket ones); the party check with all three roles 9/9, no wipe, no down (412 s fighting, the thunder grounded twice); perf `stormwatch_coils` 47.3 FPS on the iGPU (48.6 in phase 4: noise; GPU-bound as noted); smoke 911 green; shots
   `m13b_stormwatch` (23) and `m13b_trader`; docs (HANDOFF, ROADMAP).
 - **Net.PROTOCOL 15** (the Stormwatch, the downed state, the notice key,
-  shards in GRANT): the server needs a release before co-op
-  (`tools\run_godot.cmd release`).
+  shards in GRANT): shipped on 2026-10-13 (`release` at 71e8a71, the
+  deploy reported it live).
 - **Gate walk (user):** the Stormwatch wants three heroes - solo:
   `tools\run_godot.cmd coop 2` (you, a tank bot and a druid bot), with
   friends after the release.

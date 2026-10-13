@@ -1,6 +1,6 @@
 # RUNEBOUND — Handoff: von einem anderen Rechner weiterarbeiten
 
-Stand: 2026-10-13 · `release` steht auf `f2da9a6` (PROTOCOL 13), `main` trägt M13 und M13b (PROTOCOL 15). Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
+Stand: 2026-10-13 · `release` steht auf `71e8a71` (M13 + M13b, PROTOCOL 15), der Laptop-Server läuft damit. Für dich und für Claude auf dem zweiten Rechner. Claude lädt `CLAUDE.md` im Repo-Root von selbst, die Regeln und das Know-how stehen dort und in `docs/dev-notes/`.
 
 ## 1. Status
 **Gebaut:** M01–M08, M09 Co-op, M09b (Funnel + Einladungscodes, am 2026-09-28 eingerichtet), M10 Tank + Elementar-Magier + Loadout, M10b Heiltränke, M11 Wurzel-Druide, M17a Menüs & Einstellungen (vorgezogen), M12 Highlands mit Substanz (gebaut 2026-10-02). **M13 Dungeons gebaut** (2026-10-10, alle zehn Phasen: Dungeon-Technik, die Cistern als Graubox, das Tor öffnet sich; Runen, Tod, Boss-Arenen, Truhen einmalig; Mechanik-Rätsel und das Puzzle Lab; Element-Rätsel und Fallen; die Cistern mit allen Rätseln, eigenem Look und Lore; ihre Gegner, der Aufgedunsene Wärter und der Tiefenschlund; die Ember Warrens mit allen Rätseln, Lava und eigenem Look; ihre Glutbrut, der Schlackenvogt und die Glutbrutmutter; die Folianten beider Dungeons mit je drei neuen Fähigkeiten). **M13b Koop-Dungeon gebaut** (2026-10-13, alle neun Phasen: die Sturmwarte hinter dem Osttor, ab drei Helden; Niederschlag + Wiederbeleben; vier Koop-Rätsel; Bots, die mitlösen; Sturmfamilie, Sturmgeschworene, Windbinder, der letzte Sturmrufer; Party-Check mit Bots; Foliant mit Sturmband, Gewitterwolke, Wolkenbruch; Sturmsplitter und Tova mit sechs Sturm-Legendaries in Runehold). Letzter Smoke-Lauf: 911 Checks grün (2026-10-13, M13b Phase 8, auf dem Haupt-PC mit iGPU).
@@ -13,12 +13,12 @@ Stand: 2026-10-13 · `release` steht auf `f2da9a6` (PROTOCOL 13), `main` trägt 
 - Solo-Check Cistern L5: Elementar-Magier und Druide 6/6, der Runebreaker-Bot stirbt an beiden Bossen (weicht Telegraphen nie aus). Warrens L6: alle drei Klassen 6/6, knapp.
 - Net-Suite: `heal`, `handshake@ws`, `travel@ws` stürzen bei wenig freiem RAM ab, einzeln laufen sie grün.
 
-**Server:** `release` steht auf `f2da9a6` (Protokoll 13); `main` hat Protokoll 15 (M13 brachte 14, M13b Phase 0 brachte 15), vor dem nächsten Koop braucht der Server ein Release. Das Server-Journal vom 2026-10-02 zeigt Join und Zonenwechsel sauber. Heutiger Stand ungeprüft (ssh vom Haupt-PC lief am 2026-10-09 in ein Timeout: Tailscale aus oder Laptop aus).
+**Server:** `release` steht auf `71e8a71` (Protokoll 15, M13 und M13b), am 2026-10-13 ausgeliefert: der Deploy meldete „live at 71e8a71“. Freunde brauchen den neuen Stand (Branch `release`).
 
 **Wie es weitergeht:**
 1. Playtest-Feedback einsammeln (die J-Liste liegt als `playtest.json` auf deinem Spiel-PC) und fixen.
 2. RTX-2070-PC: dein Online-Lauf ohne Editor (der automatische Retest lief am 09.10. sauber).
-3. **Release für den Server** (`tools\run_godot.cmd release`), wenn du willst: `main` hat **PROTOCOL 15**, ohne Release kommt niemand mehr auf den Laptop-Server. Danach dein M13-Playtest (Gate-Walk in `docs/PROJECT_STATE.md`, J-Gruppe „M13: Dungeons“), gern auch zu zweit.
+3. Dein M13-Playtest (Gate-Walk in `docs/PROJECT_STATE.md`, J-Gruppe „M13: Dungeons“), gern auch zu zweit: der Server läuft seit dem 13.10. mit Protokoll 15.
 4. **M13b-Playtest**: die Sturmwarte (Gate-Walk in `docs/PROJECT_STATE.md`, J-Gruppe „M13b: Koop-Dungeon“). Solo kommt man nicht hinein: `tools\run_godot.cmd coop 2` (du + Tank- und Druiden-Bot) oder mit Freunden auf dem Laptop nach dem Release.
 5. M14 Story & RPG (Dialoge, Quests, Meta-Würze, UI zweisprachig), M15 zwei weitere Zonen, M16 Endgame, M17 Politur.
 
