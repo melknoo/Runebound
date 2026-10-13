@@ -23,7 +23,7 @@ var source_dir: int = 0
 var mirrors: Array[Vector3] = []
 var receiver: Vector3 = Vector3.ZERO
 var look: String = "light"
-var inputs: Array[String] = []
+var inputs: Array = []  # PuzzleInputs entries
 var _flowing_shown: bool = false
 var _watch_left: float = 0.0
 var _mirror_nodes: Array[Node3D] = []
@@ -44,8 +44,7 @@ static func build(zone: ZoneBase, poi: Dictionary) -> BeamPuzzle:
 	b.source = ZoneLayout.pos_of(poi)
 	b.source_dir = int(poi.get("dir", 0))
 	b.look = String(poi.get("look", "light"))
-	for i in poi.get("inputs", []):
-		b.inputs.append(String(i))
+	b.inputs = PuzzleInputs.parse(poi.get("inputs", []))
 	var rot: Array = []
 	for m: Array in poi.get("mirrors", []):
 		var p := Vector3(float(m[0]), zone.ground_y(Vector3(float(m[0]), 0, float(m[1]))), float(m[1]))
@@ -76,15 +75,7 @@ func flowing() -> bool:
 	if inputs.is_empty() or is_solved():
 		return true
 	var zone := ZoneBase.zone_of(self) as DungeonZone
-	for input in inputs:
-		if input.begins_with("flag:"):
-			if not SaveGame.has_flag(StringName(input.trim_prefix("flag:"))):
-				return false
-		else:
-			var p := zone.puzzles.get(input) as PoiPuzzle if zone != null else null
-			if p == null or not p.is_active():
-				return false
-	return true
+	return PuzzleInputs.holds(inputs, zone.puzzles if zone != null else {})
 
 
 ## Inputs change on their own (a kiln lit, a lever pulled): every machine

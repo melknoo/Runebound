@@ -928,8 +928,34 @@ art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
   stood up elsewhere (each machine sees the others' falls a network delay
   late - waiting for the whole party on the floor until the end raced).
   HUD: `downed_status` (the seconds and the bound key). No new message.
+- **The co-op puzzle kit (phase 2, scripts/world/puzzles/):**
+  - `PuzzleInputs` reads every `inputs` list (gates, water, beams; it was
+    copied three times): AND over the entries; an entry is a puzzle id or
+    `flag:<name>`, or a list = ANY of its ids (split paths: "the other
+    wing's plate held, or the lever beyond pulled"). `DungeonZone._listen`
+    listens to the flattened ids.
+  - `CoopPlates` (POI `plates`: `plates` [[x, z]...], `hold`, `open_for`;
+    0 = for good): every plate under a living hero (never a block) for
+    `hold` s opens the group until `until` (server clock,
+    `IceBridge.now_msec`); the authority commits `until` 0 when it runs out
+    so every machine's gates follow; a label shows "2 / 3".
+  - `SyncLevers` (POI `sync`: `levers` [[x, z, yaw]...], `window`, `look`
+    lever / coil): pulls are requests, the server keeps their times; all
+    within one window = solved for good; an expired pull springs back (a
+    commit).
+  - `ChainPuzzle` (POI `chain`: `source`, `receiver`, `link`, `heroes`,
+    `hold`, `damage`): `ChainPuzzle.trace(heroes, from, to, link)` (pure:
+    a BFS over living heroes within `link` of each other) gives the
+    connected heroes, the closing chain and the parents; the authority
+    judges (its proxies), every machine draws the arcs from its own
+    positions, each owner hurts its own conductor (`damage` per second).
+  - The bake (`validate_coop`): every part clear inside its room; plates
+    4 m apart; sync levers out of one hero's reach (`min gap x (n - 1) >=
+    window x 14 m/s`, sprint plus a dash); a chain takes exactly `heroes`
+    conductors (`ceil(d / link) - 1`, at least 2).
+  - The puzzle lab's co-op rooms (south of its entry) hold one of each.
 - **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
-  NOTICE with a key). Net scenarios `coop_gate`, `revive`.
+  NOTICE with a key). Net scenarios `coop_gate`, `revive`, `coop_puzzles`.
 
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**

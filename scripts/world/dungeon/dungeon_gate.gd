@@ -12,7 +12,7 @@ const SINK_TIME := 0.9
 const BAR_SPACING := 0.55
 
 var door_id: String = ""
-var inputs: Array[String] = []
+var inputs: Array = []  # M13b: PuzzleInputs entries (an id, a flag, or a list = any of)
 ## The doorway on XZ and its floor (DungeonLayout door entry).
 var rect: Rect2 = Rect2()
 var floor_y: float = 0.0
@@ -28,8 +28,7 @@ static func build(zone: ZoneBase, door: Dictionary) -> DungeonGate:
 	var g := DungeonGate.new()
 	g.door_id = String(door.get("id", ""))
 	g.name = "Gate_" + g.door_id
-	for i in door.get("inputs", []):
-		g.inputs.append(String(i))
+	g.inputs = PuzzleInputs.parse(door.get("inputs", []))
 	g.rect = DungeonLayout.rect_of(door)
 	g.floor_y = float(door.get("floor", 0.0))
 	g.height = minf(float(door.get("wall_h", 6.0)), 4.5)
@@ -75,17 +74,9 @@ func _build_bars() -> void:
 	_built = true
 
 
-## Every input holds? `puzzles`: the zone's PoiPuzzles by id.
+## Every input holds? `puzzles`: the zone's PoiPuzzles by id (PuzzleInputs).
 func evaluate(puzzles: Dictionary) -> bool:
-	for input in inputs:
-		if input.begins_with("flag:"):
-			if not SaveGame.has_flag(StringName(input.trim_prefix("flag:"))):
-				return false
-		else:
-			var p := puzzles.get(input) as PoiPuzzle
-			if p == null or not p.is_active():
-				return false
-	return true
+	return PuzzleInputs.holds(inputs, puzzles)
 
 
 ## Opens or closes to match its inputs; `instant` on load (no animation).

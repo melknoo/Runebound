@@ -4497,7 +4497,7 @@ func _run() -> void:
 					_check(lh._query_hurtboxes(probe_at, 1.5).has(wall), "M13 kit: a swing at the cracked wall finds it")
 					for strike_i in 3:
 						wall.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, probe_at))
-						await get_tree().create_timer(SecretWall.STRIKE_GAP + 0.05).timeout
+						await get_tree().create_timer(SecretWall.STRIKE_GAP + 0.2).timeout  # the wall keeps real time; a busy PC's smoothed deltas ran 50 ms short
 					await _wait_frames(2)
 					_check(wall.is_solved() and wall._body.collision_layer == 0 and int(wall.state.get("hits", 0)) == 3,
 						"M13 kit: three strikes break the cracked wall")
@@ -4626,6 +4626,83 @@ func _run() -> void:
 					_check(collapse.falls >= 1 and eh2.global_position.distance_to(collapse.back) < 1.0 and eh2.health.current_health < hp_before_fall,
 						"M13 traps: a fall into the pit hurts and sets the hero back at its edge")
 					eh2.god_mode = true
+					# --- M13b phase 2: the co-op kit - plates at once, the chain, coils in time, split paths ---
+					var ck_lead := lab13.player
+					ck_lead.god_mode = true
+					var ck_heroes: Array[Player] = [ck_lead]
+					for ck_class: StringName in [&"runebreaker", &"druid"]:
+						var ck_mate := Player.create(ClassData.load_by_id(ck_class))
+						ck_mate.is_local = false
+						ck_mate.input_source = InputSource.new()
+						ck_mate.god_mode = true
+						lab13.add_player(ck_mate)
+						ck_heroes.append(ck_mate)
+					var ck_place := func(spots: Array) -> void:
+						for ck_i in spots.size():
+							ck_heroes[ck_i].global_position = (spots[ck_i] as Vector3) + Vector3(0, 0.2, 0)
+							ck_heroes[ck_i].velocity = Vector3.ZERO
+					var ck_plates := lab13.puzzles["lab_coop_plates"] as CoopPlates
+					var ck_gate_chain := lab13.gates["lab_d_plates_chain"] as DungeonGate
+					var ck_far := Vector3(7, 0, 58)
+					ck_place.call([ck_plates.plate_pos[0], ck_plates.plate_pos[1], ck_far])
+					await _wait_frames(80)
+					var ck_two := ck_plates.held_count() == 2 and not ck_plates.is_active() and not ck_gate_chain.is_open
+					ck_place.call([ck_plates.plate_pos[0], ck_plates.plate_pos[1], ck_plates.plate_pos[2]])
+					await _wait_frames(90)
+					_check(ck_two and ck_plates.held_count() == 3 and ck_plates.is_active() and ck_gate_chain.is_open,
+						"M13b kit: two plates held do nothing; all three held a second open the way")
+					ck_place.call([ck_far, ck_far + Vector3(3, 0, 0), ck_far + Vector3(-3, 0, 0)])
+					await _wait_frames(int(ck_plates.open_for * 60.0) + 30)
+					_check(not ck_plates.is_active() and not ck_gate_chain.is_open,
+						"M13b kit: the plates' time runs out and the way closes again")
+					# the chain: 38 m from coil to receiver, 10 m a link - two heroes are not enough
+					var ck_chain := lab13.puzzles["lab_coop_chain"] as ChainPuzzle
+					var ck_gate_sync := lab13.gates["lab_d_chain_sync"] as DungeonGate
+					ck_place.call([Vector3(-4, 0, 89), Vector3(5, 0, 89), Vector3(7, 0, 98)])
+					await _wait_frames(20)
+					var ck_short := not ck_chain.closed and ck_chain.path.size() >= 2 and not ck_chain.is_solved()
+					var ck_hp := ck_heroes[1].health.current_health
+					ck_heroes[1].god_mode = false
+					await _wait_frames(45)
+					var ck_hurt := ck_heroes[1].health.current_health < ck_hp
+					ck_heroes[1].god_mode = true
+					ck_heroes[1].health.heal_full()
+					ck_place.call([Vector3(-2.5, 0, 89), Vector3(7, 0, 89), Vector3(16.5, 0, 89)])
+					await _wait_frames(int(ck_chain.hold * 60.0) + 30)
+					_check(ck_short and ck_hurt and ck_chain.is_solved() and ck_gate_sync.is_open,
+						"M13b kit: two heroes cannot bridge coil and receiver (a conductor hurts); three in a line close the chain")
+					# coils struck within two seconds: one alone springs back
+					var ck_sync := lab13.puzzles["lab_coop_sync"] as SyncLevers
+					ck_sync.request("pull", 0, ck_heroes[0])
+					await _wait_frames(4)
+					var ck_one := ck_sync.pulled_count() == 1
+					await _wait_frames(int(ck_sync.window * 60.0) + 20)
+					var ck_lapsed := ck_sync.pulled_count() == 0 and not ck_sync.is_solved()
+					for ck_k in 3:
+						ck_sync.request("pull", ck_k, ck_heroes[ck_k])
+					await _wait_frames(4)
+					_check(ck_one and ck_lapsed and ck_sync.is_solved(),
+						"M13b kit: a coil struck alone springs back; three struck within two seconds hold")
+					# split paths: a wing's plate opens the other wing's way while held; the lever beyond opens both
+					var ck_pw := lab13.puzzles["lab_split_plate_w"] as PressurePlate
+					var ck_gate_w := lab13.gates["lab_d_split_w_end"] as DungeonGate
+					var ck_gate_e := lab13.gates["lab_d_split_e_end"] as DungeonGate
+					ck_place.call([ck_pw.global_position, Vector3(20, 0, 106), Vector3(-10, 0, 106)])
+					await _wait_frames(15)
+					var ck_split := ck_gate_e.is_open and not ck_gate_w.is_open
+					ck_place.call([Vector3(-12, 0, 106), Vector3(24, 0, 106), Vector3(-10, 0, 106)])
+					await _wait_frames(15)
+					var ck_shut := not ck_gate_e.is_open
+					(lab13.puzzles["lab_split_lever"] as PuzzleLever).request("pull", 0, ck_heroes[0])
+					await _wait_frames(4)
+					_check(ck_split and ck_shut and ck_gate_w.is_open and ck_gate_e.is_open
+						and PuzzleInputs.holds(PuzzleInputs.parse([["lab_split_plate_e", "lab_split_lever"]]), lab13.puzzles)
+						and not PuzzleInputs.holds(PuzzleInputs.parse(["lab_split_plate_e"]), lab13.puzzles),
+						"M13b kit: split paths - the other wing's plate opens a wing's way while held; the far lever opens both")
+					for ck_m: Player in [ck_heroes[1], ck_heroes[2]]:
+						lab13.remove_player(ck_m)
+						ck_m.queue_free()
+					await _wait_frames(4)
 
 	# --- M13 phase 6: the Ember Warrens - the shell, lava, every puzzle wired ---
 	leave_zone.travel_to("res://scenes/ember_warrens.tscn", "wa_exit")

@@ -100,6 +100,22 @@
 		"en": "You wake at the rune",
 		"de": "Du erwachst an der Rune"
 	},
+	"ui.coop.coil": {
+		"en": "Strike the coil",
+		"de": "Spule anschlagen"
+	},
+	"ui.coop.plates_open": {
+		"en": "The plates hold - the way is open",
+		"de": "Die Platten halten - der Weg ist frei"
+	},
+	"ui.coop.sync_done": {
+		"en": "All at once - it worked",
+		"de": "Alle zugleich - es hat geklappt"
+	},
+	"ui.coop.chain_done": {
+		"en": "The chain closes - the lightning runs through",
+		"de": "Die Kette schließt sich - der Blitz läuft durch"
+	},
 	"ui.revive.wiped": {
 		"en": "The party has fallen - back to the rune",
 		"de": "Die Gruppe ist gefallen - zurück zur Rune"

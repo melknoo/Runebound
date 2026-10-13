@@ -230,8 +230,8 @@ func _build_gates() -> void:
 
 
 func _listen(inputs: Array) -> void:
-	for input in inputs:
-		var p := puzzles.get(String(input)) as PoiPuzzle
+	for input in PuzzleInputs.ids(PuzzleInputs.parse(inputs)):
+		var p := puzzles.get(input) as PoiPuzzle
 		if p != null and not p.state_applied.is_connected(refresh_gates):
 			p.state_applied.connect(refresh_gates)
 

@@ -2,10 +2,10 @@
  "id": "puzzle_lab",
  "prefix": "lab_",
  "entry": "lab_entry",
- "size_m": 160.0,
+ "size_m": 188.0,
  "origin": [
-  -80,
-  -70
+  -94,
+  -51
  ],
  "base_y": -4.0,
  "rooms": [
@@ -225,6 +225,90 @@
     20,
     76,
     40
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_coop_c",
+   "rect": [
+    3,
+    42,
+    9,
+    54
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_room_plates",
+   "rect": [
+    -16,
+    56,
+    30,
+    76
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_room_chain",
+   "rect": [
+    -16,
+    78,
+    30,
+    100
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_room_sync",
+   "rect": [
+    32,
+    78,
+    70,
+    100
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_split_w",
+   "rect": [
+    -16,
+    102,
+    6,
+    118
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_split_e",
+   "rect": [
+    10,
+    102,
+    30,
+    118
+   ],
+   "floor": 0.0,
+   "wall_h": 6.0,
+   "tags": []
+  },
+  {
+   "id": "lab_split_end",
+   "rect": [
+    -16,
+    120,
+    30,
+    132
    ],
    "floor": 0.0,
    "wall_h": 6.0,
@@ -555,6 +639,188 @@
     32.5
    ],
    "axis": "x",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_entry_coop",
+   "a": "lab_entry",
+   "b": "lab_coop_c",
+   "at": [
+    6,
+    41
+   ],
+   "width": 4.0,
+   "kind": "open",
+   "inputs": [],
+   "rect": [
+    4.0,
+    40,
+    8.0,
+    42
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_coop_plates",
+   "a": "lab_coop_c",
+   "b": "lab_room_plates",
+   "at": [
+    6,
+    55
+   ],
+   "width": 4.0,
+   "kind": "open",
+   "inputs": [],
+   "rect": [
+    4.0,
+    54,
+    8.0,
+    56
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_plates_chain",
+   "a": "lab_room_plates",
+   "b": "lab_room_chain",
+   "at": [
+    7,
+    77
+   ],
+   "width": 5.0,
+   "kind": "gate",
+   "inputs": [
+    "lab_coop_plates"
+   ],
+   "rect": [
+    4.5,
+    76,
+    9.5,
+    78
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_chain_sync",
+   "a": "lab_room_chain",
+   "b": "lab_room_sync",
+   "at": [
+    31,
+    89
+   ],
+   "width": 5.0,
+   "kind": "gate",
+   "inputs": [
+    "lab_coop_chain"
+   ],
+   "rect": [
+    30,
+    86.5,
+    32,
+    91.5
+   ],
+   "axis": "x",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_chain_split_w",
+   "a": "lab_room_chain",
+   "b": "lab_split_w",
+   "at": [
+    -5,
+    101
+   ],
+   "width": 4.0,
+   "kind": "open",
+   "inputs": [],
+   "rect": [
+    -7.0,
+    100,
+    -3.0,
+    102
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_chain_split_e",
+   "a": "lab_room_chain",
+   "b": "lab_split_e",
+   "at": [
+    20,
+    101
+   ],
+   "width": 4.0,
+   "kind": "open",
+   "inputs": [],
+   "rect": [
+    18.0,
+    100,
+    22.0,
+    102
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_split_w_end",
+   "a": "lab_split_w",
+   "b": "lab_split_end",
+   "at": [
+    -5,
+    119
+   ],
+   "width": 4.0,
+   "kind": "gate",
+   "inputs": [
+    [
+     "lab_split_plate_e",
+     "lab_split_lever"
+    ]
+   ],
+   "rect": [
+    -7.0,
+    118,
+    -3.0,
+    120
+   ],
+   "axis": "z",
+   "floor": 0.0,
+   "wall_h": 6.0
+  },
+  {
+   "id": "lab_d_split_e_end",
+   "a": "lab_split_e",
+   "b": "lab_split_end",
+   "at": [
+    20,
+    119
+   ],
+   "width": 4.0,
+   "kind": "gate",
+   "inputs": [
+    [
+     "lab_split_plate_w",
+     "lab_split_lever"
+    ]
+   ],
+   "rect": [
+    18.0,
+    118,
+    22.0,
+    120
+   ],
+   "axis": "z",
    "floor": 0.0,
    "wall_h": 6.0
   }
@@ -1149,6 +1415,15 @@
    "rect": [
     -12.0,
     40.0,
+    4.0,
+    42.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    8.0,
+    40.0,
     12.0,
     42.0
    ],
@@ -1183,6 +1458,24 @@
   },
   {
    "rect": [
+    1.0,
+    42.0,
+    3.0,
+    54.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    9.0,
+    42.0,
+    11.0,
+    54.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
     -52.0,
     44.0,
     -50.0,
@@ -1201,10 +1494,208 @@
   },
   {
    "rect": [
+    -18.0,
+    54.0,
+    4.0,
+    56.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    8.0,
+    54.0,
+    32.0,
+    56.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    56.0,
+    -16.0,
+    76.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    30.0,
+    56.0,
+    32.0,
+    76.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
     -52.0,
     66.0,
     -26.0,
     68.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    76.0,
+    4.5,
+    78.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    9.5,
+    76.0,
+    72.0,
+    78.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    78.0,
+    -16.0,
+    100.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    30.0,
+    78.0,
+    32.0,
+    86.5
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    70.0,
+    78.0,
+    72.0,
+    100.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    30.0,
+    91.5,
+    32.0,
+    100.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    100.0,
+    -7.0,
+    102.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -3.0,
+    100.0,
+    18.0,
+    102.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    22.0,
+    100.0,
+    72.0,
+    102.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    102.0,
+    -16.0,
+    118.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    6.0,
+    102.0,
+    10.0,
+    118.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    30.0,
+    102.0,
+    32.0,
+    118.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    118.0,
+    -7.0,
+    120.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -3.0,
+    118.0,
+    18.0,
+    120.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    22.0,
+    118.0,
+    32.0,
+    120.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    120.0,
+    -16.0,
+    132.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    30.0,
+    120.0,
+    32.0,
+    132.0
+   ],
+   "top": 6.0
+  },
+  {
+   "rect": [
+    -18.0,
+    132.0,
+    32.0,
+    134.0
    ],
    "top": 6.0
   }
@@ -1601,6 +2092,114 @@
    ],
    "damage": 14.0,
    "room": "lab_trap_c",
+   "y": 0.0
+  },
+  {
+   "id": "lab_coop_plates",
+   "type": "plates",
+   "pos": [
+    7,
+    66
+   ],
+   "plates": [
+    [
+     -8,
+     62
+    ],
+    [
+     7,
+     70
+    ],
+    [
+     22,
+     62
+    ]
+   ],
+   "hold": 1.0,
+   "open_for": 6.0,
+   "room": "lab_room_plates",
+   "y": 0.0
+  },
+  {
+   "id": "lab_coop_chain",
+   "type": "chain",
+   "pos": [
+    7,
+    89
+   ],
+   "source": [
+    -12,
+    89
+   ],
+   "receiver": [
+    26,
+    89
+   ],
+   "link": 10.0,
+   "heroes": 3,
+   "hold": 1.5,
+   "damage": 4.0,
+   "room": "lab_room_chain",
+   "y": 0.0
+  },
+  {
+   "id": "lab_coop_sync",
+   "type": "sync",
+   "pos": [
+    51,
+    89
+   ],
+   "look": "coil",
+   "window": 2.0,
+   "levers": [
+    [
+     35,
+     81,
+     0.0
+    ],
+    [
+     67,
+     81,
+     0.0
+    ],
+    [
+     51,
+     97,
+     3.14159
+    ]
+   ],
+   "room": "lab_room_sync",
+   "y": 0.0
+  },
+  {
+   "id": "lab_split_plate_w",
+   "type": "plate",
+   "pos": [
+    -5,
+    110
+   ],
+   "room": "lab_split_w",
+   "y": 0.0
+  },
+  {
+   "id": "lab_split_plate_e",
+   "type": "plate",
+   "pos": [
+    20,
+    110
+   ],
+   "room": "lab_split_e",
+   "y": 0.0
+  },
+  {
+   "id": "lab_split_lever",
+   "type": "lever",
+   "pos": [
+    7,
+    126
+   ],
+   "yaw": 3.14159,
+   "room": "lab_split_end",
    "y": 0.0
   }
  ],

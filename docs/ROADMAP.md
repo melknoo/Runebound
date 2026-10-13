@@ -442,6 +442,8 @@ mit Pfad; Sperre ab 3 Helden an Tor, Reise, Server und Countdown-Ende, Hinweis i
 Stufe = Durchschnitt der Gruppe, mindestens 7; ist niemand mehr auf dem Server, reist er zurück in die Highlands).
 Phase 1 gebaut (Niederschlag: 30 s am Boden mit Ring und Sekunden, Gegner lassen dich liegen; [E] 3 s halten holt den
 Verbündeten mit 30 % zurück; Zeit um: an der Rune; liegen alle, wachen alle nach einem Moment an der Rune auf).
+Phase 2 gebaut (Koop-Rätsel: Platten gleichzeitig, Synchron-Hebel und -Spulen, Blitzkette aus Helden, getrennte Wege
+mit „eins von beiden“; die Regeln prüft der Bake; vier Koop-Räume im Puzzle Lab).
 **PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG

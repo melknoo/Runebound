@@ -7,6 +7,11 @@ two plates (one for the block, one latching) open the beam room, the beam
 opens the water room, two valves drain its channel so the causeway shows,
 and the corridor behind it holds the shortcut's lever back to the hub. The
 hub's west wall is cracked: a hidden room with a chest.
+M13b phase 2 adds the co-op kit south of the entry: three plates held at
+once open the chain room for a few seconds; three heroes in a line carry
+the lightning from coil to receiver, which opens the coil room; its three
+coils struck within two seconds; and two wings whose plates open each
+other's way to the end room (or its lever, pulled from the far side).
 """
 
 LAYOUT = {
@@ -35,6 +40,14 @@ LAYOUT = {
         {"id": "lab_trap_c", "rect": [12, 27, 60, 33], "floor": 0.0,
          "channels": [{"id": "lab_pit", "rect": [40, 27, 56, 33], "depth": 3.0}]},
         {"id": "lab_trap_end", "rect": [62, 20, 76, 40], "floor": 0.0},
+        # M13b phase 2: the co-op kit
+        {"id": "lab_coop_c", "rect": [3, 42, 9, 54], "floor": 0.0},
+        {"id": "lab_room_plates", "rect": [-16, 56, 30, 76], "floor": 0.0},
+        {"id": "lab_room_chain", "rect": [-16, 78, 30, 100], "floor": 0.0},
+        {"id": "lab_room_sync", "rect": [32, 78, 70, 100], "floor": 0.0},
+        {"id": "lab_split_w", "rect": [-16, 102, 6, 118], "floor": 0.0},
+        {"id": "lab_split_e", "rect": [10, 102, 30, 118], "floor": 0.0},
+        {"id": "lab_split_end", "rect": [-16, 120, 30, 132], "floor": 0.0},
     ],
     "connectors": [
         {"id": "lab_d_entry_c1", "a": "lab_entry", "b": "lab_c1", "at": [0, 19], "width": 5.0},
@@ -58,6 +71,18 @@ LAYOUT = {
         {"id": "lab_d_fire_storm", "a": "lab_fire", "b": "lab_storm", "at": [-39, 43], "width": 5.0},
         {"id": "lab_d_entry_trap", "a": "lab_entry", "b": "lab_trap_c", "at": [11, 30], "width": 5.0},
         {"id": "lab_d_trap_end", "a": "lab_trap_c", "b": "lab_trap_end", "at": [61, 30], "width": 5.0},
+        {"id": "lab_d_entry_coop", "a": "lab_entry", "b": "lab_coop_c", "at": [6, 41], "width": 4.0},
+        {"id": "lab_d_coop_plates", "a": "lab_coop_c", "b": "lab_room_plates", "at": [6, 55], "width": 4.0},
+        {"id": "lab_d_plates_chain", "a": "lab_room_plates", "b": "lab_room_chain", "at": [7, 77], "width": 5.0,
+         "kind": "gate", "inputs": ["lab_coop_plates"]},
+        {"id": "lab_d_chain_sync", "a": "lab_room_chain", "b": "lab_room_sync", "at": [31, 89], "width": 5.0,
+         "kind": "gate", "inputs": ["lab_coop_chain"]},
+        {"id": "lab_d_chain_split_w", "a": "lab_room_chain", "b": "lab_split_w", "at": [-5, 101], "width": 4.0},
+        {"id": "lab_d_chain_split_e", "a": "lab_room_chain", "b": "lab_split_e", "at": [20, 101], "width": 4.0},
+        {"id": "lab_d_split_w_end", "a": "lab_split_w", "b": "lab_split_end", "at": [-5, 119], "width": 4.0,
+         "kind": "gate", "inputs": [["lab_split_plate_e", "lab_split_lever"]]},
+        {"id": "lab_d_split_e_end", "a": "lab_split_e", "b": "lab_split_end", "at": [20, 119], "width": 4.0,
+         "kind": "gate", "inputs": [["lab_split_plate_w", "lab_split_lever"]]},
     ],
     "pois": [
         {"id": "lab_exit", "type": "portal", "pos": [0, 37], "yaw": 3.14159, "dest": "hub", "label": "RUNEHOLD"},
@@ -96,5 +121,16 @@ LAYOUT = {
          "lane": [[16, 30], [36, 30]], "strips": 5, "period": 3.0, "damage": 14.0},
         {"id": "lab_collapse", "type": "collapse", "pos": [48, 30], "channel": "lab_pit",
          "rows": 4, "period": 4.0, "down": 1.5, "back": [38, 30], "damage": 14.0},
+        # M13b phase 2: three plates at once (open 6 s), a chain of three, three coils in 2 s
+        {"id": "lab_coop_plates", "type": "plates", "pos": [7, 66], "plates": [[-8, 62], [7, 70], [22, 62]],
+         "hold": 1.0, "open_for": 6.0},
+        {"id": "lab_coop_chain", "type": "chain", "pos": [7, 89], "source": [-12, 89], "receiver": [26, 89],
+         "link": 10.0, "heroes": 3, "hold": 1.5, "damage": 4.0},
+        {"id": "lab_coop_sync", "type": "sync", "pos": [51, 89], "look": "coil", "window": 2.0,
+         "levers": [[35, 81, 0.0], [67, 81, 0.0], [51, 97, 3.14159]]},
+        # split paths: each wing's plate opens the other wing's way on; the far lever opens both
+        {"id": "lab_split_plate_w", "type": "plate", "pos": [-5, 110]},
+        {"id": "lab_split_plate_e", "type": "plate", "pos": [20, 110]},
+        {"id": "lab_split_lever", "type": "lever", "pos": [7, 126], "yaw": 3.14159},
     ],
 }

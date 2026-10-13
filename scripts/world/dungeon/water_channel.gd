@@ -21,7 +21,7 @@ var rect: Rect2 = Rect2()
 var floor_y: float = 0.0
 var depth: float = 2.0
 var lava: bool = false
-var inputs: Array[String] = []
+var inputs: Array = []  # PuzzleInputs entries
 var walkways: Array[Rect2] = []
 var drained: bool = false
 var _wants_drained: bool = false
@@ -44,8 +44,7 @@ static func build(zone: ZoneBase, layout: DungeonLayout, poi: Dictionary) -> Wat
 	w.floor_y = float(ch.get("floor", 0.0))
 	w.depth = float(ch.get("depth", 2.0))
 	w.lava = String(ch.get("kind", "water")) == "lava"
-	for i in poi.get("inputs", []):
-		w.inputs.append(String(i))
+	w.inputs = PuzzleInputs.parse(poi.get("inputs", []))
 	for r: Array in poi.get("walkways", []):
 		w.walkways.append(Rect2(float(r[0]), float(r[1]), float(r[2]) - float(r[0]), float(r[3]) - float(r[1])))
 	w.set_meta(&"poi_id", w.channel_id)
@@ -129,15 +128,7 @@ func _level_y(low: bool) -> float:
 func evaluate(puzzles: Dictionary) -> bool:
 	if inputs.is_empty():
 		return false
-	for input in inputs:
-		if input.begins_with("flag:"):
-			if not SaveGame.has_flag(StringName(input.trim_prefix("flag:"))):
-				return false
-		else:
-			var p := puzzles.get(input) as PoiPuzzle
-			if p == null or not p.is_active():
-				return false
-	return true
+	return PuzzleInputs.holds(inputs, puzzles)
 
 
 func refresh(puzzles: Dictionary, instant: bool = false) -> void:

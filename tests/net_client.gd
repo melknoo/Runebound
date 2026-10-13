@@ -638,6 +638,65 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
+			"coop_puzzles":
+				# M13b phase 2: the three stand on the three plates (the chain room
+				# opens on every machine), line up from coil to receiver (the chain
+				# closes), strike the three coils together, then hold one wing's
+				# plate (the other wing's way opens), step off (it shuts) and pull
+				# the far lever (both open).
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as PuzzleLabZone
+				if zone == null:
+					_finish("fail: not in the puzzle lab")
+					return
+				var hero := zone.player
+				hero.input_source = InputSource.new()
+				hero.god_mode = true
+				if not await _until(func() -> bool: return zone.party_size() >= 3, 40.0, "all three heroes"):
+					return
+				var idx := int({"c1": 0, "c2": 1, "c3": 2}[role])
+				var put := func(at: Vector3) -> void:
+					hero.global_position = at + Vector3(0, 0.2, 0)
+					hero.velocity = Vector3.ZERO
+				var plates := zone.puzzles["lab_coop_plates"] as CoopPlates
+				var gate_chain := zone.gates["lab_d_plates_chain"] as DungeonGate
+				put.call(plates.plate_pos[idx])
+				if not await _until(func() -> bool: return plates.is_active() and gate_chain.is_open, 20.0, "the plates open"):
+					return
+				var chain := zone.puzzles["lab_coop_chain"] as ChainPuzzle
+				var gate_sync := zone.gates["lab_d_chain_sync"] as DungeonGate
+				put.call(([Vector3(-2.5, 0, 89), Vector3(7, 0, 89), Vector3(16.5, 0, 89)] as Array)[idx] as Vector3)
+				if not await _until(func() -> bool: return chain.is_solved() and gate_sync.is_open, 20.0, "the chain closed"):
+					return
+				var sync := zone.puzzles["lab_coop_sync"] as SyncLevers
+				put.call(sync.levers[idx] + Vector3(0, 0, 1.2) if idx < 2 else sync.levers[idx] + Vector3(0, 0, -1.2))
+				await _seconds(2.0)
+				sync.request("pull", idx, hero)
+				if not await _until(func() -> bool: return sync.is_solved(), 15.0, "the coils struck together"):
+					return
+				var pw := zone.puzzles["lab_split_plate_w"] as PressurePlate
+				var gate_w := zone.gates["lab_d_split_w_end"] as DungeonGate
+				var gate_e := zone.gates["lab_d_split_e_end"] as DungeonGate
+				put.call(([pw.global_position, Vector3(24, 0, 106), Vector3(-10, 0, 106)] as Array)[idx] as Vector3)
+				if not await _until(func() -> bool: return gate_e.is_open and not gate_w.is_open, 15.0,
+						"the east wing's way open while c1 holds the west plate"):
+					return
+				await _seconds(1.0)
+				if role == "c1":
+					put.call(Vector3(-12, 0, 106))
+				if not await _until(func() -> bool: return not gate_e.is_open, 15.0, "the east way shut again"):
+					return
+				await _seconds(1.0)
+				if role == "c3":
+					var lever := zone.puzzles["lab_split_lever"] as PuzzleLever
+					put.call(lever.global_position + Vector3(0, 0, -1.5))
+					await _seconds(0.6)  # the server's proxy follows (it judges the reach)
+					lever.request("pull", 0, hero)
+				if not await _until(func() -> bool: return gate_w.is_open and gate_e.is_open, 15.0, "both wings open by the far lever"):
+					return
+				await _seconds(2.0)
+				_finish("ok")
 			"revive":
 				# M13b phase 1: c2 falls and lies downed (dead and lying on every
 				# machine, its proxy dead on the server); c1 holds [E] beside it and

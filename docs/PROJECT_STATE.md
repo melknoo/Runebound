@@ -73,6 +73,26 @@ boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
     a little less than their own 1.2 s and missed the wipe (they waited out
     their 30 s). Now a wipe is set going after 0.3 s with nobody standing
     and runs to its end.
+- **Phase 2 (built): the co-op puzzle kit.**
+  - Plates held at once (three heroes for a second open the way, for a
+    while or for good), synchronised levers or storm coils (too far apart
+    for one hero within their window), the lightning chain (heroes within a
+    link of each other carry it from a coil to a receiver; conductors take
+    a little damage), split paths (an input may be "any of": the other
+    wing's plate held, or the lever beyond).
+  - One reader for every gate's, water's and beam's inputs (`PuzzleInputs`,
+    was copied three times).
+  - The bake checks the co-op rules (parts clear, plates one hero apart,
+    levers out of one hero's reach, the chain's number of conductors).
+  - The puzzle lab got four co-op rooms south of its entry.
+  - Smoke 881 green (two plates do nothing, three open the way and it closes
+    again; two heroes cannot bridge the chain and a conductor hurts, three
+    close it; a lone coil springs back, three in time hold; split paths and
+    the far lever). Net scenario `coop_puzzles` (three clients solve all
+    four on the server's judgement) green; `puzzle_kit`, `dungeon`,
+    `dungeon_boss`, `warrens_boss`, `revive` still green. The cracked
+    wall's smoke check waited 50 ms past the wall's strike gap and failed
+    once under load (smoothed deltas): it waits 200 ms now.
 
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the

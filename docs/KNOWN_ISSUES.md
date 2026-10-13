@@ -381,6 +381,12 @@
   its fights, so this should be rare.
 - The downed pose tips the whole rig onto its back (no fall clip); the
   idle loop keeps playing on the floor.
+- **Co-op puzzle numbers to feel (phase 2, the lab's values; the
+  Stormwatch sets its own in phase 4):** plates held 1 s, open 6 s in the
+  lab; coils within 2 s; a chain link 10 m, its conductors take 4 a second.
+  The puzzle parts are code-built shapes until the Stormwatch's props.
+- A hero dashing (Storm Step, Rootwalk) could in theory beat a sync window;
+  the bake keeps levers out of reach at 14 m/s (sprint plus a dash).
 
 ## M13 open items (built 2026-10-10, the user's playtest is the gate)
 - **Playtest list:** group "M13: Dungeons" on J (18 points, ids `m13_*`).

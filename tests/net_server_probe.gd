@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -25,6 +25,8 @@ var _coop_marked := false
 ## M13b revive: c2's proxy seen dead (downed), then alive again.
 var _rv_saw_down := false
 var _rv_saw_up := false
+## M13b coop_puzzles: the plates seen open on the server.
+var _cp_saw_open := false
 
 
 func _ready() -> void:
@@ -354,6 +356,23 @@ func _update() -> void:
 					verdict = "fail: no crypt chest on the server"
 				else:
 					verdict = "ok"
+		"coop_puzzles":  # M13b: the server judged every co-op puzzle from its proxies and keeps them
+			var lz := get_tree().current_scene as PuzzleLabZone
+			if lz != null and (lz.puzzles.get("lab_coop_plates") as CoopPlates) != null \
+					and (lz.puzzles["lab_coop_plates"] as CoopPlates).is_active():
+				_cp_saw_open = true
+			if lz == null and not _cp_saw_open:
+				verdict = "fail: the server is not in the puzzle lab"
+			elif not _cp_saw_open:
+				verdict = "fail: the plates never opened on the server"
+			elif not bool(SaveGame.poi_state("lab_coop_chain").get("solved", false)):
+				verdict = "fail: the chain is not closed in the server's world"
+			elif not bool(SaveGame.poi_state("lab_coop_sync").get("solved", false)):
+				verdict = "fail: the coils are not solved in the server's world"
+			elif not bool(SaveGame.poi_state("lab_split_lever").get("on", false)):
+				verdict = "fail: the far lever is not pulled in the server's world"
+			else:
+				verdict = "ok"
 		"revive":  # M13b: the proxy of a downed hero is dead on the server (enemies leave it), then up again
 			var rz := get_tree().current_scene as StormwatchZone
 			var c2_peer := _roster_peer("C2")

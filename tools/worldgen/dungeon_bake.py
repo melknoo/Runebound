@@ -56,7 +56,8 @@ SPOT_CLEAR = 1.0
 DOOR_KINDS = {"open", "gate", "secret", "shortcut"}
 KNOWN_TYPES = {"portal", "camp", "chest", "lore", "rune", "arena", "tome", "light",
                "lever", "plate", "block", "reset", "beam", "water",
-               "carrier", "element", "ice", "trap", "collapse", "drain", "pylon", "quench", "valve"}
+               "carrier", "element", "ice", "trap", "collapse", "drain", "pylon", "quench", "valve",
+               "plates", "sync", "chain"}
 FEATURE_TYPES = {"camp", "chest", "rune", "arena", "tome", "portal", "lever", "plate", "block", "reset", "beam",
                  "carrier", "element", "pylon", "quench", "valve"}
 ## POIs that belong in a channel (the water itself, an ice socket, a pit's tiles)
@@ -65,6 +66,11 @@ WATER_COLOR = "#1C4652"
 LAVA_COLOR = "#B8401A"
 CHANNEL_KINDS = {"water", "lava"}
 COMBAT_TYPES = {"camp", "arena"}
+## M13b co-op puzzles: plates of a group stand this far apart (one hero, one
+## plate); synchronised levers so far apart that one hero cannot pull them all
+## within their window, even sprinting with a dash (m/s).
+COOP_PLATE_GAP = 4.0
+SOLO_SPEED = 14.0
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +296,39 @@ def highlands_ids() -> set:
     return ids
 
 
+def validate_coop(p: dict, room: dict, ras: "Raster") -> list:
+    """M13b: the co-op puzzles' own rules - every part clear inside its room,
+    plates one hero apart, levers out of one hero's reach within their window,
+    a chain that takes exactly `heroes` conductors."""
+    problems = []
+    if p["type"] == "plates":
+        parts = [q[:2] for q in p.get("plates", [])]
+    elif p["type"] == "sync":
+        parts = [q[:2] for q in p.get("levers", [])]
+    else:
+        parts = [p.get("source", [0, 0]), p.get("receiver", [0, 0])]
+    if len(parts) < 2:
+        problems.append("%s: fewer than two parts" % p["id"])
+    for q in parts:
+        if not inside(room["rect"], q[0], q[1]) or not ras.clear_around(q[0], q[1], FEATURE_CLEAR):
+            problems.append("%s: a part at %s not clear inside its room" % (p["id"], q))
+    gaps = [math.dist(a, b) for i, a in enumerate(parts) for b in parts[i + 1:]]
+    if p["type"] == "plates" and gaps and min(gaps) < COOP_PLATE_GAP:
+        problems.append("%s: plates %.1f m apart (< %.0f)" % (p["id"], min(gaps), COOP_PLATE_GAP))
+    if p["type"] == "sync" and gaps:
+        need = float(p.get("window", 2.0)) * SOLO_SPEED
+        if min(gaps) * (len(parts) - 1) < need:
+            problems.append("%s: one hero reaches every lever within the window (%.0f m < %.0f m)"
+                            % (p["id"], min(gaps) * (len(parts) - 1), need))
+    if p["type"] == "chain":
+        link = float(p.get("link", 8.0))
+        conductors = math.ceil(math.dist(parts[0], parts[1]) / link) - 1
+        if conductors != int(p.get("heroes", 0)) or conductors < 2:
+            problems.append("%s: the chain takes %d conductors, says %s (at least 2)"
+                            % (p["id"], conductors, p.get("heroes")))
+    return problems
+
+
 def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> list:
     problems = []
     prefix = lay["prefix"]
@@ -427,6 +466,8 @@ def validate(lay: dict, rooms: list, doors: list, ras: Raster, others: set) -> l
                 problems.append("%s: its grid runs past the room" % p["id"])
             if not inside(p["grid"], x, z):
                 problems.append("%s: its home lies outside its grid" % p["id"])
+        if p["type"] in ("plates", "sync", "chain"):
+            problems.extend(validate_coop(p, room, ras))
         if p["type"] == "camp":
             x0, z0, x1, z1 = room["rect"]
             edge = min(x - x0, x1 - x, z - z0, z1 - z)
