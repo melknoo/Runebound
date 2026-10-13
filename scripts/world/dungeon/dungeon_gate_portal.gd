@@ -23,8 +23,18 @@ func _ready() -> void:
 	destination_scene = String(dinfo.get("scene", ""))
 	arrival = String(dinfo.get("exit", ""))
 	label_text = Texts.t("ui.dungeon.gate", [DungeonRegistry.title(dungeon_id).to_upper(), int(dinfo.get("recommended", 1))])
+	if DungeonRegistry.is_coop(dungeon_id):  # M13b: the co-op dungeon names the party it wants
+		label_text = Texts.t("ui.dungeon.gate_coop", [DungeonRegistry.title(dungeon_id).to_upper(),
+			int(dinfo.get("recommended", 1)), DungeonRegistry.min_party(dungeon_id)])
 	locked = true
 	super()
+
+
+## M13b: an open co-op gate tells a party that is too small (travel refuses it).
+func _travel_prompt(zone: ZoneBase) -> String:
+	if zone != null and not zone.party_allows(destination_scene):
+		return Texts.t("ui.dungeon.party_prompt", [DungeonRegistry.min_party(dungeon_id)])
+	return super(zone)
 
 
 func is_open() -> bool:
@@ -70,6 +80,9 @@ func break_seal(hero: Player) -> void:
 	hero.feel_shake(0.25)
 	if zone != null and zone.hud != null:
 		var dinfo := DungeonRegistry.info(dungeon_id)
-		zone.hud.toast(Texts.t("ui.dungeon.seal_broken", [DungeonRegistry.title(dungeon_id), int(dinfo.get("recommended", 1))]),
-			Color(0.7, 0.55, 1.0))
+		var text := Texts.t("ui.dungeon.seal_broken", [DungeonRegistry.title(dungeon_id), int(dinfo.get("recommended", 1))])
+		if DungeonRegistry.is_coop(dungeon_id):
+			text = Texts.t("ui.dungeon.seal_broken_coop", [DungeonRegistry.title(dungeon_id),
+				int(dinfo.get("recommended", 1)), DungeonRegistry.min_party(dungeon_id)])
+		zone.hud.toast(text, Color(0.7, 0.55, 1.0))
 	SaveGame.request_save()

@@ -869,6 +869,48 @@ Plan with the user's answers: ROADMAP M13.
 - **Net:** protocol 14 (new zones, the turned gates, the CHEST_OPENED
   quiet flag); no new message.
 
+### The co-op dungeon (M13b)
+Plan and the user's decisions: ROADMAP M13b, WORLD_DESIGN "The Stormwatch".
+The Stormwatch (`StormwatchZone`, `scenes/stormwatch.tscn`, layout
+`tools/worldgen/stormwatch_layout.py` -> `assets/world/stormwatch/`, palette
+art_spec `stormwatch`) is an ordinary DungeonZone with more registry fields:
+- **`min_party` 3 (the lock):** `DungeonRegistry.min_party(_for_scene)` /
+  `is_coop`. `ZoneBase.party_size()` counts the heroes in the zone (a
+  client: its own and the puppets; the server: its proxies; offline: every
+  local hero), `party_allows(scene)` compares. Four places check it:
+  `DungeonGatePortal._travel_prompt` (an open gate says "Needs 3 heroes";
+  `Portal._travel_prompt` is the seam), `ZoneBase.travel_to` (refuses with
+  `ui_denied` and a toast, offline and on a client before asking),
+  `NetWorld._on_travel_request_msg` (the server refuses a request) and
+  `_tick_travel` (re-checked when the countdown ends: TRAVEL_CANCELLED with
+  peer 0 = the server, no "cancelled by" toast). A refusal is
+  `Net.notice_key(peer, key, args)`: NOTICE carries `[english, key, args]`,
+  the client shows `Texts.t(key, args)` in its own language; an argument
+  "@<key>" is translated too (the dungeon's name). Inside, the party may
+  shrink (the user's rule).
+- **Nobody left:** `NetWorld._leave_empty_coop_dungeon` - when the roster
+  is empty while the server holds a co-op dungeon, it travels to the
+  Highlands (arrival: the dungeon's gate). `DedicatedServer` never boots
+  into a co-op dungeon from its save (an explicit `--zone=` still does, for
+  tests).
+- **`fresh_runs` (every entry a new run):** `SaveGame.clear_world_prefix
+  (prefix)` drops every flag (`chest:<prefix>` too), puzzle state and
+  cleared camp with the layout's prefix. The authority clears at
+  `_build_zone`, every machine again in `DungeonZone._exit_tree` (a
+  client's mirror of the server's flags would otherwise open gates on the
+  next run). Camps get `respawn_minutes = 0` (never re-arm within a run).
+- **`level_mode` "party", `min_level` 7:** `DungeonZone.party_level()` -
+  the average level of the roster (server) or the local heroes (offline)
+  when the run's first enemy asks, at least `min_level`, then fixed in
+  `run_level`; bosses stand `boss_level - level` above it. Loot rolls at the
+  enemy's level, so the reward grows with the party too.
+- **The gate:** `dungeon_se` east of the Cinder Flats (Highlands layout,
+  spur `spur_dungeon_se` from the east loop); label, seal toast and map
+  name the party (`ui.dungeon.gate_coop`, `seal_broken_coop`,
+  `map.dungeon_coop`). Texts: `resources/i18n/m13b_ui.json`.
+- **Net:** protocol 15 (the new zone, the new ground on the spur, the lock,
+  NOTICE with a key). Net scenario `coop_gate`.
+
 ## Co-op (M09)
 Plan and rules: ROADMAP.md M09. Roles, not machines: **authority**
 (singleplayer = OFFLINE with a local hero; the dedicated server = SERVER

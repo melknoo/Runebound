@@ -638,6 +638,83 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 40.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
+			"coop_gate":
+				# M13b phase 0: c1 and c2 are two - the server refuses the Stormwatch
+				# (a notice in our language); c3 joins, c1 starts the travel and c3
+				# leaves in the countdown, so the server cancels it at the end; c4
+				# joins, the three travel in; c2 and c4 leave inside and c1 goes on.
+				if not await _in_zone():
+					return
+				var zone := get_tree().current_scene as ZoneBase
+				if not zone is AshenHighlands:
+					_finish("fail: joined %s, not the Highlands" % zone.scene_file_path)
+					return
+				zone.player.input_source = InputSource.new()
+				zone.player.god_mode = true
+				var sw_scene := "res://scenes/stormwatch.tscn"
+				var notices: Array[String] = []
+				Net.notice_received.connect(func(t: String) -> void: notices.append(t))
+				var world := zone.net_world
+				var in_storm := func() -> bool:
+					var z := get_tree().current_scene as StormwatchZone
+					return z != null and z.player != null and z.net_world != null
+				if role == "c3":
+					if not await _until(func() -> bool: return world.travel_countdowns_seen >= 1, 40.0, "c1's countdown"):
+						return
+					await _seconds(0.5)
+					Net.leave()  # gone before the countdown ends
+					await _seconds(1.5)
+					_finish("ok")
+					return
+				if role == "c2" or role == "c4":
+					if not await _until(in_storm, 150.0, "the party's way into the Stormwatch"):
+						return
+					await _seconds(3.0)
+					Net.leave()
+					await _seconds(1.5)
+					_finish("ok")
+					return
+				# c1 leads
+				if not await _until(func() -> bool: return zone.party_size() >= 2, 30.0, "c2's hero"):
+					return
+				await _seconds(1.0)
+				if zone.party_allows(sw_scene):
+					_finish("fail: two heroes may enter the Stormwatch")
+					return
+				world.request_party_travel(sw_scene, "sw_exit", "the Stormwatch")  # what an older client could send
+				if not await _until(func() -> bool: return notices.any(func(t: String) -> bool: return t.contains("3 heroes")),
+						15.0, "the server's refusal for two"):
+					return
+				if world.travel_countdowns_seen > 0:
+					_finish("fail: two heroes got a countdown")
+					return
+				if not await _until(func() -> bool: return zone.party_size() >= 3, 40.0, "c3's hero"):
+					return
+				zone.travel_to(sw_scene, "sw_exit")
+				if not await _until(func() -> bool: return world.travel_cancels_seen >= 1, 20.0, "the server cancelling a party that shrank"):
+					return
+				if notices.size() < 2 or not (get_tree().current_scene is AshenHighlands):
+					_finish("fail: no second refusal (%d notices) or the party left anyway" % notices.size())
+					return
+				if not await _until(func() -> bool: return zone.party_size() >= 3, 60.0, "c4's hero"):
+					return
+				zone._travelling = false
+				zone.travel_to(sw_scene, "sw_exit")
+				if not await _until(in_storm, 30.0, "arriving in the Stormwatch"):
+					return
+				var storm := get_tree().current_scene as StormwatchZone
+				if storm.room_id_at(storm.player.global_position) != "sw_forecourt":
+					_finish("fail: arrived in %s, not the forecourt" % storm.room_id_at(storm.player.global_position))
+					return
+				if not await _until(func() -> bool: return Net.roster.size() == 1, 40.0, "c2 and c4 leaving"):
+					return
+				await _seconds(4.0)
+				if get_tree().current_scene != storm:
+					_finish("fail: the server left the Stormwatch while c1 was still inside")
+					return
+				Net.leave()
+				await _seconds(1.5)
+				_finish("ok")
 			"dungeon_boss":
 				# M13 phase 1: c1 and c2 wake the Cistern's mid-boss (scaled for two),
 				# both walk out (the arena resets: the boss is gone on both), c1

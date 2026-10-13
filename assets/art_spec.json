@@ -636,6 +636,20 @@
 			"ambient": "#5C3E2C",
 			"background": "#0A0605"
 		},
+		"stormwatch": {
+			"comment": "M13b interior: no sun; a shattered rune observatory - cold blue-grey slate, verdigris copper coils and rods, violet-white lightning against the dark",
+			"floor": ["#14161C", "#1C1F27", "#262A34", "#323744", "#414757"],
+			"wall": ["#101218", "#171A21", "#20232C", "#2A2E39", "#363B48"],
+			"copper": ["#1F3A33", "#2E5A4C", "#3F7D66", "#5FA88A"],
+			"brass": ["#3A2E1C", "#5C4A2A", "#84693A", "#B08F50"],
+			"lightning": "#B9A8FF",
+			"lightning_hi": "#F2EEFF",
+			"lamp": "#C8C0FF",
+			"rune": "#9F8CFF",
+			"fog": "#141624",
+			"ambient": "#3A3C58",
+			"background": "#08090E"
+		},
 		"drowned_thrall": {
 			"comment": "M13 the Drowned: a bloated keeper, waterlogged grey-green skin, dark rags, kelp, pale phosphor eyes",
 			"skin": ["#3E4A44", "#4F5D55", "#61716A", "#77877F"],

@@ -16,6 +16,45 @@ user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
+## M13b the Stormwatch, the co-op dungeon (in progress)
+Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -
+storm theme, ~25 min with three bosses, entry from 3 heroes (the party may
+shrink inside), every run fresh, soft role pressure, a revive in this
+dungeon only, all four co-op puzzle kinds, +70 % health plus mechanics that
+grow with the party, storm shards and a trader with six storm legendaries, a
+fourth tome, the level from the party's average (at least 7), bots that
+help solve. Phases: 0 frame, 1 downed + revive, 2 co-op puzzle kit, 3 bots,
+4 content + look + lore, 5 the storm family + two mid-bosses, 6 the end
+boss + party check, 7 shards, trader, legendaries, the tome, 8 wrap-up.
+- **Phase 0 (built): the frame - the gate, the lock, a fresh run, the
+  greybox.**
+  - The Stormwatch as a greybox (`tools/worldgen/stormwatch_layout.py`):
+    20 rooms (corridors included), 21 doors, a 208 m map square - the
+    forecourt, the coil hall, the crossing with the archive and the turbine
+    hall, the bridge, the hall of the Sworn, a ramp up to the plate hall and
+    the gale hall, a ramp down to the landing, the gallery's shortcut back
+    into the coil hall, the conductor hall, the heart of the storm; the
+    orrery and the tome room behind a cracked wall. Six placeholder camps,
+    three arenas with the placeholder warden, three runes.
+  - The gate `dungeon_se` east of the Cinder Flats with its spur from the
+    east loop; the label, the seal toast and the map name the level (7+) and
+    the party (3+ heroes).
+  - The lock: a party enters with 3 heroes or more - the gate's prompt, the
+    travel, the server's request check and the countdown's end; a refusal
+    reaches the client as a keyed notice in its language. Inside, the party
+    may shrink. With nobody left on the server it goes back to the
+    Highlands; it never boots into the co-op dungeon.
+  - A fresh run: entering (authority) and leaving (every machine) forget
+    every `sw_` key; camps never re-arm within a run.
+  - The run's level: the party's average on entry, at least 7, bosses one
+    above.
+  - **Protocol 15.**
+  - Smoke: the three gates, the Stormwatch's gate and label, alone the seal
+    breaks but travel is refused, three heroes go in, the last run's keys
+    are gone (other dungeons keep theirs), POIs on their floors, camps that
+    never re-arm, arenas, runes, gates, the cracked wall, the party level,
+    out again (the run forgotten). Net scenario `coop_gate`.
+
 ## M13 Dungeons with puzzles (built 2026-10-10, the user's playtest is the gate)
 Plan with the user's answers (2026-10-09, three rounds): ROADMAP M13 - the
 Hollow Cistern (water) and the Ember Warrens (embers) now, the co-op dungeon

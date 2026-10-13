@@ -7,7 +7,7 @@ extends Node
 
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
-	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss",
+	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate",
 	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
 
 var scenario := ""
@@ -17,6 +17,11 @@ var _revoked := false
 var _joins := 0
 var _leaves := 0
 var _ready_peers := 0
+## M13b coop_gate: refusals seen in the Highlands, the party inside, the
+## run's probe key set.
+var _coop_refused := 0
+var _coop_in := false
+var _coop_marked := false
 
 
 func _ready() -> void:
@@ -346,6 +351,25 @@ func _update() -> void:
 					verdict = "fail: no crypt chest on the server"
 				else:
 					verdict = "ok"
+		"coop_gate":  # M13b: refusals, the run inside, back out (and the run forgotten) once all left
+			var cz := get_tree().current_scene as ZoneBase
+			if cz is StormwatchZone:
+				_coop_in = true
+				if not _coop_marked:
+					_coop_marked = true
+					SaveGame.set_flag(&"sw_probe_run")
+			elif cz is AshenHighlands and cz.net_world != null and not _coop_in:
+				_coop_refused = maxi(_coop_refused, cz.net_world.refused_travels)
+			if _coop_refused < 2:
+				verdict = "fail: %d refused travels (want 2+: two heroes, then a party that shrank)" % _coop_refused
+			elif not _coop_in:
+				verdict = "fail: the party never reached the Stormwatch"
+			elif not cz is AshenHighlands:
+				verdict = "fail: the server stayed in %s after everyone left" % (cz.scene_file_path if cz != null else "nothing")
+			elif SaveGame.has_flag(&"sw_probe_run"):
+				verdict = "fail: the run's keys outlived it"
+			else:
+				verdict = "ok"
 		"dungeon":  # M13: the server's world keeps the lit rune and the opened chest
 			var dz := get_tree().current_scene as CisternZone
 			if dz == null:

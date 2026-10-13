@@ -193,6 +193,18 @@ func _on_peer_left(peer: int) -> void:
 		proxy.queue_free()
 	Net.broadcast_zone(NetMsg.HERO_DESPAWN, [peer])
 	_rescale_enemies()
+	_leave_empty_coop_dungeon()
+
+
+## M13b, server: nobody is left on the server while it holds a co-op
+## dungeon - back to its gate in the Highlands (a lone joiner never lands
+## inside, the run is over; a party that shrinks inside goes on).
+func _leave_empty_coop_dungeon() -> void:
+	var dz := zone as DungeonZone
+	if not Net.is_dedicated() or dz == null or not dz.fresh_runs() or not Net.roster.is_empty():
+		return
+	Net.log_line("nobody left in %s: back to the Highlands" % zone.scene_file_path)
+	Net.change_zone(DungeonRegistry.HIGHLANDS_SCENE, String(dz.info.get("gate", "")))
 
 
 func _ensure_proxy(peer: int) -> Player:
@@ -1031,6 +1043,8 @@ var _banner: Label = null
 ## Tests: countdowns seen / cancelled on this machine.
 var travel_countdowns_seen: int = 0
 var travel_cancels_seen: int = 0
+## Tests (M13b): party travels this server refused (too few heroes).
+var refused_travels: int = 0
 
 
 ## Server, at the end of the zone build: clients that reported this zone before
@@ -1060,10 +1074,22 @@ func _on_travel_request_msg(from: int, payload: Array) -> void:
 	var scene_path := str(payload[0])
 	if not ResourceLoader.exists(scene_path) or scene_path == zone.scene_file_path:
 		return
+	if heroes.size() < DungeonRegistry.min_party_for_scene(scene_path):  # M13b: a co-op dungeon wants a party
+		_refuse_small_party(from, scene_path)
+		return
 	travel = {"scene": scene_path, "arrival": str(payload[1]), "label": str(payload[2]),
 		"left": TRAVEL_COUNTDOWN_SECONDS, "by": from}
 	Net.log_line("%s starts party travel to %s" % [Net.peer_name(from), scene_path])
 	Net.broadcast_zone(NetMsg.TRAVEL_COUNTDOWN, [scene_path, str(payload[2]), TRAVEL_COUNTDOWN_SECONDS, from])
+
+
+## M13b, server: tells `peer` (in its language) the party is too small.
+func _refuse_small_party(peer: int, scene_path: String) -> void:
+	var id := DungeonRegistry.id_for_scene(scene_path)
+	refused_travels += 1
+	Net.log_line("party travel to %s refused: %d of %d heroes" % [scene_path, heroes.size(), DungeonRegistry.min_party(id)])
+	Net.notice_key(peer, "ui.dungeon.party_needed", ["@" + String(DungeonRegistry.info(id).get("name_key", "")),
+		DungeonRegistry.min_party(id)])
 
 
 func _on_travel_cancel_msg(from: int, _payload: Array) -> void:
@@ -1082,6 +1108,11 @@ func _tick_travel(delta: float) -> void:
 		if float(travel["left"]) <= 0.0:
 			var go := travel
 			travel = {}
+			if heroes.size() < DungeonRegistry.min_party_for_scene(str(go["scene"])):  # M13b: someone left meanwhile
+				Net.broadcast_zone(NetMsg.TRAVEL_CANCELLED, [0])
+				for peer: int in heroes:
+					_refuse_small_party(peer, str(go["scene"]))
+				return
 			Net.change_zone(str(go["scene"]), str(go["arrival"]))
 	elif _banner != null:
 		_banner.text = "Party travel to %s in %d   [%s] Cancel   (%s)" % [str(travel["label"]),
@@ -1113,7 +1144,7 @@ func _on_travel_cancelled_msg(_from: int, payload: Array) -> void:
 	if _banner != null:
 		_banner.queue_free()
 		_banner = null
-	if zone.hud != null and not payload.is_empty():
+	if zone.hud != null and not payload.is_empty() and int(payload[0]) != 0:  # 0: the server (M13b: a notice says why)
 		zone.hud.toast("Travel cancelled by %s" % Net.peer_name(int(payload[0])), UiTheme.MUTED)
 
 

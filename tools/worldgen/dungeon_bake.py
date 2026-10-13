@@ -41,7 +41,8 @@ from highlands_layout import LAYOUT as HIGHLANDS  # noqa: E402
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
 ## dungeon id -> layout module (tools/worldgen/<module>.py, LAYOUT dict); "lab"
 ## is the test room of the puzzle kit (scenes/puzzle_lab.tscn, never reachable)
-DUNGEONS = {"cistern": "cistern_layout", "warrens": "warrens_layout", "lab": "lab_layout"}
+DUNGEONS = {"cistern": "cistern_layout", "warrens": "warrens_layout", "lab": "lab_layout",
+            "stormwatch": "stormwatch_layout"}
 GRID = 0.5            # m per raster cell
 MAP_PX_PER_M = 3
 WALL_REACH = 2.0      # m of wall grown around every walkable cell

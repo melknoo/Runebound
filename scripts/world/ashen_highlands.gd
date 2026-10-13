@@ -561,8 +561,12 @@ static func marker_label(poi: Dictionary) -> String:
 		"landmark": return "Landmark"
 		"arena": return "Colossus arena"
 		"dungeon":  # M13: the dungeon's name and recommended level (DE/EN)
-			var dinfo := DungeonRegistry.info(String(poi.get("dungeon", "")))
-			return Texts.t("map.dungeon", [DungeonRegistry.title(String(poi.get("dungeon", ""))), int(dinfo.get("recommended", 1))])
+			var did := String(poi.get("dungeon", ""))
+			var dinfo := DungeonRegistry.info(did)
+			if DungeonRegistry.is_coop(did):  # M13b: the co-op dungeon names its party
+				return Texts.t("map.dungeon_coop", [DungeonRegistry.title(did), int(dinfo.get("recommended", 1)),
+					DungeonRegistry.min_party(did)])
+			return Texts.t("map.dungeon", [DungeonRegistry.title(did), int(dinfo.get("recommended", 1))])
 		"lore": return Texts.t(String(poi.get("text", "")) + ".title")  # M12: DE/EN
 		"ghost": return Texts.t("lore.kind.ghost")
 		"puzzle_braziers", "puzzle_monolith", "puzzle_dodge": return Texts.t("map.puzzle")

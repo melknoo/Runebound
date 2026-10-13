@@ -443,6 +443,25 @@
    ]
   },
   {
+   "id": "spur_dungeon_se",
+   "width": 2.2,
+   "grade_max": 0.6,
+   "points": [
+    [
+     78,
+     30
+    ],
+    [
+     106,
+     38
+    ],
+    [
+     134,
+     44
+    ]
+   ]
+  },
+  {
    "id": "spur_hidden",
    "width": 1.8,
    "grade_max": 0.5,
@@ -1426,6 +1445,20 @@
    "dungeon": "warrens",
    "y": 19.107,
    "biome": "burnt_forest"
+  },
+  {
+   "id": "dungeon_se",
+   "type": "dungeon",
+   "pos": [
+    140,
+    44
+   ],
+   "yaw": -1.5708,
+   "pad": 7,
+   "label": "STORMWATCH",
+   "dungeon": "stormwatch",
+   "y": 12.625,
+   "biome": "ash"
   },
   {
    "id": "camp_8",

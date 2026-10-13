@@ -31,6 +31,9 @@ var carriers: Dictionary = {}
 var traps: Dictionary = {}
 ## M13 phase 8: the tomes by POI id.
 var tomes: Dictionary = {}
+## M13b: the run's enemy level when the registry's `level_mode` is "party"
+## (0 until the first enemy asks; then fixed for the run).
+var run_level: int = 0
 var _map_texture: Texture2D
 var _discover_left: float = 0.0
 var _room_seen: Dictionary = {}
@@ -69,9 +72,40 @@ func zone_title() -> String:
 
 
 func _enemy_level(enemy: EnemyBase, _pos: Vector3) -> int:
+	var level := int(info.get("level", 3))
+	var boss_level := int(info.get("boss_level", 4))
+	if String(info.get("level_mode", "")) == "party":  # M13b: the party's level, bosses as far above it
+		boss_level = party_level() + boss_level - level
+		level = party_level()
 	if enemy != null and enemy.has_signal(&"boss_health_changed"):
-		return int(info.get("boss_level", 4))
-	return int(info.get("level", 3))
+		return boss_level
+	return level
+
+
+## M13b: is every entry a new run (the co-op dungeon)?
+func fresh_runs() -> bool:
+	return bool(info.get("fresh_runs", false))
+
+
+## M13b: the run's level - the party's average level when the first enemy of
+## the run asked (at least the registry's `min_level`), then fixed. On the
+## server the roster's levels, offline the local heroes'.
+func party_level() -> int:
+	if run_level > 0:
+		return run_level
+	var total := 0
+	var count := 0
+	if Net.is_dedicated():
+		for peer: int in Net.roster:
+			total += int((Net.roster[peer] as Dictionary).get("level", 1))
+			count += 1
+	else:
+		for p in party():
+			total += p.progression.level
+			count += 1
+	var floor_level := int(info.get("min_level", 1))
+	run_level = maxi(floor_level, roundi(float(total) / float(count))) if count > 0 else floor_level
+	return run_level
 
 
 ## Every enemy type the layout's camps and arenas field (their rigs warm up
@@ -111,6 +145,8 @@ func setup_enemy_puppet(e: EnemyBase) -> void:
 
 func _build_zone() -> void:
 	info = DungeonRegistry.info(_dungeon_id())
+	if fresh_runs() and Net.is_authority():  # M13b: a new run - the last one's puzzles, chests, flags, camps go
+		SaveGame.clear_world_prefix(String(info.get("prefix", "")))
 	layout = DungeonLayout.load_from(String(info.get("layout", "")))
 	var art := look != null and look.art_pass
 	var floor_mat: Material = ArtKit.material(_floor_role()) if art else \
@@ -123,6 +159,8 @@ func _build_zone() -> void:
 		var id := String(poi.get("id", ""))
 		if made.has("spawner"):
 			camps[id] = made["spawner"]
+			if fresh_runs():  # M13b: a cleared camp stays clear for the rest of the run
+				(made["spawner"] as EncounterSpawner).respawn_minutes = 0.0
 		if made.has("chest"):
 			chests[id] = made["chest"]
 		if made.has("portal"):
@@ -158,6 +196,13 @@ func _build_zone() -> void:
 ## Subclass content after the shell (dressing, ambience, set pieces).
 func _build_dungeon() -> void:
 	pass
+
+
+## M13b: leaving a fresh-run dungeon forgets the run on every machine (a
+## client's mirror of the server's flags too), so the next entry starts clean.
+func _exit_tree() -> void:
+	if fresh_runs():
+		SaveGame.clear_world_prefix(String(info.get("prefix", "")))
 
 
 # ---------------------------------------------------------------------------

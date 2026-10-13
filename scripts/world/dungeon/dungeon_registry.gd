@@ -3,8 +3,14 @@ extends Object
 ## M13: every dungeon behind a Highlands gate - its scene, baked layout, gate
 ## POI, enemy levels and name (a Texts key). A dungeon without a scene keeps
 ## its gate sealed (the Ember Warrens did until M13 phase 6). `min_party` is
-## the seam for the M13b co-op dungeon (heroes needed to enter); the normal
-## dungeons take anyone.
+## the heroes needed to enter; the normal dungeons take anyone.
+## M13b, the co-op dungeon (the Stormwatch):
+##   min_party 3   - a party enters with 3 heroes or more (the gate, travel and
+##                   the server check it); inside it may shrink
+##   fresh_runs    - every entry is a new run: the world keys with the
+##                   layout's prefix are cleared, camps never re-arm in a run
+##   level_mode "party", min_level - enemy and loot level = the party's
+##                   average level on entry (at least min_level), bosses +1
 
 const DUNGEONS := {
 	"cistern": {
@@ -41,7 +47,24 @@ const DUNGEONS := {
 		"name_key": "zone.ember_warrens",
 		"min_party": 1,
 	},
+	"stormwatch": {
+		"scene": "res://scenes/stormwatch.tscn",
+		"layout": "res://assets/world/stormwatch",
+		"gate": "dungeon_se",
+		"exit": "sw_exit",
+		"prefix": "sw_",
+		"level": 7,
+		"boss_level": 8,
+		"recommended": 7,
+		"name_key": "zone.stormwatch",
+		"min_party": 3,
+		"fresh_runs": true,
+		"level_mode": "party",
+		"min_level": 7,
+	},
 }
+
+const HIGHLANDS_SCENE := "res://scenes/ashen_highlands.tscn"
 
 
 static func info(id: String) -> Dictionary:
@@ -60,6 +83,21 @@ static func id_for_scene(scene_path: String) -> String:
 static func is_open(id: String) -> bool:
 	var scene := String(info(id).get("scene", ""))
 	return scene != "" and ResourceLoader.exists(scene)
+
+
+## M13b: heroes a party needs to enter this dungeon (1 for every other zone).
+static func min_party(id: String) -> int:
+	return int(info(id).get("min_party", 1))
+
+
+## M13b: heroes a party needs to travel to this scene (1 for any non-dungeon).
+static func min_party_for_scene(scene_path: String) -> int:
+	return min_party(id_for_scene(scene_path))
+
+
+## M13b: is this a co-op dungeon (more than one hero needed)?
+static func is_coop(id: String) -> bool:
+	return min_party(id) > 1
 
 
 ## Display name in the current language ("" for an unknown id).

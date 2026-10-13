@@ -1,0 +1,79 @@
+{
+	"_note": "M13b text table: the Stormwatch, the co-op dungeon (name, gate, party lock, rooms). Keys are dotted ids; every key needs en + de (written, never machine-translated). Loaded by scripts/systems/texts.gd.",
+	"zone.stormwatch": {
+		"en": "The Stormwatch",
+		"de": "Die Sturmwarte"
+	},
+	"ui.dungeon.gate_coop": {
+		"en": "%s - Level %d+ - %d+ heroes",
+		"de": "%s - ab Stufe %d - ab %d Helden"
+	},
+	"ui.dungeon.seal_broken_coop": {
+		"en": "The seal of %s breaks. From level %d, for a party of %d heroes or more.",
+		"de": "Das Siegel von %s bricht. Ab Stufe %d, für eine Gruppe ab %d Helden."
+	},
+	"ui.dungeon.party_needed": {
+		"en": "%s needs a party of at least %d heroes.",
+		"de": "%s braucht eine Gruppe von mindestens %d Helden."
+	},
+	"ui.dungeon.party_prompt": {
+		"en": "Needs %d heroes",
+		"de": "Braucht %d Helden"
+	},
+	"map.dungeon_coop": {
+		"en": "%s (level %d+, %d+ heroes)",
+		"de": "%s (ab Stufe %d, ab %d Helden)"
+	},
+	"area.sw_forecourt": {
+		"en": "The Forecourt",
+		"de": "Der Vorhof"
+	},
+	"area.sw_coils": {
+		"en": "Coil Hall",
+		"de": "Spulenhalle"
+	},
+	"area.sw_crossing": {
+		"en": "The Crossing",
+		"de": "Die Kreuzung"
+	},
+	"area.sw_archive": {
+		"en": "The Archive",
+		"de": "Das Archiv"
+	},
+	"area.sw_turbines": {
+		"en": "Turbine Hall",
+		"de": "Turbinenhalle"
+	},
+	"area.sw_bridge": {
+		"en": "The Storm Bridge",
+		"de": "Die Sturmbrücke"
+	},
+	"area.sw_sworn": {
+		"en": "Hall of the Sworn",
+		"de": "Halle der Geschworenen"
+	},
+	"area.sw_plates": {
+		"en": "Plate Hall",
+		"de": "Plattenhalle"
+	},
+	"area.sw_gale": {
+		"en": "Gale Hall",
+		"de": "Windhalle"
+	},
+	"area.sw_landing": {
+		"en": "The Landing",
+		"de": "Der Absatz"
+	},
+	"area.sw_conductors": {
+		"en": "Conductor Hall",
+		"de": "Leiterhalle"
+	},
+	"area.sw_heart": {
+		"en": "Heart of the Storm",
+		"de": "Herz des Sturms"
+	},
+	"area.sw_orrery": {
+		"en": "The Orrery",
+		"de": "Das Planetarium"
+	}
+}

@@ -72,6 +72,9 @@ LAYOUT = {
          "points": [[126, -56], [148, -62]]},
         {"id": "spur_dungeon_w", "width": 2.2, "grade_max": 0.6,
          "points": [[-132, -30], [-152, -28]]},
+        # M13b: the spur east from the loop past Eastwatch to the Stormwatch's gate
+        {"id": "spur_dungeon_se", "width": 2.2, "grade_max": 0.6,
+         "points": [[78, 30], [106, 38], [134, 44]]},
         {"id": "spur_hidden", "width": 1.8, "grade_max": 0.5,
          "points": [[-30, -78], [-52, -100]]},
         # M12: the village street and lane (Ashwick), spurs to the new POIs,
@@ -192,6 +195,8 @@ LAYOUT = {
          "chest": True, "rarity_bias": 1, "ambush": ["smoulder_wisp", "smoulder_wisp", "cinderbark"]},  # M12
         {"id": "dungeon_w", "type": "dungeon", "pos": [-152, -28], "yaw": 1.5708, "pad": 7,
          "label": "EMBER WARRENS", "pad_from": [-132, -30], "dungeon": "warrens"},  # M13: faces its spur (east)
+        {"id": "dungeon_se", "type": "dungeon", "pos": [140, 44], "yaw": -1.5708, "pad": 7,
+         "label": "STORMWATCH", "dungeon": "stormwatch"},  # M13b: the co-op dungeon, faces its spur (west)
         {"id": "camp_8", "type": "camp", "pos": [-70, -136], "yaw": 0.0, "pad": 11, "radius": 12.0,
          "composition": ["cinderbark", "smoulder_wisp", "smoulder_wisp", "smoulder_wisp"], "banners": 3},  # M12: the Charwood
         {"id": "wp_gate", "type": "waypoint", "pos": [22, -110], "yaw": 0.0, "pad": 5,

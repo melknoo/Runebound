@@ -121,6 +121,15 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
 		"timeout": 200.0,
 	},
+	# M13b phase 0: the Stormwatch's party lock - two heroes are refused, a
+	# party that shrinks in the countdown is cancelled, three go in, the last
+	# one inside goes on alone; nobody left: the server goes back out.
+	"coop_gate": {
+		"server": ["--zone=res://scenes/ashen_highlands.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]},
+			{"role": "c3", "delay": 14.0}, {"role": "c4", "delay": 40.0}],
+		"timeout": 200.0,
+	},
 	"trial": {
 		# M12 phase 6: two heroes take the Charwood's trial; one is struck too often
 		"server": ["--zone=res://scenes/ashen_highlands.tscn"],

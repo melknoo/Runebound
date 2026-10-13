@@ -1169,6 +1169,24 @@ func party() -> Array[Player]:
 	return out
 
 
+## M13b: heroes in this zone - a client counts its own and the others'
+## puppets, the server its proxies, offline every local hero.
+func party_size() -> int:
+	return party().size()
+
+
+## M13b: may this party travel to `scene_path`? A co-op dungeon wants
+## `DungeonRegistry.min_party` heroes; every other zone takes anyone.
+func party_allows(scene_path: String) -> bool:
+	return party_size() >= DungeonRegistry.min_party_for_scene(scene_path)
+
+
+## M13b: the toast when a party is too small for a co-op dungeon.
+static func party_needed_text(scene_path: String) -> String:
+	var id := DungeonRegistry.id_for_scene(scene_path)
+	return Texts.t("ui.dungeon.party_needed", [DungeonRegistry.title(id), DungeonRegistry.min_party(id)])
+
+
 ## Hands `hero` a reward: right here when it is this machine's hero, to its
 ## owner when it is a co-op proxy (GRANT; the client spawns the drops as its
 ## own personal loot). `note` becomes a toast for the local hero. M10b:
@@ -1370,6 +1388,12 @@ func cycle_style() -> void:
 func travel_to(scene_path: String, arrival: String = "") -> void:
 	if _travelling:
 		return
+	if not party_allows(scene_path):  # M13b: a co-op dungeon wants a party (the server checks again)
+		if player != null and is_instance_valid(player):
+			player.ui_denied()
+		if hud != null:
+			hud.toast(party_needed_text(scene_path), Color(0.7, 0.55, 1.0))
+		return
 	if Net.is_client():  # M09: the whole party travels, after a countdown anyone can cancel
 		if net_world != null:
 			net_world.request_party_travel(scene_path, arrival, zone_label(scene_path))
@@ -1457,7 +1481,7 @@ func fast_travel(key: String) -> void:
 ## M09: display names for the party travel banner.
 const ZONE_LABELS := {"hub": "Runehold", "ashen_highlands": "the Ashen Highlands",
 	"shattered_spire": "the Shattered Spire", "combat_lab": "the Combat Lab",
-	"hollow_cistern": "the Hollow Cistern", "ember_warrens": "the Ember Warrens"}
+	"hollow_cistern": "the Hollow Cistern", "ember_warrens": "the Ember Warrens", "stormwatch": "the Stormwatch"}
 
 
 static func zone_label(scene_path: String) -> String:

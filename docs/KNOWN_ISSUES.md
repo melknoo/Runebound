@@ -362,6 +362,18 @@
 - Capture run asserts nothing automatically — it relies on eyeball review of
   captures/.
 
+## M13b open items (the Stormwatch, in progress)
+- **Protocol 15:** ship a release before the next co-op session (the
+  Stormwatch can only be played online with three heroes).
+- Phase 0 is a greybox: placeholder camps (raiders, wardens) and the
+  placeholder "Arena Warden" in all three arenas, the Spire's materials,
+  no puzzles yet. The playtest list (group "M13b") comes with the wrap-up.
+- The run's level is fixed when its first enemy asks (the party's average
+  then); a late joiner does not change it, only the health scaling.
+- A server with nobody left goes back to the Highlands; a party that
+  leaves the Stormwatch through its exit does too. A lone player cannot
+  enter (the gate says how many heroes it wants).
+
 ## M13 open items (built 2026-10-10, the user's playtest is the gate)
 - **Playtest list:** group "M13: Dungeons" on J (18 points, ids `m13_*`).
 - **Boss timers fixed in phase 9:** the keeper's wave, the Reeve's spew,

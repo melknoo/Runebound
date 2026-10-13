@@ -437,6 +437,10 @@ Phasen (jede endet mit Smoke grün, Doku, Commit + Push): 0 Rahmen (Tor, Sperre,
 Graubox, PROTOCOL 15), 1 Niederschlag + Wiederbeleben, 2 Koop-Rätsel-Kit + Puzzle Lab, 3 Bots für den Koop,
 4 Sturmwarte Inhalt + Look + Lore, 5 Sturm-Familie + Zwischenbosse, 6 Endboss + Party-Check (mit und ohne Rollen),
 7 Sturmsplitter + Händler + Legendaries, Foliant + 3 Fähigkeiten, 8 Abschluss.
+**Stand:** Phase 0 gebaut (die Sturmwarte als Graubox mit 20 Räumen samt Gängen, das Tor östlich der Cinder Flats
+mit Pfad; Sperre ab 3 Helden an Tor, Reise, Server und Countdown-Ende, Hinweis in deiner Sprache; jeder Lauf frisch;
+Stufe = Durchschnitt der Gruppe, mindestens 7; ist niemand mehr auf dem Server, reist er zurück in die Highlands).
+**PROTOCOL 15:** vor dem Koop braucht der Server ein Release.
 
 ### M14 — Story & RPG
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

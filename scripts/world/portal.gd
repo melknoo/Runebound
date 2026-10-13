@@ -179,6 +179,12 @@ func _add_hum() -> void:
 	add_child(p)
 
 
+## The interact prompt of an open gate (M13b: a co-op dungeon's gate tells
+## when the party is too small).
+func _travel_prompt(_zone: ZoneBase) -> String:
+	return "Travel"
+
+
 func set_locked(value: bool) -> void:
 	locked = value
 	_apply_lock_visuals()
@@ -207,7 +213,7 @@ func _process(delta: float) -> void:
 	if locked:
 		_prompt.update(near, "Sealed")
 		return
-	_prompt.update(near and _cooldown <= 0.0, "Travel")
+	_prompt.update(near and _cooldown <= 0.0, _travel_prompt(zone))
 	if _cooldown > 0.0:
 		_cooldown -= delta
 		return

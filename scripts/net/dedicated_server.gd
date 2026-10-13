@@ -54,6 +54,8 @@ func _ready() -> void:
 			var probe: Node = (load("res://tests/net_server_probe.gd") as GDScript).new()
 			get_tree().root.add_child.call_deferred(probe)
 	var zone := SaveGame.current_zone
+	if DungeonRegistry.is_coop(DungeonRegistry.id_for_scene(zone)):  # M13b: never wake up alone in a co-op dungeon
+		zone = DungeonRegistry.HIGHLANDS_SCENE
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--zone="):  # tests: start in this zone
 			zone = arg.trim_prefix("--zone=")

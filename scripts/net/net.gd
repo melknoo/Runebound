@@ -57,7 +57,10 @@ enum Transport { ENET, WS }
 ## POI_ACT / POI_STATE (shared puzzles and secrets).
 ## 14 (M13): the dungeons - new zones, the Highlands gates turned to face
 ## their spurs, new enemy ids; all of M13 rides on it until a release.
-const PROTOCOL := 14
+## 15 (M13b): the Stormwatch - a new zone and its Highlands gate (new ground
+## on the spur), the party lock, NOTICE with a Texts key; all of M13b rides on
+## it until a release.
+const PROTOCOL := 15
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3
@@ -691,10 +694,27 @@ func _on_notice(_from: int, payload: Array) -> void:
 	if mode != Mode.CLIENT or payload.is_empty():
 		return
 	var text := str(payload[0])
+	if payload.size() >= 3 and str(payload[1]) != "" and payload[2] is Array:  # M13b: a Texts key, in our language
+		text = Texts.t(str(payload[1]), localized_args(payload[2] as Array))
 	notice_received.emit(text)
 	var zone := get_tree().current_scene as ZoneBase
 	if zone != null and zone.hud != null:
 		zone.hud.toast(text, ArtKit.color("color_roles.resonance.body", Color("#FFC34D")))
+
+
+## M13b, server: a line to one peer as a Texts key, so the client shows it in
+## its own language (the English line rides along for older clients). An
+## argument "@<key>" is a Texts key itself (a dungeon's name).
+func notice_key(peer_id: int, key: String, args: Array = []) -> void:
+	send_to_peer(peer_id, NetMsg.NOTICE, [Texts.t(key, localized_args(args)), key, args], CH_EVENTS, false)
+
+
+## M13b: notice arguments with "@<key>" replaced by that text.
+static func localized_args(args: Array) -> Array:
+	var out: Array = []
+	for a: Variant in args:
+		out.append(Texts.t(str(a).substr(1)) if a is String and str(a).begins_with("@") else a)
+	return out
 
 
 ## Server: one line to everyone connected.

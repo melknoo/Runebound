@@ -2757,9 +2757,10 @@ func _run() -> void:
 	for child in highlands.world.get_children():
 		if child is DungeonGatePortal:
 			dungeon_gates[(child as DungeonGatePortal).gate_id] = child
-	_check(dungeon_gates.size() == 2 and (dungeon_gates.get("dungeon_e") as DungeonGatePortal).locked
-		and (dungeon_gates.get("dungeon_w") as DungeonGatePortal).locked,
-		"M13: two dungeon gates stand sealed in the Highlands")
+	_check(dungeon_gates.size() == 3 and (dungeon_gates.get("dungeon_e") as DungeonGatePortal).locked
+		and (dungeon_gates.get("dungeon_w") as DungeonGatePortal).locked
+		and (dungeon_gates.get("dungeon_se") as DungeonGatePortal).locked,
+		"M13: three dungeon gates stand sealed in the Highlands (M13b: the Stormwatch's)")
 	var gate_e := dungeon_gates.get("dungeon_e") as DungeonGatePortal
 	var gate_w := dungeon_gates.get("dungeon_w") as DungeonGatePortal
 	if gate_e != null and gate_w != null:
@@ -2768,7 +2769,8 @@ func _run() -> void:
 			and gate_w.arrival == "wa_exit" and gate_w.is_open(),
 			"M13: the east gate leads into the Hollow Cistern, the west gate into the Ember Warrens")
 		var gates_face_spurs := true
-		for pair: Array in [[gate_e, Vector3(126, 0, -56)], [gate_w, Vector3(-132, 0, -30)]]:
+		var gate_se := dungeon_gates.get("dungeon_se") as DungeonGatePortal
+		for pair: Array in [[gate_e, Vector3(126, 0, -56)], [gate_w, Vector3(-132, 0, -30)], [gate_se, Vector3(106, 0, 38)]]:
 			var g := pair[0] as DungeonGatePortal
 			var spur := pair[1] as Vector3
 			var to_spur := Vector3(spur.x - g.global_position.x, 0.0, spur.z - g.global_position.z).normalized()
@@ -4343,7 +4345,7 @@ func _run() -> void:
 				if child is DungeonGatePortal:
 					if (child as DungeonGatePortal).gate_id == "dungeon_e":
 						seal_gate = child
-					else:
+					elif (child as DungeonGatePortal).gate_id == "dungeon_w":
 						warren_gate = child
 			_check(seal_gate != null and not seal_gate.locked and back_hl.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_e")),
 				"M13: standing at the gate breaks its seal (remembered by the character)")
@@ -5083,6 +5085,127 @@ func _run() -> void:
 			_check(wa_gate != null and wa_back.player.global_position.distance_to(wa_back._arrival_point("dungeon_w")) < 3.0
 				and not wa_gate.locked and wa_back.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_w")),
 				"M13 Warrens: the hero comes out at the Charwood gate; its seal breaks")
+
+	# --- M13b phase 0: the Stormwatch - the co-op gate, the party lock, a fresh run ---
+	var sw_hl := leave_zone as AshenHighlands
+	_check(sw_hl != null, "M13b: back in the Highlands for the Stormwatch")
+	if sw_hl != null:
+		var sw_gate: DungeonGatePortal = null
+		for child in sw_hl.world.get_children():
+			if child is DungeonGatePortal and (child as DungeonGatePortal).gate_id == "dungeon_se":
+				sw_gate = child
+		_check(sw_gate != null and sw_gate.destination_scene == "res://scenes/stormwatch.tscn" and sw_gate.arrival == "sw_exit"
+			and sw_gate.is_open() and DungeonRegistry.min_party("stormwatch") == 3 and DungeonRegistry.is_coop("stormwatch")
+			and not DungeonRegistry.is_coop("cistern") and DungeonRegistry.min_party_for_scene("res://scenes/hub.tscn") == 1,
+			"M13b: the Stormwatch's gate east of the Cinder Flats; it alone wants three heroes")
+		if sw_gate != null:
+			_check(sw_gate._label.text.contains("7") and sw_gate._label.text.contains("3"),
+				"M13b: the gate's label names the level and the party (%s)" % sw_gate._label.text)
+			sw_hl.player.global_position = sw_hl._arrival_point("dungeon_se")
+			sw_hl.player.velocity = Vector3.ZERO
+			await _wait_frames(6)
+			_check(not sw_gate.locked and sw_hl.player.map_discovered.has(DungeonGatePortal.seal_key("dungeon_se")),
+				"M13b: alone at the gate the seal still breaks")
+			_check(not sw_hl.party_allows(sw_gate.destination_scene) and sw_gate._travel_prompt(sw_hl).contains("3"),
+				"M13b: the open gate tells a party of one that it needs three heroes")
+			sw_hl.travel_to(sw_gate.destination_scene, sw_gate.arrival)
+			await _wait_frames(30)
+			_check(get_tree().current_scene == sw_hl and not sw_hl._travelling,
+				"M13b: alone, travel to the Stormwatch is refused (no scene change)")
+		# a party of three may go; the last run's keys wait in the world save
+		var sw_mates: Array[Player] = []
+		for sw_class: StringName in [&"runebreaker", &"druid"]:
+			var sw_mate := Player.create(ClassData.load_by_id(sw_class))
+			sw_mate.is_local = false
+			sw_mate.input_source = InputSource.new()
+			sw_hl.add_player(sw_mate)
+			sw_mate.global_position = sw_hl.player.global_position + Vector3(1.5 * (sw_mates.size() + 1), 0, 0)
+			sw_mates.append(sw_mate)
+		_check(sw_hl.party_size() == 3 and sw_hl.party_allows("res://scenes/stormwatch.tscn"),
+			"M13b: three heroes make a party the gate lets through")
+		SaveGame.flags["sw_sworn_down"] = true
+		SaveGame.flags["chest:sw_chest_archive"] = true
+		SaveGame.pois["sw_lever_short"] = {"solved": true}
+		SaveGame.camps["sw_camp_coils"] = {"cleared_at": Time.get_unix_time_from_system()}
+		SaveGame.flags["ci_keeper_down_probe"] = true  # another dungeon's key stays
+		sw_hl.travel_to("res://scenes/stormwatch.tscn", "sw_exit")
+		for i in 90:
+			await get_tree().process_frame
+			if get_tree().current_scene is StormwatchZone:
+				break
+	var sw := get_tree().current_scene as StormwatchZone
+	_check(sw != null, "M13b: the Stormwatch loads for a party of three")
+	if sw != null:
+		leave_zone = sw
+		await _wait_frames(8)
+		var swh := sw.player
+		swh.god_mode = true
+		_check(sw.look != null and sw.look.interior and MusicDirector.instance.zone_key() == "spire"
+			and sw.room_id_at(swh.global_position) == "sw_forecourt" and swh.discovered_zones.has("stormwatch"),
+			"M13b: an interior with the Spire's music; the hero arrives in the forecourt (a discovery)")
+		_check(not SaveGame.has_flag(&"sw_sworn_down") and not SaveGame.has_flag(&"chest:sw_chest_archive")
+			and SaveGame.poi_state("sw_lever_short").is_empty() and SaveGame.camp_cleared_at("sw_camp_coils") < 0.0
+			and SaveGame.has_flag(&"ci_keeper_down_probe") and not (sw.puzzles["sw_lever_short"] as PoiPuzzle).is_solved(),
+			"M13b: a fresh run - the last run's flags, chest, lever and camp are gone, other dungeons keep theirs")
+		SaveGame.flags.erase("ci_keeper_down_probe")
+		var sw_floor_ok := true
+		var sw_prefix_ok := true
+		for poi in sw.layout.pois.pois:
+			if not String(poi["id"]).begins_with("sw_"):
+				sw_prefix_ok = false
+			var swp := ZoneLayout.pos_of(poi)
+			var sw_beside := swp + Vector3(1.2, 0.5, 0)
+			if absf(swp.y - sw.layout.floor_at(swp.x, swp.z, -99.0)) > 0.05 \
+					or absf(sw.ground_point(sw_beside).y - sw.layout.floor_at(sw_beside.x, sw_beside.z, -99.0)) > 0.1:
+				sw_floor_ok = false
+		_check(sw_floor_ok and sw_prefix_ok, "M13b: every POI on its room's floor, every id with the sw_ prefix")
+		var sw_respawn_ok := true
+		for sw_camp: String in sw.camps:
+			if (sw.camps[sw_camp] as EncounterSpawner).respawn_minutes > 0.0:
+				sw_respawn_ok = false
+		_check(sw.camps.size() == 6 and sw_respawn_ok and sw.enemy_count() == 0,
+			"M13b: six camps that never re-arm within a run, nothing awake on arrival")
+		_check(sw.arenas.size() == 3 and sw.runes.size() == 3 and sw.gates.has("sw_d_sworn_c3") and sw.gates.has("sw_d_gale_c5")
+			and sw.gates.has("sw_d_gallery_coils") and sw.puzzles.has("sw_d_bridge_orrery"),
+			"M13b: three boss arenas, three runes, the boss gates, the gallery's shortcut and the orrery's cracked wall")
+		# the run's level: the party's average on entry, at least 7; bosses one above
+		var sw_boss := ZoneBase.make_enemy("dungeon_boss")
+		_check(sw.party_level() == maxi(7, swh.progression.level) and sw._enemy_level(null, Vector3.ZERO) == sw.party_level()
+			and sw._enemy_level(sw_boss, Vector3.ZERO) == sw.party_level() + 1,
+			"M13b: enemies at the party's level (at least 7), bosses one above (%d)" % sw.party_level())
+		sw_boss.free()
+		sw.run_level = 0
+		var sw_lv: Array[Player] = []
+		for sw_l: int in [14, 17]:
+			var sw_lp := Player.create(ClassData.load_by_id(&"elementalist"))
+			sw_lp.is_local = false
+			sw_lp.input_source = InputSource.new()
+			sw.add_player(sw_lp)
+			sw_lp.global_position = swh.global_position + Vector3(2, 0, 0)
+			sw_lp.progression.level = sw_l
+			sw_lv.append(sw_lp)
+		var sw_expect := maxi(7, roundi(float(swh.progression.level + 14 + 17) / 3.0))
+		_check(sw.party_level() == sw_expect, "M13b: a party of levels %d, 14, 17 fights at %d" % [swh.progression.level, sw_expect])
+		for sw_lp in sw_lv:
+			sw.remove_player(sw_lp)
+			sw_lp.queue_free()
+		sw.run_level = 0
+		await _wait_frames(4)
+		# out through the forecourt: the run is forgotten, the hero stands at the gate
+		SaveGame.set_flag(&"sw_probe_run")
+		sw.travel_to("res://scenes/ashen_highlands.tscn", "dungeon_se")
+		for i in 90:
+			await get_tree().process_frame
+			if get_tree().current_scene is AshenHighlands:
+				break
+		var sw_back := get_tree().current_scene as AshenHighlands
+		_check(sw_back != null, "M13b: the Stormwatch's exit leads back to the Highlands")
+		if sw_back != null:
+			leave_zone = sw_back
+			await _wait_frames(8)
+			_check(not SaveGame.has_flag(&"sw_probe_run")
+				and sw_back.player.global_position.distance_to(sw_back._arrival_point("dungeon_se")) < 3.0,
+				"M13b: leaving forgets the run; the hero comes out in front of the Stormwatch's gate")
 
 	# --- hub shows the spire shortcut once the colossus flag is set ---
 	leave_zone.travel_to("res://scenes/hub.tscn", "gate_spire")  # M08 arrival hint: appear at the Spire gate

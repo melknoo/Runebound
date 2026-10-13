@@ -153,6 +153,23 @@ func clear_camp(camp_id: String) -> void:
 		request_save()
 
 
+## M13b, a fresh run of the co-op dungeon: forgets every world key of its
+## layout (flags, opened chests, puzzle states, cleared camps with `prefix`).
+## Returns how many keys went.
+func clear_world_prefix(prefix: String) -> int:
+	if prefix == "":
+		return 0
+	var gone := 0
+	for dict: Dictionary in [flags, pois, camps]:
+		for key: String in dict.keys():
+			if key.begins_with(prefix) or key.begins_with("chest:" + prefix):
+				dict.erase(key)
+				gone += 1
+	if gone > 0:
+		request_save()
+	return gone
+
+
 ## M12: a puzzle's or secret's world state ({} = untouched).
 func poi_state(poi_id: String) -> Dictionary:
 	var entry: Variant = pois.get(poi_id)
