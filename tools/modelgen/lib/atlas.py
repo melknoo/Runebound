@@ -50,11 +50,14 @@ def _uv_area(me):
     return total
 
 
-def unwrap(obj, target_px_per_m, sizes=(64, 128, 256, 512), axis_aligned=False):
+def unwrap(obj, target_px_per_m, sizes=(64, 128, 256, 512), axis_aligned=False, upscale=True):
     """Returns the atlas size in px (square) that holds `target_px_per_m`.
     axis_aligned: pack islands only in 90-degree turns, so straight edges of
     built props (planks, masonry, frames) run along the texel grid instead of
-    as jagged diagonals."""
+    as jagged diagonals.
+    upscale=False (Rig v3): when even the largest size misses the density,
+    keep the packed islands inside the atlas at the lower density instead of
+    scaling them past the UV square."""
     _select_only(obj)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
@@ -77,6 +80,9 @@ def unwrap(obj, target_px_per_m, sizes=(64, 128, 256, 512), axis_aligned=False):
             chosen, density = size, d
             break
     scale = target_px_per_m / density
+    if not upscale and scale > 1.0:
+        print("atlas: %d px holds only %.0f px/m (target %d)" % (chosen, density, target_px_per_m))
+        scale = 1.0
     for loop in me.uv_layers.active.data:
         loop.uv = loop.uv * scale
     return chosen
@@ -113,9 +119,12 @@ def _seg_dist(px, py, ax, ay, bx, by):
     return math.hypot(px - qx, py - qy)
 
 
-def bake(obj, size, path, skip_material_indices=(1,)):
+def bake(obj, size, path, skip_material_indices=(1,), base=None):
     """Rasterize the atlas at `size` px square; faces on skipped material slots
-    (emissive glow) keep a flat material and are not painted."""
+    (emissive glow) keep a flat material and are not painted.
+    base (Rig v3): a (size, size, 3) sRGB 0-1 array, rows bottom-up like
+    Blender pixels, for the faces whose paint is -1 (the AI body, already
+    quantized by lib.texbake); painted (script kit) faces draw over it."""
     me = obj.data
     paints = json.loads(obj["paints"])
     ramps = [[rig.hex_to_srgb(h) for h in p["ramp"]] for p in paints]
@@ -135,7 +144,7 @@ def bake(obj, size, path, skip_material_indices=(1,)):
 
     for tri in me.loop_triangles:
         poly = me.polygons[tri.polygon_index]
-        if poly.material_index in skip_material_indices:
+        if poly.material_index in skip_material_indices or paint_of[tri.polygon_index] < 0:
             continue
         paint = paints[paint_of[tri.polygon_index]]
         ramp = ramps[paint_of[tri.polygon_index]]
@@ -229,7 +238,7 @@ def bake(obj, size, path, skip_material_indices=(1,)):
     fill = ramps[0][0]
     for y in range(size):
         for x in range(size):
-            c = color[y][x] or fill
+            c = color[y][x] or (fill if base is None else base[y][x])
             pixels.extend((c[0], c[1], c[2], 1.0))
     img.pixels = pixels
     img.filepath_raw = path

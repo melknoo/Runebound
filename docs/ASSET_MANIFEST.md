@@ -146,6 +146,33 @@ screenshots. The source stays the `tools/modelgen` scripts (ART_BIBLE
 Hyper3D, Hunyuan3D, Tripo) stay off: the style is built from the scripts, and
 every source needs a clear licence.
 
+**Rig v3 probe (2026-10-14, user decision; not shipped yet):** the user wants
+far more detailed characters (the lofted boxes read as "Minecraft"). Under
+test: AI base meshes from free, permissively licensed models, fitted onto the
+EXISTING skeletons so clips, timings and the Godot contract stay as they are.
+- `tools/modelgen/ai_gen.py` (plain Python + `pip install --user gradio_client`):
+  FLUX.1-schnell (Apache-2.0) concept -> TRELLIS.2 (Microsoft, MIT) mesh via
+  their Hugging Face Spaces (ZeroGPU, a free account's read token in `.env` as
+  `HF_TOKEN`, about one mesh a day). Output goes to `%TEMP%\runebound_ai\`. The
+  backdrop is keyed locally, so the Space never calls its non-commercial
+  background remover. The owner's Windows SOCKS proxy entry is bypassed in
+  that process only.
+- `tools/modelgen/ai_ingest.py`: compacts a generation (<= 50k tris, base colour
+  JPEG <= 2048 px) into `raw.glb` + `manifest.json` (prompts, seeds, Space
+  revisions, licence notes; never URLs or keys). `promote` copies a reviewed
+  candidate to `tools/modelgen/ai_src/<char>/` (`.gdignore`d).
+- `tools/modelgen/ai_fit.py` + `lib/{aimesh,fit,texbake}.py`: landmarks from
+  `fit.json` (`--detect` proposes them and renders `landmarks.png`), bone heat
+  or voxel-proxy weights, warp onto the template rest (lengths scaled), smooth
+  normals, the script kit (`runebreaker_kit` / `marauder_kit`: weapon slot 2,
+  glow decals snapped onto the surface), Cycles transfer of the AI texture onto
+  a 128 px/m atlas, quantized to the art_spec ramps (palette only), AO one step
+  darker. `ai_fit_report.json` checks tris, bones, slots, weights, height, clips
+  and palette. `--out DIR` previews without touching `assets/`.
+- Checked on a fixture (the legacy Runebreaker re-posed to an A-pose): every
+  clip plays on the fitted mesh like on the original. The legacy generator
+  output stays byte-identical (`RB_BONES` / `CM_BONES` only lift numbers).
+
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's
 `execute_blender_code`:

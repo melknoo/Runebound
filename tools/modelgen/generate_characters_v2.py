@@ -154,12 +154,12 @@ def finish(body, arm, atlas_name, glb_name, skip_slots, sheets):
 # ---------------------------------------------------------------------------
 
 RB_LEG = 0.88 - 0.1  # hip height minus ankle: thigh 0.396 + shin 0.384
+RB_BONES = dict(hip=0.88, chest_top=1.5, shoulder_x=0.34, arm_len=0.62, leg_x=0.14, head_base=1.52, head_top=1.86)
 
 
 def build_runebreaker(sheets=False):
     rig.reset_scene()
-    arm = rig.build_armature("runebreaker", humanoid_bones(
-        hip=0.88, chest_top=1.5, shoulder_x=0.34, arm_len=0.62, leg_x=0.14, head_base=1.52, head_top=1.86))
+    arm = rig.build_armature("runebreaker", humanoid_bones(**RB_BONES))
     rb = PAL["runebreaker"]
     pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
     # value bands: key planes 40-70 % vs ash ground ~25 % (ART_BIBLE)
@@ -229,6 +229,28 @@ def build_runebreaker(sheets=False):
 
     runebreaker_clips(arm)
     finish(body, arm, "runebreaker", "runebreaker", (1,), sheets)
+
+
+def runebreaker_kit(pm, snap):
+    """Rig v3 (tools/modelgen/ai_fit.py): the script-built parts on an AI body,
+    placed like build_runebreaker's: chest sigil + visor slit (glow, `snap`
+    seats them on the AI surface) and the rune sword in the right fist."""
+    rb = PAL["runebreaker"]
+    leather = pm.paint(rb["leather"], 2, "hide")
+    gold = pm.paint(rb["gold_trim"], 2)
+    steel = pm.paint(rb["steel"], 2)
+    snap(pm.loft("chest", [(1.28, 0.07, 0.03, 0, -0.215), (1.4, 0.07, 0.03, 0, -0.215)], sides=6, mat_index=1))
+    snap(pm.box("head", (0.21, 0.03, 0.035), (0, -0.182, 1.68), mat_index=1))
+    hx = -0.36 * 1.14
+    pm.box("hand.R", (0.05, 0.05, 0.24), (hx, -0.01, 0.84), paint=leather)
+    pm.box("hand.R", (0.3, 0.07, 0.05), (hx, -0.1, 0.84), paint=gold)
+    pm.loft("hand.R", [(0.0, 0.07, 0.02, 0, 0), (0.95, 0.065, 0.02, 0, 0), (1.1, 0.012, 0.012, 0, 0)],
+            sides=4, center=(hx, -0.12, 0.84), rot=(1.5708, 0, 0), paint=steel, mat_index=2)
+    pm.box("hand.R", (0.018, 0.8, 0.026), (hx, -0.6, 0.84), mat_index=1)
+    return [rig.make_material("rb_body", "#FFFFFF"),
+            rig.make_material("rb_glow", ROLES["resonance"]["body"], emission_hex=ROLES["resonance"]["body"],
+                              strength=3.0),
+            rig.make_material("rb_blade", "#FFFFFF")]
 
 
 def runebreaker_clips(arm):
@@ -1071,10 +1093,13 @@ def druid_clips(arm):
 # CINDER MARAUDER — hunched ash raider: jagged wedges, horns, heavy forearms
 # ---------------------------------------------------------------------------
 
+CM_BONES = dict(hip=0.74, chest_top=1.32, shoulder_x=0.38, arm_len=0.64, leg_x=0.17, head_base=1.3, head_top=1.55,
+                lean=-0.14)
+
+
 def build_marauder(sheets=False):
     rig.reset_scene()
-    arm = rig.build_armature("marauder", humanoid_bones(
-        hip=0.74, chest_top=1.32, shoulder_x=0.38, arm_len=0.64, leg_x=0.17, head_base=1.3, head_top=1.55, lean=-0.14))
+    arm = rig.build_armature("marauder", humanoid_bones(**CM_BONES))
     cm = PAL["cinder_marauder"]
     pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
     hide = pm.paint(cm["hide"], 3, "hide")
@@ -1123,6 +1148,21 @@ def build_marauder(sheets=False):
 
     marauder_clips(arm)
     finish(body, arm, "cinder_marauder", "cinder_marauder", (1, 2), sheets)
+
+
+def marauder_kit(pm, snap):
+    """Rig v3 (tools/modelgen/ai_fit.py): ember eyes (glow, seated on the AI
+    face by `snap`) and the raider axe (haft + telegraph blade, slot 2)."""
+    cm = PAL["cinder_marauder"]
+    wood = pm.paint(cm["wood"], 2)
+    snap(pm.box("head", (0.26, 0.05, 0.06), (0, -0.375, 1.43), mat_index=1))
+    hx = -0.38 * 1.14
+    pm.loft("hand.R", [(0.0, 0.028, 0.028, 0, 0), (0.85, 0.03, 0.03, 0, 0)], sides=6,
+            center=(hx, -0.1, 0.64), rot=(1.5708, 0, 0), paint=wood)
+    pm.box("hand.R", (0.07, 0.3, 0.34), (hx, -0.8, 0.72), mat_index=2)
+    return [rig.make_material("cm_body", "#FFFFFF"),
+            rig.make_material("cm_eyes", cm["eyes"], emission_hex=cm["eyes"], strength=3.0),
+            rig.make_material("cm_blade", "#9A9AA6")]
 
 
 def marauder_clips(arm):
