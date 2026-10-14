@@ -17,6 +17,8 @@ extends Node
 ## mouse on an ability slot (tooltip shots), {"do": "loot"} drops a random item,
 ## {"do": "legendary"} a legendary. M07: {"xp": n} grants XP, {"learn": [ids]}
 ## learns talents, {"do": "talents" | "runic_guard" | "resonance_burst"}.
+## Rig v3: {"wear": {"helm": "rare", "chest": "", ...}} equips test gear of that
+## rarity per listed slot ("" takes it off).
 ## M07b: {"gold": n}, {"learn_abilities": [ids] | "all"}, {"do": "trainer" |
 ## "hero_inventory" | "hero_character" | "hero_talents" | "gold"}; a list with
 ## "fresh_abilities": true starts with the one-ability kit. M10: a shot's
@@ -193,6 +195,25 @@ func _do(action: Dictionary) -> void:
 	elif action.has("give_items"):  # M07b: straight into the inventory (no pickup walk)
 		for i in int(action["give_items"]):
 			player.equipment.add_item(ItemGenerator.generate(randi() % 3))
+	elif action.has("wear"):  # Rig v3: {"helm": "rare", ...}; listed slots only, "" takes it off
+		const SLOT_OF := {"weapon": ItemData.Slot.WEAPON, "helm": ItemData.Slot.HELM,
+			"chest": ItemData.Slot.CHEST, "gloves": ItemData.Slot.GLOVES, "boots": ItemData.Slot.BOOTS}
+		const RARITY_OF := {"common": ItemData.Rarity.COMMON, "magic": ItemData.Rarity.MAGIC,
+			"rare": ItemData.Rarity.RARE, "legendary": ItemData.Rarity.LEGENDARY}
+		var wear: Dictionary = action["wear"]
+		for slot_name: String in wear:
+			var slot: int = SLOT_OF[slot_name]
+			var old: ItemData = player.equipment.equipped.get(slot)
+			if old != null and player.equipment.unequip(slot):
+				player.equipment.discard(old)
+			if String(wear[slot_name]) == "":
+				continue
+			var item := ItemData.new()
+			item.slot = slot as ItemData.Slot
+			item.rarity = RARITY_OF[String(wear[slot_name])]
+			item.display_name = "Shot %s" % slot_name
+			player.equipment.add_item(item)
+			player.equipment.equip(item)
 	elif action.has("discover"):  # M08: map points / shrines known ("all" or ids)
 		if str(action["discover"]) == "all":
 			for poi in _zone.get(&"layout").pois:

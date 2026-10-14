@@ -934,6 +934,8 @@ var _rune_glow: StandardMaterial3D
 ## invisible stand-in so the legacy ability tweens stay untouched. Returns
 ## false when the GLB is missing (legacy visuals then).
 func _build_rigged_visual() -> bool:
+	if HeroLook.available(class_data.id):
+		return _build_hero_look()
 	var scene := ArtKit.rig_scene(class_data.rig_path if class_data.rig_path != "" else RIG_PATH)
 	if scene == null:
 		return false
@@ -982,6 +984,61 @@ func _anim_profile() -> Dictionary:
 var _body_mat: StandardMaterial3D
 var _rig_mesh: MeshInstance3D
 var _cindermaw_mat: StandardMaterial3D
+## Rig v3: the modular hero (visible gear per slot), null on legacy rigs.
+var look: HeroLook
+## Settings -> Gameplay: the helm slot shows the base head (stats unchanged).
+var hide_helm: bool = false
+
+
+## Rig v3 hero: base rig + one region mesh per gear slot, re-dressed whenever
+## the equipped looks change (Equipment.changed also fires on bag-only edits).
+func _build_hero_look() -> bool:
+	var rig_root := Node3D.new()
+	rig_root.name = "RigRoot"
+	_visual.add_child(rig_root)
+	look = HeroLook.create(rig_root, class_data.id,
+		ArtKit.color("color_roles.%s.body" % class_data.resource_color_role), 1.2, class_data.body_tint)
+	if look == null:
+		rig_root.queue_free()
+		return false
+	_rune_glow = look.glow
+	_body_mat = look.body_material(&"base")
+	equipment.changed.connect(refresh_look)
+	refresh_look()
+	resonance_changed.connect(_on_resonance_glow)
+	animator = CharacterAnimator.create(self, look.model, _anim_profile())
+	if animator != null:
+		animator.full_rate = true  # the hero never drops animation rate
+		health.damaged.connect(func(_hit: HitInfo) -> void: animator.flinch())
+	_weapon_pivot = Node3D.new()
+	_weapon_pivot.name = "WeaponPivotStandIn"
+	_visual.add_child(_weapon_pivot)
+	return true
+
+
+## Shows the equipped gear (rarity looks) and a legendary weapon's own blade.
+func refresh_look() -> void:
+	if look == null:
+		return
+	look.apply(HeroLook.looks_for(equipment.equipped, hide_helm))
+	var weapon: ItemData = equipment.equipped.get(ItemData.Slot.WEAPON)
+	look.set_blade_material(_cindermaw_material() if weapon != null and weapon.legendary_id == &"cindermaw" else null)
+
+
+## Cindermaw's basalt with a molten, breathing edge (built once per hero).
+func _cindermaw_material() -> StandardMaterial3D:
+	if _cindermaw_mat == null:
+		_cindermaw_mat = StandardMaterial3D.new()
+		_cindermaw_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
+		_cindermaw_mat.albedo_color = ArtKit.color("palettes.highlands.basalt.2")
+		_cindermaw_mat.emission_enabled = true
+		_cindermaw_mat.emission = ArtKit.color("color_roles.fire.body")
+		_cindermaw_mat.emission_energy_multiplier = 0.9
+		_cindermaw_mat.set_meta(ArtKit.KEEP_EMISSION, true)
+		var breathe := create_tween().set_loops()
+		breathe.tween_property(_cindermaw_mat, "emission_energy_multiplier", 1.5, 0.8).set_trans(Tween.TRANS_SINE)
+		breathe.tween_property(_cindermaw_mat, "emission_energy_multiplier", 0.7, 0.9).set_trans(Tween.TRANS_SINE)
+	return _cindermaw_mat
 
 
 ## M06 C6: the weapon surface shows the equipped legendary weapon — Cindermaw's
@@ -991,18 +1048,7 @@ func _refresh_blade() -> void:
 		return
 	var weapon: ItemData = equipment.equipped.get(ItemData.Slot.WEAPON)
 	if weapon != null and weapon.legendary_id == &"cindermaw":
-		if _cindermaw_mat == null:
-			_cindermaw_mat = StandardMaterial3D.new()
-			_cindermaw_mat.diffuse_mode = BaseMaterial3D.DIFFUSE_TOON
-			_cindermaw_mat.albedo_color = ArtKit.color("palettes.highlands.basalt.2")
-			_cindermaw_mat.emission_enabled = true
-			_cindermaw_mat.emission = ArtKit.color("color_roles.fire.body")
-			_cindermaw_mat.emission_energy_multiplier = 0.9
-			_cindermaw_mat.set_meta(ArtKit.KEEP_EMISSION, true)
-			var breathe := create_tween().set_loops()
-			breathe.tween_property(_cindermaw_mat, "emission_energy_multiplier", 1.5, 0.8).set_trans(Tween.TRANS_SINE)
-			breathe.tween_property(_cindermaw_mat, "emission_energy_multiplier", 0.7, 0.9).set_trans(Tween.TRANS_SINE)
-		_rig_mesh.set_surface_override_material(2, _cindermaw_mat)
+		_rig_mesh.set_surface_override_material(2, _cindermaw_material())
 	else:
 		_rig_mesh.set_surface_override_material(2, _body_mat)
 

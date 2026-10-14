@@ -64,10 +64,31 @@ def detect(obj, bones):
             if not region:
                 continue
             tip = max(region, key=lambda c: ((c - shoulder).length, -c.z))
-            d = (tip - shoulder).normalized()
+            reach = (tip - shoulder).length
             arm_len = (tmpl["hand." + side][0] - shoulder).length
-            wrist = shoulder + d * min((tip - shoulder).length - 0.1, arm_len * 1.15)
-            elbow = shoulder + (wrist - shoulder) * 0.52
+
+            def shell(r, band=0.035):
+                """Centre of the arm where a sphere of radius r around the
+                shoulder cuts it: follows a bent elbow, unlike a straight line."""
+                pts = [c for c in region if abs((c - shoulder).length - r) < band]
+                if not pts:
+                    return shoulder + (tip - shoulder) * (r / reach)
+                return sum(pts, Vector()) / len(pts)
+            wrist = shell(min(reach - 0.1, arm_len * 1.15))
+            # a bent arm's elbow is not half way along the chord: pick the
+            # radius where upper : fore matches the template's ratio
+            t_up = (tmpl["upper_arm." + side][1] - tmpl["upper_arm." + side][0]).length
+            t_fo = (tmpl["forearm." + side][1] - tmpl["forearm." + side][0]).length
+            chord = (wrist - shoulder).length
+            best = None
+            for k in range(40, 96):
+                r = chord * k / 100.0
+                e = shell(r)
+                err = abs(r / max((wrist - e).length, 1e-4) - t_up / t_fo)
+                if best is None or err < best[0]:
+                    best = (err, e)
+            elbow = best[1]
+            d = (tip - wrist).normalized()
             lm["upper_arm." + side] = [_r(shoulder), _r(elbow)]
             lm["forearm." + side] = [_r(elbow), _r(wrist)]
             lm["hand." + side] = [_r(wrist), _r(wrist + d * 0.1)]
@@ -276,6 +297,80 @@ def join_body(obj, kit, mats, name, arm):
 
 
 # ---------------------------------------------------------------------------
+# Gear regions (heroes: one look per rarity, swapped per slot at runtime)
+# ---------------------------------------------------------------------------
+
+HUMANOID_REGIONS = {
+    "helm": ("head",),
+    "chest": ("hips", "spine", "chest", "upper_arm.L", "upper_arm.R", "thigh.L", "thigh.R"),
+    "gloves": ("forearm.L", "forearm.R", "hand.L", "hand.R"),
+    "boots": ("shin.L", "shin.R", "foot.L", "foot.R"),
+}
+REGION_PREFIX = "rg_"
+
+
+def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R"):
+    """Cut the joined body into one object per gear region (rg_helm, rg_chest,
+    rg_gloves, rg_boots, rg_weapon). A face goes to the region most of its
+    vertices' dominant bones belong to; script-kit faces on `weapon_bone` are
+    the weapon. Every region then grows `rings` face rings into its AI
+    neighbours, so pieces of different looks overlap instead of gapping.
+    Each object keeps the armature, weights, slots and the shared atlas UVs."""
+    from collections import Counter
+    me = body.data
+    names = {vg.index: vg.name for vg in body.vertex_groups}
+    dom = [names[max(v.groups, key=lambda g: g.weight).group] if len(v.groups) else "" for v in me.vertices]
+    bone_region = {b: r for r, bones in regions.items() for b in bones}
+    paint = [a.value for a in me.attributes["paint"].data]
+    face_region = []
+    for p in me.polygons:
+        if paint[p.index] != -1 and any(dom[i] == weapon_bone for i in p.vertices):
+            face_region.append("weapon")
+            continue
+        votes = Counter(bone_region.get(dom[i], "chest") for i in p.vertices)
+        face_region.append(max(sorted(votes), key=lambda r: votes[r]))
+    sets = {r: {i for i, fr in enumerate(face_region) if fr == r} for r in sorted(set(face_region))}
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    bm.faces.ensure_lookup_table()
+    for r in regions:
+        cur = set(sets.get(r, ()))
+        frontier = set(cur)
+        for _ in range(rings):
+            nxt = set()
+            for fi in frontier:
+                for e in bm.faces[fi].edges:
+                    for g in e.link_faces:
+                        if g.index not in cur and paint[g.index] == -1:
+                            nxt.add(g.index)
+            cur |= nxt
+            frontier = nxt
+        sets[r] = cur
+    bm.free()
+    out = {}
+    for r, faces in sets.items():
+        obj = body.copy()
+        obj.data = me.copy()
+        bpy.context.scene.collection.objects.link(obj)
+        obj.name = REGION_PREFIX + r
+        obj.data.name = REGION_PREFIX + r
+        rb = bmesh.new()
+        rb.from_mesh(obj.data)
+        rb.faces.ensure_lookup_table()
+        bmesh.ops.delete(rb, geom=[f for f in rb.faces if f.index not in faces], context="FACES")
+        loose = [v for v in rb.verts if not v.link_faces]
+        if loose:
+            bmesh.ops.delete(rb, geom=loose, context="VERTS")
+        rb.to_mesh(obj.data)
+        rb.free()
+        obj.data.validate(clean_customdata=False)  # glTF export warns on stray degenerate loops
+        out[r] = obj
+    bpy.data.objects.remove(body)
+    bpy.context.view_layer.update()
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Verification
 # ---------------------------------------------------------------------------
 
@@ -330,7 +425,7 @@ def write_json(path, data):
 # Review sheet: landmarks over the mesh (front + side, Workbench x-ray)
 # ---------------------------------------------------------------------------
 
-def _sticks(landmarks, r=0.012):
+def _sticks(landmarks, r=0.02):
     bm = bmesh.new()
     for head, tail in landmarks.values():
         a, b = Vector(head), Vector(tail)
@@ -364,7 +459,7 @@ def landmark_sheet(obj, landmarks, path, tile=520):
     sh.light = "STUDIO"
     sh.color_type = "OBJECT"
     sh.show_xray = True
-    sh.xray_alpha = 0.55
+    sh.xray_alpha = 0.3
     obj.color = (0.75, 0.75, 0.78, 1.0)
     sticks.color = (1.0, 0.1, 0.6, 1.0)
     scene.view_settings.view_transform = "Standard"

@@ -22,6 +22,41 @@ user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
+## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
+The user: every model reads "too much like Minecraft", make them far more
+detailed; and equipped gear should show on the hero like in WoW. Decisions
+(2026-10-14): characters at 128 px/m (pixel look kept: ramps, outline,
+posterize); AI base meshes from free, permissively licensed models (FLUX.1
+schnell concept -> TRELLIS.2 mesh, HF Spaces, ~2-3 meshes a day) fitted onto
+the EXISTING skeletons; detail over FPS (heroes ~10k tris, enemies ~6k,
+bosses ~12k); gear looks by rarity (base for an empty slot, common, magic,
+rare, legendary; each class its own style), no save change; extras: a 3D
+hero in the inventory, hide helm, the title hero in its saved gear. Plan:
+C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
+(phases: 1 Runebreaker pilot, 2 HeroLook everywhere + extras, 3 co-op sync
+(protocol 16), 4 Runebreaker complete, 5 Elementalist + Druid, 6 enemies,
+7 perf + docs).
+- **Phase 1a (built): the pipeline** - `tools/modelgen/ai_gen.py`,
+  `ai_ingest.py`, `ai_fit.py`, `lib/{aimesh,fit,texbake}.py`
+  ([ASSET_MANIFEST](ASSET_MANIFEST.md) "Rig v3").
+- **Phase 1 (built, the user's look gate is open): the Runebreaker pilot.**
+  - Two looks from the user-approved concept: `rare` (the plate knight) and
+    `base` (gambeson, bare head), sources in
+    `tools/modelgen/ai_src/runebreaker/{base,rare}/` (rebuilds byte-identical).
+  - The v3 skeleton keeps every bone, clip and timing; only `arm_len`
+    0.62 -> 0.52 (the AI arms are shorter; clips re-solve their reach intents).
+  - Each look is cut into gear regions (`rg_helm`, `rg_chest`, `rg_gloves`,
+    `rg_boots`, `rg_weapon`) that overlap two face rings, so mixed looks
+    never gap. `assets/models/chars/hero/runebreaker/<look>.glb` +
+    `assets/textures/char/hero/runebreaker_<look>_atlas.png`.
+  - `HeroLook` (`scripts/player/hero_look.gd`): the base rig plus, per slot,
+    the region mesh of the equipped rarity's look on the same skeleton;
+    missing looks fall back to the nearest lower one. The Player uses it when
+    its class has looks (only the Runebreaker so far); Cindermaw keeps its
+    molten blade. Remote heroes still show the base look (phase 3).
+  - Shots: `tests/shots/rigv3_gear.json` (base, rare, two mixes), the
+    shot runner's new `{"wear": {...}}`. Smoke 917 checks green.
+
 ## M13b the Stormwatch, the co-op dungeon (built 2026-10-13, the user's playtest is the gate)
 Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -
 storm theme, ~25 min with three bosses, entry from 3 heroes (the party may

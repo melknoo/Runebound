@@ -50,14 +50,16 @@ def _uv_area(me):
     return total
 
 
-def unwrap(obj, target_px_per_m, sizes=(64, 128, 256, 512), axis_aligned=False, upscale=True):
+def unwrap(obj, target_px_per_m, sizes=(64, 128, 256, 512), axis_aligned=False, upscale=True, margin=0.02):
     """Returns the atlas size in px (square) that holds `target_px_per_m`.
     axis_aligned: pack islands only in 90-degree turns, so straight edges of
     built props (planks, masonry, frames) run along the texel grid instead of
     as jagged diagonals.
     upscale=False (Rig v3): when even the largest size misses the density,
     keep the packed islands inside the atlas at the lower density instead of
-    scaling them past the UV square."""
+    scaling them past the UV square.
+    margin: island gap in UV units; an AI body has hundreds of islands, where
+    the props' 0.02 (~20 px at 1024) would eat the whole atlas."""
     _select_only(obj)
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
@@ -65,9 +67,9 @@ def unwrap(obj, target_px_per_m, sizes=(64, 128, 256, 512), axis_aligned=False, 
                              area_weight=0.0, correct_aspect=True, scale_to_bounds=False)
     bpy.ops.uv.average_islands_scale()
     if axis_aligned:
-        bpy.ops.uv.pack_islands(rotate=True, rotate_method="CARDINAL", margin=0.02)
+        bpy.ops.uv.pack_islands(rotate=True, rotate_method="CARDINAL", margin=margin)
     else:
-        bpy.ops.uv.pack_islands(rotate=True, margin=0.02)
+        bpy.ops.uv.pack_islands(rotate=True, margin=margin)
     bpy.ops.object.mode_set(mode="OBJECT")
     me = obj.data
     area3d = sum(p.area for p in me.polygons)

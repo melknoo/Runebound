@@ -2,7 +2,7 @@ r"""Rig v3 generation (plain Python, no Blender): free AI base meshes for
 tools/modelgen/ai_ingest.py -> ai_fit.py.
 
   concept  FLUX.1-schnell (Apache-2.0, HF Space black-forest-labs/FLUX.1-schnell)
-           paints a front-view A-pose concept from PROMPTS[char]
+           paints a front-view A-pose concept from PROMPTS[key] (<class>/<look> or <enemy>)
   mesh     TRELLIS.2 (MIT, HF Space microsoft/TRELLIS.2) lifts a concept to a
            textured GLB (PBR, WebP textures)
 
@@ -16,8 +16,8 @@ the alpha and never calls its background remover (BRIA RMBG 2.0 is
 non-commercial). Seeds, Space revisions and every parameter go into
 gen.json next to each output (ai_ingest copies them into the manifest).
 
-  python tools/modelgen/ai_gen.py concept runebreaker --seeds 11 12 13
-  python tools/modelgen/ai_gen.py mesh runebreaker concept_12.png --seed 7
+  python tools/modelgen/ai_gen.py concept runebreaker/base --seeds 11 12 13
+  python tools/modelgen/ai_gen.py mesh runebreaker/base concept_12.png --seed 7
 """
 import argparse
 import datetime
@@ -50,12 +50,18 @@ FRAME = ("full body character concept, front view, orthographic, standing straig
          "clean readable shapes, hand-painted texture style, high detail")
 
 PROMPTS = {
-    # ART_BIBLE section 7 + palettes in assets/art_spec.json
-    "runebreaker": ("a heroic rune knight, broad V-shaped torso, about 4.5 heads tall, oversized domed steel-grey "
-                    "iron pauldrons with gold trim, large armoured gauntlets, heavy plated boots, bucket great helm "
-                    "with a narrow visor slit and a short teal crest on top, blue-grey iron plate armour, teal cloth "
-                    "tabard hanging front and back, brown leather belt with a gold buckle, leather thighs, glowing "
-                    "gold rune circle engraved on the chest plate"),
+    # "<class>/<look>" for heroes (Rig v3 gear looks by rarity, same body under
+    # every look so the regions swap cleanly), "<enemy>" for enemies.
+    # ART_BIBLE section 7 + palettes in assets/art_spec.json.
+    "runebreaker/rare": ("a heroic rune knight, broad V-shaped torso, about 4.5 heads tall, oversized domed steel-grey "
+                         "iron pauldrons with gold trim, large armoured gauntlets, heavy plated boots, bucket great helm "
+                         "with a narrow visor slit and a short teal crest on top, blue-grey iron plate armour, teal cloth "
+                         "tabard hanging front and back, brown leather belt with a gold buckle, leather thighs, glowing "
+                         "gold rune circle engraved on the chest plate"),
+    "runebreaker/base": ("a stocky young warrior with the build of a heroic rune knight, broad V-shaped torso, about 4.5 "
+                         "heads tall, bare head with short dark brown hair and a short beard, quilted teal-grey padded "
+                         "gambeson reaching mid-thigh, brown leather belt, plain brown wool trousers, cloth-wrapped "
+                         "forearms and leather fingerless gloves, simple brown leather boots to the shin"),
     "marauder": ("a hunched ash raider brute leaning forward, bulky barrel chest, heavy muscular forearms and big "
                  "fists, rust-red leathery hide skin, one huge rusty iron shoulder plate on the left shoulder with "
                  "three bone spikes, rusted plate chest guard, bone jaw guard over the mouth, two curved bone horns, "
@@ -179,7 +185,7 @@ def concept(char, seeds, steps=4):
         cover = key_background(dst, os.path.join(out, "concept_%d_rgba.png" % seed))
         _write_json(os.path.join(out, "concept_%d.json" % seed), {
             "space": FLUX, "space_revision": rev, "model_license": "Apache-2.0", "prompt": prompt,
-            "seed": int(used), "width": 768, "height": 1024, "steps": steps,
+            "key": char, "seed": int(used), "width": 768, "height": 1024, "steps": steps,
             "date": datetime.date.today().isoformat(), "foreground_cover": round(cover, 4)})
         print("ai_gen: concept %s seed %d -> %s (subject %.0f %% of the frame)" % (char, seed, dst, cover * 100))
 
@@ -210,7 +216,7 @@ def mesh(char, concept_png, seed, resolution="1024", decimation=100000, texture=
     shutil.copyfile(rgba, os.path.join(out, "input_rgba.png"))
     concept_meta = os.path.splitext(src.replace("_rgba", ""))[0] + ".json"
     _write_json(os.path.join(out, "gen.json"), {
-        "service": "TRELLIS.2 (microsoft/TRELLIS.2-4B, MIT) via HF Space " + TRELLIS,
+        "key": char, "service": "TRELLIS.2 (microsoft/TRELLIS.2-4B, MIT) via HF Space " + TRELLIS,
         "space_revision": rev, "model_license": "MIT", "seed": seed, "resolution": resolution,
         "decimation_target": decimation, "texture_size": texture,
         "concept": json.load(open(concept_meta, encoding="utf-8")) if os.path.exists(concept_meta) else None,

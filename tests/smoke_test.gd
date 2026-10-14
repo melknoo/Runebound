@@ -5911,12 +5911,34 @@ func _run() -> void:
 		cm.rarity = ItemData.Rarity.LEGENDARY
 		cm.legendary_id = &"cindermaw"
 		cm.display_name = "Cindermaw"
-		hub2.player.equipment.add_item(cm)
-		hub2.player.equipment.equip(cm)
-		var blade_mat := hub2.player._rig_mesh.get_surface_override_material(2) if hub2.player._rig_mesh != null else null
-		_check(blade_mat != null and blade_mat == hub2.player._cindermaw_mat, "Cindermaw equipped: the hero's blade turns molten")
-		hub2.player.equipment.unequip(ItemData.Slot.WEAPON)
-		_check(hub2.player._rig_mesh.get_surface_override_material(2) == hub2.player._body_mat, "unequipped: rune steel again")
+		var p2 := hub2.player
+		p2.equipment.add_item(cm)
+		p2.equipment.equip(cm)
+		var blade_mat: Material = p2.look.blade_material() if p2.look != null \
+			else (p2._rig_mesh.get_surface_override_material(2) if p2._rig_mesh != null else null)
+		_check(blade_mat != null and blade_mat == p2._cindermaw_mat, "Cindermaw equipped: the hero's blade turns molten")
+		p2.equipment.unequip(ItemData.Slot.WEAPON)
+		if p2.look != null:
+			_check(p2.look.blade_material() == p2.look.body_material(p2.look.look_of(&"weapon")),
+				"unequipped: rune steel again")
+			# Rig v3: gear shows per slot by rarity; an empty slot shows the base look.
+			var helm := ItemData.new()
+			helm.slot = ItemData.Slot.HELM
+			helm.rarity = ItemData.Rarity.RARE
+			helm.display_name = "Test Helm"
+			p2.equipment.add_item(helm)
+			p2.equipment.equip(helm)
+			var shown: StringName = p2.look.look_of(&"helm")
+			_check(shown != &"base" and p2.look.part(&"helm") != null and p2.look.part(&"helm").visible,
+				"Rig v3: a rare helm shows its look on the hero (%s)" % shown)
+			_check(p2.look.look_of(&"chest") == &"base", "Rig v3: the empty chest slot shows the base look")
+			_check(HeroLook.decode(HeroLook.encode(HeroLook.looks_for(p2.equipment.equipped)))[&"helm"] == &"rare",
+				"Rig v3: the look survives the wire form")
+			p2.equipment.unequip(ItemData.Slot.HELM)
+			_check(p2.look.look_of(&"helm") == &"base", "Rig v3: unequipped helm -> base head")
+			p2.equipment.discard(helm)
+		else:
+			_check(p2._rig_mesh.get_surface_override_material(2) == p2._body_mat, "unequipped: rune steel again")
 		_check(UiTheme.item_icon(cm) != null and UiTheme.item_icon(cm).resource_path.ends_with("cindermaw.png"),
 			"inventory shows the legendary's own icon")
 

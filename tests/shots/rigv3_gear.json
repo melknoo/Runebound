@@ -1,0 +1,24 @@
+{
+	"zone": "res://scenes/combat_lab.tscn",
+	"out": "captures_shots/rigv3_gear",
+	"comment": "Rig v3: visible gear on the hero (looks by rarity). Base clothes, the full rare set, two mixes (rare chest + base boots/helm, rare helm + gloves on base clothes), close and at the gameplay zoom.",
+	"shots": [
+		{"name": "base_front", "class": "runebreaker", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
+			"actions": [{"wear": {"helm": "", "chest": "", "gloves": "", "boots": "", "weapon": ""}}], "settle": 0.8},
+		{"name": "base_three_quarter", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3, "settle": 0.5},
+		{"name": "rare_front", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
+			"actions": [{"wear": {"helm": "rare", "chest": "rare", "gloves": "rare", "boots": "rare"}}], "settle": 0.6},
+		{"name": "rare_three_quarter", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3, "settle": 0.5},
+		{"name": "mix_chest_only", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3,
+			"actions": [{"wear": {"helm": "", "boots": "", "gloves": ""}}], "settle": 0.6},
+		{"name": "mix_helm_gloves", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3,
+			"actions": [{"wear": {"chest": "", "helm": "rare", "gloves": "rare"}}], "settle": 0.6},
+		{"name": "rare_back", "player": [0, 0.2, 6], "face": 0.0, "yaw": 0.4, "pitch": -0.16, "zoom": 3.6,
+			"actions": [{"wear": {"helm": "rare", "chest": "rare", "gloves": "rare", "boots": "rare"}}], "settle": 0.6},
+		{"name": "rare_gameplay", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.35, "pitch": -0.3, "zoom": 4.6,
+			"spawn": [{"id": "rusher", "at": [0.6, 0.2, 5.5], "freeze": true, "face": 3.1416}], "settle": 0.6},
+		{"name": "rare_cleave", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.6, "pitch": -0.22, "zoom": 4.0,
+			"spawn": [{"id": "rusher", "at": [0.3, 0.2, 6.6], "freeze": true, "face": 3.1416}],
+			"actions": [{"wait": 0.2}, {"do": "melee"}, {"wait": 0.14}], "settle": 0.0}
+	]
+}

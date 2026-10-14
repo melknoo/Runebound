@@ -172,6 +172,27 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
 - Checked on a fixture (the legacy Runebreaker re-posed to an A-pose): every
   clip plays on the fitted mesh like on the original. The legacy generator
   output stays byte-identical (`RB_BONES` / `CM_BONES` only lift numbers).
+- **Hero gear looks** (`ai_fit.py -- runebreaker [--look rare]`): one source
+  per class and look in `tools/modelgen/ai_src/<class>/<look>/` (raw.glb,
+  manifest.json, fit.json, the keyed concept `input_rgba.png`), built to
+  `assets/models/chars/hero/<class>/<look>.glb` (meshes `rg_helm`, `rg_chest`,
+  `rg_gloves`, `rg_boots`, `rg_weapon` on the shared skeleton, all clips) +
+  `assets/textures/char/hero/<class>_<look>_atlas.png`. Regions come from each
+  face's dominant bones (`lib/fit.split_regions`), grown two face rings into
+  their neighbours. Import settings copy the legacy rigs' (60 fps, named
+  skins, shadow meshes). Built: `runebreaker/base`, `runebreaker/rare`.
+- Workflow per look: `ai_gen.py concept <class>/<look> --seeds ...` (review
+  the PNGs, pick an A-pose with open arms), `ai_gen.py mesh <class>/<look>
+  concept_<seed>.png --seed 7`, `blender ... ai_ingest.py -- <candidate dir>`,
+  `ai_fit.py -- <class> --look <look> --src <candidate dir> --detect` (check
+  `landmarks.png`), `... --sheets` (contact sheets in
+  `captures_contact/hero_<class>_<look>/`), then promote the candidate
+  (`ai_ingest.promote`) and rebuild from `ai_src`.
+- Lessons: weld glTF seam vertices before decimating (else the surface tears
+  into hundreds of shells); pack an AI body's UV islands with a ~3 px margin;
+  the AI paintings run dark, so `texbake.quantize` lifts the median lightness
+  to the ART_BIBLE key band before matching the ramps; AO darkens only below
+  0.35.
 
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's

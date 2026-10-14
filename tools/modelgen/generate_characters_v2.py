@@ -231,22 +231,31 @@ def build_runebreaker(sheets=False):
     finish(body, arm, "runebreaker", "runebreaker", (1,), sheets)
 
 
-def runebreaker_kit(pm, snap):
+def _hand_head(bones, side="R"):
+    """Armature-space head of hand.<side> for humanoid_bones(**bones)."""
+    return next(h for n, _p, h, _t in humanoid_bones(**bones) if n == "hand." + side)
+
+
+def runebreaker_kit(pm, snap, bones=RB_BONES, visor=True):
     """Rig v3 (tools/modelgen/ai_fit.py): the script-built parts on an AI body,
-    placed like build_runebreaker's: chest sigil + visor slit (glow, `snap`
-    seats them on the AI surface) and the rune sword in the right fist."""
+    placed like build_runebreaker's: the visor slit (glow, `snap` seats it on
+    the AI surface; looks with a bare head pass visor=False) and the rune
+    sword in the right fist, kept at the legacy offset from hand.R (the v3
+    skeleton has shorter arms). The chest sigil is gone: the AI chest plate
+    carries its own rune."""
     rb = PAL["runebreaker"]
     leather = pm.paint(rb["leather"], 2, "hide")
     gold = pm.paint(rb["gold_trim"], 2)
     steel = pm.paint(rb["steel"], 2)
-    snap(pm.loft("chest", [(1.28, 0.07, 0.03, 0, -0.215), (1.4, 0.07, 0.03, 0, -0.215)], sides=6, mat_index=1))
-    snap(pm.box("head", (0.21, 0.03, 0.035), (0, -0.182, 1.68), mat_index=1))
-    hx = -0.36 * 1.14
-    pm.box("hand.R", (0.05, 0.05, 0.24), (hx, -0.01, 0.84), paint=leather)
-    pm.box("hand.R", (0.3, 0.07, 0.05), (hx, -0.1, 0.84), paint=gold)
+    if visor:
+        snap(pm.box("head", (0.21, 0.03, 0.035), (0, -0.182, 1.68), mat_index=1))
+    hand = _hand_head(bones)
+    hx, hz = hand[0] - 0.0228, hand[2] + 0.02  # legacy: (-0.4104, 0.84) at wrist (-0.3876, 0.82)
+    pm.box("hand.R", (0.05, 0.05, 0.24), (hx, -0.01, hz), paint=leather)
+    pm.box("hand.R", (0.3, 0.07, 0.05), (hx, -0.1, hz), paint=gold)
     pm.loft("hand.R", [(0.0, 0.07, 0.02, 0, 0), (0.95, 0.065, 0.02, 0, 0), (1.1, 0.012, 0.012, 0, 0)],
-            sides=4, center=(hx, -0.12, 0.84), rot=(1.5708, 0, 0), paint=steel, mat_index=2)
-    pm.box("hand.R", (0.018, 0.8, 0.026), (hx, -0.6, 0.84), mat_index=1)
+            sides=4, center=(hx, -0.12, hz), rot=(1.5708, 0, 0), paint=steel, mat_index=2)
+    pm.box("hand.R", (0.018, 0.8, 0.026), (hx, -0.6, hz), mat_index=1)
     return [rig.make_material("rb_body", "#FFFFFF"),
             rig.make_material("rb_glow", ROLES["resonance"]["body"], emission_hex=ROLES["resonance"]["body"],
                               strength=3.0),
@@ -1150,16 +1159,18 @@ def build_marauder(sheets=False):
     finish(body, arm, "cinder_marauder", "cinder_marauder", (1, 2), sheets)
 
 
-def marauder_kit(pm, snap):
+def marauder_kit(pm, snap, bones=CM_BONES):
     """Rig v3 (tools/modelgen/ai_fit.py): ember eyes (glow, seated on the AI
-    face by `snap`) and the raider axe (haft + telegraph blade, slot 2)."""
+    face by `snap`) and the raider axe (haft + telegraph blade, slot 2), kept
+    at the legacy offset from hand.R."""
     cm = PAL["cinder_marauder"]
     wood = pm.paint(cm["wood"], 2)
     snap(pm.box("head", (0.26, 0.05, 0.06), (0, -0.375, 1.43), mat_index=1))
-    hx = -0.38 * 1.14
+    hand = _hand_head(bones)
+    hx, hz = hand[0], hand[2]  # legacy wrist (-0.4332, 0.62): haft at +0.02, blade at +0.10
     pm.loft("hand.R", [(0.0, 0.028, 0.028, 0, 0), (0.85, 0.03, 0.03, 0, 0)], sides=6,
-            center=(hx, -0.1, 0.64), rot=(1.5708, 0, 0), paint=wood)
-    pm.box("hand.R", (0.07, 0.3, 0.34), (hx, -0.8, 0.72), mat_index=2)
+            center=(hx, -0.1, hz + 0.02), rot=(1.5708, 0, 0), paint=wood)
+    pm.box("hand.R", (0.07, 0.3, 0.34), (hx, -0.8, hz + 0.1), mat_index=2)
     return [rig.make_material("cm_body", "#FFFFFF"),
             rig.make_material("cm_eyes", cm["eyes"], emission_hex=cm["eyes"], strength=3.0),
             rig.make_material("cm_blade", "#9A9AA6")]

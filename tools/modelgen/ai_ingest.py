@@ -10,7 +10,7 @@ the compacted file this module writes, never the generator again.
       writes %TEMP%/runebound_ai/<char_id>/<tag>/raw.glb + manifest.json
   ingest_dir(dir)  the same for ai_gen.py output (<dir>/trellis.glb + gen.json),
       headless: blender --background --python ai_ingest.py -- <dir> [--promote]
-  promote(char_id, tag)  copies that candidate to tools/modelgen/ai_src/<char_id>/
+  promote(dir)  copies a candidate to tools/modelgen/ai_src/<key>/
       (the only path that writes into the repo; commit only the chosen one)
 
 Through the MCP's execute_blender_code, after import_generated_asset*:
@@ -146,7 +146,21 @@ def _base_only(obj):
     return sizes
 
 
+def _weld(obj, dist=1e-5):
+    """glTF splits vertices along UV seams and normal breaks: weld them first,
+    or the decimation collapses each side on its own and tears the surface
+    into hundreds of shells (seen on the first TRELLIS Runebreaker)."""
+    import bmesh
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=dist)
+    bm.to_mesh(obj.data)
+    bm.free()
+    obj.data.update()
+
+
 def _decimate(obj, max_tris):
+    _weld(obj)
     before = _tris(obj)
     if before > max_tris:
         mod = obj.modifiers.new("compact", "DECIMATE")
@@ -169,13 +183,13 @@ def _export(obj, path):
     bpy.ops.export_scene.gltf(**kw)
 
 
-def candidate(obj_name, char_id, tag, meta):
+def candidate(obj_name, char_id, tag, meta, out=None):
     """Compact the imported generation `obj_name` into a review candidate.
     meta: service, prompt, request_id, quality, bbox_condition, ... (no URLs, no keys)."""
-    for bad in ("url", "key", "token"):
+    for bad in ("url", "api_key", "apikey", "token", "secret", "password"):
         if any(bad in k.lower() for k in meta):
             raise ValueError("manifest meta must not carry %r fields" % bad)
-    out = os.path.join(CAND_DIR, char_id, tag)
+    out = out or os.path.join(CAND_DIR, char_id, tag)
     os.makedirs(out, exist_ok=True)
     obj = _join(obj_name)
     obj.name = "%s_%s" % (char_id, tag)
@@ -209,7 +223,6 @@ def ingest_dir(cand):
     """Headless path for ai_gen.py output: <cand>/trellis.glb + gen.json ->
     <cand>/raw.glb + manifest.json (same compaction as candidate())."""
     cand = os.path.abspath(cand)
-    char_id = os.path.basename(os.path.dirname(cand))
     tag = os.path.basename(cand)
     with open(os.path.join(cand, "gen.json"), encoding="utf-8") as f:
         meta = json.load(f)
@@ -219,23 +232,22 @@ def ingest_dir(cand):
     bpy.ops.import_scene.gltf(filepath=os.path.join(cand, "trellis.glb"))
     new = [o for o in bpy.data.objects if o not in before]
     root = next((o for o in new if o.parent is None), new[0])
-    global CAND_DIR
-    saved, CAND_DIR = CAND_DIR, os.path.dirname(os.path.dirname(cand))
-    try:
-        return candidate(root.name, char_id, tag, meta)
-    finally:
-        CAND_DIR = saved
+    char_id = meta.get("key") or os.path.basename(os.path.dirname(cand))
+    return candidate(root.name, char_id, tag, meta, out=cand)
 
 
-def promote(char_id, tag):
-    """Copy a reviewed candidate into the repo (tools/modelgen/ai_src/<char_id>/)."""
-    src = os.path.join(CAND_DIR, char_id, tag)
-    dst = os.path.join(SRC_DIR, char_id)
+def promote(cand):
+    """Copy a reviewed candidate dir into the repo: tools/modelgen/ai_src/<key>/
+    (key from its manifest, e.g. runebreaker/rare)."""
+    cand = os.path.abspath(cand)
+    with open(os.path.join(cand, "manifest.json"), encoding="utf-8") as f:
+        key = json.load(f)["char_id"]
+    dst = os.path.join(SRC_DIR, *key.split("/"))
     os.makedirs(dst, exist_ok=True)
     for fn in ("raw.glb", "manifest.json", "fit.json", "input_rgba.png"):
-        if os.path.exists(os.path.join(src, fn)):
-            shutil.copyfile(os.path.join(src, fn), os.path.join(dst, fn))
-    print("ai_ingest: promoted", char_id, tag, "->", os.path.relpath(dst, rig.ROOT))
+        if os.path.exists(os.path.join(cand, fn)):
+            shutil.copyfile(os.path.join(cand, fn), os.path.join(dst, fn))
+    print("ai_ingest: promoted", key, "->", os.path.relpath(dst, rig.ROOT))
     return dst
 
 
@@ -246,4 +258,4 @@ if __name__ == "__main__":
         bpy.ops.wm.read_factory_settings(use_empty=True)
         ingest_dir(d)
         if "--promote" in args:
-            promote(os.path.basename(os.path.dirname(os.path.abspath(d))), os.path.basename(os.path.abspath(d)))
+            promote(d)

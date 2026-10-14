@@ -9,12 +9,16 @@ quantize()  maps every texel to the nearest colour of the character's
 The result goes to lib.atlas.bake(base=...), which paints the script kit's
 faces over it, so the atlas holds palette colours only.
 """
+import os
+
 import bpy
 import numpy as np
 
 from . import rig
 
-AO_STEP = 0.55     # Cycles AO below this -> one ramp step darker
+AO_STEP = 0.35     # Cycles AO below this -> one ramp step darker (crevices only)
+LIFT_TARGET = 0.55  # OKLab L the body's median is lifted to: ART_BIBLE key planes 40-70 L*
+LIFT_MAX = 1.6      # AI paintings run dark (the first Runebreaker gambeson sat at ~27 L*)
 AO_DISTANCE = 0.18  # metres, like lib.atlas's probe
 
 
@@ -106,7 +110,12 @@ def transfer(obj, size, src_uv="src"):
     _bake(obj, "EMIT", col, src_image=src, src_uv=src_uv)
     ao = _image("rigv3_ao", size)
     _bake(obj, "AO", ao, samples=32)
-    return _pixels(col)[:, :, :3].copy(), _pixels(ao)[:, :, 0].copy()
+    base, occ = _pixels(col)[:, :, :3].copy(), _pixels(ao)[:, :, 0].copy()
+    dump = os.environ.get("RIGV3_DUMP")
+    if dump:  # review aid: the raw bake before quantization
+        np.save(os.path.join(dump, "base_lin.npy"), base)
+        np.save(os.path.join(dump, "ao.npy"), occ)
+    return base, occ
 
 
 def ramps_of(palette):
@@ -114,16 +123,22 @@ def ramps_of(palette):
     return [v for v in palette.values() if isinstance(v, list)]
 
 
-def quantize(base_lin, ao, ramps, ao_step=AO_STEP, chunk=1 << 18):
-    """Nearest ramp colour per texel in OKLab; AO darkens one step; isolated
-    texels (all 4 neighbours agree on another colour) take that colour.
-    Returns sRGB floats (size, size, 3) holding palette colours only."""
+def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chunk=1 << 18):
+    """Nearest ramp colour per texel in OKLab after lifting the body's median
+    lightness to `lift_target` (gain 1..LIFT_MAX, hue kept); AO darkens one
+    step; isolated texels (all 4 neighbours agree on another colour) take that
+    colour. Returns sRGB floats (size, size, 3) holding palette colours only."""
     entries = [(ri, si) for ri, ramp in enumerate(ramps) for si in range(len(ramp))]
     pal_srgb = np.array([rig.hex_to_srgb(ramps[ri][si]) for ri, si in entries], dtype=np.float32)
     pal_lin = np.array([rig.hex_to_linear(ramps[ri][si]) for ri, si in entries], dtype=np.float32)
     pal_lab = _oklab(pal_lin)
     h, w, _ = base_lin.shape
     lab = _oklab(base_lin.reshape(-1, 3).astype(np.float32))
+    covered = base_lin.reshape(-1, 3).max(axis=1) > 0.002
+    if covered.any() and lift_target:
+        gain = float(np.clip(lift_target / max(np.median(lab[covered, 0]), 1e-3), 1.0, LIFT_MAX))
+        lab[:, 0] = np.minimum(lab[:, 0] * gain, 0.97)
+        print("texbake: lightness gain %.2f" % gain)
     idx = np.empty(len(lab), dtype=np.int32)
     for i in range(0, len(lab), chunk):
         d = ((lab[i:i + chunk, None, :] - pal_lab[None, :, :]) ** 2).sum(axis=2)
