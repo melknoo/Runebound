@@ -3,6 +3,16 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "rigv3",
+			"title": "Rig v3: Modelle & Ausrüstung",
+			"items": [
+				{"id": "rigv3_look", "src": "Rig v3", "title": "Neuer Runebreaker-Look", "hint": "KI-Modell auf dem alten Skelett, 128 px/m: detailreich genug, passt der Pixel-Look zur Welt, sehen alle Fähigkeiten-Animationen gut aus?"},
+				{"id": "rigv3_gear", "src": "Rig v3", "title": "Ausrüstung sichtbar", "hint": "Seltene und legendäre Teile zeigen den Plattenritter, Startausrüstung die Grundkleidung, abgelegt die Unterkleidung, ohne Waffe Fäuste: passt die Logik, stören Nahtstellen beim Mischen?"},
+				{"id": "rigv3_kit", "src": "Rig v3", "title": "Startausrüstung", "hint": "Neue und alte Charaktere tragen Waffe, Wams, Handwickel und Stiefel (ohne Werte), sichtbar im Inventar angelegt: passt das?"},
+				{"id": "rigv3_inventory", "src": "Rig v3", "title": "Neues Inventar", "hint": "3D-Held zum Drehen, Slots drumherum, Tasche als Raster, Tooltip mit Vergleich, Ziehen & Ablegen, Korb mit Rückfrage, Rechtsklick: leicht zu bedienen? Was fehlt?"}
+			]
+		},
+		{
 			"id": "m13b",
 			"title": "M13b: Koop-Dungeon",
 			"items": [

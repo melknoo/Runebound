@@ -7,6 +7,16 @@ Numeric affixes stay chunky; the exciting drops change ability behavior.
 - **Slots** (7, user decision 2026-09-24): Weapon · Helm · Chest · Gloves ·
   Boots · Amulet · Ring. Old Armor/Relic items are Chest/Amulet (same enum
   values, no save conversion). Inventory cap 24.
+- **Start kit** (Rig v3, user 2026-10-14): every character wears its class's
+  start kit - weapon, chest, gloves, boots; common, no affixes, `kit` =
+  class id (saved as `"kit"`), named from `rigv3_ui.json`
+  (`item.kit.<class>.<slot>`). `SaveGame.restore_character` hands it out once
+  into the empty slots (new and old characters; the character's `"kit"` flag).
+- **Visible gear** (Rig v3): what a slot shows on the hero follows the item -
+  the start kit the class's base clothes, a dropped item its rarity's look
+  (common, magic, rare, legendary; each class its own style), an empty slot
+  the underclothes (an empty weapon slot shows bare fists). Helm, chest,
+  gloves, boots and weapon show; amulet and ring don't (`HeroLook`).
 - **Affix spread**:
   - Movement, dodge and Storm Step cooldown roll on boots only.
   - Crit and area on gloves, rings and weapons.

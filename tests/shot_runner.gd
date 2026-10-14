@@ -18,7 +18,8 @@ extends Node
 ## {"do": "legendary"} a legendary. M07: {"xp": n} grants XP, {"learn": [ids]}
 ## learns talents, {"do": "talents" | "runic_guard" | "resonance_burst"}.
 ## Rig v3: {"wear": {"helm": "rare", "chest": "", ...}} equips test gear of that
-## rarity per listed slot ("" takes it off).
+## rarity per listed slot ("" takes it off); {"wear_kit": true} the class's
+## start kit into the empty slots; {"inv_select": n} pins bag item n's tooltip.
 ## M07b: {"gold": n}, {"learn_abilities": [ids] | "all"}, {"do": "trainer" |
 ## "hero_inventory" | "hero_character" | "hero_talents" | "gold"}; a list with
 ## "fresh_abilities": true starts with the one-ability kit. M10: a shot's
@@ -214,6 +215,15 @@ func _do(action: Dictionary) -> void:
 			item.display_name = "Shot %s" % slot_name
 			player.equipment.add_item(item)
 			player.equipment.equip(item)
+	elif action.has("wear_kit"):  # Rig v3: the class's start kit into the empty slots
+		for kit_item in ItemGenerator.starter_kit(player.class_data.id):
+			if not player.equipment.equipped.has(kit_item.slot):
+				player.equipment.add_item(kit_item)
+				player.equipment.equip(kit_item)
+	elif action.has("inv_select"):  # Rig v3: pin the inventory tooltip of bag item n
+		var n := int(action["inv_select"])
+		if n < player.equipment.inventory.size():
+			_zone.inventory_ui._select(player.equipment.inventory[n])
 	elif action.has("discover"):  # M08: map points / shrines known ("all" or ids)
 		if str(action["discover"]) == "all":
 			for poi in _zone.get(&"layout").pois:

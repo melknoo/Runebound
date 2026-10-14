@@ -50,6 +50,16 @@ func unequip(slot: ItemData.Slot) -> bool:
 	return true
 
 
+## Rig v3 inventory: puts a bag item at `index` (drag-and-drop order).
+func move(item: ItemData, index: int) -> void:
+	var from := inventory.find(item)
+	if from < 0:
+		return
+	inventory.remove_at(from)
+	inventory.insert(clampi(index, 0, inventory.size()), item)
+	changed.emit()
+
+
 func is_full() -> bool:
 	return inventory.size() >= INVENTORY_CAP
 

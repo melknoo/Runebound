@@ -56,6 +56,23 @@ C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
     molten blade. Remote heroes still show the base look (phase 3).
   - Shots: `tests/shots/rigv3_gear.json` (base, rare, two mixes), the
     shot runner's new `{"wear": {...}}`. Smoke 917 checks green.
+- **Phase 1b (built 2026-10-14, user wishes after the pilot): the start kit
+  and the WoW-style inventory.**
+  - The start kit as real items (weapon, chest, gloves, boots; `ItemData.kit`,
+    [ITEMIZATION](ITEMIZATION.md)): the hero holds a weapon from the first
+    minute, so the inventory shows it equipped. An empty slot shows the
+    underclothes look `bare` (falls back to `base` until its mesh exists), an
+    empty weapon slot no weapon.
+  - `InventoryUI` rewritten: the paper doll (the hero in 3D in its own
+    world, half resolution with nearest filtering, drag to turn; the seven
+    slot tiles around it), the bag as a 6x4 icon grid with rarity frames,
+    the consumables as counted tiles, an instant tooltip with the equipped
+    piece beside it and the stat comparison, drag and drop (bag -> slot or
+    onto the hero, slot -> bag, bag reorder, onto the bin with a confirm),
+    right-click / double-click. New texts DE+EN (`resources/i18n/rigv3_ui.json`).
+  - Tests: smoke 930 green (start kit once, empty hands, hide helm, tooltip,
+    drop rules, the bin's confirm); shots `rigv3_inventory`; the J list's
+    group "Rig v3: Modelle & Ausrüstung".
 
 ## M13b the Stormwatch, the co-op dungeon (built 2026-10-13, the user's playtest is the gate)
 Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -

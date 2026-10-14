@@ -20,6 +20,9 @@ var legendary_id: StringName = &""
 var legendary_text: String = ""
 ## M07: level of the source that dropped it; scales the numeric affixes.
 var item_level: int = 1
+## Rig v3: the class whose start kit this is (no stats, shows the class's
+## base clothes; named from the text table). "" for every dropped item.
+var kit: StringName = &""
 
 
 func to_dict() -> Dictionary:
@@ -31,7 +34,7 @@ func to_dict() -> Dictionary:
 			"stat": String(affix["stat"]),
 			"value": affix["value"],
 		})
-	return {
+	var out := {
 		"slot": slot,
 		"rarity": rarity,
 		"name": display_name,
@@ -40,6 +43,9 @@ func to_dict() -> Dictionary:
 		"legendary_text": legendary_text,
 		"item_level": item_level,
 	}
+	if kit != &"":
+		out["kit"] = String(kit)
+	return out
 
 
 static func from_dict(data: Dictionary) -> ItemData:
@@ -50,6 +56,7 @@ static func from_dict(data: Dictionary) -> ItemData:
 	item.legendary_id = StringName(data.get("legendary_id", ""))
 	item.legendary_text = data.get("legendary_text", "")
 	item.item_level = int(data.get("item_level", 1))
+	item.kit = StringName(data.get("kit", ""))  # Rig v3, optional
 	for affix: Dictionary in data.get("affixes", []):
 		item.affixes.append({
 			"id": StringName(affix.get("id", "")),
@@ -65,7 +72,19 @@ static func from_dict(data: Dictionary) -> ItemData:
 func title() -> String:
 	if legendary_id != &"" and Texts.has("item.%s.name" % legendary_id):
 		return Texts.t("item.%s.name" % legendary_id)
+	if kit != &"" and Texts.has(kit_key()):  # Rig v3 start kit
+		return Texts.t(kit_key())
 	return display_name
+
+
+## Text key of a start-kit item's name: item.kit.<class>.<slot>.
+func kit_key() -> String:
+	return "item.kit.%s.%s" % [kit, slot_name(slot).to_lower()]
+
+
+## Rig v3: a rarity's name in the player's language (the inventory).
+static func rarity_title(r: Rarity) -> String:
+	return Texts.t("item.rarity.%s" % rarity_name(r).to_lower())
 
 
 ## ... and its power ("item.<legendary id>.text", else the stored text).

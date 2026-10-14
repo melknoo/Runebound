@@ -1,0 +1,13 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/rigv3_inventory",
+	"comment": "Rig v3: the WoW-style inventory. The start kit worn, a bag of loot, the paper doll with the hero in 3D; a rare helm worn; a bag item's tooltip with the comparison to the equipped piece.",
+	"shots": [
+		{"name": "kit_worn", "class": "runebreaker", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"wear_kit": true}, {"give_items": 7}, {"draughts": 3}, {"gold": 130}, {"wait": 0.3},
+			            {"do": "inventory"}, {"wait": 0.6}], "settle": 0.2},
+		{"name": "rare_helm_tooltip", "player": [0, 0.2, 8], "yaw": 0.0, "pitch": -0.25, "zoom": 5.0,
+			"actions": [{"do": "inventory"}, {"wait": 0.2}, {"wear": {"helm": "rare", "chest": "rare"}}, {"wait": 0.2},
+			            {"do": "inventory"}, {"wait": 0.5}, {"inv_select": 0}, {"wait": 0.3}], "settle": 0.1}
+	]
+}

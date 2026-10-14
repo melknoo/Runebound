@@ -2322,6 +2322,38 @@ func _run() -> void:
 	_check(edge_pos.x + tip_size.x <= 1592.0, "ability tooltip stays on screen at the edge")
 	hud._update_tooltip(Vector2(-100, -100))
 	_check(not hud.tooltip_visible(), "tooltip hides when the mouse leaves the slots")
+	# Rig v3 inventory (WoW style): paper doll, bag grid, tooltip, drag and drop, the bin.
+	var inv := lab.inventory_ui
+	_check(inv._slot_tiles.size() == ItemData.SLOT_COUNT and inv._bag_tiles.size() == Equipment.INVENTORY_CAP
+		and inv._doll != null and inv._doll.get_child_count() > 0, "Rig v3 inventory: seven slot tiles around the hero, a 24-cell bag")
+	var inv_probe := ItemGenerator.generate(1)
+	inv_probe.slot = ItemData.Slot.HELM
+	player.equipment.unequip(ItemData.Slot.HELM)
+	player.equipment.add_item(inv_probe)
+	var inv_tile: InventoryUI.Tile = null
+	for t: InventoryUI.Tile in inv._bag_tiles:
+		if t.item == inv_probe:
+			inv_tile = t
+	_check(inv_tile != null, "the new item sits in a bag cell")
+	if inv_tile != null:
+		inv._hover(inv_tile)
+		_check(inv.tooltip_visible() and inv.tip_text().contains(inv_probe.title()), "hovering a bag item shows its tooltip")
+		var payload: Variant = inv._drag_payload(inv_tile)
+		var helm_tile: InventoryUI.Tile = inv._slot_tiles[ItemData.Slot.HELM]
+		_check(inv._can_drop(helm_tile, payload) and not inv._can_drop(inv._slot_tiles[ItemData.Slot.BOOTS], payload),
+			"an item drops only onto its own slot")
+		inv._drop(helm_tile, payload)
+		_check(player.equipment.equipped.get(ItemData.Slot.HELM) == inv_probe, "dropping it on its slot equips it")
+		_check(inv._can_drop_on_hero(inv._drag_payload(inv._bag_tiles[0])) or player.equipment.inventory.is_empty(),
+			"bag items can be dropped onto the hero")
+		inv._drop(inv._bag_tiles[0], inv._drag_payload(helm_tile))
+		_check(player.equipment.inventory.has(inv_probe) and player.equipment.equipped.get(ItemData.Slot.HELM) == null,
+			"dragging it back into the bag takes it off")
+		inv._ask_discard(inv_probe)
+		_check(inv.discard_pending() and player.equipment.inventory.has(inv_probe), "the bin asks before discarding")
+		inv._close_confirm()
+		inv._unhover(inv_tile)
+	player.equipment.discard(inv_probe)
 	lab.inventory_ui.toggle()
 	_check(not lab.inventory_ui.visible and not player.input_locked, "inventory closes and unlocks input")
 
@@ -2679,11 +2711,11 @@ func _run() -> void:
 	# the inventory shows the bag above the gear; the HUD counts it next to the gold
 	hub.inventory_ui.toggle()
 	await _wait_frames(2)
-	var bag_row: Button = null
+	var bag_tile: InventoryUI.Tile = null
 	if hub.inventory_ui._bag_box.get_child_count() > 0:
-		bag_row = hub.inventory_ui._bag_box.get_child(0) as Button
-	_check(bag_row != null and bag_row.text.begins_with("Healing Draught") and bag_row.text.ends_with("%d/%d" % [
-		Consumables.cap(draught), Consumables.cap(draught)]), "the inventory lists the draughts (%s)" % (bag_row.text if bag_row != null else "-"))
+		bag_tile = hub.inventory_ui._bag_box.get_child(0) as InventoryUI.Tile
+	_check(bag_tile != null and bag_tile.cid == draught and bag_tile.count.text == str(Consumables.cap(draught)),
+		"the inventory shows the draughts with their count (%s)" % (bag_tile.count.text if bag_tile != null else "-"))
 	hp.health.current_health = hp.health.max_health * 0.5
 	hub.inventory_ui._drink(draught)
 	_check(hp.consumable_count(draught) == Consumables.cap(draught) - 1 and hp.healing_left() > 0.0,
@@ -5912,16 +5944,35 @@ func _run() -> void:
 		cm.legendary_id = &"cindermaw"
 		cm.display_name = "Cindermaw"
 		var p2 := hub2.player
+		# Rig v3: a new character wears its class's start kit (the hero holds a
+		# weapon from the first minute, so the inventory shows it equipped).
+		var before_kit := SaveGame.character_dict(p2)
+		SaveGame.apply_character(p2, SaveGame.new_character(p2.class_data.id, "Kit Test"))
+		var kit_w: ItemData = p2.equipment.equipped.get(ItemData.Slot.WEAPON)
+		_check(kit_w != null and kit_w.kit == p2.class_data.id and p2.equipment.equipped.has(ItemData.Slot.CHEST)
+			and p2.equipment.equipped.has(ItemData.Slot.GLOVES) and p2.equipment.equipped.has(ItemData.Slot.BOOTS)
+			and not p2.equipment.equipped.has(ItemData.Slot.HELM) and kit_w.affixes.is_empty(),
+			"Rig v3: a new character wears the start kit (weapon, chest, gloves, boots; no stats)")
+		_check(bool(SaveGame.character_dict(p2).get("kit", false)) and ItemData.from_dict(kit_w.to_dict()).kit == kit_w.kit
+			and kit_w.title() != "", "Rig v3: the kit flag and the kit field are saved (%s)" % kit_w.title())
+		p2.equipment.unequip(ItemData.Slot.WEAPON)
+		SaveGame.apply_character(p2, SaveGame.character_dict(p2))
+		_check(not p2.equipment.equipped.has(ItemData.Slot.WEAPON) and p2.equipment.inventory.size() == 1,
+			"Rig v3: the kit comes once (an emptied slot stays empty, nothing doubles)")
+		if p2.look != null:
+			_check(p2.look.look_of(&"weapon") == &"bare" and p2.look.part(&"weapon") == null,
+				"Rig v3: empty hands show no weapon")
+			_check(p2.look.look_of(&"chest") == &"base", "Rig v3: the kit chest shows the base clothes")
+		kit_w = p2.equipment.inventory[0]
 		p2.equipment.add_item(cm)
 		p2.equipment.equip(cm)
-		var blade_mat: Material = p2.look.blade_material() if p2.look != null \
-			else (p2._rig_mesh.get_surface_override_material(2) if p2._rig_mesh != null else null)
+		var blade_mat: Material = p2.look.blade_material() if p2.look != null 			else (p2._rig_mesh.get_surface_override_material(2) if p2._rig_mesh != null else null)
 		_check(blade_mat != null and blade_mat == p2._cindermaw_mat, "Cindermaw equipped: the hero's blade turns molten")
-		p2.equipment.unequip(ItemData.Slot.WEAPON)
+		p2.equipment.equip(kit_w)
 		if p2.look != null:
 			_check(p2.look.blade_material() == p2.look.body_material(p2.look.look_of(&"weapon")),
-				"unequipped: rune steel again")
-			# Rig v3: gear shows per slot by rarity; an empty slot shows the base look.
+				"another weapon: rune steel again")
+			# Rig v3: gear shows per slot by rarity; an empty slot shows the underclothes.
 			var helm := ItemData.new()
 			helm.slot = ItemData.Slot.HELM
 			helm.rarity = ItemData.Rarity.RARE
@@ -5929,16 +5980,20 @@ func _run() -> void:
 			p2.equipment.add_item(helm)
 			p2.equipment.equip(helm)
 			var shown: StringName = p2.look.look_of(&"helm")
-			_check(shown != &"base" and p2.look.part(&"helm") != null and p2.look.part(&"helm").visible,
+			_check(shown != &"base" and shown != &"bare" and p2.look.part(&"helm") != null and p2.look.part(&"helm").visible,
 				"Rig v3: a rare helm shows its look on the hero (%s)" % shown)
-			_check(p2.look.look_of(&"chest") == &"base", "Rig v3: the empty chest slot shows the base look")
 			_check(HeroLook.decode(HeroLook.encode(HeroLook.looks_for(p2.equipment.equipped)))[&"helm"] == &"rare",
 				"Rig v3: the look survives the wire form")
+			p2.hide_helm = true
+			p2.refresh_look()
+			_check(p2.look.look_of(&"helm") == p2.look._resolve(&"bare"), "Rig v3: hide helm shows the bare head")
+			p2.hide_helm = false
 			p2.equipment.unequip(ItemData.Slot.HELM)
-			_check(p2.look.look_of(&"helm") == &"base", "Rig v3: unequipped helm -> base head")
+			_check(p2.look.look_of(&"helm") == p2.look._resolve(&"bare"), "Rig v3: unequipped helm -> bare head")
 			p2.equipment.discard(helm)
 		else:
-			_check(p2._rig_mesh.get_surface_override_material(2) == p2._body_mat, "unequipped: rune steel again")
+			_check(p2._rig_mesh.get_surface_override_material(2) == p2._body_mat, "another weapon: rune steel again")
+		SaveGame.apply_character(p2, before_kit)
 		_check(UiTheme.item_icon(cm) != null and UiTheme.item_icon(cm).resource_path.ends_with("cindermaw.png"),
 			"inventory shows the legendary's own icon")
 

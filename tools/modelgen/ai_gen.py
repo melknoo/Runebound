@@ -62,6 +62,10 @@ PROMPTS = {
                          "heads tall, bare head with short dark brown hair and a short beard, quilted teal-grey padded "
                          "gambeson reaching mid-thigh, brown leather belt, plain brown wool trousers, cloth-wrapped "
                          "forearms and leather fingerless gloves, simple brown leather boots to the shin"),
+    "runebreaker/bare": ("a stocky young warrior with the build of a heroic rune knight, broad V-shaped torso, about "
+                         "4.5 heads tall, bare head with short dark brown hair and a short beard, a plain off-white "
+                         "linen undershirt with short sleeves, plain grey-brown linen trousers tied with a cord, bare "
+                         "forearms and bare hands, barefoot"),
     "marauder": ("a hunched ash raider brute leaning forward, bulky barrel chest, heavy muscular forearms and big "
                  "fists, rust-red leathery hide skin, one huge rusty iron shoulder plate on the left shoulder with "
                  "three bone spikes, rusted plate chest guard, bone jaw guard over the mouth, two curved bone horns, "

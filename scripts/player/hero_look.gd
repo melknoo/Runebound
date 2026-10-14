@@ -8,11 +8,12 @@ extends RefCounted
 ## the base skeleton so every clip drives it. tools/modelgen/ai_fit.py builds
 ## the looks (AI bodies fitted onto the legacy skeleton, cut into regions that
 ## overlap so mixed looks never gap). A missing look falls back to the nearest
-## lower one, then upwards.
+## lower one, then upwards. An empty slot shows `bare` (underclothes; an empty
+## weapon slot shows no weapon), the start kit shows `base`.
 
 const HERO_DIR := "res://assets/models/chars/hero/"
 ## Gear look per region; the index is the wire id (HERO_LOOK).
-const LOOKS: Array[StringName] = [&"base", &"common", &"magic", &"rare", &"legendary"]
+const LOOKS: Array[StringName] = [&"bare", &"base", &"common", &"magic", &"rare", &"legendary"]
 const REGIONS: Array[StringName] = [&"helm", &"chest", &"gloves", &"boots", &"weapon"]
 const SLOT_REGION := {
 	ItemData.Slot.HELM: &"helm", ItemData.Slot.CHEST: &"chest", ItemData.Slot.GLOVES: &"gloves",
@@ -49,22 +50,25 @@ static func look_path(cls: StringName, look: StringName) -> String:
 static func looks_for(equipped: Dictionary, hide_helm: bool = false) -> Dictionary:
 	var out := {}
 	for region: StringName in REGIONS:
-		out[region] = &"base"
+		out[region] = &"bare"
 	for key: Variant in equipped:
 		var slot := int(key)
 		if not SLOT_REGION.has(slot):
 			continue
 		var item: Variant = equipped[key]
 		var rarity := 0
+		var kit := ""
 		if item is ItemData:
 			rarity = (item as ItemData).rarity
+			kit = String((item as ItemData).kit)
 		elif item is Dictionary:
 			rarity = int((item as Dictionary).get("rarity", 0))
+			kit = String((item as Dictionary).get("kit", ""))
 		else:
 			continue
-		out[SLOT_REGION[slot]] = RARITY_LOOK.get(rarity, &"common")
+		out[SLOT_REGION[slot]] = &"base" if kit != "" else RARITY_LOOK.get(rarity, &"common")
 	if hide_helm:
-		out[&"helm"] = &"base"
+		out[&"helm"] = &"bare"
 	return out
 
 
@@ -79,7 +83,7 @@ static func encode(looks: Dictionary) -> Array:
 static func decode(ids: Array) -> Dictionary:
 	var out := {}
 	for i in REGIONS.size():
-		var id := int(ids[i]) if i < ids.size() else 0
+		var id := int(ids[i]) if i < ids.size() else 0  # 0 = bare
 		out[REGIONS[i]] = LOOKS[clampi(id, 0, LOOKS.size() - 1)]
 	return out
 
@@ -107,10 +111,11 @@ static func create(parent: Node3D, cls: StringName, glow_color: Color, glow_ener
 	return hl
 
 
-## Shows `looks` (region -> look; missing regions show base).
+## Shows `looks` (region -> look; missing regions show bare).
 func apply(looks: Dictionary) -> void:
 	for region: StringName in REGIONS:
-		var want := _resolve(looks.get(region, &"base"))
+		var asked: StringName = looks.get(region, &"bare")
+		var want := &"bare" if region == &"weapon" and asked == &"bare" else _resolve(asked)
 		if _applied.get(region, &"") == want:
 			continue
 		_applied[region] = want
@@ -118,6 +123,11 @@ func apply(looks: Dictionary) -> void:
 		var base_mi: MeshInstance3D = _base_parts.get(region)
 		if cur != null and cur != base_mi:
 			_drop(cur)
+		if region == &"weapon" and want == &"bare":  # empty hands: no weapon at all
+			if base_mi != null:
+				base_mi.visible = false
+			_parts[region] = null
+			continue
 		var part: MeshInstance3D = base_mi
 		if want != &"base":
 			part = _instance_part(want, region)

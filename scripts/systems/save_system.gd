@@ -423,6 +423,10 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 	for slot_key: String in ch.get("equipped", {}):
 		var item := ItemData.from_dict(ch["equipped"][slot_key])
 		player.equipment.equipped[int(slot_key) as ItemData.Slot] = item
+	if not bool(ch.get("kit", false)):  # Rig v3: the start kit, once, into the empty slots only
+		for item in ItemGenerator.starter_kit(player.class_data.id):
+			if not player.equipment.equipped.has(item.slot):
+				player.equipment.equipped[item.slot] = item
 	player.equipment._recompute()  # legendary powers first: they may unlock abilities
 	player.progression.from_dict(ch.get("progression", {}))
 	if ch.has("known_abilities"):
@@ -468,7 +472,8 @@ static func character_dict(player: Player) -> Dictionary:
 		"waypoints": Array(player.discovered_waypoints), "map_discovered": Array(player.map_discovered),
 		"discovered": Array(player.discovered_zones),
 		"lore_read": Array(player.lore_read), "collected": Array(player.collected), "gathered": player.gathered.duplicate(),
-		"blessings": Array(player.blessings), "storm_shards": player.storm_shards}
+		"blessings": Array(player.blessings), "storm_shards": player.storm_shards,
+		"kit": true}  # Rig v3: the start kit was handed out (never again)
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:

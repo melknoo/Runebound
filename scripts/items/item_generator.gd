@@ -54,6 +54,27 @@ static func apply_item_level(item: ItemData, lvl: int) -> void:
 				affix["label"] = String(def["template"]) % int(value)
 
 
+## Rig v3: the slots a class's start kit fills (what the hero visibly wears
+## from the first minute: the base clothes and the class weapon).
+const KIT_SLOTS: Array[ItemData.Slot] = [ItemData.Slot.WEAPON, ItemData.Slot.CHEST, ItemData.Slot.GLOVES,
+	ItemData.Slot.BOOTS]
+
+
+## The class's start kit: common, no affixes, item level 1, named from the
+## text table (item.kit.<class>.<slot>; the English name is stored).
+static func starter_kit(class_id: StringName) -> Array[ItemData]:
+	var out: Array[ItemData] = []
+	for slot: ItemData.Slot in KIT_SLOTS:
+		var item := ItemData.new()
+		item.slot = slot
+		item.rarity = ItemData.Rarity.COMMON
+		item.kit = class_id
+		item.display_name = Texts.in_language(item.kit_key(), "en") if Texts.has(item.kit_key()) \
+			else "Worn %s" % ItemData.slot_name(slot)
+		out.append(item)
+	return out
+
+
 ## rarity_bias: 0 = normal enemy, 1 = brute, 2 = elite (min RARE).
 ## class_id (M07b): only that class's affixes and legendaries; "" = any.
 static func generate(rarity_bias: int = 0, class_id: StringName = &"") -> ItemData:

@@ -14,7 +14,7 @@ extends Object
 
 const FILES: Array[String] = ["res://resources/i18n/m12_ui.json", "res://resources/i18n/m12_lore.json",
 	"res://resources/i18n/m13_ui.json", "res://resources/i18n/m13_lore.json", "res://resources/i18n/m13b_ui.json",
-	"res://resources/i18n/m13b_lore.json", "res://resources/i18n/dist_ui.json"]
+	"res://resources/i18n/m13b_lore.json", "res://resources/i18n/dist_ui.json", "res://resources/i18n/rigv3_ui.json"]
 const LANGUAGES: Array[String] = ["en", "de"]
 
 ## key -> {"en": text, "de": text}
