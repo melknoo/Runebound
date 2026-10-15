@@ -1,0 +1,161 @@
+{
+  "tris": 9631,
+  "budget": 10000,
+  "tris_ok": true,
+  "bones": [
+    "root",
+    "hips",
+    "spine",
+    "chest",
+    "head",
+    "upper_arm.L",
+    "forearm.L",
+    "hand.L",
+    "upper_arm.R",
+    "forearm.R",
+    "hand.R",
+    "thigh.L",
+    "shin.L",
+    "foot.L",
+    "thigh.R",
+    "shin.R",
+    "foot.R"
+  ],
+  "bones_ok": true,
+  "slots": [
+    "rb_body",
+    "rb_glow",
+    "rb_blade"
+  ],
+  "slots_used": [
+    0,
+    1,
+    2
+  ],
+  "slots_ok": true,
+  "weights_over4": 0,
+  "weightless": 0,
+  "weights_ok": true,
+  "bbox_min": [
+    -0.5704,
+    -1.25,
+    0.0007
+  ],
+  "bbox_max": [
+    0.519,
+    0.3055,
+    1.9698
+  ],
+  "height_ok": true,
+  "body_radius_wo_hands": 0.467,
+  "top": {
+    "z": 1.97,
+    "bone": "head",
+    "xy": [
+      0.0003,
+      0.0318
+    ]
+  },
+  "clips": {
+    "block": [
+      0,
+      180
+    ],
+    "chain_spark": [
+      0,
+      22
+    ],
+    "challenge": [
+      0,
+      34
+    ],
+    "cleave_l": [
+      0,
+      28
+    ],
+    "cleave_r": [
+      0,
+      28
+    ],
+    "dodge": [
+      0,
+      19
+    ],
+    "earthbreaker_impact": [
+      0,
+      24
+    ],
+    "earthbreaker_rise": [
+      0,
+      60
+    ],
+    "ember": [
+      0,
+      24
+    ],
+    "flinch": [
+      0,
+      16
+    ],
+    "fracture_rune": [
+      0,
+      26
+    ],
+    "idle": [
+      0,
+      90
+    ],
+    "resonance_burst": [
+      0,
+      32
+    ],
+    "run": [
+      0,
+      36
+    ],
+    "runic_guard": [
+      0,
+      32
+    ],
+    "storm_step": [
+      0,
+      16
+    ]
+  },
+  "atlas_off_palette": 0,
+  "ok": true,
+  "regions": {
+    "boots": 2671,
+    "chest": 5453,
+    "gloves": 1172,
+    "helm": 640,
+    "weapon": 332
+  },
+  "char": "runebreaker",
+  "look": "common",
+  "atlas_id": "hero/runebreaker_common",
+  "src": "tools/modelgen/ai_src/runebreaker/common",
+  "weights": "heat",
+  "nearest_bone_fill": 0,
+  "length_ratios": {
+    "root": 1.0,
+    "hips": 1.0,
+    "spine": 1.0,
+    "chest": 1.0,
+    "head": 1.0,
+    "upper_arm.L": 1.331,
+    "forearm.L": 1.163,
+    "hand.L": 1.001,
+    "thigh.L": 1.0,
+    "shin.L": 1.0,
+    "foot.L": 1.0,
+    "upper_arm.R": 1.279,
+    "forearm.R": 1.116,
+    "hand.R": 1.0,
+    "thigh.R": 1.0,
+    "shin.R": 1.0,
+    "foot.R": 1.0
+  },
+  "atlas_px": 1024,
+  "px_per_m": 128
+}

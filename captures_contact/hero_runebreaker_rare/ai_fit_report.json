@@ -48,6 +48,14 @@
   ],
   "height_ok": true,
   "body_radius_wo_hands": 0.477,
+  "top": {
+    "z": 1.974,
+    "bone": "head",
+    "xy": [
+      0.0096,
+      0.0405
+    ]
+  },
   "clips": {
     "block": [
       0,

@@ -27,6 +27,7 @@ from mathutils.bvhtree import BVHTree
 from . import rig
 
 NO_DEFORM = ("root",)
+FAR_MARGIN = 0.12  # an influence farther than the dominant bone by this goes (lib.fit._prune_far)
 
 
 def _select_only(objs, active=None):
@@ -185,8 +186,37 @@ def auto_weights(obj, arm, voxel=0.012):
     left = _weightless(obj)
     if left:
         _nearest_bone(obj, arm, left)
+    _prune_far(obj, arm)
     _limit_normalize(obj, 4)
     return method, len(left)
+
+
+def _prune_far(obj, arm):
+    """Keeps only the influences of a vertex's dominant bone and its direct
+    neighbours (parent, children): bone heat leaks across gaps (a helm onto
+    the upper arms beside it), and the warp would then drag those parts along
+    when the A-pose arms swing down."""
+    near = {}
+    for b in arm.data.bones:
+        ring = {b.name}
+        if b.parent is not None:
+            ring.add(b.parent.name)
+        ring.update(c.name for c in b.children)
+        near[b.name] = ring
+    seg = {b.name: (b.head_local, b.tail_local) for b in arm.data.bones}
+    names = {vg.index: vg.name for vg in obj.vertex_groups}
+    groups = {vg.name: vg for vg in obj.vertex_groups}
+    for v in obj.data.vertices:
+        if len(v.groups) < 2:
+            continue
+        dom = names[max(v.groups, key=lambda g: g.weight).group]
+        keep = near.get(dom, {dom})
+        d_dom = _segment_dist(v.co, *seg[dom]) if dom in seg else 0.0
+        for g in list(v.groups):
+            name = names[g.group]
+            far = name in seg and _segment_dist(v.co, *seg[name]) > d_dom + FAR_MARGIN
+            if name != dom and (name not in keep or far):
+                groups[name].remove([v.index])
 
 
 def _limit_normalize(obj, limit):
@@ -333,6 +363,8 @@ def join_body(obj, kit, mats, name, arm):
     mod = obj.modifiers.new("Armature", "ARMATURE")
     mod.object = arm
     obj.parent = arm
+    if "UVMap" not in me.uv_layers:  # a look without kit parts (the underclothes)
+        me.uv_layers.new(name="UVMap", do_init=False)
     me.uv_layers.active = me.uv_layers["UVMap"]
     src_attr = me.attributes.get("src_id")
     if src_attr is not None:  # the AI weapon shows on the weapon slot (Cindermaw's override)
@@ -433,7 +465,9 @@ def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R",
 # Verification
 # ---------------------------------------------------------------------------
 
-def verify(body, arm, bones, budget, atlas_path=None, palette=None):
+def verify(body, arm, bones, budget, atlas_path=None, palette=None, all_slots=True):
+    """all_slots: every material slot carries faces (the single-mesh contract);
+    a gear look needs only its body (no glow on the underclothes)."""
     me = body.data
     tri = sum(len(p.vertices) - 2 for p in me.polygons)
     used = sorted({p.material_index for p in me.polygons})
@@ -452,15 +486,18 @@ def verify(body, arm, bones, budget, atlas_path=None, palette=None):
     def dominant(v):
         return names[max(v.groups, key=lambda g: g.weight).group] if len(v.groups) else ""
     body_r = max(math.hypot(v.co.x, v.co.y) for v in me.vertices if not dominant(v).startswith("hand"))
+    top = max(me.vertices, key=lambda v: v.co.z)
     clips = {a.name: [int(a.frame_range[0]), int(a.frame_range[1])] for a in bpy.data.actions}
     report = {
         "tris": tri, "budget": budget, "tris_ok": tri <= budget,
         "bones": [b.name for b in arm.data.bones], "bones_ok": set(tmpl) == {b.name for b in arm.data.bones}
         and bone_err < 1e-5,
-        "slots": [m.name for m in me.materials], "slots_used": used, "slots_ok": used == list(range(len(me.materials))),
+        "slots": [m.name for m in me.materials], "slots_used": used,
+        "slots_ok": used == list(range(len(me.materials))) if all_slots else 0 in used,
         "weights_over4": over4, "weightless": zero, "weights_ok": over4 == 0 and zero == 0,
         "bbox_min": _r(lo), "bbox_max": _r(hi), "height_ok": hi[2] <= 2.0 + 1e-3,
         "body_radius_wo_hands": round(body_r, 3),
+        "top": {"z": round(top.co.z, 3), "bone": dominant(top), "xy": _r((top.co.x, top.co.y))},
         "clips": clips,
     }
     if atlas_path and palette is not None:

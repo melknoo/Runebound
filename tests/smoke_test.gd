@@ -6628,8 +6628,15 @@ func _run() -> void:
 	_check(SaveGame.active == 0 and backdrop.hero.class_id == SaveGame.active_class_id(),
 		"clicking a character selects it and the fire shows its class")
 	var fire_looks := backdrop.hero.looks_shown()
-	_check(fire_looks.is_empty() or fire_looks[&"chest"] != &"bare",
-		"Rig v3: the fire shows the character in its saved gear (the start kit at least) %s" % [fire_looks])
+	var fire_ch := SaveGame.active_character()
+	var fire_ok := true
+	if not fire_looks.is_empty() and bool(fire_ch.get("kit", false)):
+		var want := HeroLook.looks_for(fire_ch.get("equipped", {}) as Dictionary, GameSettings.hide_helm())
+		for region: StringName in HeroLook.REGIONS:
+			var w: StringName = want[region]
+			var expect: StringName = w if region == &"weapon" and w == &"bare" else backdrop.hero._look._resolve(w)
+			fire_ok = fire_ok and fire_looks[region] == expect
+	_check(fire_ok, "Rig v3: the fire shows the character in its saved gear %s" % [fire_looks])
 	title.call(&"_select_character", chars_before)
 	title.call(&"_show_join")
 	var name_edit := title.get(&"_name_edit") as LineEdit

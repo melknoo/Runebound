@@ -158,7 +158,8 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     base = texbake.quantize(base_lin, ao, ramps)
     atlas.bake(body, size, atlas_path, skip_material_indices=cfg["skip"], base=base)
     body.data.uv_layers.remove(body.data.uv_layers[aimesh.SRC_UV])
-    report = fit.verify(body, arm, bones, cfg["budget"], atlas_path, [h for r in ramps for h in r])
+    report = fit.verify(body, arm, bones, cfg["budget"], atlas_path, [h for r in ramps for h in r],
+                        all_slots=look is None)
 
     parts = [body]
     if look is not None:

@@ -1,11 +1,15 @@
 {
 	"zone": "res://scenes/combat_lab.tscn",
 	"out": "captures_shots/rigv3_gear",
-	"comment": "Rig v3: visible gear on the hero (looks by rarity). The start kit (base clothes, recruit's runeblade), the full rare set with its sword, two mixes (rare chest on the underclothes, rare helm + gloves), close and at the gameplay zoom.",
+	"comment": "Rig v3: visible gear on the hero (looks by rarity). The start kit (base clothes, recruit's runeblade), the underclothes (empty slots), the common set, the full rare set with its sword, two mixes (rare chest on the underclothes, rare helm + gloves), close and at the gameplay zoom.",
 	"shots": [
 		{"name": "base_front", "class": "runebreaker", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
 			"actions": [{"wear": {"helm": "", "chest": "", "gloves": "", "boots": "", "weapon": ""}}, {"wear_kit": true}], "settle": 0.8},
 		{"name": "base_three_quarter", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3, "settle": 0.5},
+		{"name": "bare_front", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
+			"actions": [{"wear": {"helm": "", "chest": "", "gloves": "", "boots": "", "weapon": ""}}], "settle": 0.6},
+		{"name": "common_front", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
+			"actions": [{"wear": {"helm": "common", "chest": "common", "gloves": "common", "boots": "common", "weapon": "common"}}], "settle": 0.6},
 		{"name": "rare_front", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
 			"actions": [{"wear": {"helm": "rare", "chest": "rare", "gloves": "rare", "boots": "rare", "weapon": "rare"}}], "settle": 0.6},
 		{"name": "rare_three_quarter", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3, "settle": 0.5},

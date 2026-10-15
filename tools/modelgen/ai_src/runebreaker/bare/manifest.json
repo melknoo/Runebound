@@ -1,0 +1,65 @@
+{
+  "char_id": "runebreaker/bare",
+  "tag": "trellis_concept_31_s7",
+  "date": "2026-10-15",
+  "key": "runebreaker/bare",
+  "service": "TRELLIS.2 (microsoft/TRELLIS.2-4B, MIT) via HF Space microsoft/TRELLIS.2",
+  "space_revision": "ebf60b20fc5a4607f90a1c11c0aab0ceeda5429d",
+  "model_license": "MIT",
+  "seed": 7,
+  "resolution": "1024",
+  "decimation_target": 100000,
+  "texture_size": 2048,
+  "concept": {
+    "space": "black-forest-labs/FLUX.1-schnell",
+    "space_revision": "2569ee41266dd6d3a5e84c2a5ea3f4ad6e4ff25e",
+    "model_license": "Apache-2.0",
+    "prompt": "a stocky young warrior with the build of a heroic rune knight, broad V-shaped torso, about 4.5 heads tall, bare head with short dark brown hair and a short beard, a plain off-white linen undershirt with short sleeves, plain grey-brown linen trousers tied with a cord, bare forearms and bare hands, barefoot, full body character concept, front view, orthographic, standing straight in an A-pose with both arms held 45 degrees down and away from the body, elbows straight, legs slightly apart, feet flat, empty clenched fists, no weapon, no cape, nothing held, plain light grey background, even soft lighting, no cast shadow, stylized fantasy RPG game character, chunky exaggerated proportions, clean readable shapes, hand-painted texture style, high detail",
+    "key": "runebreaker/bare",
+    "seed": 31,
+    "width": 768,
+    "height": 1024,
+    "steps": 4,
+    "date": "2026-10-14",
+    "foreground_cover": 0.2556
+  },
+  "original": {
+    "tris": 96198,
+    "textures": [
+      [
+        2048,
+        2048
+      ]
+    ],
+    "bbox_min": [
+      -0.3134,
+      -0.1404,
+      -0.4996
+    ],
+    "bbox_max": [
+      0.3139,
+      0.1374,
+      0.4998
+    ]
+  },
+  "compact": {
+    "max_tris": 50000,
+    "tris": 50000,
+    "max_tex": 2048,
+    "jpeg_quality": 90,
+    "blender": "5.2.2 LTS",
+    "sha256": "9f307066a03ab25836e080a579e82f0d944c425605d28a9b35f1ec96ef0d3a80",
+    "bytes": 2121920
+  },
+  "license": {
+    "route": "MCP for Blender Premium (mcp-for-blender.com), paid plan",
+    "terms": {
+      "mcp_for_blender": "https://mcp-for-blender.com/terms (updated 2026-10-01): 'What you create is yours'; outputs come from third-party providers, the user checks fitness for purpose",
+      "tripo": "https://www.tripo3d.ai/help/privacy-policy/can-i-use-models-commercially : paid users may use, modify, distribute and commercially exploit generated models",
+      "rodin": "https://hyper3d.ai/legal/copyright-license : licence to sell, redistribute, modify, publish; no competing service, no training of competing AI models"
+    },
+    "checked": "2026-10-14",
+    "commercial": true,
+    "public_redistribution": true
+  }
+}

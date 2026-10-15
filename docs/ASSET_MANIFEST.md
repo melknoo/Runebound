@@ -180,7 +180,9 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   `assets/textures/char/hero/<class>_<look>_atlas.png`. Regions come from each
   face's dominant bones (`lib/fit.split_regions`), grown two face rings into
   their neighbours. Import settings copy the legacy rigs' (60 fps, named
-  skins, shadow meshes). Built: `runebreaker/base`, `runebreaker/rare`.
+  skins, shadow meshes): after a new look run `toolsun_godot.cmd import`,
+  `python tools/modelgen/hero_import.py`, import again. Built:
+  `runebreaker/{bare, base, common, rare}`.
 - Workflow per look: `ai_gen.py concept <class>/<look> --seeds ...` (review
   the PNGs, pick an A-pose with open arms), `ai_gen.py mesh <class>/<look>
   concept_<seed>.png --seed 7`, `blender ... ai_ingest.py -- <candidate dir>`,
@@ -198,8 +200,12 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
 - Lessons: weld glTF seam vertices before decimating (else the surface tears
   into hundreds of shells); pack an AI body's UV islands with a ~3 px margin;
   the AI paintings run dark, so `texbake.quantize` lifts the median lightness
-  to the ART_BIBLE key band before matching the ramps; AO darkens only below
-  0.35.
+  to the ART_BIBLE key band before matching the ramps (two stages: the ramp
+  by hue and chroma, the step by lightness - else a lifted skin turns gold);
+  AO darkens only below 0.35. Bone heat leaks across gaps (a helm onto the
+  upper arms): `lib.fit._prune_far` keeps a vertex's dominant bone and its
+  neighbours within 12 cm, else the A-pose arms swinging down drag the helm
+  up (`ai_fit_report.json` "top" names the highest vertex's bone).
 
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's

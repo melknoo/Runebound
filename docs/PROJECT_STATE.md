@@ -73,6 +73,10 @@ C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
   - Tests: smoke 930 green (start kit once, empty hands, hide helm, tooltip,
     drop rules, the bin's confirm); shots `rigv3_inventory`; the J list's
     group "Rig v3: Modelle & Ausrüstung".
+- **Runebreaker looks (2026-10-15):** `bare` (underclothes, the empty-slot
+  look) and `common` (iron half-plate, kettle helm) built; `magic` and
+  `legendary` wait for the GPU quota. Weapons stay script-built per tier
+  (`rune_sword`, `rune_rod`, `root_staff`).
 - **Phases 2 + 3 (built 2026-10-15): HeroLook everywhere, hide helm, co-op.**
   - NPCs borrowing a class rig with looks wear `Npc.looks` (the kit; Sigrun
     the rare plate), ghosts the kit (transparent), the title hero its saved

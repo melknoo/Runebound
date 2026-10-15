@@ -43,11 +43,19 @@
   ],
   "bbox_max": [
     0.5011,
-    0.2478,
+    0.2477,
     1.9702
   ],
   "height_ok": true,
   "body_radius_wo_hands": 0.51,
+  "top": {
+    "z": 1.97,
+    "bone": "head",
+    "xy": [
+      0.0451,
+      0.0095
+    ]
+  },
   "clips": {
     "block": [
       0,

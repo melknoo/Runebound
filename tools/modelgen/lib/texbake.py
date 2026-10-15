@@ -19,6 +19,7 @@ from . import rig
 AO_STEP = 0.35     # Cycles AO below this -> one ramp step darker (crevices only)
 LIFT_TARGET = 0.55  # OKLab L the body's median is lifted to: ART_BIBLE key planes 40-70 L*
 LIFT_MAX = 1.6      # AI paintings run dark (the first Runebreaker gambeson sat at ~27 L*)
+HUE_L_WEIGHT = 0.3  # lightness' share when picking the ramp (hue and chroma decide)
 AO_DISTANCE = 0.18  # metres, like lib.atlas's probe
 
 
@@ -143,9 +144,9 @@ def ramps_of(palette):
 
 
 def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chunk=1 << 18):
-    """Nearest ramp colour per texel in OKLab after lifting the body's median
-    lightness to `lift_target` (gain 1..LIFT_MAX, hue kept); AO darkens one
-    step; isolated texels (all 4 neighbours agree on another colour) take that
+    """Ramp colour per texel in OKLab after lifting the body's median
+    lightness to `lift_target` (gain 1..LIFT_MAX, hue kept): the ramp by hue
+    and chroma, the step by lightness; AO darkens one step; isolated texels (all 4 neighbours agree on another colour) take that
     colour. Returns sRGB floats (size, size, 3) holding palette colours only."""
     entries = [(ri, si) for ri, ramp in enumerate(ramps) for si in range(len(ramp))]
     pal_srgb = np.array([rig.hex_to_srgb(ramps[ri][si]) for ri, si in entries], dtype=np.float32)
@@ -158,10 +159,22 @@ def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chun
         gain = float(np.clip(lift_target / max(np.median(lab[covered, 0]), 1e-3), 1.0, LIFT_MAX))
         lab[:, 0] = np.minimum(lab[:, 0] * gain, 0.97)
         print("texbake: lightness gain %.2f" % gain)
+    # two stages: the ramp by hue and chroma (lightness counts a little), then
+    # the step within it by lightness - a lifted skin stays skin, not gold
+    ramp_of = np.array([e[0] for e in entries])
+    n_ramps = len(ramps)
     idx = np.empty(len(lab), dtype=np.int32)
     for i in range(0, len(lab), chunk):
-        d = ((lab[i:i + chunk, None, :] - pal_lab[None, :, :]) ** 2).sum(axis=2)
-        idx[i:i + chunk] = d.argmin(axis=1)
+        part = lab[i:i + chunk]
+        d = (part[:, None, 1:] - pal_lab[None, :, 1:]) ** 2
+        cost = d.sum(axis=2) + (HUE_L_WEIGHT * (part[:, None, 0] - pal_lab[None, :, 0])) ** 2
+        ramp_cost = np.full((len(part), n_ramps), np.inf, dtype=np.float32)
+        for r in range(n_ramps):
+            ramp_cost[:, r] = cost[:, ramp_of == r].min(axis=1)
+        best_ramp = ramp_cost.argmin(axis=1)
+        dl = np.abs(part[:, None, 0] - pal_lab[None, :, 0])
+        dl[ramp_of[None, :] != best_ramp[:, None]] = np.inf
+        idx[i:i + chunk] = dl.argmin(axis=1)
     idx = idx.reshape(h, w)
     # AO: one step down the same ramp
     lookup = {e: k for k, e in enumerate(entries)}
