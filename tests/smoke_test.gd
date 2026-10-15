@@ -5984,10 +5984,11 @@ func _run() -> void:
 				"Rig v3: a rare helm shows its look on the hero (%s)" % shown)
 			_check(HeroLook.decode(HeroLook.encode(HeroLook.looks_for(p2.equipment.equipped)))[&"helm"] == &"rare",
 				"Rig v3: the look survives the wire form")
-			p2.hide_helm = true
-			p2.refresh_look()
-			_check(p2.look.look_of(&"helm") == p2.look._resolve(&"bare"), "Rig v3: hide helm shows the bare head")
-			p2.hide_helm = false
+			var helm_was := GameSettings.hide_helm()
+			GameSettings.set_value("gameplay/hide_helm", true)  # the setting re-dresses the local hero
+			_check(p2.look.look_of(&"helm") == p2.look._resolve(&"bare") and bool(SaveGame.character_dict(p2)["hide_helm"]),
+				"Rig v3: hide helm shows the bare head (and travels in CHARACTER)")
+			GameSettings.set_value("gameplay/hide_helm", helm_was)
 			p2.equipment.unequip(ItemData.Slot.HELM)
 			_check(p2.look.look_of(&"helm") == p2.look._resolve(&"bare"), "Rig v3: unequipped helm -> bare head")
 			p2.equipment.discard(helm)
@@ -6144,6 +6145,16 @@ func _run() -> void:
 		"network state poses a puppet; 0 HP marks it dead without dying locally")
 	_check(not puppet.take_hit(HitInfo.create(10.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.LIGHT, Vector3.ZERO)),
 		"hits on a puppet are ignored (its owner decides)")
+	if puppet.look != null:  # Rig v3: what a remote hero wears
+		_check(puppet.look.look_of(&"chest") == &"base" and puppet.look.look_of(&"weapon") == &"base",
+			"Rig v3: a puppet wears the start kit until its owner's look arrives")
+		puppet.apply_remote_look([4, 4, 1, 1, 0], &"")  # rare helm + chest, kit gloves + boots, empty hands
+		_check(puppet.look.look_of(&"helm") == &"rare" and puppet.look.look_of(&"chest") == &"rare"
+			and puppet.look.look_of(&"boots") == &"base" and puppet.look.part(&"weapon") == null,
+			"Rig v3: HERO_LOOK dresses the puppet (rare helm and chest, empty hands)")
+	var look_msg := NetWorld.look_payload(7, zone_now.player)
+	_check(look_msg.size() == 3 and int(look_msg[0]) == 7 and (look_msg[1] as Array).size() == HeroLook.REGIONS.size(),
+		"Rig v3: the server's HERO_LOOK carries one look id per gear region")
 	zone_now.remove_player(puppet)
 	puppet.free()
 	var proxy_hero := Player.create(ClassData.load_by_id(&"elementalist"))
@@ -6616,6 +6627,9 @@ func _run() -> void:
 	title.call(&"_select_character", 0)
 	_check(SaveGame.active == 0 and backdrop.hero.class_id == SaveGame.active_class_id(),
 		"clicking a character selects it and the fire shows its class")
+	var fire_looks := backdrop.hero.looks_shown()
+	_check(fire_looks.is_empty() or fire_looks[&"chest"] != &"bare",
+		"Rig v3: the fire shows the character in its saved gear (the start kit at least) %s" % [fire_looks])
 	title.call(&"_select_character", chars_before)
 	title.call(&"_show_join")
 	var name_edit := title.get(&"_name_edit") as LineEdit

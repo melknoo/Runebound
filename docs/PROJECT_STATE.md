@@ -73,6 +73,18 @@ C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
   - Tests: smoke 930 green (start kit once, empty hands, hide helm, tooltip,
     drop rules, the bin's confirm); shots `rigv3_inventory`; the J list's
     group "Rig v3: Modelle & Ausrüstung".
+- **Phases 2 + 3 (built 2026-10-15): HeroLook everywhere, hide helm, co-op.**
+  - NPCs borrowing a class rig with looks wear `Npc.looks` (the kit; Sigrun
+    the rare plate), ghosts the kit (transparent), the title hero its saved
+    gear (`HeroPreview.show_character`).
+  - Settings -> Gameplay "Hide the helm" (`gameplay/hide_helm`, DE+EN):
+    the local hero shows the bare head at once; it travels in CHARACTER.
+  - **Protocol 16:** HERO_LOOK, `"kit"` / `"hide_helm"` in CHARACTER
+    ([TECHNICAL_ARCHITECTURE](TECHNICAL_ARCHITECTURE.md) "Visible gear"):
+    partners see your gear, hide-helm and Cindermaw. **A release must follow
+    before co-op** (the laptop still runs protocol 15).
+  - Smoke 934 green (puppet kit + HERO_LOOK, the payload, hide-helm in
+    CHARACTER, the title hero's gear).
 
 ## M13b the Stormwatch, the co-op dungeon (built 2026-10-13, the user's playtest is the gate)
 Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -

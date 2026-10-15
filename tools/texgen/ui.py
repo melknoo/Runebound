@@ -319,6 +319,27 @@ def icon_coin() -> Image.Image:
     return outlined(img)
 
 
+def icon_bin() -> Image.Image:
+    """Rig v3 inventory: the discard bin - a banded wooden bucket, a few
+    splinters over the rim, in the muted ink-and-ash of the UI (no role colour:
+    it is a tool, not an item)."""
+    img, d = canvas()
+    wood, wood_hi, wood_lo = rgb("#6E5A44"), rgb("#8C7458"), rgb("#4A3C2E")
+    band = rgb("#5A6070")
+    d.polygon([(4, 6), (15, 6), (14, 18), (5, 18)], fill=wood)          # the tapering body
+    d.line([7, 7, 7, 17], fill=wood_lo)                                  # staves
+    d.line([10, 7, 10, 17], fill=wood_lo)
+    d.line([13, 7, 12, 17], fill=wood_lo)
+    d.line([5, 7, 5, 16], fill=wood_hi)
+    d.rectangle([3, 4, 16, 6], fill=wood_hi)                             # the rim
+    d.line([3, 6, 16, 6], fill=wood_lo)
+    d.line([4, 10, 15, 10], fill=band)                                   # iron bands
+    d.line([5, 15, 14, 15], fill=band)
+    d.line([6, 1, 8, 4], fill=wood_hi)                                   # splinters over the rim
+    d.line([12, 2, 11, 4], fill=wood_hi)
+    return outlined(img)
+
+
 def icon_healing_draught() -> Image.Image:
     """M10b consumable: a round flask of health-red draught with a cork and a
     glint - the colour of the HUD's health bar it refills."""
@@ -1256,7 +1277,7 @@ def main() -> None:
                      ("rune_chain", icon_rune_chain), ("warden_leap", icon_warden_leap),
                      ("warding_rune", icon_warding_rune), ("frost_nova", icon_frost_nova),
                      ("flame_wall", icon_flame_wall), ("ball_lightning", icon_ball_lightning),
-                     ("ember_fall", icon_ember_fall), ("coin", icon_coin),
+                     ("ember_fall", icon_ember_fall), ("coin", icon_coin), ("bin", icon_bin),
                      ("healing_draught", icon_healing_draught), ("ember_tuber", icon_ember_tuber),
                      ("thorn_volley", icon_thorn_volley), ("mending_bloom", icon_mending_bloom),
                      ("barkskin", icon_barkskin), ("regrowth", icon_regrowth), ("root_grasp", icon_root_grasp),

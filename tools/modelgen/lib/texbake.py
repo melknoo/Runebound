@@ -76,7 +76,10 @@ def _bake_material(target, src_image=None, src_uv=None):
     return mat
 
 
-def _bake(obj, kind, target, src_image=None, src_uv=None, dst_uv="UVMap", samples=1):
+def _bake(obj, kind, target, sources=(), src_uv=None, dst_uv="UVMap", samples=1):
+    """Bake `kind` into `target` on the final UVs. `sources`: one image per
+    face source (face attribute "src_id": 0 the AI body, 1 an AI weapon, ...);
+    the object's slots and indices are swapped for the bake and restored."""
     scene = bpy.context.scene
     scene.render.engine = "CYCLES"
     scene.cycles.device = "CPU"
@@ -87,27 +90,43 @@ def _bake(obj, kind, target, src_image=None, src_uv=None, dst_uv="UVMap", sample
     if scene.world is None:
         scene.world = bpy.data.worlds.new("rigv3_world")
     scene.world.light_settings.distance = AO_DISTANCE
-    saved = [s.material for s in obj.material_slots]
-    mat = _bake_material(target, src_image, src_uv)
-    for s in obj.material_slots:
-        s.material = mat
+    me = obj.data
+    n = len(me.polygons)
+    saved_mats = list(me.materials)
+    saved_idx = np.empty(n, dtype=np.int32)
+    me.polygons.foreach_get("material_index", saved_idx)
+    src_attr = me.attributes.get("src_id")
+    src_ids = np.zeros(n, dtype=np.int32)
+    if src_attr is not None:
+        src_attr.data.foreach_get("value", src_ids)
+    mats = [_bake_material(target, img, src_uv) for img in sources] or [_bake_material(target)]
+    me.materials.clear()
+    for m in mats:
+        me.materials.append(m)
+    me.polygons.foreach_set("material_index", np.clip(src_ids, 0, len(mats) - 1) if sources else np.zeros(n, np.int32))
     for o in bpy.context.view_layer.objects:
-        o.select_set(False)
+        if o is not None:
+            o.select_set(False)
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     try:
         bpy.ops.object.bake(type=kind, uv_layer=dst_uv, use_clear=True, margin=4)
     finally:
-        for s, m in zip(obj.material_slots, saved):
-            s.material = m
-        bpy.data.materials.remove(mat)
+        me.materials.clear()
+        for m in saved_mats:
+            me.materials.append(m)
+        me.polygons.foreach_set("material_index", saved_idx)
+        for m in mats:
+            bpy.data.materials.remove(m)
 
 
 def transfer(obj, size, src_uv="src"):
-    """(base linear rgb (size, size, 3), ao (size, size)), rows bottom-up."""
-    src = bpy.data.images[obj["src_image"]]
+    """(base linear rgb (size, size, 3), ao (size, size)), rows bottom-up.
+    obj["src_images"]: the AI source images by face "src" id (obj["src_image"]
+    alone for a body without an AI weapon)."""
+    names = list(obj.get("src_images", [])) or [obj["src_image"]]
     col = _image("rigv3_base", size)
-    _bake(obj, "EMIT", col, src_image=src, src_uv=src_uv)
+    _bake(obj, "EMIT", col, sources=[bpy.data.images[nm] for nm in names], src_uv=src_uv)
     ao = _image("rigv3_ao", size)
     _bake(obj, "AO", ao, samples=32)
     base, occ = _pixels(col)[:, :, :3].copy(), _pixels(ao)[:, :, 0].copy()

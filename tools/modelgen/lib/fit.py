@@ -241,6 +241,47 @@ def warp(obj, fit_arm, bones):
 
 
 # ---------------------------------------------------------------------------
+# AI weapon of a look
+# ---------------------------------------------------------------------------
+
+def place_weapon(obj, grip, length, grip_frac=0.08, bone="hand.R"):
+    """An AI weapon generated upright (pommel down, tip up), its flat facing
+    the camera: centred on its long axis, scaled to `length`, its grip point
+    (`grip_frac` of the length above the pommel) moved to `grip` and turned
+    to point along -Y (the rig's rest: the weapon forward from the fist, as
+    lib.pose's "_blade" intent expects), rigidly weighted to `bone`."""
+    from . import aimesh
+    me = obj.data
+    lo, hi = aimesh.bounds(obj)
+    s = length / max(hi.z - lo.z, 1e-6)
+    me.transform(Matrix.Translation((-(lo.x + hi.x) * 0.5, -(lo.y + hi.y) * 0.5, -lo.z)))
+    me.transform(Matrix.Diagonal((s, s, s, 1.0)))
+    me.transform(Matrix.Translation((0.0, 0.0, -grip_frac * length)))
+    me.transform(Matrix.Rotation(math.radians(90.0), 4, "X"))  # +Z (the tip) -> -Y
+    me.transform(Matrix.Translation(Vector(grip)))
+    me.update()
+    for vg in list(obj.vertex_groups):
+        obj.vertex_groups.remove(vg)
+    vg = obj.vertex_groups.new(name=bone)
+    vg.add(list(range(len(me.vertices))), 1.0, "REPLACE")
+
+
+def join_weapon(body, weapon):
+    """Joins the placed AI weapon into the AI body before the kit: face
+    attribute "src" 1 (lib.texbake bakes it from its own image, split_regions
+    makes it the weapon region), body["src_images"] = [body image, weapon image]."""
+    images = [body["src_image"], weapon["src_image"]]
+    for obj, sid in ((body, 0), (weapon, 1)):
+        me = obj.data
+        attr = me.attributes.get("src_id") or me.attributes.new("src_id", "INT", "FACE")
+        attr.data.foreach_set("value", [sid] * len(me.polygons))
+    _select_only([body, weapon], active=body)
+    bpy.ops.object.join()
+    body["src_images"] = images
+    return body
+
+
+# ---------------------------------------------------------------------------
 # Script kit on the AI body
 # ---------------------------------------------------------------------------
 
@@ -293,6 +334,12 @@ def join_body(obj, kit, mats, name, arm):
     mod.object = arm
     obj.parent = arm
     me.uv_layers.active = me.uv_layers["UVMap"]
+    src_attr = me.attributes.get("src_id")
+    if src_attr is not None:  # the AI weapon shows on the weapon slot (Cindermaw's override)
+        src = [a.value for a in src_attr.data]
+        idx = [0] * len(me.polygons)
+        me.polygons.foreach_get("material_index", idx)
+        me.polygons.foreach_set("material_index", [2 if src[i] == 1 else idx[i] for i in range(len(idx))])
     return obj
 
 
@@ -322,10 +369,12 @@ def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R")
     dom = [names[max(v.groups, key=lambda g: g.weight).group] if len(v.groups) else "" for v in me.vertices]
     bone_region = {b: r for r, bones in regions.items() for b in bones}
     paint = [a.value for a in me.attributes["paint"].data]
+    src_attr = me.attributes.get("src_id")
+    src = [a.value for a in src_attr.data] if src_attr is not None else [0] * len(me.polygons)
     face_region = []
     for p in me.polygons:
-        if paint[p.index] != -1 and any(dom[i] == weapon_bone for i in p.vertices):
-            face_region.append("weapon")
+        if (paint[p.index] != -1 and any(dom[i] == weapon_bone for i in p.vertices)) or src[p.index] == 1:
+            face_region.append("weapon")  # script-kit parts in the fist, or the look's AI weapon
             continue
         votes = Counter(bone_region.get(dom[i], "chest") for i in p.vertices)
         face_region.append(max(sorted(votes), key=lambda r: votes[r]))

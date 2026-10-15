@@ -96,3 +96,7 @@ const POI_ACT := 37
 ## server -> client: [poi id, state dict] - its state now (also replayed to
 ## late joiners); M12
 const POI_STATE := 38
+## server -> client: [peer, look ids (HeroLook.encode: helm, chest, gloves,
+## boots, weapon), weapon legendary id] - what that hero visibly wears
+## (Rig v3), sent when it changes and replayed to late joiners
+const HERO_LOOK := 39

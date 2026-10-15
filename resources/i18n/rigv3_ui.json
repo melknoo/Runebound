@@ -38,5 +38,6 @@
 	"ui.inv.discard_yes": {"en": "Discard", "de": "Wegwerfen"},
 	"ui.inv.discard_no": {"en": "Keep", "de": "Behalten"},
 	"ui.inv.full": {"en": "Bag full", "de": "Tasche voll"},
-	"ui.inv.cant_drink": {"en": "Can't drink now", "de": "Gerade nicht möglich"}
+	"ui.inv.cant_drink": {"en": "Can't drink now", "de": "Gerade nicht möglich"},
+	"ui.settings.hide_helm": {"en": "Hide the helm (the hero's head shows; the helm still counts)", "de": "Helm ausblenden (der Kopf des Helden ist zu sehen, der Helm zählt weiter)"}
 }

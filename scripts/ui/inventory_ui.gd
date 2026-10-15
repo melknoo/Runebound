@@ -12,6 +12,7 @@ extends HBoxContainer
 
 const TILE := 60
 const ICON := 48  # the 16 px item art at 3x (its 32 px texture at 1.5x keeps whole art pixels)
+const HUD_ICON := 40  # HUD icons (consumables, the bin): their 40 px texture 1:1
 const COLS := 6
 const LEFT_SLOTS: Array[ItemData.Slot] = [ItemData.Slot.HELM, ItemData.Slot.AMULET, ItemData.Slot.CHEST]
 const RIGHT_SLOTS: Array[ItemData.Slot] = [ItemData.Slot.GLOVES, ItemData.Slot.RING, ItemData.Slot.BOOTS]
@@ -113,6 +114,7 @@ func _build() -> void:
 		var ct := Tile.make(self, &"consumable")
 		ct.cid = cid
 		ct.icon.texture = Hud.icon(cid)
+		ct.icon.custom_minimum_size = Vector2(HUD_ICON, HUD_ICON)
 		_bag_box.add_child(ct)
 	var grid := GridContainer.new()
 	grid.columns = COLS
@@ -129,6 +131,7 @@ func _build() -> void:
 	right.add_child(foot)
 	var bin := Tile.make(self, &"bin")
 	bin.icon.texture = Hud.icon(&"bin")
+	bin.icon.custom_minimum_size = Vector2(HUD_ICON, HUD_ICON)
 	if bin.icon.texture == null:
 		bin.count.text = Texts.t("ui.inv.bin")
 		bin.count.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -224,7 +227,7 @@ func _refresh() -> void:
 		ct.set_frame(Consumables.is_food(ct.cid) and n > 0, n > 0)
 	var cls := player.class_data
 	_info.text = Texts.t("ui.inv.level_class", [player.progression.level, cls.display_name if cls != null else ""])
-	_doll.show_hero(cls, HeroLook.looks_for(player.equipment.equipped, player.hide_helm), _blade_override())
+	_doll.show_hero(cls, HeroLook.looks_for(player.equipment.equipped, player.helm_hidden()), _blade_override())
 	if _hovered != null:
 		_show_tooltip(_hovered)
 

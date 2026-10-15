@@ -24,6 +24,8 @@ const RARITY_LOOK := {
 	ItemData.Rarity.RARE: &"rare", ItemData.Rarity.LEGENDARY: &"legendary",
 }
 const PART_PREFIX := "rg_"
+## What the start kit shows (a remote hero before its first HERO_LOOK, NPCs).
+const KIT_LOOKS := {&"helm": &"bare", &"chest": &"base", &"gloves": &"base", &"boots": &"base", &"weapon": &"base"}
 
 var model: Node3D
 var glow: StandardMaterial3D

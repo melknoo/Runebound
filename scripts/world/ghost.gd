@@ -42,10 +42,16 @@ func _build_visual(rig: String) -> void:
 	var scene := ArtKit.rig_scene(path)
 	if scene == null or DisplayServer.get_name() == "headless":
 		return
-	var model := scene.instantiate() as Node3D
-	model.rotation.y = PI
-	_visual.add_child(model)
-	ArtKit.dress_rig(model, rig, PALE, PALE, 0.6)
+	var model: Node3D
+	if HeroLook.available(StringName(rig)):  # Rig v3: the modular hero in its start kit
+		var look := HeroLook.create(_visual, StringName(rig), PALE, 0.6, PALE)
+		look.apply(HeroLook.KIT_LOOKS)
+		model = look.model
+	else:
+		model = scene.instantiate() as Node3D
+		model.rotation.y = PI
+		_visual.add_child(model)
+		ArtKit.dress_rig(model, rig, PALE, PALE, 0.6)
 	for mi: Node in model.find_children("*", "MeshInstance3D", true, false):
 		var mesh := mi as MeshInstance3D
 		for s in mesh.mesh.get_surface_count():

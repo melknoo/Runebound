@@ -46,7 +46,8 @@ AI = {
     "runebreaker": dict(rig="runebreaker", glb="runebreaker", atlas="runebreaker", palette="runebreaker",
                         bone_args=RB3_BONES, kit=gen.runebreaker_kit,
                         clips=gen.runebreaker_clips, skip=(1,), budget=10000, height=1.97,
-                        looks={"base": {"visor": False}, "rare": {}}),
+                        looks={"bare": {"visor": False}, "base": {"visor": False}, "rare": {}},
+                        grip=gen.runebreaker_grip, weapon=dict(length=1.3, grip_frac=0.08, tris=1600)),
     "marauder": dict(rig="marauder", glb="cinder_marauder", atlas="cinder_marauder", palette="cinder_marauder",
                      bone_args=gen.CM_BONES, kit=gen.marauder_kit,
                      clips=gen.marauder_clips, skip=(1, 2), budget=6000, height=1.85),
@@ -89,7 +90,9 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     obj = aimesh.load(os.path.join(src, "raw.glb"), cfg["glb"] + "_ai")
     dropped = aimesh.clean(obj)
     aimesh.normalize(obj, fj["yaw_deg"], fj["height"])
-    tris_in, tris_out = aimesh.decimate(obj, cfg["budget"] - KIT_TRIS)
+    has_weapon = look is not None and os.path.exists(os.path.join(src, "weapon", "raw.glb"))
+    weapon_tris = int(cfg["weapon"]["tris"]) if has_weapon else 0
+    tris_in, tris_out = aimesh.decimate(obj, cfg["budget"] - KIT_TRIS - weapon_tris)
     print("ai_fit: %s  %d -> %d tris, %d specks dropped" % (label, tris_in, tris_out, dropped))
 
     if detect:
@@ -106,8 +109,25 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     aimesh.smooth(obj)
     arm = rig.build_armature(cfg["rig"], bones)
 
+    kit_args = dict((cfg.get("looks") or {}).get(look, {}))
+    weapon_src = os.path.join(src, "weapon")
+    if has_weapon:
+        # the look's AI weapon replaces the script sword (lib.fit.place_weapon)
+        wcfg = dict(cfg["weapon"])
+        if os.path.exists(os.path.join(weapon_src, "fit.json")):
+            wcfg.update(_read_json(os.path.join(weapon_src, "fit.json")))
+        weapon = aimesh.load(os.path.join(weapon_src, "raw.glb"), cfg["glb"] + "_weapon")
+        aimesh.clean(weapon)
+        if wcfg.get("yaw_deg"):
+            aimesh.normalize(weapon, float(wcfg["yaw_deg"]), 1.0)
+        aimesh.decimate(weapon, int(wcfg["tris"]))
+        fit.place_weapon(weapon, cfg["grip"](cfg["bone_args"]), float(wcfg["length"]), float(wcfg["grip_frac"]))
+        aimesh.smooth(weapon)
+        obj = fit.join_weapon(obj, weapon)
+        kit_args["sword"] = False
+        print("ai_fit: %s weapon from %s" % (label, weapon_src))
+
     pm = rig.PartMesh(px_per_m=PX_PER_M)
-    kit_args = (cfg.get("looks") or {}).get(look, {})
     mats = cfg["kit"](pm, fit.snapper(obj), cfg["bone_args"], **kit_args)
     kit = pm.to_object(cfg["glb"] + "_kit", mats, arm)
     body = fit.join_body(obj, kit, mats, cfg["glb"], arm)
@@ -163,6 +183,10 @@ def main():
     for name in names or sorted(AI):
         looks = [opts["look"]] if "look" in opts else ([None] if not AI[name].get("looks") else list(AI[name]["looks"]))
         for look in looks:
+            label = name if look is None else "%s/%s" % (name, look)
+            if not opts.get("src") and not os.path.exists(os.path.join(HERE, "ai_src", *label.split("/"), "raw.glb")):
+                print("ai_fit: %s has no source yet (tools/modelgen/ai_src/%s), skipped" % (label, label))
+                continue
             build(name, look=look, src=opts.get("src"), detect=bool(opts.get("detect")), out=opts.get("out"),
                   sheets=bool(opts.get("sheets")))
     print("ai_fit done.")

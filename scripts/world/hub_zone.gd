@@ -106,6 +106,8 @@ func _build_zone() -> void:
 	var trainer := TrainerNpc.new()
 	trainer.name = "Trainer"
 	trainer.teaches_class = &"runebreaker"
+	# Rig v3: Sigrun, a veteran, in full rune plate (the rare look)
+	trainer.looks = {&"helm": &"rare", &"chest": &"rare", &"gloves": &"rare", &"boots": &"rare", &"weapon": &"rare"}
 	world.add_child(trainer)
 	trainer.global_position = TRAINER_SPOT
 	var to_fire := FIRE_POS - TRAINER_SPOT

@@ -1367,6 +1367,42 @@ never `DisplayServer` (headless bot clients are clients).
   drops its materials (else the renderer logged "material is null").
   Look review: `-- --snap=<png> --snap-page=<page>` (a test-run flag).
 
+## Visible gear (Rig v3, 2026-10-14)
+Heroes whose class has gear looks (`HeroLook.available`, only the
+Runebreaker so far) are modular; the other classes keep their single rig.
+- **Assets:** `assets/models/chars/hero/<class>/<look>.glb`, one per look
+  (`bare`, `base`, `common`, `magic`, `rare`, `legendary`), each the legacy
+  skeleton with the meshes `rg_helm`, `rg_chest`, `rg_gloves`, `rg_boots`,
+  `rg_weapon` (regions cut from one AI body, overlapping two face rings) and
+  its atlas `textures/char/hero/<class>_<look>_atlas.png`. Built by
+  `tools/modelgen/ai_fit.py` ([ASSET_MANIFEST](ASSET_MANIFEST.md) "Rig v3").
+- **HeroLook** (`scripts/player/hero_look.gd`): instances `base.glb` (its
+  skeleton and clips drive everything) and, per region, duplicates the
+  region mesh of the wanted look onto that skeleton (`skeleton = ".."`, skins
+  bind by bone name), hiding the base part. Surfaces are dressed by material
+  name: `*_glow` / `*_eyes` the hero's glow material, `*_blade` the weapon
+  override (Cindermaw), the rest the look's body material
+  (`ArtKit.character_material`, so the outline switch covers it). A missing
+  look resolves to the nearest lower one, then upwards; an empty weapon slot
+  shows no weapon. `release()` drops every material before the rig is freed.
+- **The rule:** `HeroLook.looks_for(equipped, hide_helm)` - start kit
+  (`ItemData.kit`) -> `base`, a dropped item -> its rarity's look, an empty
+  slot -> `bare`; helm, chest, gloves, boots, weapon (amulet and ring don't
+  show). Works on `Equipment.equipped` and on saved `"equipped"` dicts.
+- **Who uses it:** Player (`_build_hero_look`, `refresh_look` on
+  `Equipment.changed` and on the `gameplay/hide_helm` setting), the
+  inventory's 3D doll (`InventoryUI.DollView`, its own World3D), the title
+  hero (`HeroPreview.show_character`, the saved gear, the kit for characters
+  saved before it), NPCs (`Npc.looks`, the kit by default; Sigrun in the
+  rare look) and ghosts (the kit, made transparent).
+- **Co-op (protocol 16):** CHARACTER carries `"kit"` and `"hide_helm"`; the
+  server applies it to the proxy and broadcasts **HERO_LOOK** `[peer, ids,
+  weapon legendary]` (`HeroLook.encode`: one id per region, index into
+  `HeroLook.LOOKS`) when it changed, and replays every known look to a late
+  joiner after the HERO_SPAWNs. A client applies it to the puppet
+  (`Player.apply_remote_look`), or keeps it until the puppet spawns; a
+  puppet shows the kit until then.
+
 ## Player builds (2026-10-13)
 Windows installer + ZIP on GitHub Releases; the pipeline, pins and pitfalls
 are in [dev-notes/release-builds.md](dev-notes/release-builds.md). In the code:

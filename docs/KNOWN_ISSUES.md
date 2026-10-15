@@ -225,7 +225,9 @@
   purse radius 12 m, enemy health +70 % per extra hero, hurt margin 1.2 m.
 - Remote heroes: split-lance shards and the Glacier Heart frost field are
   not mirrored (their damage is; only the look is missing on the others'
-  screens); equipment looks (Cindermaw's molten blade) are not either.
+  screens). Equipment looks are mirrored since Rig v3 (HERO_LOOK, protocol
+  16, 2026-10-15): the visible gear by rarity, hide-helm and Cindermaw's
+  molten blade.
 - The Vessel's expanding ring hits by band, not by sphere: a forwarded ring
   hit carries no area, so only i-frames refuse it on the owner's side.
 - Free chests reset with the server's session (like singleplayer, not

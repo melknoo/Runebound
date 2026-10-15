@@ -72,6 +72,8 @@ const HURT_MARGIN := 0.3
 ## hero joins or leaves.
 const HP_PER_EXTRA_HERO := 0.7
 var _enemy_handlers: Dictionary = {}  # NetMsg kind -> handler (registered in setup)
+var _looks: Dictionary = {}          # server: peer -> its last HERO_LOOK payload (Rig v3)
+var _pending_looks: Dictionary = {}  # client: peer -> a HERO_LOOK that beat its HERO_SPAWN
 
 
 func setup(z: ZoneBase) -> void:
@@ -83,6 +85,7 @@ func setup(z: ZoneBase) -> void:
 	Net.on(NetMsg.HERO_DESPAWN, _on_hero_despawn)
 	Net.on(NetMsg.HERO_ACTION, _on_hero_action)
 	Net.on(NetMsg.CHARACTER, _on_character)
+	Net.on(NetMsg.HERO_LOOK, _on_hero_look)
 	_enemy_handlers = {
 		NetMsg.ENEMY_SPAWN: _on_enemy_spawn, NetMsg.ENEMY_STATE: _on_enemy_state_msg,
 		NetMsg.ENEMY_HIT: _on_enemy_hit_msg, NetMsg.ENEMY_DOT: _on_enemy_dot_msg,
@@ -114,15 +117,21 @@ func watch_local_hero(hero: Player) -> void:
 		Net.send_to_server(NetMsg.HERO_ACTION, [String(action)]))
 	var dirty := func() -> void: _char_dirty = true
 	hero.equipment.changed.connect(dirty)
+	GameSettings.changed.connect(_on_setting_for_look)  # Rig v3: hide-helm travels in CHARACTER
 	hero.abilities_changed.connect(dirty)
 	hero.progression.talents_changed.connect(dirty)
 	hero.progression.leveled_up.connect(func(_level: int) -> void: _char_dirty = true)
 	_send_character()
 
 
+func _on_setting_for_look(key: String) -> void:
+	if key == "gameplay/hide_helm":
+		_char_dirty = true
+
+
 func _exit_tree() -> void:
 	for kind: int in [NetMsg.HERO_STATE, NetMsg.SNAPSHOT, NetMsg.HERO_SPAWN, NetMsg.HERO_DESPAWN,
-			NetMsg.HERO_ACTION, NetMsg.CHARACTER]:
+			NetMsg.HERO_ACTION, NetMsg.CHARACTER, NetMsg.HERO_LOOK]:
 		for handler: Callable in [_on_hero_state, _on_snapshot, _on_hero_spawn, _on_hero_despawn,
 				_on_hero_action, _on_character]:
 			Net.off(kind, handler)
@@ -170,6 +179,9 @@ func _on_peer_ready(peer: int) -> void:
 		if other != peer:
 			Net.send_to_peer(peer, NetMsg.HERO_SPAWN, _spawn_payload(other))
 	Net.broadcast_zone(NetMsg.HERO_SPAWN, _spawn_payload(peer), Net.CH_EVENTS, peer)
+	for other: int in _looks:  # Rig v3: and what the others wear (theirs arrives with its CHARACTER)
+		if other != peer:
+			Net.send_to_peer(peer, NetMsg.HERO_LOOK, _looks[other])
 	for key in _opened_chests:  # and the chests already opened (M13: quietly, they were open before)
 		Net.send_to_peer(peer, NetMsg.CHEST_OPENED, [key, true])
 	for poi_id: String in poi_nodes:  # M12: every shared puzzle's state
@@ -188,6 +200,7 @@ func _on_peer_left(peer: int) -> void:
 	var proxy := heroes.get(peer) as Player
 	heroes.erase(peer)
 	_last_seq.erase(peer)
+	_looks.erase(peer)
 	if proxy != null and is_instance_valid(proxy):
 		zone.remove_player(proxy)
 		proxy.queue_free()
@@ -253,6 +266,37 @@ func _on_character(from: int, payload: Array) -> void:
 		return
 	SaveGame.apply_character(proxy, payload[0] as Dictionary)
 	Net.set_peer_level(from, proxy.progression.level)
+	_broadcast_look(from, proxy)
+
+
+## Server (Rig v3): what `peer`'s hero wears - its proxy's gear and
+## hide-helm - to everyone else, when it changed.
+func _broadcast_look(peer: int, proxy: Player) -> void:
+	var payload := look_payload(peer, proxy)
+	if _looks.get(peer, []) == payload:
+		return
+	_looks[peer] = payload
+	Net.broadcast_zone(NetMsg.HERO_LOOK, payload, Net.CH_EVENTS, peer)
+
+
+static func look_payload(peer: int, hero: Player) -> Array:
+	var weapon: ItemData = hero.equipment.equipped.get(ItemData.Slot.WEAPON)
+	return [peer, HeroLook.encode(HeroLook.looks_for(hero.equipment.equipped, hero.helm_hidden())),
+		String(weapon.legendary_id) if weapon != null else ""]
+
+
+## Client (Rig v3): a remote hero's gear; kept until its puppet exists.
+func _on_hero_look(_from: int, payload: Array) -> void:
+	if not Net.is_client() or payload.size() < 3:
+		return
+	var peer := int(payload[0])
+	if peer == Net.my_id():
+		return
+	var p := heroes.get(peer) as Player
+	if p != null and is_instance_valid(p):
+		p.apply_remote_look(payload[1] as Array, StringName(str(payload[2])))
+	else:
+		_pending_looks[peer] = payload
 
 
 func _on_hero_action(from: int, payload: Array) -> void:
@@ -365,6 +409,10 @@ func _on_hero_spawn(_from: int, payload: Array) -> void:
 	heroes[peer] = p
 	_samples[peer] = []
 	_add_nameplate(p, peer)
+	if _pending_looks.has(peer):  # Rig v3: its look came first
+		var look: Array = _pending_looks[peer]
+		_pending_looks.erase(peer)
+		p.apply_remote_look(look[1] as Array, StringName(str(look[2])))
 
 
 func _on_hero_despawn(_from: int, payload: Array) -> void:

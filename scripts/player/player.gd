@@ -986,8 +986,12 @@ var _rig_mesh: MeshInstance3D
 var _cindermaw_mat: StandardMaterial3D
 ## Rig v3: the modular hero (visible gear per slot), null on legacy rigs.
 var look: HeroLook
-## Settings -> Gameplay: the helm slot shows the base head (stats unchanged).
+## Hide-helm of a remote hero (proxies: from its CHARACTER); the local hero
+## reads Settings -> Gameplay instead (helm_hidden()).
 var hide_helm: bool = false
+## Puppets (Rig v3): what the owner's hero wears (HERO_LOOK); empty until then.
+var _remote_looks: Dictionary = {}
+var _remote_blade: StringName = &""
 
 
 ## Rig v3 hero: base rig + one region mesh per gear slot, re-dressed whenever
@@ -1004,6 +1008,8 @@ func _build_hero_look() -> bool:
 	_rune_glow = look.glow
 	_body_mat = look.body_material(&"base")
 	equipment.changed.connect(refresh_look)
+	if is_local:
+		GameSettings.changed.connect(_on_setting_for_look)
 	refresh_look()
 	resonance_changed.connect(_on_resonance_glow)
 	animator = CharacterAnimator.create(self, look.model, _anim_profile())
@@ -1016,13 +1022,37 @@ func _build_hero_look() -> bool:
 	return true
 
 
-## Shows the equipped gear (rarity looks) and a legendary weapon's own blade.
+## Shows the equipped gear (rarity looks) and a legendary weapon's own blade;
+## a puppet shows what its owner sent (HERO_LOOK), the start kit until then.
 func refresh_look() -> void:
 	if look == null:
 		return
-	look.apply(HeroLook.looks_for(equipment.equipped, hide_helm))
-	var weapon: ItemData = equipment.equipped.get(ItemData.Slot.WEAPON)
-	look.set_blade_material(_cindermaw_material() if weapon != null and weapon.legendary_id == &"cindermaw" else null)
+	var blade := &""
+	if net_role == NetRole.PUPPET:
+		look.apply(_remote_looks if not _remote_looks.is_empty() else HeroLook.KIT_LOOKS)
+		blade = _remote_blade
+	else:
+		look.apply(HeroLook.looks_for(equipment.equipped, helm_hidden()))
+		var weapon: ItemData = equipment.equipped.get(ItemData.Slot.WEAPON)
+		blade = weapon.legendary_id if weapon != null else &""
+	look.set_blade_material(_cindermaw_material() if blade == &"cindermaw" else null)
+
+
+## The local hero follows the setting; a remote one what its owner sent.
+func helm_hidden() -> bool:
+	return GameSettings.hide_helm() if is_local else hide_helm
+
+
+## Puppets: the owner's looks (HeroLook wire ids) and weapon legendary.
+func apply_remote_look(ids: Array, blade: StringName) -> void:
+	_remote_looks = HeroLook.decode(ids)
+	_remote_blade = blade
+	refresh_look()
+
+
+func _on_setting_for_look(key: String) -> void:
+	if key == "gameplay/hide_helm":
+		refresh_look()
 
 
 ## Cindermaw's basalt with a molten, breathing edge (built once per hero).

@@ -60,7 +60,8 @@ enum Transport { ENET, WS }
 ## 15 (M13b): the Stormwatch - a new zone and its Highlands gate (new ground
 ## on the spur), the party lock, NOTICE with a Texts key; all of M13b rides on
 ## it until a release.
-const PROTOCOL := 15
+## 16 (Rig v3): HERO_LOOK (visible gear), "kit" and "hide_helm" in CHARACTER.
+const PROTOCOL := 16
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

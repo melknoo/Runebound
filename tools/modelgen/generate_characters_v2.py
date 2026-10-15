@@ -236,7 +236,14 @@ def _hand_head(bones, side="R"):
     return next(h for n, _p, h, _t in humanoid_bones(**bones) if n == "hand." + side)
 
 
-def runebreaker_kit(pm, snap, bones=RB_BONES, visor=True):
+def runebreaker_grip(bones=RB_BONES):
+    """Armature-space centre of the Runebreaker's sword grip in the right fist
+    (the legacy offset from hand.R: (-0.4104, 0.84) at the wrist (-0.3876, 0.82))."""
+    hand = _hand_head(bones)
+    return (hand[0] - 0.0228, -0.01, hand[2] + 0.02)
+
+
+def runebreaker_kit(pm, snap, bones=RB_BONES, visor=True, sword=True):
     """Rig v3 (tools/modelgen/ai_fit.py): the script-built parts on an AI body,
     placed like build_runebreaker's: the visor slit (glow, `snap` seats it on
     the AI surface; looks with a bare head pass visor=False) and the rune
@@ -249,13 +256,18 @@ def runebreaker_kit(pm, snap, bones=RB_BONES, visor=True):
     steel = pm.paint(rb["steel"], 2)
     if visor:
         snap(pm.box("head", (0.21, 0.03, 0.035), (0, -0.182, 1.68), mat_index=1))
-    hand = _hand_head(bones)
-    hx, hz = hand[0] - 0.0228, hand[2] + 0.02  # legacy: (-0.4104, 0.84) at wrist (-0.3876, 0.82)
+    if not sword:  # an AI weapon of the look takes its place (ai_fit, lib.fit.place_weapon)
+        return _rb_mats()
+    hx, _gy, hz = runebreaker_grip(bones)
     pm.box("hand.R", (0.05, 0.05, 0.24), (hx, -0.01, hz), paint=leather)
     pm.box("hand.R", (0.3, 0.07, 0.05), (hx, -0.1, hz), paint=gold)
     pm.loft("hand.R", [(0.0, 0.07, 0.02, 0, 0), (0.95, 0.065, 0.02, 0, 0), (1.1, 0.012, 0.012, 0, 0)],
             sides=4, center=(hx, -0.12, hz), rot=(1.5708, 0, 0), paint=steel, mat_index=2)
     pm.box("hand.R", (0.018, 0.8, 0.026), (hx, -0.6, hz), mat_index=1)
+    return _rb_mats()
+
+
+def _rb_mats():
     return [rig.make_material("rb_body", "#FFFFFF"),
             rig.make_material("rb_glow", ROLES["resonance"]["body"], emission_hex=ROLES["resonance"]["body"],
                               strength=3.0),

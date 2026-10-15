@@ -525,7 +525,7 @@ func _show_hero(ch: Dictionary, flourish: bool) -> void:
 	if ch.is_empty():
 		_backdrop.hero.show_class(null)
 		return
-	_backdrop.hero.show_class(ClassData.load_by_id(StringName(str(ch.get("class_id", ClassData.DEFAULT_ID)))), flourish)
+	_backdrop.hero.show_character(ch, flourish)  # Rig v3: in the saved gear
 
 
 # ---------------------------------------------------------------------------

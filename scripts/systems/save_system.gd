@@ -442,6 +442,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 	player.restore_loadout(ch.get("loadout", []) as Array)  # M10: after the known abilities
 	player.gold = maxi(int(ch.get("gold", 0)), 0)
 	player.storm_shards = maxi(int(ch.get("storm_shards", 0)), 0)  # M13b, optional
+	player.hide_helm = bool(ch.get("hide_helm", false))  # Rig v3, a remote hero's choice
 	player.consumables = {}  # M10b: id -> count, clamped to the bag
 	var bag: Variant = ch.get("consumables", {})
 	if bag is Dictionary:
@@ -473,7 +474,8 @@ static func character_dict(player: Player) -> Dictionary:
 		"discovered": Array(player.discovered_zones),
 		"lore_read": Array(player.lore_read), "collected": Array(player.collected), "gathered": player.gathered.duplicate(),
 		"blessings": Array(player.blessings), "storm_shards": player.storm_shards,
-		"kit": true}  # Rig v3: the start kit was handed out (never again)
+		"kit": true,  # Rig v3: the start kit was handed out (never again)
+		"hide_helm": player.helm_hidden()}  # Rig v3: co-op partners see the bare head too
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:

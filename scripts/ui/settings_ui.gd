@@ -208,6 +208,7 @@ func _build_gameplay(page: VBoxContainer) -> void:
 	page.add_child(_check_row("Damage numbers", "gameplay/damage_numbers"))
 	page.add_child(_check_row("Pause when the window loses focus (solo)", "gameplay/pause_on_focus_loss"))
 	page.add_child(_check_row("ui.settings.update_check", "gameplay/update_check"))
+	page.add_child(_check_row("ui.settings.hide_helm", "gameplay/hide_helm"))
 	page.add_child(_check_row("Developer tools (F1 debug panel, J playtest list)", "gameplay/dev_tools"))
 
 

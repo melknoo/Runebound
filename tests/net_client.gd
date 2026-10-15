@@ -158,6 +158,12 @@ class Driver extends Node:
 				goto.queue.append(&"dodge")  # an action the other side must replay
 				if role == "c2":
 					hero.progression.add_xp(5000)  # levels up: the character goes to the server again
+					var helm := ItemData.new()  # Rig v3: the other side must see it (HERO_LOOK)
+					helm.slot = ItemData.Slot.HELM
+					helm.rarity = ItemData.Rarity.RARE
+					helm.display_name = "Net Helm"
+					hero.equipment.add_item(helm)
+					hero.equipment.equip(helm)
 				var their_spot := NetClient.hero_target(zone, other_role)
 				if not await _until(func() -> bool:
 					return Vector2(other.global_position.x - their_spot.x, other.global_position.z - their_spot.z).length() < 0.6,
@@ -170,6 +176,10 @@ class Driver extends Node:
 				if role == "c1" and not await _until(func() -> bool:
 					var entry: Dictionary = Net.roster.get(other.peer_id, {})
 					return int(entry.get("level", 1)) > 1, 20.0, "c2's new level in the roster"):
+					return
+				if role == "c1" and HeroLook.available(other.class_data.id) and not await _until(func() -> bool:
+					return (other.look != null and other.look.look_of(&"helm") == &"rare"
+						and other.look.look_of(&"chest") == &"base"), 20.0, "c2's rare helm and kit chest on its puppet (HERO_LOOK)"):
 					return
 				if other.net_role != Player.NetRole.PUPPET or other.is_local or other.collision_layer != 0:
 					_finish("fail: the other hero is not a puppet")

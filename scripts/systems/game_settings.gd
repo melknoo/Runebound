@@ -22,6 +22,7 @@ const DEFAULTS := {
 	"controls/sensitivity": 1.0, "controls/invert_y": false, "controls/zoom_speed": 1.0,
 	"gameplay/shake": 1.0, "gameplay/hurt_flash": true, "gameplay/damage_numbers": true,
 	"gameplay/pause_on_focus_loss": true, "gameplay/dev_tools": false, "gameplay/update_check": true,
+	"gameplay/hide_helm": false,
 	# M12: the language of the new texts (Texts); "auto" follows the system.
 	# Its own section, so the Gameplay tab's Reset leaves it alone.
 	"general/language": "auto",
@@ -177,6 +178,12 @@ func pause_on_focus_loss() -> bool:
 ## Player builds: the title screen asks GitHub for a newer release (UpdateCheck).
 func update_check() -> bool:
 	return bool(value("gameplay/update_check"))
+
+
+## Rig v3: the hero's helm slot shows the bare head (the helm still counts;
+## co-op partners see it too).
+func hide_helm() -> bool:
+	return bool(value("gameplay/hide_helm"))
 
 
 ## F1 debug panel, the J playtest list and its line on the title screen.

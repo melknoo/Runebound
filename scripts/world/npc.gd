@@ -18,11 +18,15 @@ const TURN_SPEED := 5.0
 @export var material_id: String = "runebreaker"
 @export var body_tint: Color = Color(0.86, 0.66, 0.42)
 @export var rune_color: Color = Color("#E8B23A")
+## Rig v3: what the NPC wears when its rig's class has gear looks (region ->
+## look, HeroLook); the start kit by default.
+@export var looks: Dictionary = HeroLook.KIT_LOOKS
 
 var _prompt: InteractPrompt
 var _visual: Node3D
 var _anim: AnimationPlayer
 var _home_yaw: float = 0.0
+var _look: HeroLook = null
 
 
 func _ready() -> void:
@@ -58,13 +62,20 @@ func _ready() -> void:
 
 
 func _build_rig() -> bool:
-	var scene := ArtKit.rig_scene(rig_path)
-	if scene == null:
-		return false
-	var model := scene.instantiate() as Node3D
-	model.rotation.y = PI  # Blender front lands at Godot +Z
-	_visual.add_child(model)
-	ArtKit.dress_rig(model, material_id, body_tint, rune_color)
+	var model: Node3D
+	var cls := StringName(rig_path.get_file().get_basename())
+	if HeroLook.available(cls):  # Rig v3: the class's modular hero in `looks`
+		_look = HeroLook.create(_visual, cls, rune_color, 1.0, body_tint)
+		_look.apply(looks)
+		model = _look.model
+	else:
+		var scene := ArtKit.rig_scene(rig_path)
+		if scene == null:
+			return false
+		model = scene.instantiate() as Node3D
+		model.rotation.y = PI  # Blender front lands at Godot +Z
+		_visual.add_child(model)
+		ArtKit.dress_rig(model, material_id, body_tint, rune_color)
 	var anims := model.find_children("*", "AnimationPlayer", true, false)
 	if not anims.is_empty():
 		_anim = anims[0] as AnimationPlayer

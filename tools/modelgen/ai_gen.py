@@ -49,6 +49,13 @@ FRAME = ("full body character concept, front view, orthographic, standing straig
          "lighting, no cast shadow, stylized fantasy RPG game character, chunky exaggerated proportions, "
          "clean readable shapes, hand-painted texture style, high detail")
 
+# Weapons (keys "<class>/<look>/weapon"): one upright object, its flat to the
+# camera, so lib.fit.place_weapon can lay it along the rig's forward axis.
+OBJECT_FRAME = ("a single object, standing perfectly upright and vertical with the tip pointing up and the "
+                "pommel or butt at the bottom, the whole object in view, flat side facing the camera, centred, "
+                "plain light grey background, even soft lighting, no cast shadow, nothing else in the picture, "
+                "stylized fantasy RPG game asset, chunky readable shapes, hand-painted texture style, high detail")
+
 PROMPTS = {
     # "<class>/<look>" for heroes (Rig v3 gear looks by rarity, same body under
     # every look so the regions swap cleanly), "<enemy>" for enemies.
@@ -66,6 +73,29 @@ PROMPTS = {
                          "4.5 heads tall, bare head with short dark brown hair and a short beard, a plain off-white "
                          "linen undershirt with short sleeves, plain grey-brown linen trousers tied with a cord, bare "
                          "forearms and bare hands, barefoot"),
+    "runebreaker/common": ("a stocky rune knight squire with the build of a heroic rune knight, broad V-shaped torso, "
+                           "about 4.5 heads tall, simple dented iron half-plate breastplate over a teal-grey padded "
+                           "gambeson, open-faced round iron kettle helmet over a short beard, mail sleeves, brown "
+                           "leather belt, leather gloves with iron knuckle plates, iron-capped leather boots"),
+    "runebreaker/magic": ("a heroic rune knight, broad V-shaped torso, about 4.5 heads tall, blued-steel chainmail "
+                          "hauberk under a steel breastplate, rounded steel pauldrons, steel nasal helm with a short "
+                          "teal plume, teal tabard with a steel-blue trim, steel gauntlets, steel greaves over "
+                          "leather boots, brown leather belt with a steel buckle"),
+    "runebreaker/legendary": ("a legendary rune knight, broad V-shaped torso, about 4.5 heads tall, ornate full plate "
+                              "of polished steel and gold, glowing teal runes etched into every plate, winged great "
+                              "helm with a narrow glowing visor and a tall teal crest, huge layered pauldrons with "
+                              "gold edges, long teal tabard with gold embroidery, gold-trimmed gauntlets and sabatons"),
+    "runebreaker/base/weapon": ("a plain recruit's longsword, straight iron blade, simple iron crossguard, "
+                                "leather-wrapped grip, round iron pommel"),
+    "runebreaker/common/weapon": ("a sturdy iron longsword, broad straight blade with a fuller, squared iron "
+                                  "crossguard, brown leather grip, faceted iron pommel"),
+    "runebreaker/magic/weapon": ("a blued-steel rune longsword, broad blade with a thin teal rune line along the "
+                                 "fuller, steel crossguard with small curled tips, teal-wrapped grip, steel pommel"),
+    "runebreaker/rare/weapon": ("an ornate rune knight's longsword, broad steel blade with glowing teal runes "
+                                "engraved along the fuller, gold-trimmed crossguard, leather grip, gold pommel"),
+    "runebreaker/legendary/weapon": ("a legendary runeblade, massive broad steel blade covered in glowing teal "
+                                     "runes, winged gold crossguard with a teal gem, gold-wrapped grip, large gold "
+                                     "pommel with a glowing rune stone"),
     "marauder": ("a hunched ash raider brute leaning forward, bulky barrel chest, heavy muscular forearms and big "
                  "fists, rust-red leathery hide skin, one huge rusty iron shoulder plate on the left shoulder with "
                  "three bone spikes, rusted plate chest guard, bone jaw guard over the mouth, two curved bone horns, "
@@ -176,7 +206,7 @@ def concept(char, seeds, steps=4):
     rev = _revision(FLUX, token)
     out = os.path.join(OUT_DIR, char)
     os.makedirs(out, exist_ok=True)
-    prompt = "%s, %s" % (PROMPTS[char], FRAME)
+    prompt = "%s, %s" % (PROMPTS[char], OBJECT_FRAME if char.endswith("/weapon") else FRAME)
     for seed in seeds:
         try:
             result, used = client.predict(prompt=prompt, seed=seed, randomize_seed=False, width=768, height=1024,
