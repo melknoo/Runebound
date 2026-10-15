@@ -220,6 +220,11 @@
 - Only the Highlands have a map; Runehold's travel panel shows the list only.
 - The new drop rates may feel stingy in the arena; tune in `ItemGenerator`.
 
+## Test flakes
+- Smoke "M13 elements: a frost-charged strike freezes the strip" failed once
+  on a slow run (335 s instead of ~270 s, 2026-10-15) and passed on the rerun:
+  it waits a fixed number of frames for the ice to form.
+
 ## M09 open items (needs the user's playtest)
 - Numbers to feel in play: party countdown 5 s, reward radius 60 m, chest
   purse radius 12 m, enemy health +70 % per extra hero, hurt margin 1.2 m.

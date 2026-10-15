@@ -33,7 +33,7 @@ from lib import aimesh, atlas, fit, rig, texbake  # noqa: E402
 
 PX_PER_M = 128          # art_spec texel_density.character_px_per_m (Rig v3)
 ATLAS_SIZES = (256, 512, 1024)
-KIT_TRIS = 400          # reserve for the script kit inside the budget
+KIT_TRIS = 700          # reserve for the script kit (visor, rune sword) inside the budget
 UV_MARGIN = 0.003       # ~3 px at 1024: an AI body unwraps into hundreds of islands
 
 # Rig v3 skeletons: the legacy ones with proportions the AI bodies share (the
@@ -46,7 +46,9 @@ AI = {
     "runebreaker": dict(rig="runebreaker", glb="runebreaker", atlas="runebreaker", palette="runebreaker",
                         bone_args=RB3_BONES, kit=gen.runebreaker_kit,
                         clips=gen.runebreaker_clips, skip=(1,), budget=10000, height=1.97,
-                        looks={"bare": {"visor": False}, "base": {"visor": False}, "rare": {}},
+                        looks={"bare": {"visor": False, "sword": False}, "base": {"visor": False, "tier": "base"},
+                               "common": {"visor": False, "tier": "common"}, "magic": {"visor": False, "tier": "magic"},
+                               "rare": {"tier": "rare"}, "legendary": {"tier": "legendary"}},
                         grip=gen.runebreaker_grip, weapon=dict(length=1.3, grip_frac=0.08, tris=1600)),
     "marauder": dict(rig="marauder", glb="cinder_marauder", atlas="cinder_marauder", palette="cinder_marauder",
                      bone_args=gen.CM_BONES, kit=gen.marauder_kit,

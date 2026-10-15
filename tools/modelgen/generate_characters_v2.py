@@ -243,27 +243,96 @@ def runebreaker_grip(bones=RB_BONES):
     return (hand[0] - 0.0228, -0.01, hand[2] + 0.02)
 
 
-def runebreaker_kit(pm, snap, bones=RB_BONES, visor=True, sword=True):
-    """Rig v3 (tools/modelgen/ai_fit.py): the script-built parts on an AI body,
-    placed like build_runebreaker's: the visor slit (glow, `snap` seats it on
-    the AI surface; looks with a bare head pass visor=False) and the rune
-    sword in the right fist, kept at the legacy offset from hand.R (the v3
+# Rig v3 rune swords per gear look: (blade width scale, guard style, grip
+# paint, metal paint, rune glow, pommel style). The rune fuller glows with
+# the hero's resource (slot 1): the runes are its in-world meter.
+RB_SWORDS = {
+    "base": dict(width=1.0, guard="bar", grip="leather", metal="iron", glow=True, pommel="round"),
+    "common": dict(width=1.05, guard="block", grip="leather", metal="iron", glow=True, pommel="facet"),
+    "magic": dict(width=1.1, guard="curl", grip="teal", metal="steel", glow=True, pommel="facet"),
+    "rare": dict(width=1.15, guard="gold", grip="leather", metal="steel", glow=True, pommel="gold"),
+    "legendary": dict(width=1.3, guard="wing", grip="gold", metal="steel", glow=True, pommel="gem"),
+}
+
+
+def rune_sword(pm, grip, tier="base"):
+    """Rig v3: a detailed rune sword on hand.R, modelled along -Y from the
+    fist (lib.pose "_blade" convention): a faceted blade with a ricasso and a
+    point, the fuller (glowing runes or a groove), a crossguard per tier, a
+    ridged grip and a pommel. `grip`: the grip centre (runebreaker_grip)."""
+    rb = PAL["runebreaker"]
+    spec = RB_SWORDS.get(tier, RB_SWORDS["base"])
+    metal = pm.paint(rb["steel"] if spec["metal"] == "steel" else rb["iron"], 3)
+    dark = pm.paint(rb["iron"], 1)
+    gold = pm.paint(rb["gold_trim"], 3)
+    wrap = pm.paint({"leather": rb["leather"], "teal": rb["teal_cloth"], "gold": rb["gold_trim"]}[spec["grip"]], 2,
+                    "hide" if spec["grip"] == "leather" else "cloth")
+    gx, gy, gz = grip
+    fwd = (1.5708, 0.0, 0.0)  # local +Z -> armature -Y (forward from the fist)
+
+    def along(rings, sides, paint=0, mat_index=0, phase=None):
+        return pm.loft("hand.R", rings, sides=sides, center=(gx, gy, gz), rot=fwd, paint=paint,
+                       mat_index=mat_index, phase=phase)
+
+    w = spec["width"]
+    # blade: hexagonal section (sharp edges left and right), ricasso -> belly -> point
+    along([(0.12, 0.024 * w, 0.011, 0, 0), (0.2, 0.034 * w, 0.012, 0, 0), (0.62, 0.034 * w, 0.011, 0, 0),
+           (0.98, 0.03 * w, 0.01, 0, 0), (1.14, 0.016 * w, 0.007, 0, 0), (1.24, 0.001, 0.001, 0, 0)],
+          6, paint=metal, mat_index=2, phase=0.0)  # slot 2: the blade a legendary re-skins (Cindermaw)
+    # the fuller: a diamond ridge proud of both flats (runes glow on the better swords)
+    along([(0.2, 0.007 * w, 0.0128, 0, 0), (0.9, 0.007 * w, 0.0122, 0, 0), (0.98, 0.002, 0.0108, 0, 0)],
+          4, paint=dark, mat_index=1 if spec["glow"] else 0, phase=1.5708)
+    # crossguard: rings along the character's left-right (local X after the turn)
+    guard_y = 0.11
+    across = (0.0, 1.5708, 0.0)
+    styles = {
+        "bar": [(-0.15, 0.012, 0.014, 0, 0), (-0.13, 0.015, 0.016, 0, 0), (0.13, 0.015, 0.016, 0, 0),
+                (0.15, 0.012, 0.014, 0, 0)],
+        "block": [(-0.16, 0.018, 0.02, 0, 0), (-0.05, 0.022, 0.022, 0, 0), (0.05, 0.022, 0.022, 0, 0),
+                  (0.16, 0.018, 0.02, 0, 0)],
+        "curl": [(-0.17, 0.008, 0.01, 0, -0.05), (-0.15, 0.013, 0.015, 0, -0.02), (-0.06, 0.018, 0.02, 0, 0),
+                 (0.06, 0.018, 0.02, 0, 0), (0.15, 0.013, 0.015, 0, -0.02), (0.17, 0.008, 0.01, 0, -0.05)],
+        "gold": [(-0.17, 0.012, 0.016, 0, -0.02), (-0.12, 0.018, 0.02, 0, 0), (-0.04, 0.03, 0.026, 0, 0),
+                 (0.04, 0.03, 0.026, 0, 0), (0.12, 0.018, 0.02, 0, 0), (0.17, 0.012, 0.016, 0, -0.02)],
+        "wing": [(-0.24, 0.006, 0.01, -0.07, 0.04), (-0.2, 0.014, 0.016, -0.04, 0.02), (-0.1, 0.022, 0.022, -0.01, 0),
+                 (-0.03, 0.034, 0.03, 0, 0), (0.03, 0.034, 0.03, 0, 0), (0.1, 0.022, 0.022, -0.01, 0),
+                 (0.2, 0.014, 0.016, -0.04, 0.02), (0.24, 0.006, 0.01, -0.07, 0.04)],
+    }
+    guard_paint = gold if spec["guard"] in ("gold", "wing") else metal
+    pm.loft("hand.R", styles[spec["guard"]], sides=8, center=(gx, gy - guard_y, gz), rot=across, paint=guard_paint)
+    if spec["guard"] in ("gold", "wing"):  # a set stone in the guard's middle (glows)
+        pm.loft("hand.R", [(-0.044, 0.008, 0.008, 0, 0), (-0.03, 0.016, 0.016, 0, 0), (0.03, 0.016, 0.016, 0, 0),
+                           (0.044, 0.008, 0.008, 0, 0)],
+                sides=6, center=(gx, gy - guard_y, gz), rot=(0.0, 0.0, 0.0), mat_index=1)  # through both flats
+    # grip: ridged wrap between the guard and the pommel
+    rings = []
+    for k in range(9):
+        z = -0.09 + 0.0225 * k
+        r = 0.021 if k % 2 == 0 else 0.025
+        rings.append((z, r, r, 0, 0))
+    along(rings, 8, paint=wrap)
+    # pommel
+    pom = {"round": [(-0.1, 0.02, 0.02), (-0.115, 0.032, 0.032), (-0.14, 0.03, 0.03), (-0.155, 0.012, 0.012)],
+           "facet": [(-0.1, 0.022, 0.022), (-0.12, 0.034, 0.03), (-0.145, 0.034, 0.03), (-0.165, 0.01, 0.01)],
+           "gold": [(-0.1, 0.024, 0.024), (-0.12, 0.04, 0.036), (-0.15, 0.04, 0.036), (-0.175, 0.012, 0.012)],
+           "gem": [(-0.1, 0.026, 0.026), (-0.125, 0.05, 0.044), (-0.16, 0.05, 0.044), (-0.19, 0.014, 0.014)]}
+    along([(z, rx, ry, 0, 0) for z, rx, ry in pom[spec["pommel"]]], 6 if spec["pommel"] == "facet" else 8,
+          paint=gold if spec["pommel"] in ("gold", "gem") else metal)
+    if spec["pommel"] == "gem":
+        along([(-0.13, 0.026, 0.054, 0, 0), (-0.155, 0.026, 0.054, 0, 0)], 6, mat_index=1, phase=1.5708)
+
+
+def runebreaker_kit(pm, snap, bones=RB_BONES, visor=True, sword=True, tier="base"):
+    """Rig v3 (tools/modelgen/ai_fit.py): the script-built parts on an AI body:
+    the visor slit (glow, `snap` seats it on the AI surface; looks with a bare
+    head pass visor=False) and the look's rune sword (rune_sword, `tier` = the
+    gear look) in the right fist, at the legacy offset from hand.R (the v3
     skeleton has shorter arms). The chest sigil is gone: the AI chest plate
     carries its own rune."""
-    rb = PAL["runebreaker"]
-    leather = pm.paint(rb["leather"], 2, "hide")
-    gold = pm.paint(rb["gold_trim"], 2)
-    steel = pm.paint(rb["steel"], 2)
     if visor:
         snap(pm.box("head", (0.21, 0.03, 0.035), (0, -0.182, 1.68), mat_index=1))
-    if not sword:  # an AI weapon of the look takes its place (ai_fit, lib.fit.place_weapon)
-        return _rb_mats()
-    hx, _gy, hz = runebreaker_grip(bones)
-    pm.box("hand.R", (0.05, 0.05, 0.24), (hx, -0.01, hz), paint=leather)
-    pm.box("hand.R", (0.3, 0.07, 0.05), (hx, -0.1, hz), paint=gold)
-    pm.loft("hand.R", [(0.0, 0.07, 0.02, 0, 0), (0.95, 0.065, 0.02, 0, 0), (1.1, 0.012, 0.012, 0, 0)],
-            sides=4, center=(hx, -0.12, hz), rot=(1.5708, 0, 0), paint=steel, mat_index=2)
-    pm.box("hand.R", (0.018, 0.8, 0.026), (hx, -0.6, hz), mat_index=1)
+    if sword:  # (an AI weapon of the look takes its place otherwise: lib.fit.place_weapon)
+        rune_sword(pm, runebreaker_grip(bones), tier)
     return _rb_mats()
 
 

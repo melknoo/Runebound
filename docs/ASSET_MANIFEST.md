@@ -188,6 +188,13 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   `landmarks.png`), `... --sheets` (contact sheets in
   `captures_contact/hero_<class>_<look>/`), then promote the candidate
   (`ai_ingest.promote`) and rebuild from `ai_src`.
+- Weapons: the looks' weapons stay script-built (2026-10-15: the free GPU
+  quota goes to bodies and enemies): `rune_sword(pm, grip, tier)` in
+  `generate_characters_v2.py`, one per look (`RB_SWORDS`: blade width, guard
+  bar / block / curl / gold / wing, grip, metal, pommel), the blade on slot 2
+  (Cindermaw re-skins it), the rune fuller on slot 1 (the resource glow).
+  An AI weapon can still replace it: `<src>/weapon/raw.glb` (+ optional
+  `fit.json`: length, grip_frac, yaw_deg) -> `lib.fit.place_weapon`.
 - Lessons: weld glTF seam vertices before decimating (else the surface tears
   into hundreds of shells); pack an AI body's UV islands with a ~3 px margin;
   the AI paintings run dark, so `texbake.quantize` lifts the median lightness

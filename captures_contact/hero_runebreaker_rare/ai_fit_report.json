@@ -1,5 +1,5 @@
 {
-  "tris": 9668,
+  "tris": 9736,
   "budget": 10000,
   "tris_ok": true,
   "bones": [
@@ -37,8 +37,8 @@
   "weightless": 0,
   "weights_ok": true,
   "bbox_min": [
-    -0.5604,
-    -1.22,
+    -0.5804,
+    -1.25,
     0.0009
   ],
   "bbox_max": [
@@ -117,18 +117,18 @@
   "atlas_off_palette": 0,
   "ok": true,
   "regions": {
-    "boots": 939,
-    "chest": 7216,
-    "gloves": 1388,
-    "helm": 710,
-    "weapon": 56
+    "boots": 899,
+    "chest": 7028,
+    "gloves": 1330,
+    "helm": 686,
+    "weapon": 424
   },
   "char": "runebreaker",
   "look": "rare",
   "atlas_id": "hero/runebreaker_rare",
   "src": "tools/modelgen/ai_src/runebreaker/rare",
   "weights": "proxy",
-  "nearest_bone_fill": 4171,
+  "nearest_bone_fill": 4021,
   "length_ratios": {
     "root": 1.0,
     "hips": 1.0,
