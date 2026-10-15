@@ -55,16 +55,22 @@ static func apply_item_level(item: ItemData, lvl: int) -> void:
 
 
 ## Rig v3: the slots a class's start kit fills (what the hero visibly wears
-## from the first minute: the base clothes and the class weapon).
+## from the first minute: the base clothes and the class weapon). The
+## Elementalist's circlet and the druid's antler hood are part of who they
+## are, so their kits bring a helm; the Runebreaker starts bareheaded.
 const KIT_SLOTS: Array[ItemData.Slot] = [ItemData.Slot.WEAPON, ItemData.Slot.CHEST, ItemData.Slot.GLOVES,
 	ItemData.Slot.BOOTS]
+const KIT_HELM_CLASSES: Array[StringName] = [&"elementalist", &"druid"]
 
 
 ## The class's start kit: common, no affixes, item level 1, named from the
 ## text table (item.kit.<class>.<slot>; the English name is stored).
 static func starter_kit(class_id: StringName) -> Array[ItemData]:
 	var out: Array[ItemData] = []
-	for slot: ItemData.Slot in KIT_SLOTS:
+	var slots := KIT_SLOTS.duplicate()
+	if KIT_HELM_CLASSES.has(class_id):
+		slots.append(ItemData.Slot.HELM)
+	for slot: ItemData.Slot in slots:
 		var item := ItemData.new()
 		item.slot = slot
 		item.rarity = ItemData.Rarity.COMMON

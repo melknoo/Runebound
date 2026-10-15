@@ -66,7 +66,7 @@ func _build(cls: ClassData) -> void:
 	var glow := ArtKit.color("color_roles.%s.body" % cls.resource_color_role, Color("#3CBEB4"))
 	if HeroLook.available(cls.id):  # Rig v3: the modular hero, in the start kit until show_character
 		_look = HeroLook.create(self, cls.id, glow, 1.2, cls.body_tint)
-		_look.apply(HeroLook.KIT_LOOKS)
+		_look.apply(HeroLook.kit_looks(cls.id))
 		_model = _look.model
 	else:
 		var scene := ArtKit.rig_scene(cls.rig_path)

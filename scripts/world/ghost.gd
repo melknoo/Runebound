@@ -45,7 +45,7 @@ func _build_visual(rig: String) -> void:
 	var model: Node3D
 	if HeroLook.available(StringName(rig)):  # Rig v3: the modular hero in its start kit
 		var look := HeroLook.create(_visual, StringName(rig), PALE, 0.6, PALE)
-		look.apply(HeroLook.KIT_LOOKS)
+		look.apply(HeroLook.kit_looks(StringName(rig)))
 		model = look.model
 	else:
 		model = scene.instantiate() as Node3D

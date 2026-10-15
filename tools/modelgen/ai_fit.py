@@ -50,6 +50,21 @@ AI = {
                                "common": {"visor": False, "tier": "common"}, "magic": {"visor": False, "tier": "magic"},
                                "rare": {"tier": "rare"}, "legendary": {"tier": "legendary"}},
                         grip=gen.runebreaker_grip, weapon=dict(length=1.3, grip_frac=0.08, tris=1600)),
+    "elementalist": dict(rig="elementalist", glb="elementalist", atlas="elementalist", palette="elementalist",
+                         bone_args=gen.EL_BONES, kit=gen.elementalist_kit, clips=gen.elementalist_clips, skip=(1,),
+                         budget=10000, height=1.85,
+                         looks={"bare": {"circlet": False, "weapon": False}, "base": {"tier": "base"},
+                                "common": {"tier": "common"}, "magic": {"tier": "magic"}, "rare": {"tier": "rare"},
+                                "legendary": {"tier": "legendary"}},
+                         grip=gen.elementalist_grip, weapon=dict(length=0.8, grip_frac=0.15, tris=1200),
+                         robe_radius=0.15),  # the coat's skirt stays with the chest
+    "druid": dict(rig="druid", glb="druid", atlas="druid", palette="druid",
+                  bone_args=gen.DR_BONES, kit=gen.druid_kit, clips=gen.druid_clips, skip=(1,),
+                  budget=10000, height=1.98,
+                  looks={"bare": {"weapon": False}, "base": {"tier": "base"}, "common": {"tier": "common"},
+                         "magic": {"tier": "magic"}, "rare": {"tier": "rare"}, "legendary": {"tier": "legendary"}},
+                  grip=gen.druid_grip, weapon=dict(length=1.6, grip_frac=0.35, tris=1400),
+                  robe_radius=0.14),  # the robe's long skirt stays with the chest
     "marauder": dict(rig="marauder", glb="cinder_marauder", atlas="cinder_marauder", palette="cinder_marauder",
                      bone_args=gen.CM_BONES, kit=gen.marauder_kit,
                      clips=gen.marauder_clips, skip=(1, 2), budget=6000, height=1.85),
@@ -147,7 +162,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
 
     parts = [body]
     if look is not None:
-        regions = fit.split_regions(body)
+        regions = fit.split_regions(body, bones=bones, robe_radius=cfg.get("robe_radius"))
         parts = [regions[r] for r in sorted(regions)]
         report["regions"] = {r: sum(len(p.vertices) - 2 for p in o.data.polygons) for r, o in sorted(regions.items())}
     rig.export_glb(glb_path, active_action=bpy.data.actions["idle"], arm_obj=arm)

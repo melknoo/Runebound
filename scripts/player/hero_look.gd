@@ -24,8 +24,6 @@ const RARITY_LOOK := {
 	ItemData.Rarity.RARE: &"rare", ItemData.Rarity.LEGENDARY: &"legendary",
 }
 const PART_PREFIX := "rg_"
-## What the start kit shows (a remote hero before its first HERO_LOOK, NPCs).
-const KIT_LOOKS := {&"helm": &"bare", &"chest": &"base", &"gloves": &"base", &"boots": &"base", &"weapon": &"base"}
 
 var model: Node3D
 var glow: StandardMaterial3D
@@ -72,6 +70,15 @@ static func looks_for(equipped: Dictionary, hide_helm: bool = false) -> Dictiona
 	if hide_helm:
 		out[&"helm"] = &"bare"
 	return out
+
+
+## What `cls`'s start kit shows (a remote hero before its first HERO_LOOK,
+## NPCs, ghosts, the create page).
+static func kit_looks(cls: StringName) -> Dictionary:
+	var kit := {}
+	for item in ItemGenerator.starter_kit(cls):
+		kit[int(item.slot)] = item
+	return looks_for(kit)
 
 
 ## Wire form of a looks dict: one id per REGIONS entry.

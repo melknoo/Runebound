@@ -1029,7 +1029,7 @@ func refresh_look() -> void:
 		return
 	var blade := &""
 	if net_role == NetRole.PUPPET:
-		look.apply(_remote_looks if not _remote_looks.is_empty() else HeroLook.KIT_LOOKS)
+		look.apply(_remote_looks if not _remote_looks.is_empty() else HeroLook.kit_looks(class_data.id))
 		blade = _remote_blade
 	else:
 		look.apply(HeroLook.looks_for(equipment.equipped, helm_hidden()))

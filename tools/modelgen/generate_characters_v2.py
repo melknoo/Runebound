@@ -611,10 +611,12 @@ def runebreaker_clips(arm):
 EL_LEG = 0.9 - 0.1  # hip height minus ankle
 
 
+EL_BONES = dict(hip=0.9, chest_top=1.47, shoulder_x=0.27, arm_len=0.6, leg_x=0.12, head_base=1.5, head_top=1.8)
+
+
 def build_elementalist(sheets=False):
     rig.reset_scene()
-    arm = rig.build_armature("elementalist", humanoid_bones(
-        hip=0.9, chest_top=1.47, shoulder_x=0.27, arm_len=0.6, leg_x=0.12, head_base=1.5, head_top=1.8))
+    arm = rig.build_armature("elementalist", humanoid_bones(**EL_BONES))
     el = PAL["elementalist"]
     pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
     coat = pm.paint(el["coat"], 3, "cloth")
@@ -899,10 +901,12 @@ def elementalist_clips(arm):
 DR_LEG = 0.9 - 0.1  # hip height minus ankle
 
 
+DR_BONES = dict(hip=0.9, chest_top=1.46, shoulder_x=0.28, arm_len=0.6, leg_x=0.12, head_base=1.49, head_top=1.79)
+
+
 def build_druid(sheets=False):
     rig.reset_scene()
-    arm = rig.build_armature("druid", humanoid_bones(
-        hip=0.9, chest_top=1.46, shoulder_x=0.28, arm_len=0.6, leg_x=0.12, head_base=1.49, head_top=1.79))
+    arm = rig.build_armature("druid", humanoid_bones(**DR_BONES))
     dr = PAL["druid"]
     pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
     robe = pm.paint(dr["robe"], 3, "cloth")
@@ -1238,6 +1242,158 @@ def build_marauder(sheets=False):
 
     marauder_clips(arm)
     finish(body, arm, "cinder_marauder", "cinder_marauder", (1, 2), sheets)
+
+
+# ---------------------------------------------------------------------------
+# Rig v3 kits of the Elementalist and the druid: the script-built weapon per
+# gear look (rod / staff, slot 2 "_blade": a legendary re-skins it; its stone
+# or seed on slot 1: the resource glow) and the glow decals on the AI body.
+# ---------------------------------------------------------------------------
+
+def elementalist_grip(bones=EL_BONES):
+    """Centre of the rune rod's grip in the right fist (legacy: z wrist + 0.04)."""
+    hand = _hand_head(bones)
+    return (hand[0], 0.0, hand[2] + 0.04)
+
+
+def druid_grip(bones=DR_BONES):
+    """Centre of the staff's grip in the right fist (legacy: z wrist + 0.05)."""
+    hand = _hand_head(bones)
+    return (hand[0], 0.0, hand[2] + 0.05)
+
+
+EL_RODS = {  # (shaft paint, rings, crystal size, head style)
+    "base": dict(shaft="rod", rings=1, crystal=1.0, head="cap"),
+    "common": dict(shaft="rod", rings=2, crystal=1.1, head="cap"),
+    "magic": dict(shaft="rod", rings=2, crystal=1.2, head="prongs"),
+    "rare": dict(shaft="gold", rings=3, crystal=1.35, head="claw"),
+    "legendary": dict(shaft="gold", rings=3, crystal=1.6, head="halo"),
+}
+
+
+def rune_rod(pm, grip, tier="base"):
+    """Rig v3: the Elementalist's rune rod along -Y from the fist (lib.pose
+    "_blade"): a tapering shaft with gold rings, a head per tier (cap,
+    prongs, claw, a halo of floating shards) around the Aether crystal."""
+    el = PAL["elementalist"]
+    spec = EL_RODS.get(tier, EL_RODS["base"])
+    shaft = pm.paint(el["gold_trim"] if spec["shaft"] == "gold" else el["rod"], 2)
+    gold = pm.paint(el["gold_trim"], 3)
+    gx, gy, gz = grip
+    fwd = (1.5708, 0.0, 0.0)
+
+    def along(rings, sides, paint=0, mat_index=2, center=None, rot=fwd, phase=None):
+        return pm.loft("hand.R", rings, sides=sides, center=center or (gx, gy, gz), rot=rot, paint=paint,
+                       mat_index=mat_index, phase=phase)
+    along([(-0.12, 0.022, 0.022, 0, 0), (-0.1, 0.03, 0.03, 0, 0), (0.0, 0.026, 0.026, 0, 0),
+           (0.5, 0.022, 0.022, 0, 0), (0.6, 0.028, 0.028, 0, 0)], 8, paint=shaft)
+    for k in range(spec["rings"]):
+        z = 0.12 + 0.17 * k
+        along([(z, 0.032, 0.032, 0, 0), (z + 0.025, 0.032, 0.032, 0, 0)], 8, paint=gold)
+    head_y = -0.64
+    c = spec["crystal"]
+    if spec["head"] in ("cap", "prongs", "claw", "halo"):
+        along([(0.58, 0.03, 0.03, 0, 0), (0.62, 0.05 * c, 0.05 * c, 0, 0), (0.64, 0.045 * c, 0.045 * c, 0, 0)],
+              8, paint=gold)
+    if spec["head"] in ("prongs", "claw", "halo"):  # prongs cupping the crystal
+        n = 2 if spec["head"] == "prongs" else 3
+        for k in range(n):
+            a = 2.0 * math.pi * k / n
+            px, pz = math.cos(a) * 0.05 * c, math.sin(a) * 0.05 * c
+            pm.loft("hand.R", [(0.0, 0.01, 0.01, 0, 0), (0.12 * c, 0.008, 0.008, px * 0.4, pz * 0.4),
+                               (0.2 * c, 0.004, 0.004, -px * 0.3, -pz * 0.3)], sides=4,
+                    center=(gx + px, gy + head_y, gz + pz), rot=fwd, paint=gold, mat_index=2)
+    # the Aether crystal (glow): an elongated octahedron along the rod
+    pm.loft("hand.R", [(0.0, 0.004, 0.004, 0, 0), (0.06 * c, 0.042 * c, 0.042 * c, 0, 0),
+                       (0.16 * c, 0.002, 0.002, 0, 0)], sides=4, center=(gx, gy + head_y - 0.02, gz), rot=fwd,
+            mat_index=1, phase=0.0)
+    if spec["head"] == "halo":  # floating shards round the crystal
+        for k in range(4):
+            a = 2.0 * math.pi * k / 4 + 0.4
+            pm.loft("hand.R", [(0.0, 0.003, 0.003, 0, 0), (0.025, 0.014, 0.014, 0, 0), (0.06, 0.002, 0.002, 0, 0)],
+                    sides=4, center=(gx + math.cos(a) * 0.11, gy + head_y - 0.08, gz + math.sin(a) * 0.11), rot=fwd,
+                    mat_index=1, phase=0.0)
+
+
+DR_STAFFS = {  # (bindings, leaves, fork, seed size, blossoms)
+    "base": dict(bindings=0, leaves=1, fork=False, seed=1.0, blossoms=0),
+    "common": dict(bindings=2, leaves=2, fork=False, seed=1.1, blossoms=0),
+    "magic": dict(bindings=2, leaves=4, fork=False, seed=1.2, blossoms=0),
+    "rare": dict(bindings=3, leaves=4, fork=True, seed=1.35, blossoms=2),
+    "legendary": dict(bindings=3, leaves=6, fork=True, seed=1.6, blossoms=5),
+}
+
+
+def root_staff(pm, grip, tier="base"):
+    """Rig v3: the druid's staff along -Y from the fist, a third of it behind
+    the grip: a gnarled shaft (bound with cord on the better staffs), a curled
+    head (an antler fork from rare on) cradling the glowing seed, leaves and
+    blossoms sprouting by tier."""
+    dr = PAL["druid"]
+    spec = DR_STAFFS.get(tier, DR_STAFFS["base"])
+    wood = pm.paint(dr["staff"], 2, "hide")
+    cord = pm.paint(dr["bark"], 4, "hide")
+    leaf = pm.paint(dr["leaf"], 3, "cloth")
+    bone = pm.paint(dr["bone"], 3)
+    gx, gy, gz = grip
+    fwd = (1.5708, 0.0, 0.0)
+    rings = []
+    for k in range(9):  # gnarled: the centre wanders a little
+        z = -0.55 + 0.197 * k  # to 1.03: into the head's curl
+        r = 0.028 + 0.006 * math.sin(k * 1.7)
+        rings.append((z, r, r * 0.95, 0.008 * math.sin(k * 2.3), 0.008 * math.cos(k * 1.9)))
+    pm.loft("hand.R", rings, sides=7, center=(gx, gy, gz), rot=fwd, paint=wood, mat_index=2)
+    for k in range(spec["bindings"]):
+        z = 0.15 + 0.07 * k
+        pm.loft("hand.R", [(z, 0.034, 0.034, 0, 0), (z + 0.03, 0.034, 0.034, 0, 0)], sides=7,
+                center=(gx, gy, gz), rot=fwd, paint=cord, mat_index=2)
+    head_y = gy - 1.02
+    # the curl: two hooked branches meeting round the seed
+    for side in (1.0, -1.0):
+        pm.loft("hand.R", [(0.0, 0.022, 0.022, 0, 0), (0.06, 0.02, 0.02, 0.05 * side, 0.0),
+                           (0.12, 0.016, 0.016, 0.06 * side, 0.02), (0.17, 0.01, 0.01, 0.02 * side, 0.03)],
+                sides=6, center=(gx, head_y, gz), rot=fwd, paint=bone if spec["fork"] else wood, mat_index=2)
+    if spec["fork"]:  # antler tines up out of the head
+        for side in (1.0, -1.0):
+            pm.loft("hand.R", [(0.0, 0.012, 0.012, 0, 0), (0.1, 0.008, 0.008, 0.03 * side, -0.04),
+                               (0.16, 0.002, 0.002, 0.05 * side, -0.07)], sides=4,
+                    center=(gx + 0.03 * side, head_y - 0.1, gz + 0.03), rot=(0.4, 0.0, 0.0), paint=bone,
+                    mat_index=2)
+    c = spec["seed"]
+    pm.loft("hand.R", [(0.0, 0.004, 0.004, 0, 0), (0.035 * c, 0.035 * c, 0.035 * c, 0, 0),
+                       (0.08 * c, 0.03 * c, 0.03 * c, 0, 0), (0.11 * c, 0.003, 0.003, 0, 0)], sides=6,
+            center=(gx, head_y - 0.06, gz), rot=fwd, mat_index=1)  # the seed (glow)
+    for k in range(spec["leaves"]):
+        a = 2.0 * math.pi * k / max(spec["leaves"], 1)
+        pm.loft("hand.R", [(0.0, 0.004, 0.01, 0, 0), (0.05, 0.02, 0.006, 0, 0), (0.1, 0.002, 0.002, 0, 0)],
+                sides=4, center=(gx + math.cos(a) * 0.03, head_y + 0.02 + 0.04 * (k % 2), gz + math.sin(a) * 0.03),
+                rot=(1.5708 + 0.7 * math.sin(a), 0.0, a), paint=leaf, mat_index=2)
+    for k in range(spec["blossoms"]):
+        a = 2.0 * math.pi * k / max(spec["blossoms"], 1) + 0.3
+        pm.loft("hand.R", [(0.0, 0.012, 0.012, 0, 0), (0.015, 0.02, 0.02, 0, 0), (0.025, 0.004, 0.004, 0, 0)],
+                sides=5, center=(gx + math.cos(a) * 0.045, head_y - 0.03, gz + math.sin(a) * 0.045), rot=fwd,
+                mat_index=1)
+
+
+def elementalist_kit(pm, snap, bones=EL_BONES, circlet=True, weapon=True, tier="base"):
+    """Rig v3: the circlet's gem (glow, snapped onto the AI brow; looks
+    without a circlet pass circlet=False) and the look's rune rod."""
+    if circlet:
+        snap(pm.box("head", (0.03, 0.02, 0.03), (0, -0.125, 1.695), mat_index=1))
+    if weapon:
+        rune_rod(pm, elementalist_grip(bones), tier)
+    return [rig.make_material("el_body", "#FFFFFF"),
+            rig.make_material("el_glow", ROLES["aether"]["body"], emission_hex=ROLES["aether"]["body"], strength=3.0),
+            rig.make_material("el_blade", "#FFFFFF")]
+
+
+def druid_kit(pm, snap, bones=DR_BONES, weapon=True, tier="base"):
+    """Rig v3: the look's staff with its seed (the druid's glow lives there)."""
+    if weapon:
+        root_staff(pm, druid_grip(bones), tier)
+    return [rig.make_material("dr_body", "#FFFFFF"),
+            rig.make_material("dr_glow", ROLES["nature"]["body"], emission_hex=ROLES["nature"]["body"], strength=3.0),
+            rig.make_material("dr_blade", "#FFFFFF")]
 
 
 def marauder_kit(pm, snap, bones=CM_BONES):

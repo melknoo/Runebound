@@ -356,13 +356,16 @@ HUMANOID_REGIONS = {
 REGION_PREFIX = "rg_"
 
 
-def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R"):
+def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R", bones=None, robe_radius=None):
     """Cut the joined body into one object per gear region (rg_helm, rg_chest,
     rg_gloves, rg_boots, rg_weapon). A face goes to the region most of its
     vertices' dominant bones belong to; script-kit faces on `weapon_bone` are
     the weapon. Every region then grows `rings` face rings into its AI
     neighbours, so pieces of different looks overlap instead of gapping.
-    Each object keeps the armature, weights, slots and the shared atlas UVs."""
+    Each object keeps the armature, weights, slots and the shared atlas UVs.
+    robe_radius (robed classes): a boots face farther than this from both
+    shin bones is a robe or coat skirt and stays with the chest, so a long hem
+    never splits at the knee when looks are mixed."""
     from collections import Counter
     me = body.data
     names = {vg.index: vg.name for vg in body.vertex_groups}
@@ -378,6 +381,13 @@ def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R")
             continue
         votes = Counter(bone_region.get(dom[i], "chest") for i in p.vertices)
         face_region.append(max(sorted(votes), key=lambda r: votes[r]))
+    if robe_radius and bones:
+        shins = [(Vector(h), Vector(t)) for n, _p, h, t in bones if n.startswith("shin.")]
+        for p in me.polygons:
+            if face_region[p.index] == "boots" and src[p.index] != 1:
+                c = p.center
+                if min(_segment_dist(c, a, b) for a, b in shins) > robe_radius:
+                    face_region[p.index] = "chest"
     sets = {r: {i for i, fr in enumerate(face_region) if fr == r} for r in sorted(set(face_region))}
     bm = bmesh.new()
     bm.from_mesh(me)
