@@ -47,7 +47,7 @@ AI = {
                         bone_args=RB3_BONES, kit=gen.runebreaker_kit,
                         clips=gen.runebreaker_clips, skip=(1,), budget=10000, height=1.97,
                         looks={"bare": {"visor": False, "sword": False}, "base": {"visor": False, "tier": "base"},
-                               "common": {"visor": False, "tier": "common"}, "magic": {"visor": False, "tier": "magic"},
+                               "common": {"visor": False, "tier": "common"}, "magic": {"tier": "magic"},  # concept 62: a closed helm with a visor
                                "rare": {"tier": "rare"}, "legendary": {"tier": "legendary"}},
                         grip=gen.runebreaker_grip, weapon=dict(length=1.3, grip_frac=0.08, tris=1600)),
     "elementalist": dict(rig="elementalist", glb="elementalist", atlas="elementalist", palette="elementalist",
