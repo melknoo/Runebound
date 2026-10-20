@@ -28,6 +28,7 @@ func run(runner: Node) -> void:
 	await _save_v7()
 	await _director_in_the_lab()
 	await _dialogue()
+	await _cutscenes()
 	StoryDB.reload()  # drops the test quests
 	if own != null:
 		own.queue_free()
@@ -309,3 +310,42 @@ func _dialogue() -> void:
 	for n in [friend, trainer, mark]:
 		if is_instance_valid(n):
 			n.queue_free()
+
+
+## Phase 3: camera pans. Headless runs finish them at once (their end effects
+## still run); the full flow is checked with `play(id)` forced on: the hero
+## is held, the HUD and the tracker go, its own camera is current, a skip
+## puts everything back and shows the act card.
+func _cutscenes() -> void:
+	var hero: Player = lab.player
+	var ql := QuestLog.of(hero)
+	ql.from_dict({"v": 1, "act": 0})
+	ql.bind(hero)
+	var director := lab.quest_director
+	_check(director.cutscene != null and director.cutscene.get_parent() == director, "every director has a camera-pan layer")
+	StoryDB.add_test_cutscene("t_pan", {"safe": false, "shots": [
+		{"from": {"at": "hero", "offset": [0, 4, 8]}, "to": {"at": "hero", "offset": [0, 2, 4]}, "t": 30.0,
+			"say": "dlg.sigrun.intro.0", "speaker": "sigrun"},
+		{"from": [0, 10, 0], "look": [0, 0, 0], "t": 30.0}],
+		"fx": [{"t": 0.0, "kind": "shake", "amount": 0.1}],
+		"card": {"title": "act.1.title", "sub": "act.1.sub"}, "on_end": [{"act": 1}, {"beat": "t_pan_done"}]})
+	director.play_cutscene("t_pan")
+	_check(not director.cutscene.playing and ql.act == 1 and ql.has_beat("t_pan_done") and ql.seen.has("t_pan"),
+		"headless: a pan finishes at once, counts as seen and runs its end effects")
+	ql.from_dict({"v": 1, "act": 0})
+	var rig_cam := lab.camera_rig.camera
+	var forced := director.cutscene.play_forced("t_pan")
+	await t.call(&"_wait_frames", 2)
+	var cam := lab.get_viewport().get_camera_3d()
+	_check(forced and director.cutscene.playing and director.cutscene.visible and hero.input_locked
+		and not lab.hud.visible and cam != rig_cam and cam != null and cam.name == "CutsceneCamera",
+		"playing: letterbox up, HUD away, the hero held, the pan's own camera current")
+	var skip := InputEventAction.new()
+	skip.action = &"interact"
+	skip.pressed = true
+	director.cutscene._input(skip)
+	await t.call(&"_wait_frames", 2)
+	_check(not director.cutscene.playing and not director.cutscene.visible and lab.hud.visible and not hero.input_locked
+		and lab.get_viewport().get_camera_3d() == rig_cam and ql.act == 1,
+		"the interact key skips it: camera, HUD and hero back, its end effects ran")
+	ql.from_dict({})

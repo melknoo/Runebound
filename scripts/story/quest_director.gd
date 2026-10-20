@@ -23,11 +23,16 @@ var _enemies_seen: Dictionary = {}  # instance id -> true (connected once)
 ## M14a phase 2: what stage.json placed in this zone (StoryNpc, StoryMarker).
 var stage_nodes: Array[Node3D] = []
 var _stage_dirty: bool = false
+## M14a phase 3: the camera pans of this zone (one at a time).
+var cutscene: StoryCutscene
 
 
 func setup(z: ZoneBase) -> void:
 	zone = z
 	name = "QuestDirector"
+	cutscene = StoryCutscene.new()
+	cutscene.setup(z)
+	add_child(cutscene)
 
 
 ## Story checks and net tests switch the director on explicitly; a net-test
@@ -233,14 +238,10 @@ func _toast(key: String, qid: String) -> void:
 	zone.hud.toast(Texts.t(key, [Texts.t(str(StoryDB.quest(qid).get("title", qid)))]), QUEST_GOLD)
 
 
-## A camera pan (phase 3 plays it; until then it only counts as seen and
-## runs its end effects).
-func play_cutscene(id: String) -> void:
-	var c := StoryDB.cutscene(id)
-	if c.is_empty():
-		return
-	qlog.mark_seen(id)
-	StoryEffects.apply(c.get("on_end", []), hero, qlog)
+## Plays camera pan `id` (StoryCutscene; it marks it seen and runs its end
+## effects when it ends or is skipped). False when unknown or one is playing.
+func play_cutscene(id: String) -> bool:
+	return cutscene.play(id)
 
 
 # ---------------------------------------------------------------------------

@@ -256,6 +256,12 @@ static func add_test_dialogue(id: String, d: Dictionary) -> void:
 	_dialogue[id] = d
 
 
+## Tests: a camera pan that exists for this run only.
+static func add_test_cutscene(id: String, c: Dictionary) -> void:
+	ensure()
+	_cutscenes[id] = c
+
+
 ## Tests: an NPC that exists for this run only.
 static func add_test_npc(id: String, d: Dictionary) -> void:
 	ensure()

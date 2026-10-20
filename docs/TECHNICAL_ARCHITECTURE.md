@@ -1500,6 +1500,21 @@ Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
   them when the log changes. A hidden StoryNpc neither draws, collides nor
   ticks. Badges over story NPCs: "?" when a running quest wants to talk to
   them, "!" when they have a topic.
+- **Camera pans (phase 3):** `StoryCutscene` (`quest_director.cutscene`,
+  CanvasLayer 15), started by the effect `{"cutscene": id}`. Data in
+  `resources/story/cutscenes.json`: shots (`from` -> `to` glide with
+  smoothstep, `look`, `t`, an optional line with a speaker), timed fx
+  (`shard_fall`: the rune_shard prop falls from 26 m with flash, light,
+  ring, sound and trauma; `flash`, `shake`, `sfx`), an act `card` (shown with
+  `Hud.title_card` at the end), `on_end` effects. Anchors: `[x, y, z]` or
+  `{at: hero | npc:<id> | marker:<id> | poi:<id>, offset, local}`. Its own
+  Camera3D in `zone.world` (so the pixel post, a full-screen CanvasLayer,
+  still applies), letterbox bars, the HUD and tracker hidden, the hero held;
+  Esc / interact / Space skip in `_input` (before the pause menu, which
+  opens in `_unhandled_input`). `safe` pans wait until the hero is out of
+  combat (at most 10 s). It never pauses the world and runs on this machine
+  only; headless runs finish at once (seen + end effects), `play_forced`
+  runs the windowed flow in tests.
 - **Save v7:** `new_character` starts with `QuestLog.new_story()` (act 0,
   the prologue pending). v6 -> v7 gives every character act 1, the beat
   `legacy` (keeps its gates open), `boss:colossus` / `boss:vessel` from its
