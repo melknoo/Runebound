@@ -82,6 +82,12 @@ static func give(zone: ZoneBase, hero: Player, r: Dictionary) -> void:
 			continue
 		var s: Dictionary = spec
 		var item := ItemGenerator.generate(int(s.get("rarity", 1)), hero.class_data.id)
+		if s.has("slot"):  # a given slot ("ring"): roll until it fits, like a player's luck would not
+			var want: int = ItemData.Slot.keys().find(str(s["slot"]).to_upper())
+			for tries in 200:
+				if item == null or int(item.slot) == want or want < 0:
+					break
+				item = ItemGenerator.generate(int(s.get("rarity", 1)), hero.class_data.id)
 		if item != null:
 			ItemGenerator.apply_item_level(item, maxi(hero.progression.level, 1))
 			items.append(item)

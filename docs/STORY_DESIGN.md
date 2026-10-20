@@ -179,8 +179,8 @@ Rare: about one an hour. Never inside the prologue's dark moments or a boss
 fight.
 - The seal of a gate locked by Act 1 reads, as an inscription:
   "As a large language model, I'm afraid I can't open this gate."
-- Sigrun, after the act, in an optional branch: "Mentors die in the second
-  act. I checked the script. I'm in luck."
+- Sigrun, after the act (built): "In the old songs the mentor dies at the end
+  of the first act. I checked the script. I'm in luck - I'm a trainer."
 - The nameless grave and its naming quest; the "kill ten" journal entry.
 - The journal at the end of M14a's content: "Act II is being written right
   now."

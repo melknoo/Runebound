@@ -31,6 +31,7 @@ func run(runner: Node) -> void:
 	await _cutscenes()
 	_story_bosses()
 	StoryDB.reload()
+	await _act1()
 	await _prologue()  # drops the test quests
 	if own != null:
 		own.queue_free()
@@ -498,3 +499,118 @@ func _until(cond: Callable, frames: int) -> void:
 func _frames(n: int) -> void:
 	for i in n:
 		await t.get_tree().process_frame
+
+
+## Phase 6: Act 1. The main chain step by step (Sigrun's talk at each turn),
+## the gates the story seals, the side quests' choices and rewards.
+func _act1() -> void:
+	var hero: Player = lab.player
+	var ql := QuestLog.of(hero)
+	ql.from_dict({"v": 1, "act": 1, "beats": ["prologue_done", "runebound"], "done": ["p_ash_road"]})
+	ql.bind(hero)
+	var dui := lab.dialogue_ui
+	_check(ql.start("a1_call") and dui.entry_for("sigrun", null, true) == "call", "Act 1 opens with Sigrun naming the shard")
+	ql.event("talk", "sigrun")
+	_check(ql.is_done("a1_call") and ql.is_running("a1_shards"), "Runebound -> What the Shards Sing")
+	for id in ["shard_1", "shard_2", "shard_3"]:
+		if not hero.collected.has(id):
+			hero.collect(id)
+	ql.event("collect", "")
+	_check(ql.step_id("a1_shards") == "return" and dui.entry_for("sigrun", null, true) == "shards",
+		"three shards found: Sigrun listens to them")
+	ql.event("talk", "sigrun")
+	_check(ql.is_running("a1_ashwick"), "-> The Bell of Ashwick")
+	ql.event("reach", "ashwick", {"zone": "ashen_highlands"})
+	hero.read_lore("lore.ghost.priest")
+	ql.event("read", "")
+	_check(ql.step_id("a1_ashwick") == "cord", "Ashwick reached, the priest heard: search the graves")
+	ql.event("interact", "a1_cord")
+	_check(ql.step_id("a1_ashwick") == "return" and dui.entry_for("sigrun", null, true) == "knot",
+		"the keepers' cord: Sigrun knows the knot")
+	ql.event("talk", "sigrun")
+	_check(ql.is_running("a1_colossus"), "-> The Warden in the North")
+	ql.add_beat("boss:colossus")
+	_check(ql.is_running("a1_spire") and ql.step_id("a1_spire") == "enter", "the Colossus down -> The Empty Socket")
+	ql.event("enter", "shattered_spire")
+	ql.add_beat("boss:vessel")
+	_check(ql.step_id("a1_spire") == "socket", "the Spire, the Vessel down: look at the socket")
+	ql.event("interact", "a1_socket")
+	_check(ql.step_id("a1_spire") == "return" and ql.seen.has("a1_socket") and dui.entry_for("sigrun", null, true) == "reveal",
+		"the socket's camera pan; Sigrun hears it was opened")
+	ql.event("talk", "sigrun")
+	_check(ql.has_beat("act1_done") and ql.is_running("a2_soon") and dui.entry_for("sigrun", null, true) == "mentor",
+		"End of Act I: Act II waits in the journal, Sigrun checks the script")
+	# the gates the story seals
+	var gate := DungeonGatePortal.new()
+	gate.dungeon_id = "cistern"
+	var probe := QuestLog.new()
+	hero.set_meta(QuestLog.META, probe)
+	probe.from_dict({"v": 1, "act": 1})
+	var sealed := not gate.story_open(hero)
+	probe.from_dict({"v": 1, "act": 2, "beats": ["act1_done"]})
+	var opened := gate.story_open(hero)
+	probe.from_dict({"v": 1, "act": 1, "beats": ["legacy"]})
+	var legacy := gate.story_open(hero)
+	probe.from_dict({})
+	var none := gate.story_open(hero)
+	gate.dungeon_id = "stormwatch"
+	probe.from_dict({"v": 1, "act": 1})
+	var storm := gate.story_open(hero)
+	gate.free()
+	hero.set_meta(QuestLog.META, ql)
+	_check(sealed and opened and legacy and none and storm and Texts.t("lore.seal.story.body").contains("language model"),
+		"the Cistern and the Warrens stay sealed until Act 1 ends (legacy and story-less heroes pass, the Stormwatch stays open)")
+	# side quests
+	ql.from_dict({"v": 1, "act": 1})
+	ql.bind(hero)
+	_check(dui.entry_for("edda", null) == "letter_offer", "Edda asks about her husband")
+	ql.start("s_letter")
+	hero.read_lore("lore.ash.letter_1")
+	ql.event("read", "")
+	_check(ql.step_id("s_letter") == "return" and dui.entry_for("edda", null) == "letter_back", "the letter found: back to Edda")
+	var rings_before := _rings(hero)
+	dui.try_open("edda", null, hero)
+	dui.choose(0)
+	await t.call(&"_wait_frames", 2)
+	var ring := _rings(hero) > rings_before
+	for c in lab.world.get_children():
+		if c is ItemDrop and (c as ItemDrop).item != null and (c as ItemDrop).item.slot == ItemData.Slot.RING:
+			ring = true
+	dui.close()
+	_check(ql.is_done("s_letter") and ql.choice("s_letter") == "truth" and ring, "telling her the truth ends it; his father's ring")
+	dui.try_open("s_nameless_stone", null, hero)
+	var names := dui.option_texts().size()
+	dui.choose(1)
+	_check(names == 4 and ql.is_done("s_nameless") and ql.choice("s_nameless") == "rune" and dui.current_text() == Texts.t("dlg.nameless.named.rune"),
+		"the nameless grave gets a name (Rune - of course)")
+	dui.close()
+	_check(dui.entry_for("s_nameless_stone", null) == "is_rune", "and keeps it")
+	ql.start("s_ten")
+	for i in 9:
+		ql.event("kill", "rusher", {"zone": "ashen_highlands"})
+	var nine := ql.step_id("s_ten") == "kill" and ql.progress("s_ten") == Vector2i(9, 10)
+	ql.event("kill", "grave_shambler", {"zone": "ashen_highlands"})
+	ql.event("kill", "brute", {"zone": "ashen_highlands"})
+	_check(nine and ql.step_id("s_ten") == "return" and Texts.t("quest.s_ten.summary").contains("ten"),
+		"Ten Is a Good Number: ten raiders (not the dead) - nobody knows why ten")
+	await t.call(&"_wait_frames", 2)
+	for c in lab.world.get_children():
+		if c is ItemDrop or c is GoldDrop or c is ConsumableDrop:
+			c.queue_free()
+	for id in ["shard_1", "shard_2", "shard_3"]:
+		var at := hero.collected.find(id)
+		if at >= 0:
+			hero.collected.remove_at(at)
+	for id in ["lore.ghost.priest", "lore.ash.letter_1"]:
+		var at := hero.lore_read.find(id)
+		if at >= 0:
+			hero.lore_read.remove_at(at)
+	ql.from_dict({})
+
+
+func _rings(hero: Player) -> int:
+	var n := 0
+	for item in hero.equipment.inventory:
+		if item.slot == ItemData.Slot.RING:
+			n += 1
+	return n

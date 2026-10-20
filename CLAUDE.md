@@ -38,7 +38,7 @@ Godot must be exactly **4.6.3-stable** (a 4.6.1 client crashed on an RTX 2070: a
 - Save additions go under `world` or `characters[i]` (SaveGame is versioned; read new keys with defaults).
 
 ## Decided — do not re-propose
-- Not chosen: weather/day-night, world events, outdoor NPCs, more music, memory/logic puzzles, dungeon events/modifiers.
+- Not chosen: weather/day-night, world events, outdoor NPCs as world life (story NPCs at story places are fine, M14a 2026-10-20), more music, memory/logic puzzles, dungeon events/modifiers.
 - Ability icons stay with the generator `tools/texgen/ui.py` (PixelLab comparison, 2026-09-29).
 - The laptop stays the server (no paid relay such as Hetzner, no third-party tunnel service such as playit.gg); friends join through Tailscale Funnel + invite codes.
 - Potions and food are used from the inventory only (no hotkey). Animals are scenery (never targetable, no net traffic).

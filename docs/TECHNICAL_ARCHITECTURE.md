@@ -1566,6 +1566,23 @@ Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
   checkpoints, skipping); `tools\run_godot.cmd solocheck <class> <level>
   ash_road` plays its fights with the start kit (all three classes clear it
   at level 2); shot list `m14a_prologue`.
+- **Act 1 (phase 6):** `resources/story/quests/act1.json`: the main chain
+  `a1_call` -> `a1_shards` (three rune shards; the map and compass point at
+  the nearest one not taken, `QuestDirector._nearest_shard`) -> `a1_ashwick`
+  (reach Ashwick, read the priest's ghost, the keepers' cord, a StoryMarker)
+  -> `a1_colossus` -> `a1_spire` (enter, the Vessel, the socket marker in the
+  boss chamber with its camera pan) -> Sigrun -> beat `act1_done`, the card
+  "END OF ACT I", `a2_soon` (a journal entry that waits for Act II).
+  Side quests from their givers: `s_letter` (Edda, the soldier's letter, a
+  ring: a reward item may name its `slot`), `s_nameless` (a StoryMarker at
+  the nameless grave; the chosen name is a dialogue `choice`), `s_ten` (Bram,
+  a deserter staged at ruin_1: ten raiders), `s_charwood` (Hild, from level
+  3). Sigrun's dialogue picks its talk by the step the hero is at.
+- **Story gates:** `DungeonRegistry` entries may name a `story_gate` beat (the
+  Cistern and the Warrens: `act1_done`); `DungeonGatePortal.story_open(hero)`
+  keeps the seal up for a story without it (legacy characters and heroes
+  without a story pass), and its prompt reads the seal
+  (`lore.seal.story`, the "large language model" line).
 - **Save v7:** `new_character` starts with `QuestLog.new_story()` (act 0,
   the prologue pending). v6 -> v7 gives every character act 1, the beat
   `legacy` (keeps its gates open), `boss:colossus` / `boss:vessel` from its

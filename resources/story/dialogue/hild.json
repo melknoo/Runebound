@@ -1,9 +1,20 @@
 {
 	"npc": "hild",
 	"entries": [
+		{"if": {"quest_step": ["s_charwood", "return"]}, "start": "char_back", "topic": true},
+		{"if": {"act_min": 1, "level": 3, "not_done": ["s_charwood"], "not_active": "s_charwood"}, "start": "char_offer", "topic": true},
 		{"if": {"not_beat": "dlg:hild_intro"}, "start": "intro", "topic": true}
 	],
 	"nodes": {
+		"char_offer": {"say": "dlg.hild.char.0", "next": "char_offer_1"},
+		"char_offer_1": {"say": "dlg.hild.char.1", "options": [
+			{"text": "dlg.hild.opt.go", "effects": [{"start": "s_charwood"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"char_back": {"say": "dlg.hild.char.back", "effects": [{"event": ["talk", "hild"]}], "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]},
 		"intro": {"say": "dlg.hild.intro.0", "effects": [{"beat": "dlg:hild_intro"}], "next": "intro_1"},
 		"intro_1": {"say": "dlg.hild.intro.1", "options": [
 			{"text": "dlg.hild.opt.roots", "next": "roots"},

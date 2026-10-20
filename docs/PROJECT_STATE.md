@@ -62,7 +62,14 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   characters start there; from the second character on it can be skipped.
   Solo check: all three classes clear it at level 2 without dying (the
   Runebreaker bot with 27 % left).
-- Next: phase 6 Act 1, 7 wrap-up.
+- Phase 6 built: Act 1 - Sigrun's chain (the shards, Ashwick and the
+  keepers' cord, the Colossus, the Spire's empty socket, "Aldric", END OF ACT
+  I), the Cistern and the Warrens sealed for new characters until then (the
+  seal reads "As a large language model ..."), four side quests (Edda's
+  letter, a name for the nameless grave, Bram's ten raiders, the Charwood
+  for Hild), Sigrun's mentor joke after the act, Act II waiting in the
+  journal.
+- Next: phase 7 wrap-up (playtest group, docs).
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

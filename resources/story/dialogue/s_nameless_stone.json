@@ -1,0 +1,133 @@
+{
+	"npc": "s_nameless_stone",
+	"entries": [
+		{
+			"if": {
+				"choice": [
+					"s_nameless",
+					"bernd"
+				]
+			},
+			"start": "is_bernd"
+		},
+		{
+			"if": {
+				"choice": [
+					"s_nameless",
+					"rune"
+				]
+			},
+			"start": "is_rune"
+		},
+		{
+			"if": {
+				"choice": [
+					"s_nameless",
+					"gerald"
+				]
+			},
+			"start": "is_gerald"
+		},
+		{
+			"start": "ask"
+		}
+	],
+	"nodes": {
+		"ask": {
+			"say": "dlg.nameless.ask",
+			"options": [
+				{
+					"text": "dlg.nameless.opt.bernd",
+					"effects": [
+						{
+							"start": "s_nameless"
+						},
+						{
+							"choice": [
+								"s_nameless",
+								"bernd"
+							]
+						},
+						{
+							"event": [
+								"interact",
+								"s_nameless_stone"
+							]
+						}
+					],
+					"next": "named_bernd"
+				},
+				{
+					"text": "dlg.nameless.opt.rune",
+					"effects": [
+						{
+							"start": "s_nameless"
+						},
+						{
+							"choice": [
+								"s_nameless",
+								"rune"
+							]
+						},
+						{
+							"event": [
+								"interact",
+								"s_nameless_stone"
+							]
+						}
+					],
+					"next": "named_rune"
+				},
+				{
+					"text": "dlg.nameless.opt.gerald",
+					"effects": [
+						{
+							"start": "s_nameless"
+						},
+						{
+							"choice": [
+								"s_nameless",
+								"gerald"
+							]
+						},
+						{
+							"event": [
+								"interact",
+								"s_nameless_stone"
+							]
+						}
+					],
+					"next": "named_gerald"
+				},
+				{
+					"text": "dlg.common.later",
+					"end": true
+				}
+			]
+		},
+		"named_bernd": {
+			"say": "dlg.nameless.named.bernd",
+			"end": true
+		},
+		"named_rune": {
+			"say": "dlg.nameless.named.rune",
+			"end": true
+		},
+		"named_gerald": {
+			"say": "dlg.nameless.named.gerald",
+			"end": true
+		},
+		"is_bernd": {
+			"say": "dlg.nameless.is.bernd",
+			"end": true
+		},
+		"is_rune": {
+			"say": "dlg.nameless.is.rune",
+			"end": true
+		},
+		"is_gerald": {
+			"say": "dlg.nameless.is.gerald",
+			"end": true
+		}
+	}
+}

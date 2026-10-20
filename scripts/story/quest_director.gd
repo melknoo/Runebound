@@ -133,12 +133,37 @@ func goal_position(goal: Dictionary) -> Vector3:
 		var a := _area(str(goal["area"]))
 		if not a.is_empty():
 			return zone.ground_point(ZoneLayout.pos_of(a))
+	if str(goal.get("type", "")) == "collect" and zone.get(&"shards") is Dictionary:
+		var near := _nearest_shard(goal)
+		if near != Vector3.INF:
+			return near
 	if goal.has("marker") or goal.has("npc"):
 		var key := str(goal.get("marker", goal.get("npc", "")))
 		for n in get_tree().get_nodes_in_group(&"story_target"):
 			if n is Node3D and is_instance_valid(n) and str(n.get_meta(&"story_id", "")) == key:
 				return (n as Node3D).global_position
 	return Vector3.INF
+
+
+## The nearest rune shard this hero hasn't taken that a collect goal counts.
+func _nearest_shard(goal: Dictionary) -> Vector3:
+	var best := Vector3.INF
+	var best_d := INF
+	var shards: Dictionary = zone.get(&"shards")
+	var prefix := str(goal.get("prefix", ""))
+	var ids: Array = goal.get("ids", [])
+	for sid: Variant in shards:
+		var id := str(sid)
+		if hero.collected.has(id) or (prefix != "" and not id.begins_with(prefix)) or (not ids.is_empty() and not ids.has(id)):
+			continue
+		var node := shards[sid] as Node3D
+		if node == null or not is_instance_valid(node):
+			continue
+		var d := node.global_position.distance_squared_to(hero.global_position)
+		if d < best_d:
+			best_d = d
+			best = node.global_position
+	return best
 
 
 func _layout() -> ZoneLayout:

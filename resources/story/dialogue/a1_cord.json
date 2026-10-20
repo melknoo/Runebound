@@ -1,0 +1,20 @@
+{
+	"npc": "a1_cord",
+	"entries": [
+		{
+			"if": {
+				"quest_step": [
+					"a1_ashwick",
+					"cord"
+				]
+			},
+			"start": "look"
+		}
+	],
+	"nodes": {
+		"look": {
+			"say": "dlg.a1_cord.0",
+			"end": true
+		}
+	}
+}

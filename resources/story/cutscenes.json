@@ -4,43 +4,345 @@
 		"p_intro": {
 			"safe": false,
 			"shots": [
-				{"from": {"at": "hero", "offset": [10, 9, 14]}, "to": {"at": "hero", "offset": [4, 4, 7]},
-				 "look": {"at": "hero", "offset": [0, 1.2, -6]}, "t": 4.0}
+				{
+					"from": {
+						"at": "hero",
+						"offset": [
+							10,
+							9,
+							14
+						]
+					},
+					"to": {
+						"at": "hero",
+						"offset": [
+							4,
+							4,
+							7
+						]
+					},
+					"look": {
+						"at": "hero",
+						"offset": [
+							0,
+							1.2,
+							-6
+						]
+					},
+					"t": 4.0
+				}
 			],
-			"card": {"title": "act.0.title", "sub": "act.0.sub"}
+			"card": {
+				"title": "act.0.title",
+				"sub": "act.0.sub"
+			}
 		},
 		"p_shard": {
 			"safe": true,
 			"shots": [
-				{"from": {"at": "hero", "offset": [0, 3.2, 6]}, "to": {"at": "hero", "offset": [0, 2.4, 4.5]},
-				 "look": {"at": "hero", "offset": [0, 6, 0]}, "t": 1.8, "say": "cut.p_shard.0"},
-				{"from": {"at": "hero", "offset": [2.5, 1.8, 3]}, "to": {"at": "hero", "offset": [1.6, 1.6, 2.2]},
-				 "look": {"at": "hero", "offset": [0, 1.0, 0]}, "t": 2.6, "say": "cut.p_shard.1"}
+				{
+					"from": {
+						"at": "hero",
+						"offset": [
+							0,
+							3.2,
+							6
+						]
+					},
+					"to": {
+						"at": "hero",
+						"offset": [
+							0,
+							2.4,
+							4.5
+						]
+					},
+					"look": {
+						"at": "hero",
+						"offset": [
+							0,
+							6,
+							0
+						]
+					},
+					"t": 1.8,
+					"say": "cut.p_shard.0"
+				},
+				{
+					"from": {
+						"at": "hero",
+						"offset": [
+							2.5,
+							1.8,
+							3
+						]
+					},
+					"to": {
+						"at": "hero",
+						"offset": [
+							1.6,
+							1.6,
+							2.2
+						]
+					},
+					"look": {
+						"at": "hero",
+						"offset": [
+							0,
+							1.0,
+							0
+						]
+					},
+					"t": 2.6,
+					"say": "cut.p_shard.1"
+				}
 			],
 			"fx": [
-				{"t": 0.5, "kind": "shard_fall", "at": {"at": "hero"}, "fall": 1.1},
-				{"t": 1.9, "kind": "flash", "at": {"at": "hero"}}
+				{
+					"t": 0.5,
+					"kind": "shard_fall",
+					"at": {
+						"at": "hero"
+					},
+					"fall": 1.1
+				},
+				{
+					"t": 1.9,
+					"kind": "flash",
+					"at": {
+						"at": "hero"
+					}
+				}
 			],
-			"on_end": [{"beat": "runebound"}]
+			"on_end": [
+				{
+					"beat": "runebound"
+				}
+			]
 		},
 		"p_bridge": {
 			"safe": true,
 			"shots": [
-				{"from": {"at": "poi:bridge_n", "offset": [7, 5, -5]}, "to": {"at": "poi:bridge_n", "offset": [5, 4, -3]},
-				 "look": {"at": "poi:bridge_s", "offset": [0, 0, 0]}, "t": 3.2, "say": "cut.p_bridge.0"}
+				{
+					"from": {
+						"at": "poi:bridge_n",
+						"offset": [
+							7,
+							5,
+							-5
+						]
+					},
+					"to": {
+						"at": "poi:bridge_n",
+						"offset": [
+							5,
+							4,
+							-3
+						]
+					},
+					"look": {
+						"at": "poi:bridge_s",
+						"offset": [
+							0,
+							0,
+							0
+						]
+					},
+					"t": 3.2,
+					"say": "cut.p_bridge.0"
+				}
 			],
-			"fx": [{"t": 0.7, "kind": "call", "name": "bridge_collapse"}],
-			"on_end": [{"zone": "bridge_collapse"}, {"beat": "p_bridge_down"}, {"hint": {"text": "tut.telegraph", "keys": []}}]
+			"fx": [
+				{
+					"t": 0.7,
+					"kind": "call",
+					"name": "bridge_collapse"
+				}
+			],
+			"on_end": [
+				{
+					"zone": "bridge_collapse"
+				},
+				{
+					"beat": "p_bridge_down"
+				},
+				{
+					"hint": {
+						"text": "tut.telegraph",
+						"keys": []
+					}
+				}
+			]
 		},
 		"p_arrival": {
 			"safe": true,
 			"shots": [
-				{"from": {"at": "hero", "offset": [0, 4, 6]}, "to": {"at": "hero", "offset": [0, 3, 3]},
-				 "look": {"at": "npc:sigrun", "offset": [0, 1.5, 0]}, "t": 2.5},
-				{"from": {"at": "npc:sigrun", "offset": [3.0, 2.0, 2.6]}, "to": {"at": "npc:sigrun", "offset": [2.2, 1.8, 1.8]},
-				 "look": {"at": "npc:sigrun", "offset": [0, 1.5, 0]}, "t": 3.6, "say": "cut.p_arrival.0", "speaker": "sigrun"}
+				{
+					"from": {
+						"at": "hero",
+						"offset": [
+							0,
+							4,
+							6
+						]
+					},
+					"to": {
+						"at": "hero",
+						"offset": [
+							0,
+							3,
+							3
+						]
+					},
+					"look": {
+						"at": "npc:sigrun",
+						"offset": [
+							0,
+							1.5,
+							0
+						]
+					},
+					"t": 2.5
+				},
+				{
+					"from": {
+						"at": "npc:sigrun",
+						"offset": [
+							3.0,
+							2.0,
+							2.6
+						]
+					},
+					"to": {
+						"at": "npc:sigrun",
+						"offset": [
+							2.2,
+							1.8,
+							1.8
+						]
+					},
+					"look": {
+						"at": "npc:sigrun",
+						"offset": [
+							0,
+							1.5,
+							0
+						]
+					},
+					"t": 3.6,
+					"say": "cut.p_arrival.0",
+					"speaker": "sigrun"
+				}
 			],
-			"card": {"title": "act.1.title", "sub": "act.1.sub"}
+			"card": {
+				"title": "act.1.title",
+				"sub": "act.1.sub"
+			}
+		},
+		"a1_socket": {
+			"safe": true,
+			"shots": [
+				{
+					"from": {
+						"at": "marker:a1_socket",
+						"offset": [
+							4,
+							3,
+							4
+						]
+					},
+					"to": {
+						"at": "marker:a1_socket",
+						"offset": [
+							2.2,
+							2.0,
+							2.2
+						]
+					},
+					"look": {
+						"at": "marker:a1_socket",
+						"offset": [
+							0,
+							0.6,
+							0
+						]
+					},
+					"t": 3.4,
+					"say": "cut.a1_socket.0"
+				},
+				{
+					"from": {
+						"at": "marker:a1_socket",
+						"offset": [
+							1.3,
+							1.5,
+							1.1
+						]
+					},
+					"to": {
+						"at": "marker:a1_socket",
+						"offset": [
+							0.8,
+							1.2,
+							0.7
+						]
+					},
+					"look": {
+						"at": "marker:a1_socket",
+						"offset": [
+							0,
+							0.3,
+							0
+						]
+					},
+					"t": 3.4,
+					"say": "cut.a1_socket.1"
+				}
+			],
+			"fx": [
+				{
+					"t": 0.3,
+					"kind": "sfx",
+					"name": "shatter_burst",
+					"db": -14.0
+				}
+			]
+		},
+		"a1_end": {
+			"safe": true,
+			"shots": [
+				{
+					"from": {
+						"at": "npc:sigrun",
+						"offset": [
+							3,
+							2.4,
+							3
+						]
+					},
+					"to": {
+						"at": "npc:sigrun",
+						"offset": [
+							5,
+							4.0,
+							6
+						]
+					},
+					"look": {
+						"at": "npc:sigrun",
+						"offset": [
+							0,
+							1.6,
+							0
+						]
+					},
+					"t": 3.2
+				}
+			],
+			"card": {
+				"title": "act.1.end",
+				"sub": "act.1.sub"
+			}
 		}
 	}
 }

@@ -1,13 +1,385 @@
 {
-	"_note": "M14a: Act 1, What the Shards Sing (STORY_DESIGN). Phase 5 brings its first quest (Sigrun names the shard); phase 6 the rest of the chain.",
+	"_note": "M14a: Act 1, What the Shards Sing (STORY_DESIGN). The main chain a1_call -> a1_shards -> a1_ashwick -> a1_colossus -> a1_spire, then a2_soon (Act II is still being written); side quests s_letter, s_nameless, s_ten, s_charwood.",
 	"quests": [
 		{
-			"id": "a1_call", "act": 1, "kind": "main", "level": 2,
-			"title": "quest.a1_call.title", "summary": "quest.a1_call.summary",
+			"id": "a1_call",
+			"act": 1,
+			"kind": "main",
+			"level": 2,
+			"title": "quest.a1_call.title",
+			"summary": "quest.a1_call.summary",
 			"steps": [
-				{"id": "talk", "text": "quest.a1_call.s.talk", "goal": {"type": "talk", "npc": "sigrun"}}
+				{
+					"id": "talk",
+					"text": "quest.a1_call.s.talk",
+					"goal": {
+						"type": "talk",
+						"npc": "sigrun"
+					}
+				}
 			],
-			"rewards": {"xp": 60, "gold": 30}
+			"rewards": {
+				"xp": 60,
+				"gold": 30
+			},
+			"on_done": [
+				{
+					"start": "a1_shards"
+				}
+			]
+		},
+		{
+			"id": "a1_shards",
+			"act": 1,
+			"kind": "main",
+			"level": 2,
+			"title": "quest.a1_shards.title",
+			"summary": "quest.a1_shards.summary",
+			"steps": [
+				{
+					"id": "collect",
+					"text": "quest.a1_shards.s.collect",
+					"goal": {
+						"type": "collect",
+						"prefix": "shard_",
+						"count": 3,
+						"zone": "ashen_highlands"
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.a1_shards.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "sigrun"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 150,
+				"gold": 50
+			},
+			"on_done": [
+				{
+					"start": "a1_ashwick"
+				}
+			]
+		},
+		{
+			"id": "a1_ashwick",
+			"act": 1,
+			"kind": "main",
+			"level": 2,
+			"title": "quest.a1_ashwick.title",
+			"summary": "quest.a1_ashwick.summary",
+			"steps": [
+				{
+					"id": "reach",
+					"text": "quest.a1_ashwick.s.reach",
+					"goal": {
+						"type": "reach",
+						"zone": "ashen_highlands",
+						"area": "ashwick"
+					}
+				},
+				{
+					"id": "priest",
+					"text": "quest.a1_ashwick.s.priest",
+					"goal": {
+						"type": "read",
+						"ids": [
+							"lore.ghost.priest"
+						]
+					}
+				},
+				{
+					"id": "cord",
+					"text": "quest.a1_ashwick.s.cord",
+					"goal": {
+						"type": "interact",
+						"marker": "a1_cord",
+						"zone": "ashen_highlands"
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.a1_ashwick.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "sigrun"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 250,
+				"gold": 70,
+				"items": [
+					{
+						"rarity": 1
+					}
+				]
+			},
+			"on_done": [
+				{
+					"start": "a1_colossus"
+				}
+			]
+		},
+		{
+			"id": "a1_colossus",
+			"act": 1,
+			"kind": "main",
+			"level": 3,
+			"title": "quest.a1_colossus.title",
+			"summary": "quest.a1_colossus.summary",
+			"steps": [
+				{
+					"id": "boss",
+					"text": "quest.a1_colossus.s.boss",
+					"goal": {
+						"type": "boss",
+						"enemy": "colossus"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 200,
+				"gold": 60
+			},
+			"on_done": [
+				{
+					"start": "a1_spire"
+				}
+			]
+		},
+		{
+			"id": "a1_spire",
+			"act": 1,
+			"kind": "main",
+			"level": 4,
+			"title": "quest.a1_spire.title",
+			"summary": "quest.a1_spire.summary",
+			"steps": [
+				{
+					"id": "enter",
+					"text": "quest.a1_spire.s.enter",
+					"goal": {
+						"type": "enter",
+						"zone": "shattered_spire"
+					}
+				},
+				{
+					"id": "boss",
+					"text": "quest.a1_spire.s.boss",
+					"goal": {
+						"type": "boss",
+						"enemy": "vessel"
+					}
+				},
+				{
+					"id": "socket",
+					"text": "quest.a1_spire.s.socket",
+					"goal": {
+						"type": "interact",
+						"marker": "a1_socket",
+						"zone": "shattered_spire"
+					},
+					"effects": [
+						{
+							"cutscene": "a1_socket"
+						}
+					]
+				},
+				{
+					"id": "return",
+					"text": "quest.a1_spire.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "sigrun"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 400,
+				"gold": 120,
+				"items": [
+					{
+						"rarity": 2
+					}
+				]
+			},
+			"on_done": [
+				{
+					"beat": "act1_done"
+				},
+				{
+					"cutscene": "a1_end"
+				},
+				{
+					"start": "a2_soon"
+				},
+				{
+					"toast": "story.toast.gates_open"
+				}
+			]
+		},
+		{
+			"id": "a2_soon",
+			"act": 2,
+			"kind": "main",
+			"level": 4,
+			"title": "quest.a2_soon.title",
+			"summary": "quest.a2_soon.summary",
+			"steps": [
+				{
+					"id": "wait",
+					"text": "quest.a2_soon.s.wait",
+					"goal": {
+						"type": "beat",
+						"id": "act2_written"
+					}
+				}
+			]
+		},
+		{
+			"id": "s_letter",
+			"act": 1,
+			"kind": "side",
+			"level": 1,
+			"title": "quest.s_letter.title",
+			"summary": "quest.s_letter.summary",
+			"steps": [
+				{
+					"id": "find",
+					"text": "quest.s_letter.s.find",
+					"goal": {
+						"type": "read",
+						"ids": [
+							"lore.ash.letter_1"
+						]
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.s_letter.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "edda"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 80,
+				"items": [
+					{
+						"rarity": 1,
+						"slot": "ring"
+					}
+				]
+			}
+		},
+		{
+			"id": "s_nameless",
+			"act": 1,
+			"kind": "side",
+			"level": 2,
+			"title": "quest.s_nameless.title",
+			"summary": "quest.s_nameless.summary",
+			"steps": [
+				{
+					"id": "name",
+					"text": "quest.s_nameless.s.name",
+					"goal": {
+						"type": "interact",
+						"marker": "s_nameless_stone",
+						"zone": "ashen_highlands"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 60
+			}
+		},
+		{
+			"id": "s_ten",
+			"act": 1,
+			"kind": "side",
+			"level": 2,
+			"title": "quest.s_ten.title",
+			"summary": "quest.s_ten.summary",
+			"steps": [
+				{
+					"id": "kill",
+					"text": "quest.s_ten.s.kill",
+					"goal": {
+						"type": "kill",
+						"enemies": [
+							"rusher",
+							"caster",
+							"assassin",
+							"brute"
+						],
+						"count": 10,
+						"zone": "ashen_highlands"
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.s_ten.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "bram"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 160,
+				"gold": 90
+			}
+		},
+		{
+			"id": "s_charwood",
+			"act": 1,
+			"kind": "side",
+			"level": 3,
+			"title": "quest.s_charwood.title",
+			"summary": "quest.s_charwood.summary",
+			"steps": [
+				{
+					"id": "reach",
+					"text": "quest.s_charwood.s.reach",
+					"goal": {
+						"type": "reach",
+						"zone": "ashen_highlands",
+						"area": "charwood"
+					}
+				},
+				{
+					"id": "wisps",
+					"text": "quest.s_charwood.s.wisps",
+					"goal": {
+						"type": "kill",
+						"enemies": [
+							"smoulder_wisp"
+						],
+						"count": 4,
+						"zone": "ashen_highlands"
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.s_charwood.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "hild"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 180,
+				"gold": 60,
+				"draughts": 2
+			}
 		}
 	]
 }

@@ -1,14 +1,147 @@
 {
 	"_note": "M14a: what the story places in a zone (QuestDirector, this machine only). npc = npcs.json id, marker = a StoryMarker; at [x, z] or poi + offset [x, z]; yaw in degrees; show_if / hide_if = StoryCond.",
 	"stage": [
-		{"id": "edda_camp", "npc": "edda", "zone": "ash_road", "poi": "spawn", "offset": [4, -4], "yaw": 200,
-		 "show_if": {"quest_step": ["p_ash_road", "wake"]}},
-		{"id": "edda_clearing", "npc": "edda", "zone": "ash_road", "poi": "clearing", "offset": [4, 2], "yaw": 180,
-		 "show_if": {"quest_step": ["p_ash_road", "shard_talk"]}},
-		{"id": "edda_gate", "npc": "edda", "zone": "ash_road", "poi": "gate_north", "offset": [3, 5], "yaw": 180,
-		 "show_if": {"quest_step": ["p_ash_road", "gate"]}},
-		{"id": "p_cart", "marker": "p_cart", "zone": "ash_road", "poi": "cart", "offset": [0, 0], "yaw": 30,
-		 "prop": "vl_cart", "prompt": "ui.prompt.search", "show_if": {"quest_active": "p_ash_road"}},
-		{"id": "edda_hub", "npc": "edda", "zone": "hub", "at": [2.6, 3.4], "yaw": 200, "show_if": {"act_min": 1}}
+		{
+			"id": "edda_camp",
+			"npc": "edda",
+			"zone": "ash_road",
+			"poi": "spawn",
+			"offset": [
+				4,
+				-4
+			],
+			"yaw": 200,
+			"show_if": {
+				"quest_step": [
+					"p_ash_road",
+					"wake"
+				]
+			}
+		},
+		{
+			"id": "edda_clearing",
+			"npc": "edda",
+			"zone": "ash_road",
+			"poi": "clearing",
+			"offset": [
+				4,
+				2
+			],
+			"yaw": 180,
+			"show_if": {
+				"quest_step": [
+					"p_ash_road",
+					"shard_talk"
+				]
+			}
+		},
+		{
+			"id": "edda_gate",
+			"npc": "edda",
+			"zone": "ash_road",
+			"poi": "gate_north",
+			"offset": [
+				3,
+				5
+			],
+			"yaw": 180,
+			"show_if": {
+				"quest_step": [
+					"p_ash_road",
+					"gate"
+				]
+			}
+		},
+		{
+			"id": "p_cart",
+			"marker": "p_cart",
+			"zone": "ash_road",
+			"poi": "cart",
+			"offset": [
+				0,
+				0
+			],
+			"yaw": 30,
+			"prop": "vl_cart",
+			"prompt": "ui.prompt.search",
+			"show_if": {
+				"quest_active": "p_ash_road"
+			}
+		},
+		{
+			"id": "edda_hub",
+			"npc": "edda",
+			"zone": "hub",
+			"at": [
+				2.6,
+				3.4
+			],
+			"yaw": 200,
+			"show_if": {
+				"act_min": 1
+			}
+		},
+		{
+			"id": "a1_cord",
+			"marker": "a1_cord",
+			"zone": "ashen_highlands",
+			"poi": "graveyard_v",
+			"offset": [
+				4,
+				-3
+			],
+			"yaw": 0,
+			"show_if": {
+				"quest_step": [
+					"a1_ashwick",
+					"cord"
+				]
+			}
+		},
+		{
+			"id": "s_nameless_stone",
+			"marker": "s_nameless_stone",
+			"zone": "ashen_highlands",
+			"poi": "lore_grave_nameless",
+			"offset": [
+				2.4,
+				0.6
+			],
+			"yaw": 0,
+			"show_if": {
+				"act_min": 1
+			}
+		},
+		{
+			"id": "bram",
+			"npc": "bram",
+			"zone": "ashen_highlands",
+			"poi": "ruin_1",
+			"offset": [
+				9,
+				7
+			],
+			"yaw": 200,
+			"show_if": {
+				"act_min": 1
+			}
+		},
+		{
+			"id": "a1_socket",
+			"marker": "a1_socket",
+			"zone": "shattered_spire",
+			"at": [
+				0,
+				-27
+			],
+			"yaw": 0,
+			"prop": "rune_seal",
+			"show_if": {
+				"quest_step": [
+					"a1_spire",
+					"socket"
+				]
+			}
+		}
 	]
 }

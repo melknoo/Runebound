@@ -4,6 +4,8 @@
 		{"if": {"quest_step": ["p_ash_road", "wake"]}, "start": "wake"},
 		{"if": {"quest_step": ["p_ash_road", "shard_talk"]}, "start": "shard"},
 		{"if": {"quest_step": ["p_ash_road", "gate"]}, "start": "gate"},
+		{"if": {"quest_step": ["s_letter", "return"]}, "start": "letter_back", "topic": true},
+		{"if": {"act_min": 1, "not_done": ["s_letter"], "not_active": "s_letter"}, "start": "letter_offer", "topic": true},
 		{"if": {"act_min": 1}, "start": "hub"},
 		{"start": "road"}
 	],
@@ -29,6 +31,17 @@
 			{"text": "dlg.edda.opt.go", "effects": [{"event": ["talk", "edda"]}], "end": true}
 		]},
 		"road": {"say": "dlg.edda.road.0", "end": true},
+		"letter_offer": {"say": "dlg.edda.letter.0", "next": "letter_offer_1"},
+		"letter_offer_1": {"say": "dlg.edda.letter.1", "options": [
+			{"text": "dlg.edda.opt.look", "effects": [{"start": "s_letter"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"letter_back": {"say": "dlg.edda.letter.back.0", "options": [
+			{"text": "dlg.edda.opt.truth", "effects": [{"choice": ["s_letter", "truth"]}, {"event": ["talk", "edda"]}], "next": "letter_truth"},
+			{"text": "dlg.edda.opt.kind", "effects": [{"choice": ["s_letter", "kind"]}, {"event": ["talk", "edda"]}], "next": "letter_kind"}
+		]},
+		"letter_truth": {"say": "dlg.edda.letter.truth", "end": true},
+		"letter_kind": {"say": "dlg.edda.letter.kind", "end": true},
 		"hub": {"say_pool": ["dlg.edda.hub.0", "dlg.edda.hub.1", "dlg.edda.hub.2"], "options": [
 			{"text": "dlg.common.bye", "end": true}
 		]}

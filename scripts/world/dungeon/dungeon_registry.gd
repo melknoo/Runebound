@@ -26,6 +26,7 @@ const DUNGEONS := {
 		"recommended": 4,
 		"name_key": "zone.hollow_cistern",
 		"min_party": 1,
+		"story_gate": "act1_done",  # M14a: a new character opens it at the end of Act 1
 	},
 	# the puzzle kit's test dungeon (tests only; no gate leads here)
 	"lab": {
@@ -50,6 +51,7 @@ const DUNGEONS := {
 		"recommended": 5,
 		"name_key": "zone.ember_warrens",
 		"min_party": 1,
+		"story_gate": "act1_done",
 	},
 	"stormwatch": {
 		"scene": "res://scenes/stormwatch.tscn",

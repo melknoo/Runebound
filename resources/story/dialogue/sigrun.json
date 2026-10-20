@@ -1,7 +1,11 @@
 {
 	"npc": "sigrun",
 	"entries": [
+		{"if": {"quest_step": ["a1_spire", "return"]}, "start": "reveal", "topic": true},
+		{"if": {"quest_step": ["a1_ashwick", "return"]}, "start": "knot", "topic": true},
+		{"if": {"quest_step": ["a1_shards", "return"]}, "start": "shards", "topic": true},
 		{"if": {"quest_step": ["a1_call", "talk"]}, "start": "call", "topic": true},
+		{"if": {"beat": "act1_done", "not_beat": "dlg:sigrun_mentor"}, "start": "mentor", "topic": true},
 		{"if": {"not_beat": "dlg:sigrun_intro"}, "start": "intro", "topic": true}
 	],
 	"nodes": {
@@ -14,6 +18,30 @@
 			{"text": "dlg.sigrun.opt.teach", "effects": [{"event": ["talk", "sigrun"]}], "next": "call_end"}
 		]},
 		"call_end": {"say": "dlg.sigrun.call.end", "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"shards": {"say": "dlg.sigrun.shards.0", "next": "shards_1"},
+		"shards_1": {"say": "dlg.sigrun.shards.1", "options": [
+			{"text": "dlg.sigrun.opt.voice", "next": "shards_voice"}
+		]},
+		"shards_voice": {"say": "dlg.sigrun.shards.voice", "effects": [{"event": ["talk", "sigrun"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"knot": {"say": "dlg.sigrun.knot.0", "next": "knot_1"},
+		"knot_1": {"say": "dlg.sigrun.knot.1", "next": "knot_2"},
+		"knot_2": {"say": "dlg.sigrun.knot.2", "effects": [{"event": ["talk", "sigrun"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"reveal": {"say": "dlg.sigrun.reveal.0", "options": [
+			{"text": "dlg.sigrun.opt.seal", "next": "reveal_1"}
+		]},
+		"reveal_1": {"say": "dlg.sigrun.reveal.1", "next": "reveal_2"},
+		"reveal_2": {"say": "dlg.sigrun.reveal.2", "effects": [{"event": ["talk", "sigrun"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"mentor": {"say": "dlg.sigrun.mentor.0", "effects": [{"beat": "dlg:sigrun_mentor"}], "next": "mentor_1"},
+		"mentor_1": {"say": "dlg.sigrun.mentor.1", "options": [
 			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
 			{"text": "dlg.common.bye", "end": true}
 		]},

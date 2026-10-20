@@ -1,0 +1,24 @@
+{
+	"npc": "bram",
+	"entries": [
+		{"if": {"quest_step": ["s_ten", "return"]}, "start": "back"},
+		{"if": {"quest_active": "s_ten"}, "start": "busy"},
+		{"if": {"done": ["s_ten"]}, "start": "after"},
+		{"start": "offer", "topic": true}
+	],
+	"nodes": {
+		"offer": {"say": "dlg.bram.offer.0", "next": "offer_1"},
+		"offer_1": {"say": "dlg.bram.offer.1", "options": [
+			{"text": "dlg.bram.opt.why", "next": "why"},
+			{"text": "dlg.bram.opt.deal", "effects": [{"start": "s_ten"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"why": {"say": "dlg.bram.why", "options": [
+			{"text": "dlg.bram.opt.deal", "effects": [{"start": "s_ten"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"busy": {"say": "dlg.bram.busy", "end": true},
+		"back": {"say": "dlg.bram.back", "effects": [{"event": ["talk", "bram"]}], "end": true},
+		"after": {"say": "dlg.bram.after", "end": true}
+	}
+}

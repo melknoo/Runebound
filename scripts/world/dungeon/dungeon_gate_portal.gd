@@ -41,6 +41,18 @@ func is_open() -> bool:
 	return DungeonRegistry.is_open(dungeon_id)
 
 
+## M14a: does the story let `hero` in yet? A gate with a `story_gate` beat
+## (the Cistern, the Warrens: "act1_done") stays sealed for a character whose
+## story hasn't reached it; legacy characters and heroes without a story walk
+## in as before.
+func story_open(hero: Player) -> bool:
+	var beat := str(DungeonRegistry.info(dungeon_id).get("story_gate", ""))
+	if beat == "" or hero == null:
+		return true
+	var ql := QuestLog.of(hero)
+	return not ql.active or ql.has_beat("legacy") or ql.has_beat(beat)
+
+
 ## Has this hero broken the seal before?
 func seal_broken(hero: Player) -> bool:
 	return hero != null and hero.map_discovered.has(seal_key(gate_id))
@@ -61,7 +73,12 @@ func _process(delta: float) -> void:
 		_prompt.update(false, "")
 		return
 	var near := hero.global_position.distance_to(global_position)
-	if is_open() and seal_broken(hero):
+	if is_open() and not story_open(hero):
+		# M14a: sealed by the story - the seal says so (and is read like lore)
+		_prompt.update(near <= TRIGGER_RANGE, Texts.t("ui.prompt.read_seal"))
+		if near <= TRIGGER_RANGE and _prompt.pressed(hero) and zone.lore_ui != null:
+			zone.lore_ui.open("lore.seal.story", "", hero)
+	elif is_open() and seal_broken(hero):
 		set_locked(false)
 	elif is_open() and near <= BREAK_RANGE:
 		break_seal(hero)
