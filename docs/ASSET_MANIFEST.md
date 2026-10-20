@@ -182,7 +182,7 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   their neighbours. Import settings copy the legacy rigs' (60 fps, named
   skins, shadow meshes): after a new look run `toolsun_godot.cmd import`,
   `python tools/modelgen/hero_import.py`, import again. Built:
-  `runebreaker/{bare, base, common, rare}`.
+  `runebreaker/{bare, base, common, magic, rare, legendary}` (complete).
 - Workflow per look: `ai_gen.py concept <class>/<look> --seeds ...` (review
   the PNGs, pick an A-pose with open arms), `ai_gen.py mesh <class>/<look>
   concept_<seed>.png --seed 7`, `blender ... ai_ingest.py -- <candidate dir>`,
