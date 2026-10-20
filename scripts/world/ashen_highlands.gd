@@ -34,6 +34,10 @@ var critter_field: CritterField
 var arena_centre: Vector3 = Vector3.ZERO
 var _boss_spawn: Vector3 = Vector3.ZERO
 var _boss_started: bool = false
+## M14a: the fight now is a story replay (the flag was set before it began);
+## after one the arena rests StoryBosses.REARM seconds.
+var _boss_replay: bool = false
+var _boss_rearm: float = 0.0
 var _boss_trigger: EncounterSpawner
 var _blockers: Array[StaticBody3D] = []
 ## M08 map: POIs a hero sees within `pad + DISCOVER_MARGIN`; named areas
@@ -510,9 +514,16 @@ func _physics_process(delta: float) -> void:
 		_discover_left = DISCOVER_INTERVAL
 		_discover_tick()
 	# Once beaten, the colossus stays beaten (world flag). M09: the server starts it.
-	if Net.is_client() or _boss_started or _boss_trigger == null or players.is_empty() or SaveGame.has_flag(&"colossus_defeated"):
+	# M14a: unless a hero at the arena still needs it for its story (StoryBosses).
+	if Net.is_client() or _boss_started or _boss_trigger == null or players.is_empty():
 		return
-	if not players_within(_boss_trigger.global_position, _boss_trigger.trigger_radius).is_empty():  # M07b: any hero
+	if _boss_rearm > 0.0:
+		_boss_rearm -= delta
+		return
+	var at := _boss_trigger.global_position
+	if SaveGame.has_flag(&"colossus_defeated") and not StoryBosses.needed_near(self, "colossus", at, _boss_trigger.trigger_radius):
+		return
+	if not players_within(at, _boss_trigger.trigger_radius).is_empty():  # M07b: any hero
 		_start_boss_fight()
 
 
@@ -658,7 +669,8 @@ func _discover_tick() -> void:
 
 func _start_boss_fight() -> void:
 	_boss_started = true
-	boss = AshveinColossus.new()
+	_boss_replay = SaveGame.has_flag(&"colossus_defeated")  # M14a: a story replay
+	boss = make_enemy("colossus") as AshveinColossus  # M14a fix: its type id names the puppet online (was a rusher)
 	_spawn_enemy(boss, ground_point(_boss_spawn, 0.2))
 	if hud != null:
 		hud.show_boss_bar("ASHVEIN COLOSSUS")
@@ -668,10 +680,23 @@ func _start_boss_fight() -> void:
 
 
 func _on_boss_died(_enemy: EnemyBase) -> void:
+	var needed := StoryBosses.credit(self, "colossus", boss.global_position if is_instance_valid(boss) else _boss_spawn)
+	if _boss_replay:  # M14a: woken for a story; the gates are open already
+		_boss_started = false
+		_boss_rearm = StoryBosses.REARM
+		if hud != null:
+			hud.hide_boss_bar()
+		_colossus_legendaries(needed)
+		return
 	SaveGame.set_flag(&"colossus_defeated")  # co-op: the server tells every client (FLAG)
 	apply_world_flag(&"colossus_defeated")
-	# Guaranteed legendary on top of the regular drop roll, one per hero (M09).
-	for hero in party():
+	_colossus_legendaries(party())
+
+
+## Guaranteed legendary on top of the regular drop roll, one per hero (M09);
+## after a story replay only for the heroes that needed it (M14a).
+func _colossus_legendaries(heroes: Array[Player]) -> void:
+	for hero in heroes:
 		var legendary := ItemGenerator.generate_legendary(hero.class_data.id)  # M10: fits the hero's class
 		ItemGenerator.apply_item_level(legendary, 3)
 		give_reward(hero, 0, 0, 0, [legendary] as Array[ItemData], boss_portal.global_position + Vector3(1.5, 0, 3))

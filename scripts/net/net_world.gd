@@ -124,6 +124,12 @@ func watch_local_hero(hero: Player) -> void:
 	_send_character()
 
 
+## M14a: the local hero's story changed - CHARACTER carries it to the server
+## (StoryBosses reads the proxies' stories).
+func mark_character_dirty() -> void:
+	_char_dirty = true
+
+
 func _on_setting_for_look(key: String) -> void:
 	if key == "gameplay/hide_helm":
 		_char_dirty = true

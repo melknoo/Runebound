@@ -1458,6 +1458,8 @@ class Driver extends Node:
 				await _until(func() -> bool: return Net.roster.size() >= 3, 50.0, "c3 to join")
 				await _seconds(3.0)
 				_finish("ok")
+			"story_boss":  # M14a: tests/net_story.gd
+				await NetStory.client(self, role)
 			"rewards":
 				# c1 clears camp_1 and opens chest_south; c2 waits 108 m away.
 				if not await _in_zone():

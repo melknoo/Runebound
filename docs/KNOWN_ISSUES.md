@@ -13,6 +13,11 @@
   v7, play either the dev build or the installed one on a PC, not both.
 - Quests count kills, bosses and places only for heroes within 60 m (the XP
   rule); a hero far away from the party gets no step.
+- **PROTOCOL 17** (phase 4): the server needs a release before the next
+  co-op session (`tools\run_godot.cmd release` from `D:\fable_test`).
+- Fixed in phase 4: online, the Ashvein Colossus and the Vessel appeared as
+  a plain rusher on co-op clients (they were spawned without their type id).
+  Watch the boss bar and the models in the next co-op playtest.
 
 ## Probably resolved: client crash after zone travel (reported 2026-10-02, retested 2026-10-09)
 - **Symptom:** a client on a second PC (NVIDIA GeForce RTX 2070, Windows,

@@ -89,6 +89,13 @@ const SCENARIOS := {
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5, "args": ["--netsim=80,20,1"]}],
 		"timeout": 180.0,
 	},
+	# M14a: the Colossus, long beaten on the server, stands again for a newcomer
+	# whose story needs it (not for the veteran); only the newcomer's legendary.
+	"story_boss": {
+		"server": ["--zone=res://scenes/ashen_highlands.tscn"],
+		"clients": [{"role": "c1", "delay": 0.0, "args": ["--story"]}, {"role": "c2", "delay": 0.5, "args": ["--story"]}],
+		"timeout": 180.0,
+	},
 	"rewards": {
 		"server": ["--zone=res://scenes/ashen_highlands.tscn"],
 		"clients": [{"role": "c1", "delay": 0.0}, {"role": "c2", "delay": 0.5}],

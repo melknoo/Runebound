@@ -29,6 +29,7 @@ func run(runner: Node) -> void:
 	await _director_in_the_lab()
 	await _dialogue()
 	await _cutscenes()
+	_story_bosses()
 	StoryDB.reload()  # drops the test quests
 	if own != null:
 		own.queue_free()
@@ -349,3 +350,23 @@ func _cutscenes() -> void:
 		and lab.get_viewport().get_camera_3d() == rig_cam and ql.act == 1,
 		"the interact key skips it: camera, HUD and hero back, its end effects ran")
 	ql.from_dict({})
+
+
+## Phase 4: whether a beaten story boss stands again for the heroes near it.
+func _story_bosses() -> void:
+	var hero: Player = lab.player
+	var ql := QuestLog.of(hero)
+	ql.from_dict({})
+	var at := hero.global_position
+	_check(not StoryBosses.needed_near(lab, "colossus", at), "a hero without a story never wakes a story boss (test heroes, bots)")
+	ql.from_dict({"v": 1, "act": 1})
+	_check(StoryBosses.needed_near(lab, "colossus", at) and not StoryBosses.needed_near(lab, "colossus", at + Vector3(0, 0, 90)),
+		"a hero whose story lacks the Colossus wakes it when near the arena, not from 90 m")
+	ql.from_dict({"v": 1, "act": 1, "beats": ["boss:colossus"]})
+	_check(not StoryBosses.needed_near(lab, "colossus", at) and StoryBosses.needed_near(lab, "vessel", at),
+		"a veteran doesn't need it again; the Vessel it still needs")
+	ql.from_dict({"v": 1, "act": 1})
+	var credited := StoryBosses.credit(lab, "colossus", at)
+	_check(credited.size() == 1 and credited[0] == hero, "the heroes that needed it are the ones its replay pays")
+	ql.from_dict({})
+	_check(Net.PROTOCOL >= 17, "the story in CHARACTER bumped the protocol (17)")

@@ -8,7 +8,7 @@ extends Node
 ## Scenarios whose server-side verdict is re-checked twice a second.
 const LIVE_SCENARIOS: Array[String] = ["heroes", "enemies", "threat", "heal", "storm_tether", "enemy_types", "look_boss", "rewards", "puzzles", "trial",
 	"dungeon", "dungeon_boss", "puzzle_kit", "warrens_boss", "coop_gate", "revive", "coop_puzzles", "coop_bots", "stormsworn", "stormcaller",
-	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice"]
+	"travel", "companions", "soak", "load", "invite", "invite_live", "auth_garbage", "deploy_notice", "story_boss"]
 
 var scenario := ""
 var result_path := ""
@@ -328,6 +328,8 @@ var _saw_level := false
 func _update() -> void:
 	var verdict := "fail: unknown scenario " + scenario
 	match scenario:
+		"story_boss":  # M14a: tests/net_story.gd
+			verdict = NetStory.server_verdict(self)
 		"handshake":
 			if _max_roster < 2:
 				verdict = "fail: only %d player(s) joined" % _max_roster

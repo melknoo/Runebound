@@ -61,7 +61,9 @@ enum Transport { ENET, WS }
 ## on the spur), the party lock, NOTICE with a Texts key; all of M13b rides on
 ## it until a release.
 ## 16 (Rig v3): HERO_LOOK (visible gear), "kit" and "hide_helm" in CHARACTER.
-const PROTOCOL := 16
+## 17 (M14a): the story in CHARACTER ("story": the QuestLog); the server wakes
+## a beaten story boss again for a hero whose story still needs it.
+const PROTOCOL := 17
 const DEFAULT_PORT := 7777
 const MAX_PLAYERS := 5
 const CHANNELS := 3

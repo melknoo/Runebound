@@ -1515,6 +1515,23 @@ Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
   combat (at most 10 s). It never pauses the world and runs on this machine
   only; headless runs finish at once (seen + end effects), `play_forced`
   runs the windowed flow in tests.
+- **Co-op story (phase 4, PROTOCOL 17):** CHARACTER carries `story`, so the
+  server's proxies hold their owners' QuestLogs (read-only: the server runs
+  no quests; the client marks it dirty through
+  `NetWorld.mark_character_dirty` whenever its log changes). Each client's
+  director credits its own hero (kills within 60 m, places, the zone).
+  **StoryBosses** (`story_bosses.gd`): the authority wakes a beaten story
+  boss again (`needed_near`: a hero within the trigger radius whose active
+  story lacks `boss:<type>`), the Colossus in `ashen_highlands.gd` and the
+  Vessel in `spire_zone.gd`. A replay sets no flag (the gates stay open),
+  pays the guaranteed loot only to the heroes `credit()` returns (they needed
+  it) and rests `REARM` 20 s; the server remembers credited beats as meta on
+  the proxy (`story_credited`) until the client's next CHARACTER has them. A
+  net-test client without `--story` drops its throwaway story, so old
+  scenarios never wake a boss. Fixed alongside: both bosses were made with
+  `.new()` instead of `make_enemy`, so their `type_id` stayed "rusher" and
+  co-op clients saw a rusher puppet; now they come from `make_enemy`.
+  Net scenario `story_boss` (tests/net_story.gd).
 - **Save v7:** `new_character` starts with `QuestLog.new_story()` (act 0,
   the prologue pending). v6 -> v7 gives every character act 1, the beat
   `legacy` (keeps its gates open), `boss:colossus` / `boss:vessel` from its

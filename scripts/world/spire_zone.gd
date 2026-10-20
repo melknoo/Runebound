@@ -11,6 +11,9 @@ var boss: ShatteredVessel = null
 var boss_portal: Portal
 var _boss_trigger_pos := Vector3(0, 0, -22)
 var _boss_started: bool = false
+## M14a: a story replay of the Vessel, and the rest after one.
+var _boss_replay: bool = false
+var _boss_rearm: float = 0.0
 var _arena_center := Vector3(0, 0, -29)
 
 ## Boss chamber interior: north wall inner face â†’ vault divider's north face.
@@ -377,12 +380,19 @@ func _add_camp(pos: Vector3, composition: Array[String], radius: float) -> void:
 	spawner.global_position = pos
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if Net.is_client():
 		return  # M09: the server starts the boss
-	if _boss_started or players.is_empty() or SaveGame.has_flag(&"spire_cleansed"):
-		if not _boss_started and SaveGame.has_flag(&"spire_cleansed") and boss_portal.locked:
-			boss_portal.set_locked(false)
+	var cleansed := SaveGame.has_flag(&"spire_cleansed")
+	if not _boss_started and cleansed and boss_portal.locked:
+		boss_portal.set_locked(false)
+	if _boss_started or players.is_empty():
+		return
+	if _boss_rearm > 0.0:
+		_boss_rearm -= delta
+		return
+	# M14a: once cleansed the Vessel stays dead, unless a hero here still needs it for its story
+	if cleansed and not StoryBosses.needed_near(self, "vessel", _boss_trigger_pos, 10.0):
 		return
 	if not players_within(_boss_trigger_pos, 10.0).is_empty():  # M07b: any hero starts it
 		_start_boss_fight()
@@ -390,7 +400,8 @@ func _physics_process(_delta: float) -> void:
 
 func _start_boss_fight() -> void:
 	_boss_started = true
-	boss = ShatteredVessel.new()
+	_boss_replay = SaveGame.has_flag(&"spire_cleansed")  # M14a: a story replay
+	boss = make_enemy("vessel") as ShatteredVessel  # M14a fix: its type id names the puppet online (was a rusher)
 	boss.setup_arena(_arena_center, blink_anchors())
 	_spawn_enemy(boss, _arena_center)
 	if hud != null:
@@ -417,10 +428,23 @@ func _on_boss_summon(pos: Vector3) -> void:
 
 
 func _on_boss_died(_enemy: EnemyBase) -> void:
+	var needed := StoryBosses.credit(self, "vessel", _arena_center)
+	if _boss_replay:  # M14a: woken for a story; the exit is open already
+		_boss_started = false
+		_boss_rearm = StoryBosses.REARM
+		if hud != null:
+			hud.hide_boss_bar()
+		_vessel_loot(needed)
+		return
 	SaveGame.set_flag(&"spire_cleansed")  # co-op: the server tells every client (FLAG)
 	apply_world_flag(&"spire_cleansed")
-	# One legendary and two rares per hero (M09 personal loot).
-	for hero in party():
+	_vessel_loot(party())
+
+
+## One legendary and two rares per hero (M09 personal loot); after a story
+## replay only for the heroes that needed it (M14a).
+func _vessel_loot(heroes: Array[Player]) -> void:
+	for hero in heroes:
 		var items: Array[ItemData] = []
 		var legendary := ItemGenerator.generate_legendary(hero.class_data.id)  # M10: fits the hero's class
 		ItemGenerator.apply_item_level(legendary, 4)

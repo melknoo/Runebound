@@ -47,8 +47,14 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   panel opens, and their old placeholder lines are DE + EN now.
 - Phase 3 built: camera pans with letterbox, subtitles, timed effects (a
   shard falling from the sky), act cards, skip with Esc / E / Space.
-- Next: phase 4 co-op story (PROTOCOL 17), 5 the prologue zone, 6 Act 1,
-  7 wrap-up.
+- Phase 4 built: the co-op story, **PROTOCOL 17** (a release must follow
+  before co-op): the story travels in CHARACTER, every client credits its
+  own hero, a beaten Colossus or Vessel stands again online for a hero whose
+  story still needs it (only that hero gets its legendary). Fixed on the way:
+  online, both bosses showed up as a rusher on the clients (their type id).
+  Net scenario `story_boss`.
+- Next: phase 5 the prologue zone, 6 Act 1, 7 wrap-up (5 and 6 wait for the
+  user's review of the story bible).
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

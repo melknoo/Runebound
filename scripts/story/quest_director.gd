@@ -54,13 +54,18 @@ func begin() -> void:
 		return
 	qlog = QuestLog.of(hero)
 	qlog.bind(hero)
-	if not qlog.active or not allowed():
+	if not allowed():
+		qlog.from_dict({})  # a net-test client's throwaway character carries no story to the server
+		return
+	if not qlog.active:
 		return
 	running = true
 	if zone.quest_tracker != null:
 		zone.quest_tracker.bind(qlog, hero)
 	_build_stage()
 	qlog.changed.connect(_mark_stage_dirty)
+	if zone.net_world != null:
+		qlog.changed.connect(zone.net_world.mark_character_dirty)  # co-op: the server reads our story
 	qlog.quest_started.connect(_on_quest_started)
 	qlog.quest_done.connect(_on_quest_done)
 	qlog.step_done.connect(_on_step_done)
