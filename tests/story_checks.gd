@@ -30,7 +30,8 @@ func run(runner: Node) -> void:
 	await _dialogue()
 	await _cutscenes()
 	_story_bosses()
-	StoryDB.reload()  # drops the test quests
+	StoryDB.reload()
+	await _prologue()  # drops the test quests
 	if own != null:
 		own.queue_free()
 		if prev != null and is_instance_valid(prev):
@@ -370,3 +371,130 @@ func _story_bosses() -> void:
 	_check(credited.size() == 1 and credited[0] == hero, "the heroes that needed it are the ones its replay pays")
 	ql.from_dict({})
 	_check(Net.PROTOCOL >= 17, "the story in CHARACTER bumped the protocol (17)")
+
+
+## Phase 5: the prologue, played through in its own zone: Edda, the road, the
+## shard, the cart, the bridge breaking behind, the Reeve, the gate, then
+## Runehold (Act 1, Sigrun's quest); checkpoints; skipping it.
+func _prologue() -> void:
+	var tree := t.get_tree()
+	var prev := tree.current_scene
+	var keep_save := SaveGame.save_path
+	SaveGame.save_path = "user://story_prologue_test.json"
+	SaveGame.wipe()
+	var title_like := Node.new()  # character creation happens with no hero in the scene (the title)
+	tree.root.add_child(title_like)
+	tree.current_scene = title_like
+	SaveGame.create_character(&"runebreaker", "Prologue")
+	title_like.queue_free()
+	_check(SaveGame.current_zone == SaveGame.PROLOGUE_SCENE and int((SaveGame.active_character().get("story", {}) as Dictionary).get("act", -1)) == 0,
+		"a new character starts on the Ash Road with the prologue waiting ")
+	var zone := (load(SaveGame.PROLOGUE_SCENE) as PackedScene).instantiate() as AshRoadZone
+	tree.root.add_child(zone)
+	tree.current_scene = zone
+	await t.call(&"_wait_frames", 6)
+	var hero := zone.player
+	var ql := QuestLog.of(hero)
+	_check(zone.terrain != null and zone.layout != null and zone.layout.pois.size() >= 10 and zone.bridge_deck != null
+		and zone.boss_portal != null and zone.boss_portal.locked, "the Ash Road: terrain, POIs, the bridge, the gate sealed")
+	_check(ql.is_running("p_ash_road") and ql.step_id("p_ash_road") == "wake" and ql.seen.has("p_intro")
+		and zone.quest_tracker.hint_text() != "", "the prologue starts by itself: its camera pan, the first step, a walking hint")
+	var edda := _stage_node(zone, "edda_camp")
+	_check(edda != null and edda.visible, "Edda waits at the camp")
+	zone.dialogue_ui.try_open("edda", edda, hero)
+	zone.dialogue_ui.advance()
+	zone.dialogue_ui.choose(0)
+	_check(ql.step_id("p_ash_road") == "road" and zone.quest_tracker.hint_text().contains(InputSetup.key_label(&"dodge")),
+		"talking to her sends the hero down the road (attack and dodge hint)")
+	await _frames(3)
+	_check(not edda.visible, "she stays behind with the carts")
+	hero.global_position = zone.ground_point(zone.poi_position("clearing"), 0.2)
+	await _until(func() -> bool: return ql.step_id("p_ash_road") == "shard_talk", 120)
+	var edda2 := _stage_node(zone, "edda_clearing")
+	await _frames(3)
+	_check(ql.step_id("p_ash_road") == "shard_talk" and ql.has_beat("runebound") and edda2 != null and edda2.visible,
+		"the clearing: the shard strikes (runebound), Edda catches up")
+	zone.dialogue_ui.try_open("edda", edda2, hero)
+	zone.dialogue_ui.advance()
+	zone.dialogue_ui.choose(1)
+	_check(ql.step_id("p_ash_road") == "cart", "Edda sends the hero to the supply cart")
+	var cart := _stage_node(zone, "p_cart") as StoryMarker
+	var draughts := hero.consumable_count(Consumables.HEALING_DRAUGHT) if hero.has_method(&"consumable_count") else int(hero.consumables.get(Consumables.HEALING_DRAUGHT, 0))
+	cart.use_by(hero)
+	await t.call(&"_wait_frames", 3)
+	var after := hero.consumable_count(Consumables.HEALING_DRAUGHT) if hero.has_method(&"consumable_count") else int(hero.consumables.get(Consumables.HEALING_DRAUGHT, 0))
+	_check(ql.step_id("p_ash_road") == "bridge" and zone.dialogue_ui.visible, "searching the cart: its line, and on to the bridge")
+	zone.dialogue_ui.close()
+	_check(after > draughts or _draught_drops(zone) >= 2, "the cart's draughts (%d -> %d, %d on the ground)" % [draughts, after, _draught_drops(zone)])
+	hero.global_position = zone.ground_point(zone.poi_position("bridge_n"), 0.2)
+	await _until(func() -> bool: return ql.step_id("p_ash_road") == "toll", 120)
+	_check(ql.step_id("p_ash_road") == "toll" and zone.bridge_down and ql.has_beat("p_bridge_down"),
+		"over the gorge: the bridge breaks behind the hero")
+	_check(zone._respawn_point(hero).distance_to(zone.poi_position("bridge_n")) < 3.0, "a fall now brings the hero back at the north end")
+	hero.global_position = zone.ground_point(zone.poi_position("toll") + Vector3(0, 0, 4), 0.2)
+	await _until(func() -> bool: return zone.reeve != null, 60)
+	_check(zone.reeve != null and zone.reeve.type_id == "risen_reeve" and zone.reeve.level == 1, "the Risen Reeve rises at his toll gate")
+	if zone.reeve != null:
+		zone.reeve.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, zone.reeve.global_position))
+	await _until(func() -> bool: return ql.step_id("p_ash_road") == "gate", 60)
+	_check(ql.step_id("p_ash_road") == "gate" and ql.has_beat("boss:risen_reeve") and not zone.boss_portal.locked,
+		"the Reeve falls: the gate to Runehold opens")
+	var edda3 := _stage_node(zone, "edda_gate")
+	await _frames(3)
+	zone.dialogue_ui.try_open("edda", edda3, hero)
+	zone.dialogue_ui.advance()
+	zone.dialogue_ui.choose(0)
+	_check(ql.step_id("p_ash_road") == "runehold", "Edda at the gate: go first")
+	ql.event("enter", "hub")
+	_check(ql.is_done("p_ash_road") and ql.act == 1 and ql.has_beat("prologue_done") and ql.is_running("a1_call")
+		and ql.seen.has("p_arrival"), "Runehold: the prologue is done, Act 1 begins with Sigrun's quest")
+	var level := hero.progression.level
+	_check(level == 2, "the prologue ends at level 2 (level %d)" % level)
+	zone.queue_free()
+	await t.call(&"_wait_frames", 2)
+	# skipping it: at creation (a second character), or online first
+	var skipped := SaveGame.new_character(&"druid", "Skip", true)
+	var sst: Dictionary = skipped.get("story", {})
+	_check(int(sst.get("act", 0)) == 1 and (sst.get("done", []) as Array).has("p_ash_road")
+		and str((skipped["world"] as Dictionary)["zone"]) == SaveGame.HUB_SCENE
+		and int((skipped["progression"] as Dictionary)["level"]) == QuestLog.PROLOGUE_LEVEL and SaveGame.can_skip_prologue() == false,
+		"skipping at creation: Act 1 in Runehold at the prologue's level (offered only once one finished it)")
+	var online_first := QuestLog.new()
+	online_first.from_dict(QuestLog.new_story())
+	online_first.skip_prologue()
+	_check(online_first.act == 1 and online_first.is_done("p_ash_road") and online_first.pending.has("a1_call")
+		and not online_first.pending.has("p_ash_road"), "online first: the prologue is skipped, Sigrun waits")
+	SaveGame.wipe()
+	SaveGame.save_path = keep_save
+	SaveGame.reload_from_disk()
+	if prev != null and is_instance_valid(prev):
+		tree.current_scene = prev
+
+
+func _stage_node(zone: ZoneBase, stage_id: String) -> Node3D:
+	for n in zone.quest_director.stage_nodes:
+		if is_instance_valid(n) and str((n.get(&"stage") as Dictionary).get("id", "")) == stage_id:
+			return n
+	return null
+
+
+func _draught_drops(zone: ZoneBase) -> int:
+	var n := 0
+	for c in zone.world.get_children():
+		if c is ConsumableDrop:
+			n += 1
+	return n
+
+
+func _until(cond: Callable, frames: int) -> void:
+	for i in frames:
+		if cond.call():
+			return
+		await t.get_tree().process_frame
+
+
+## Process frames (the director refreshes its stage there; after a heavy load
+## Godot catches up on physics frames without any).
+func _frames(n: int) -> void:
+	for i in n:
+		await t.get_tree().process_frame

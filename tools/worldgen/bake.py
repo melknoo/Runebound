@@ -1,7 +1,9 @@
 """RUNEBOUND world bake (M08): declarative layout -> heightmap, path mask, map.
 
-Run:  python tools/worldgen/bake.py
-Out:  assets/world/highlands/height.r16      uint16 LE, row 0 = north (z = -192),
+Run:  python tools/worldgen/bake.py [highlands | ash_road]   (default: highlands)
+Out:  assets/world/<zone>/... (M14a: the prologue's Ash Road has its own
+      layout, tools/worldgen/ash_road_layout.py); for the Highlands:
+      assets/world/highlands/height.r16      uint16 LE, row 0 = north (z = -192),
                                              height = v / 65535 * height_max
       assets/world/highlands/path_mask.png   L8, 2 px/m, routes + trampled camp floors
       assets/world/highlands/map.png         RGBA pixel-style map (no markers)
@@ -24,10 +26,11 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(__file__))
-from highlands_layout import LAYOUT  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
-OUT_DIR = os.path.join(ROOT, "assets", "world", "highlands")
+# M14a: zone name -> (layout module, output folder under assets/world)
+LAYOUTS = {"highlands": ("highlands_layout", "highlands"), "ash_road": ("ash_road_layout", "ash_road")}
+OUT_DIR = os.path.join(ROOT, "assets", "world", "highlands")  # main() sets the zone's
 MAP_PX_PER_M = 2
 BIOME_PX_PER_M = 1
 PAD_BLEND = 10.0
@@ -36,11 +39,12 @@ PAD_BLEND = 10.0
 # the 80 m density, and the trampled-floor radius per type in the path mask.
 KNOWN_TYPES = {"spawn", "portal", "waypoint", "camp", "chest", "landmark", "ruin", "ambush", "dungeon",
                "elite_patrol", "arena", "village", "puzzle_braziers", "puzzle_boulder", "puzzle_monolith",
-               "puzzle_dodge", "trial", "nest", "cursed", "cave", "lore", "ghost", "shard", "vignette", "lurker"}
+               "puzzle_dodge", "trial", "nest", "cursed", "cave", "lore", "ghost", "shard", "vignette", "lurker",
+               "story"}  # M14a: a story place (a pad, no geometry: the zone builds what stands there)
 SMALL_TYPES = {"lore", "ghost", "shard", "vignette"}
 FLOOR_RADIUS = {"camp": 6.5, "ruin": 5.0, "ambush": 3.5, "arena": 12.0, "spawn": 5.0, "waypoint": 3.0,
                 "dungeon": 4.0, "village": 8.0, "trial": 5.0, "nest": 5.0, "cursed": 6.0, "cave": 3.5,
-                "puzzle_braziers": 4.0, "puzzle_monolith": 4.0, "puzzle_dodge": 3.0}
+                "puzzle_braziers": 4.0, "puzzle_monolith": 4.0, "puzzle_dodge": 3.0, "story": 4.0}
 ROUTE_BLEND = 6.0
 BAYER4 = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]], dtype=np.float32) / 16.0 - 0.5
 
@@ -569,8 +573,15 @@ def write_layout(f: Field, lay: dict, weights: np.ndarray) -> None:
 
 
 def main() -> int:
+    global OUT_DIR
+    name = sys.argv[1] if len(sys.argv) > 1 else "highlands"
+    if name not in LAYOUTS:
+        print("unknown zone %s (one of %s)" % (name, ", ".join(LAYOUTS)))
+        return 2
+    module, folder = LAYOUTS[name]
+    lay = __import__(module).LAYOUT
+    OUT_DIR = os.path.join(ROOT, "assets", "world", folder)
     os.makedirs(OUT_DIR, exist_ok=True)
-    lay = LAYOUT
     rng = np.random.default_rng(lay["seed"])
     f = Field(lay["resolution"], tuple(lay["origin"]))
     build_base(f, lay, rng)

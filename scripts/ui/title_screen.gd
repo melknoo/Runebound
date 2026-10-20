@@ -31,6 +31,8 @@ var _main_page: VBoxContainer
 var _join_page: VBoxContainer
 var _chars_page: VBoxContainer
 var _create_page: VBoxContainer
+## M14a: "skip the prologue" (once a character has played it)
+var _skip_prologue: CheckBox
 var _chars_list: VBoxContainer
 var _class_buttons: Array[Button] = []
 var _class_desc: Label
@@ -399,6 +401,10 @@ func _build_character_pages(pages: Control) -> void:
 	_char_name_edit.max_length = Net.NAME_MAX
 	_char_name_edit.text_submitted.connect(func(_t: String) -> void: _create())
 	_create_page.add_child(_char_name_edit)
+	_skip_prologue = CheckBox.new()
+	_skip_prologue.text = Texts.t("ui.create.skip_prologue")
+	_skip_prologue.visible = false
+	_create_page.add_child(_skip_prologue)
 	var row2 := HBoxContainer.new()
 	row2.add_theme_constant_override("separation", 12)
 	_create_page.add_child(row2)
@@ -474,6 +480,8 @@ func _show_create() -> void:
 	_hide_pages()
 	_create_page.visible = true
 	_say(_create_status, "")
+	_skip_prologue.visible = SaveGame.can_skip_prologue()
+	_skip_prologue.button_pressed = false
 	if not _class_buttons.is_empty() and _picked_class() == null:
 		_class_buttons[0].button_pressed = true
 		_on_class_picked(ClassData.load_by_id(_class_buttons[0].get_meta(&"class_id")))
@@ -690,7 +698,8 @@ func _create() -> void:
 	if cls == null:
 		_say(_create_status, "Pick a class first.", WARN)
 		return
-	SaveGame.create_character(cls.id, Net.clean_name(_char_name_edit.text) if _char_name_edit.text.strip_edges() != "" else "")
+	SaveGame.create_character(cls.id, Net.clean_name(_char_name_edit.text) if _char_name_edit.text.strip_edges() != "" else "",
+		_skip_prologue.visible and _skip_prologue.button_pressed)
 	_char_name_edit.text = ""
 	_show_characters()
 	_say(_chars_status, "%s is ready. Play solo, or online with friends." % _character_line(SaveGame.active_character()))

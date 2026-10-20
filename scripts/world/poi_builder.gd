@@ -13,6 +13,7 @@ const DESTINATIONS := {
 	"cistern": "res://scenes/hollow_cistern.tscn",
 	"warrens": "res://scenes/ember_warrens.tscn",
 	"stormwatch": "res://scenes/stormwatch.tscn",
+	"ash_road": "res://scenes/ash_road.tscn",  # M14a the prologue
 }
 const PROP_RANGE := 110.0     # visibility_range_end for kit props (m)
 const ROCK_RANGE := 200.0     # hull-dressed rocks

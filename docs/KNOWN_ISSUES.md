@@ -15,6 +15,12 @@
   rule); a hero far away from the party gets no step.
 - **PROTOCOL 17** (phase 4): the server needs a release before the next
   co-op session (`tools\run_godot.cmd release` from `D:\fable_test`).
+- Prologue numbers to feel (phase 5): the Risen Reeve (520 health, mace 14,
+  toll ring 12 every 12 s, two shamblers at half health), the ambushes, the
+  prologue ending at level 2. The solo-check bot never dodges: the
+  Runebreaker bot clears the Reeve with 27 % health left.
+- The smoke test plays the prologue through now: 294-338 s (watchdog
+  420 s, the wrapper's limit 480 s). Raise both if it creeps up.
 - Fixed in phase 4: online, the Ashvein Colossus and the Vessel appeared as
   a plain rusher on co-op clients (they were spawned without their type id).
   Watch the boss bar and the models in the next co-op playtest.

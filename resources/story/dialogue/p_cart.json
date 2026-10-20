@@ -1,0 +1,9 @@
+{
+	"npc": "p_cart",
+	"entries": [
+		{"if": {"quest_step": ["p_ash_road", "cart"]}, "start": "look"}
+	],
+	"nodes": {
+		"look": {"say": "dlg.p_cart.0", "end": true}
+	}
+}

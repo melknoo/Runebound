@@ -40,6 +40,7 @@ func prompt_text(_hero: Player) -> String:
 
 func interact(hero: Player) -> void:
 	var zone := ZoneBase.zone_of(self)
-	QuestLog.of(hero).event("interact", story_id)
+	# its line first (the dialogue may ask for the step it is about), then the goal
 	if zone != null and zone.dialogue_ui != null and not StoryDB.dialogue(story_id).is_empty():
 		zone.dialogue_ui.try_open(story_id, self, hero)
+	QuestLog.of(hero).event("interact", story_id)

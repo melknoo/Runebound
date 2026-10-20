@@ -12,8 +12,8 @@ extends CanvasLayer
 ##   "safe": true (wait until the hero is out of combat),
 ##   "shots": [{"from": anchor, "to": anchor, "look": anchor, "t": seconds,
 ##              "say": key, "speaker": npc id}],
-##   "fx": [{"t": seconds, "kind": "shard_fall" | "flash" | "shake" | "sfx",
-##           "at": anchor, "name": sfx}],
+##   "fx": [{"t": seconds, "kind": "shard_fall" | "flash" | "shake" | "sfx" | "call",
+##           "at": anchor, "name": sfx or the zone's story_fx}],
 ##   "card": {"title": key, "sub": key}, "on_end": [effects]}}}
 ## An anchor is [x, y, z], or {"at": "hero" | "npc:<id>" | "marker:<id>" |
 ## "poi:<id>", "offset": [x, y, z], "local": true (offset turns with it)}.
@@ -264,6 +264,9 @@ func _play_fx(f: Dictionary) -> void:
 				zone.camera_rig.add_trauma(float(f.get("amount", 0.5)))
 		"sfx":
 			Sfx.play_ui(str(f.get("name", "shatter_burst")), float(f.get("db", -4.0)))
+		"call":  # a zone's own story moment (the prologue's bridge breaking)
+			if zone.has_method(&"story_fx"):
+				zone.call(&"story_fx", str(f.get("name", "")))
 
 
 ## A rune shard falls burning out of the sky onto `at`: flash, light, sound.

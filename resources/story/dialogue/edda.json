@@ -1,0 +1,36 @@
+{
+	"npc": "edda",
+	"entries": [
+		{"if": {"quest_step": ["p_ash_road", "wake"]}, "start": "wake"},
+		{"if": {"quest_step": ["p_ash_road", "shard_talk"]}, "start": "shard"},
+		{"if": {"quest_step": ["p_ash_road", "gate"]}, "start": "gate"},
+		{"if": {"act_min": 1}, "start": "hub"},
+		{"start": "road"}
+	],
+	"nodes": {
+		"wake": {"say": "dlg.edda.wake.0", "next": "wake_1"},
+		"wake_1": {"say": "dlg.edda.wake.1", "options": [
+			{"text": "dlg.edda.opt.go", "effects": [{"event": ["talk", "edda"]}], "end": true},
+			{"text": "dlg.edda.opt.who", "next": "wake_who"}
+		]},
+		"wake_who": {"say": "dlg.edda.wake.who", "options": [
+			{"text": "dlg.edda.opt.go", "effects": [{"event": ["talk", "edda"]}], "end": true}
+		]},
+		"shard": {"say": "dlg.edda.shard.0", "next": "shard_1"},
+		"shard_1": {"say": "dlg.edda.shard.1", "options": [
+			{"text": "dlg.edda.opt.hurts", "next": "shard_hurt"},
+			{"text": "dlg.edda.opt.lets_go", "effects": [{"event": ["talk", "edda"]}], "end": true}
+		]},
+		"shard_hurt": {"say": "dlg.edda.shard.hurt", "options": [
+			{"text": "dlg.edda.opt.lets_go", "effects": [{"event": ["talk", "edda"]}], "end": true}
+		]},
+		"gate": {"say": "dlg.edda.gate.0", "next": "gate_1"},
+		"gate_1": {"say": "dlg.edda.gate.1", "options": [
+			{"text": "dlg.edda.opt.go", "effects": [{"event": ["talk", "edda"]}], "end": true}
+		]},
+		"road": {"say": "dlg.edda.road.0", "end": true},
+		"hub": {"say_pool": ["dlg.edda.hub.0", "dlg.edda.hub.1", "dlg.edda.hub.2"], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

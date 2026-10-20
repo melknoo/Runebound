@@ -1532,6 +1532,40 @@ Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
   `.new()` instead of `make_enemy`, so their `type_id` stayed "rusher" and
   co-op clients saw a rusher puppet; now they come from `make_enemy`.
   Net scenario `story_boss` (tests/net_story.gd).
+- **The prologue (phase 5):** `AshRoadZone` (`scenes/ash_road.tscn`) extends
+  `AshenHighlands` for its open-zone plumbing (terrain, PoiBuilder, map,
+  compass, area names, ridge rocks, rim trees, scatter, critters) and
+  overrides the build: layout `tools/worldgen/ash_road_layout.py`, baked
+  with `python tools/worldgen/bake.py ash_road` into `assets/world/ash_road/`
+  (bake.py takes the zone name; the Highlands' output stays the same; POI
+  type `story` = a pad without geometry). Night `ZoneLook`, no discovery card
+  (`zone_title()` is empty), invisible walls along the valley and the gorge
+  rims, the bridge built from boxes (`story_fx("bridge_collapse")`: the deck
+  falls, a wall closes the way back; rebuilt broken on load when the beat
+  `p_bridge_down` is set), the toll gate's dressing, checkpoints by quest
+  step (`CHECKPOINTS`), the gate to Runehold sealed until the Reeve falls.
+  `RisenReeve` (`scripts/enemies/risen_reeve.gd`, a `DungeonBoss` on the
+  grave shambler's rig at 1.55x): a mace slam, a toll ring around himself,
+  two shamblers raised at half health; spawned by the zone when a hero
+  without the beat comes within 13 m of the toll pad; `BOSS_TYPES` (so the
+  director writes `boss:risen_reeve`).
+- **New characters:** `SaveGame.new_character` starts in
+  `PROLOGUE_SCENE` with `QuestLog.new_story()`; `create_character(..., skip)`
+  (the title's checkbox, shown when `can_skip_prologue()`: a character has
+  finished it or is legacy) starts in Runehold at Act 1 with the prologue's
+  level (2), gold (40) and two draughts. A story still at act 0 outside the
+  prologue (online first, or made before the prologue existed) is skipped by
+  the director (`QuestLog.skip_prologue`, `SaveGame.leave_prologue_offline`
+  moves a stashed solo world out of the prologue), except the arrival step.
+- **Effects added for it:** quest `on_start` effects (QuestLog.start), `hint`
+  (a tutorial line under the tracker with the player's own keys; a step's
+  completion clears it), `zone` (`zone.story_fx(name)`), and the camera
+  pans' fx `call`.
+- **Tests:** story checks play the prologue through in its zone (talks,
+  places, the shard, the cart, the bridge, the Reeve, the gate, Runehold,
+  checkpoints, skipping); `tools\run_godot.cmd solocheck <class> <level>
+  ash_road` plays its fights with the start kit (all three classes clear it
+  at level 2); shot list `m14a_prologue`.
 - **Save v7:** `new_character` starts with `QuestLog.new_story()` (act 0,
   the prologue pending). v6 -> v7 gives every character act 1, the beat
   `legacy` (keeps its gates open), `boss:colossus` / `boss:vessel` from its

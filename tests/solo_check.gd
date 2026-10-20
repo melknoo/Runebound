@@ -15,6 +15,8 @@ extends Node
 ## water comes back, it strikes a frost pylon soon after the heart floods;
 ## the Warrens: it quenches the Reeve a while after he heats up again, it
 ## turns the valve of the runnel the hero stands in soon after the lava rises).
+## M14a: `--zone=ash_road` plays the prologue: its two ambushes and the Risen
+## Reeve, with the class's start kit only (no rolled gear).
 
 const CAMP_TIMEOUT := 90.0    # simulated seconds per camp
 const BOSS_TIMEOUT := 240.0   # simulated seconds for the Colossus
@@ -32,6 +34,8 @@ var trace: bool = false
 var only: PackedStringArray = PackedStringArray()
 ## --dungeon=<id>: the DungeonRegistry id to clear instead of the Highlands.
 var dungeon: String = ""
+## M14a --zone=ash_road: the prologue instead.
+var prologue: bool = false
 var zone: ZoneBase
 var hero: Player
 
@@ -52,6 +56,8 @@ func _ready() -> void:
 			only = arg.trim_prefix("--only=").split(",")
 		elif arg.begins_with("--dungeon="):
 			dungeon = arg.trim_prefix("--dungeon=")
+		elif arg == "--zone=ash_road":
+			prologue = true
 	_run.call_deferred()
 
 
@@ -60,6 +66,8 @@ func _run() -> void:
 	SaveGame.save_path = "user://solo_check_save.json"  # never touch the real save
 	SaveGame.wipe()
 	var scene_path := "res://scenes/ashen_highlands.tscn"
+	if prologue:
+		scene_path = AshRoadZone.SCENE
 	if dungeon != "":
 		scene_path = String(DungeonRegistry.info(dungeon).get("scene", ""))
 		if scene_path == "":
@@ -82,6 +90,11 @@ func _run() -> void:
 		"" if dungeon == "" else ", " + zone.zone_title()])
 	print("health %.0f | loadout %s | gear: %s" % [hero.health.max_health, ", ".join(hero.loadout),
 		", ".join(_gear_names())])
+	if prologue:
+		await _fight_prologue()
+		_report()
+		get_tree().quit(0)
+		return
 	for id in _camp_ids():
 		if not only.is_empty() and not only.has(id):
 			continue
@@ -108,7 +121,7 @@ func _prepare_hero() -> void:
 	for data in hero.class_data.trainer_abilities():
 		if data.learn_level <= level:
 			hero.learn_ability(data.id)
-	for slot in ItemData.SLOT_COUNT:
+	for slot in ItemData.SLOT_COUNT if not prologue else 0:  # M14a: the prologue on the start kit
 		var item := ItemGenerator.generate(1, hero.class_data.id)
 		for tries in 200:  # the generator rolls the slot: keep rolling until it fits
 			if int(item.slot) == slot:
@@ -117,6 +130,11 @@ func _prepare_hero() -> void:
 		ItemGenerator.apply_item_level(item, GEAR_ITEM_LEVEL)
 		hero.equipment.add_item(item)  # equip() takes from the bag
 		hero.equipment.equip(item)
+	if prologue:  # M14a: what a new character carries (Rig v3 start kit, the start ability slotted)
+		for item in ItemGenerator.starter_kit(hero.class_data.id):
+			hero.equipment.add_item(item)
+			hero.equipment.equip(item)
+		hero.restore_loadout([])
 	hero.health.heal_full()
 	hero.health.damaged.connect(func(hit: HitInfo) -> void: _damage_taken += hit.damage)
 	hero.health.dot_damaged.connect(func(amount: float, _type: HitInfo.DamageType) -> void: _damage_taken += amount)
@@ -214,6 +232,38 @@ func _fight_boss() -> void:
 	var down := boss == null or not is_instance_valid(boss) or boss.ai_state == EnemyBase.AIState.DEAD
 	var left := "" if down else " - Colossus at %.0f %%" % (100.0 * boss.health.current_health / boss.health.max_health)
 	_record("Ashvein Colossus (L3)%s" % left, t, down)
+
+
+## M14a: the prologue's fights in order - the dead behind the camp, the
+## raiders at the bend (both ambushes, triggered where they wait), then the
+## Reeve at his toll gate.
+func _fight_prologue() -> void:
+	var road := zone as AshRoadZone
+	for id in ["ambush_dead", "ambush_raiders"]:
+		var sp := road.camps.get(id) as EncounterSpawner
+		if sp == null:
+			continue
+		_clear_leftovers()
+		_place_hero(sp.global_position)
+		var cleared := [false]
+		var on_clear := func() -> void: cleared[0] = true
+		sp.cleared.connect(on_clear)
+		sp.reset()
+		sp.trigger(zone, hero)
+		var t := await _fight(func() -> bool: return cleared[0], CAMP_TIMEOUT)
+		sp.cleared.disconnect(on_clear)
+		_record("ambush %s (L1, %s)" % [id, "+".join(sp.composition)], t, cleared[0])
+	_clear_leftovers()
+	var toll := road.poi_position("toll")
+	_place_hero(toll + Vector3(0.0, 0.0, 6.0))
+	if road.reeve == null:
+		road.call(&"_start_reeve", toll)
+	var boss := road.reeve
+	var t := await _fight(func() -> bool:
+		return boss == null or not is_instance_valid(boss) or boss.ai_state == EnemyBase.AIState.DEAD, BOSS_TIMEOUT)
+	var down := boss == null or not is_instance_valid(boss) or boss.ai_state == EnemyBase.AIState.DEAD
+	var left := "" if down else " - Reeve at %.0f %%" % (100.0 * boss.health.current_health / boss.health.max_health)
+	_record("The Risen Reeve (L1)%s" % left, t, down)
 
 
 ## M13: a dungeon boss in its arena. The test plays the room for the hero

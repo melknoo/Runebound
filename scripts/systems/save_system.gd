@@ -20,6 +20,8 @@ signal flag_set(flag: StringName)
 
 const VERSION := 7  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map; v5 (M09): discovered zones per character; v6 (M10): world, name and loadout per character; v7 (M14a): the story per character
 const HUB_SCENE := "res://scenes/hub.tscn"
+## M14a: where a new character's story begins (the prologue's Ash Road).
+const PROLOGUE_SCENE := "res://scenes/ash_road.tscn"
 ## Character keys the save keeps although the live hero doesn't hold them.
 const KEPT_KEYS: Array[String] = ["name", "notes"]
 ## M10 migration: the spells that moved from the Runebreaker to the
@@ -275,20 +277,46 @@ func characters() -> Array:
 
 
 ## A new character's dict: level 1, the class's start kit, a fresh world.
-static func new_character(class_id: StringName, char_name: String) -> Dictionary:
-	return {"name": char_name, "class_id": String(class_id), "known_abilities": [], "loadout": [], "gold": 0,
+## M14a: it starts in the prologue (`skip_prologue`: in Runehold at Act 1,
+## with what the prologue would have given).
+static func new_character(class_id: StringName, char_name: String, skip_prologue: bool = false) -> Dictionary:
+	var ch := {"name": char_name, "class_id": String(class_id), "known_abilities": [], "loadout": [], "gold": 0,
 		"inventory": [], "equipped": {}, "progression": {"level": 1, "xp": 0, "talents": {}},
 		"waypoints": [], "map_discovered": [], "discovered": [],
 		"lore_read": [], "collected": [], "gathered": {}, "blessings": [],
 		"story": QuestLog.new_story(),  # M14a: act 0, the prologue waiting
-		"world": {"zone": HUB_SCENE, "flags": {}, "camps": {}}}
+		"world": {"zone": PROLOGUE_SCENE, "flags": {}, "camps": {}}}
+	if skip_prologue:
+		ch["story"] = QuestLog.skipped_story()
+		ch["progression"] = {"level": QuestLog.PROLOGUE_LEVEL, "xp": 0, "talents": {}}
+		ch["gold"] = QuestLog.PROLOGUE_GOLD
+		ch["consumables"] = {String(Consumables.HEALING_DRAUGHT): 2}
+		(ch["world"] as Dictionary)["zone"] = HUB_SCENE
+	return ch
+
+
+## M14a: may a new character skip the prologue? Once another character has
+## finished it (or came from before the story, "legacy").
+func can_skip_prologue() -> bool:
+	for ch: Variant in characters():
+		var st: Dictionary = (ch as Dictionary).get("story", {}) if ch is Dictionary else {}
+		if (st.get("done", []) as Array).has("p_ash_road") or (st.get("beats", []) as Array).has("legacy"):
+			return true
+	return false
+
+
+## M14a: a character that skips its prologue online must not land back in it
+## when it leaves the server: the stashed solo world moves to Runehold.
+func leave_prologue_offline() -> void:
+	if online and str(_offline_world.get("zone", "")) == PROLOGUE_SCENE:
+		_offline_world["zone"] = HUB_SCENE
 
 
 ## Adds a character, makes it the active one and saves. Call it from the
 ## title screen (no hero in the scene), never from inside a zone.
-func create_character(class_id: StringName, char_name: String) -> int:
+func create_character(class_id: StringName, char_name: String, skip_prologue: bool = false) -> int:
 	var chars := _chars_with_world()
-	chars.append(new_character(class_id, char_name.strip_edges()))
+	chars.append(new_character(class_id, char_name.strip_edges(), skip_prologue))
 	active = chars.size() - 1
 	_loaded_data = {"version": VERSION, "characters": chars, "active": active}
 	_load_world(chars[active]["world"] as Dictionary)

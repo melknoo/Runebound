@@ -59,6 +59,10 @@ func begin() -> void:
 		return
 	if not qlog.active:
 		return
+	var arriving := qlog.is_running("p_ash_road") and qlog.step_id("p_ash_road") == "runehold"
+	if qlog.act == 0 and zone_key() != "ash_road" and not arriving:
+		qlog.skip_prologue()  # online first (or made before the prologue existed): Act 1 begins
+		SaveGame.leave_prologue_offline()
 	running = true
 	if zone.quest_tracker != null:
 		zone.quest_tracker.bind(qlog, hero)

@@ -53,8 +53,16 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   story still needs it (only that hero gets its legendary). Fixed on the way:
   online, both bosses showed up as a rusher on the clients (their type id).
   Net scenario `story_boss`.
-- Next: phase 5 the prologue zone, 6 Act 1, 7 wrap-up (5 and 6 wait for the
-  user's review of the story bible).
+- The user approved the story bible (2026-10-20).
+- Phase 5 built: the prologue "The Ash Road" - a new night zone (a valley
+  road, the gorge with a bridge that breaks behind the hero, the toll gate),
+  Edda, the shard falling from the sky, the raiders and the supply cart, the
+  Risen Reeve, tutorial lines with the player's keys, the arrival in Runehold
+  (Sigrun sees the glow, "ACT I") and her first Act 1 quest "Runebound". New
+  characters start there; from the second character on it can be skipped.
+  Solo check: all three classes clear it at level 2 without dying (the
+  Runebreaker bot with 27 % left).
+- Next: phase 6 Act 1, 7 wrap-up.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

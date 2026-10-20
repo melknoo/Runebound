@@ -7,12 +7,14 @@ extends Object
 ##   {"give": {xp, gold, draughts, items: [{rarity, slot?}]}}  (ZoneBase.give_reward)
 ##   {"toast": text key}              {"cutscene": id}       {"open": "trainer" | "shop" | "storm"}
 ##   {"complete_step": quest id}      {"track": quest id}
+##   {"hint": {"text": key, "keys": [actions]}}  (a tutorial line under the tracker; {} clears it)
+##   {"zone": name}                   (the zone's story_fx(name): the prologue's bridge breaks)
 ## Story state changes happen here on the quest log; the zone-side ones (rewards,
 ## toasts, windows, camera pans) go through the hero's zone and its
 ## QuestDirector, and are skipped when the hero isn't in one (unit tests).
 
 const KINDS: Array[String] = ["start", "beat", "act", "event", "seen", "choice", "give", "toast", "cutscene", "open",
-	"complete_step", "track"]
+	"complete_step", "track", "hint", "zone"]
 
 
 ## `ctx` may carry {"npc": Npc} (dialogue) for "open".
@@ -60,6 +62,13 @@ static func _one(e: Dictionary, hero: Player, qlog: QuestLog, ctx: Dictionary) -
 		"open":
 			if zone != null:
 				_open(zone, hero, str(v), ctx)
+		"hint":
+			if zone != null and zone.quest_tracker != null and hero.is_local:
+				var h: Dictionary = v if v is Dictionary else {}
+				zone.quest_tracker.set_hint(str(h.get("text", "")), h.get("keys", []) as Array)
+		"zone":
+			if zone != null and zone.has_method(&"story_fx"):
+				zone.call(&"story_fx", str(v))
 		_:
 			push_warning("StoryEffects: unknown effect " + kind)
 

@@ -1,0 +1,12 @@
+{
+	"_note": "M14a: Act 1, What the Shards Sing (DE/EN, written, never machine-translated).",
+	"quest.a1_call.title": {"en": "Runebound", "de": "Runengebunden"},
+	"quest.a1_call.summary": {"en": "Something fell out of the sky on the Ash Road and went into your hand. Sigrun Runewright in Runehold went pale when she saw it.", "de": "Auf der Aschenstraße ist etwas vom Himmel gefallen und in deine Hand gefahren. Sigrun Runewright in Runehold ist blass geworden, als sie es gesehen hat."},
+	"quest.a1_call.s.talk": {"en": "Talk to Sigrun Runewright", "de": "Sprich mit Sigrun Runewright"},
+	"dlg.sigrun.call.0": {"en": "A shard of the Rune is in you. It won't come out. I've seen it in three others since the ash began.", "de": "In dir steckt ein Splitter der Rune. Der geht nicht mehr heraus. Ich habe das bei drei anderen gesehen, seit die Asche fällt."},
+	"dlg.sigrun.call.1": {"en": "It will teach you, if you let it. Runes, the way my family cut them - only faster, and it doesn't ask.", "de": "Er lehrt dich, wenn du ihn lässt. Runen, so wie meine Familie sie geschnitten hat - nur schneller, und er fragt nicht."},
+	"dlg.sigrun.opt.what": {"en": "What does it want?", "de": "Was will er?"},
+	"dlg.sigrun.opt.teach": {"en": "Then show me how.", "de": "Dann zeig mir, wie."},
+	"dlg.sigrun.call.what": {"en": "To be whole again, I think. Every shard pulls towards the others. Yours pulls north.", "de": "Wieder ganz sein, glaube ich. Jeder Splitter zieht zu den anderen. Deiner zieht nach Norden."},
+	"dlg.sigrun.call.end": {"en": "Go to whoever teaches your way here. Then come back to me: there are more shards on the slopes, and I need to hear them.", "de": "Geh zu dem, der hier deinen Weg lehrt. Dann komm zu mir zurück: Auf den Hängen liegen mehr Splitter, und ich muss sie hören."}
+}

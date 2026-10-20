@@ -1,0 +1,13 @@
+{
+	"_note": "M14a: Act 1, What the Shards Sing (STORY_DESIGN). Phase 5 brings its first quest (Sigrun names the shard); phase 6 the rest of the chain.",
+	"quests": [
+		{
+			"id": "a1_call", "act": 1, "kind": "main", "level": 2,
+			"title": "quest.a1_call.title", "summary": "quest.a1_call.summary",
+			"steps": [
+				{"id": "talk", "text": "quest.a1_call.s.talk", "goal": {"type": "talk", "npc": "sigrun"}}
+			],
+			"rewards": {"xp": 60, "gold": 30}
+		}
+	]
+}

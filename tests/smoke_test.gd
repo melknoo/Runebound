@@ -6531,8 +6531,8 @@ func _run() -> void:
 	var mage_index := SaveGame.create_character(&"elementalist", "Brynja")
 	_check(SaveGame.characters().size() == first_count + 1 and SaveGame.active == mage_index
 		and SaveGame.active_class_id() == &"elementalist" and not SaveGame.has_flag(&"colossus_defeated")
-		and SaveGame.current_zone == SaveGame.HUB_SCENE,
-		"a new character starts in its own fresh world (no boss down, in Runehold)")
+		and SaveGame.current_zone == SaveGame.PROLOGUE_SCENE,
+		"a new character starts in its own fresh world (no boss down, M14a: on the prologue's Ash Road)")
 	_check(tank_line.contains("Runebreaker") and str(title.call(&"_continue_label")).contains("Brynja, Elementalist level 1"),
 		"Continue names the active character (%s)" % str(title.call(&"_continue_label")))
 	SaveGame.flags = {"mage_flag": true}
@@ -6656,7 +6656,7 @@ func _run() -> void:
 	var online_line := str(title.call(&"_continue_mode_text"))
 	ClientSettings.set_value("last_mode", "solo")
 	var solo_line := str(title.call(&"_continue_mode_text"))
-	_check(online_line == "Online  -  Acer" and solo_line == "Solo  -  Runehold",
+	_check(online_line == "Online  -  Acer" and solo_line == "Solo  -  Ash Road",  # M14a: a new character's prologue
 		"Continue says how it plays: \"%s\" / \"%s\"" % [online_line, solo_line])
 	title.call(&"_delete_character", SaveGame.active)
 	title.call(&"_delete_character", SaveGame.active)

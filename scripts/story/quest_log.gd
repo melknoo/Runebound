@@ -92,6 +92,39 @@ static func new_story() -> Dictionary:
 	return {"v": FORMAT, "act": 0, "pending": ["p_ash_road"]}
 
 
+## What skipping the prologue gives (a second character at creation, or one
+## that goes online first): its level and gold, Act 1 with Sigrun waiting.
+const PROLOGUE_LEVEL := 2
+const PROLOGUE_GOLD := 40
+
+
+static func skipped_story() -> Dictionary:
+	return {"v": FORMAT, "act": 1, "beats": ["prologue_skipped", "runebound"], "done": ["p_ash_road"],
+		"pending": ["a1_call"]}
+
+
+## The prologue is over without being played (online first): Act 1 begins.
+func skip_prologue() -> void:
+	if act > 0 or done.has("p_ash_road"):
+		return
+	var d := skipped_story()
+	quests.erase("p_ash_road")
+	var at := pending.find("p_ash_road")
+	if at >= 0:
+		pending.remove_at(at)
+	act = int(d["act"])
+	for b: Variant in d["beats"]:
+		if not beats.has(str(b)):
+			beats.append(str(b))
+	done.append("p_ash_road")
+	for p: Variant in d["pending"]:
+		if not pending.has(str(p)):
+			pending.append(str(p))
+	if tracked == "p_ash_road":
+		tracked = ""
+	_touched()
+
+
 # ---------------------------------------------------------------------------
 # Queries
 # ---------------------------------------------------------------------------
@@ -215,6 +248,7 @@ func start(id: String, queue_if_blocked: bool = true) -> bool:
 		tracked = id
 	_touched()
 	quest_started.emit(id)
+	StoryEffects.apply(StoryDB.quest(id).get("on_start", []), hero(), self)  # a camera pan, a hint
 	_check_current(id)
 	return true
 

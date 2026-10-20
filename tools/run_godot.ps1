@@ -287,7 +287,8 @@ switch ($Mode) {
 		$class = if ($Name) { $Name } else { "elementalist" }
 		$level = if ($Label) { $Label } else { "6" }
 		$where = @()  # M13: solocheck <class> <level> cistern (a one-item if-expression would unroll to a string)
-		if ($Extra) { $where = @("--dungeon=$Extra") }
+		if ($Extra -eq "ash_road") { $where = @("--zone=ash_road") }  # M14a: the prologue (start kit, level 1-2)
+		elseif ($Extra) { $where = @("--dungeon=$Extra") }
 		& $godot --headless --fixed-fps 60 --path $proj --quit-after 150000 res://tests/solo_check.tscn -- "--class=$class" "--level=$level" @where
 	}
 	"partycheck" {

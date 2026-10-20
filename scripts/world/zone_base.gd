@@ -901,9 +901,10 @@ const ENEMY_IDS: Array[String] = ["rusher", "caster", "assassin", "brute", "ward
 	"curse_lantern", "wisp_nest", "jackal_den", "dungeon_boss",
 	"drowned_thrall", "channel_lurker", "bloated_keeper", "deepmaw",
 	"cinder_beetle", "kiln_imp", "slag_reeve", "broodmother",
-	"storm_acolyte", "coil_sentinel", "gale_wraith", "stormsworn", "galebinder", "last_stormcaller"]
+	"storm_acolyte", "coil_sentinel", "gale_wraith", "stormsworn", "galebinder", "last_stormcaller",
+	"risen_reeve"]  # M14a: the prologue's boss
 const BOSS_TYPES: Array[String] = ["colossus", "vessel", "dungeon_boss", "bloated_keeper", "deepmaw",
-	"slag_reeve", "broodmother", "stormsworn", "galebinder", "last_stormcaller"]
+	"slag_reeve", "broodmother", "stormsworn", "galebinder", "last_stormcaller", "risen_reeve"]
 
 
 static func _enemy_script(id: String) -> GDScript:
@@ -938,6 +939,7 @@ static func _enemy_script(id: String) -> GDScript:
 		"stormsworn": return Stormsworn
 		"galebinder": return Galebinder
 		"last_stormcaller": return LastStormcaller
+		"risen_reeve": return RisenReeve  # M14a the prologue
 	return MeleeRusher
 
 
@@ -1526,7 +1528,7 @@ func fast_travel(key: String) -> void:
 
 
 ## M09: display names for the party travel banner.
-const ZONE_LABELS := {"hub": "Runehold", "ashen_highlands": "the Ashen Highlands",
+const ZONE_LABELS := {"hub": "Runehold", "ashen_highlands": "the Ashen Highlands", "ash_road": "the Ash Road",
 	"shattered_spire": "the Shattered Spire", "combat_lab": "the Combat Lab",
 	"hollow_cistern": "the Hollow Cistern", "ember_warrens": "the Ember Warrens", "stormwatch": "the Stormwatch"}
 

@@ -1,9 +1,22 @@
 {
 	"npc": "sigrun",
 	"entries": [
+		{"if": {"quest_step": ["a1_call", "talk"]}, "start": "call", "topic": true},
 		{"if": {"not_beat": "dlg:sigrun_intro"}, "start": "intro", "topic": true}
 	],
 	"nodes": {
+		"call": {"say": "dlg.sigrun.call.0", "effects": [{"beat": "dlg:sigrun_intro"}], "next": "call_1"},
+		"call_1": {"say": "dlg.sigrun.call.1", "options": [
+			{"text": "dlg.sigrun.opt.what", "next": "call_what"},
+			{"text": "dlg.sigrun.opt.teach", "effects": [{"event": ["talk", "sigrun"]}], "next": "call_end"}
+		]},
+		"call_what": {"say": "dlg.sigrun.call.what", "options": [
+			{"text": "dlg.sigrun.opt.teach", "effects": [{"event": ["talk", "sigrun"]}], "next": "call_end"}
+		]},
+		"call_end": {"say": "dlg.sigrun.call.end", "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]},
 		"intro": {"say": "dlg.sigrun.intro.0", "effects": [{"beat": "dlg:sigrun_intro"}], "next": "intro_1"},
 		"intro_1": {"say": "dlg.sigrun.intro.1", "options": [
 			{"text": "dlg.sigrun.opt.place", "next": "place"},

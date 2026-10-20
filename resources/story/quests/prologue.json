@@ -1,0 +1,32 @@
+{
+	"_note": "M14a phase 5: the prologue, The Ash Road (STORY_DESIGN beat sheet P1-P7). Steps advance by places, talks and the Reeve; the fights happen on the way (the zone's ambushes).",
+	"quests": [
+		{
+			"id": "p_ash_road", "act": 0, "kind": "main", "level": 1,
+			"title": "quest.p_ash_road.title", "summary": "quest.p_ash_road.summary",
+			"on_start": [
+				{"cutscene": "p_intro"},
+				{"hint": {"text": "tut.move", "keys": ["move_forward", "move_left", "move_back", "move_right", "interact"]}}
+			],
+			"steps": [
+				{"id": "wake", "text": "quest.p_ash_road.s.wake", "goal": {"type": "talk", "npc": "edda"},
+				 "effects": [{"hint": {"text": "tut.fight", "keys": ["primary_attack", "dodge"]}}]},
+				{"id": "road", "text": "quest.p_ash_road.s.road",
+				 "goal": {"type": "reach", "zone": "ash_road", "poi": "clearing", "radius": 9},
+				 "effects": [{"cutscene": "p_shard"}]},
+				{"id": "shard_talk", "text": "quest.p_ash_road.s.shard_talk", "goal": {"type": "talk", "npc": "edda"},
+				 "effects": [{"hint": {"text": "tut.ability", "keys": ["secondary_ability"]}}]},
+				{"id": "cart", "text": "quest.p_ash_road.s.cart", "goal": {"type": "interact", "marker": "p_cart"},
+				 "effects": [{"give": {"draughts": 2}}, {"hint": {"text": "tut.drink", "keys": ["inventory_toggle"]}}]},
+				{"id": "bridge", "text": "quest.p_ash_road.s.bridge",
+				 "goal": {"type": "reach", "zone": "ash_road", "poi": "bridge_n", "radius": 5},
+				 "effects": [{"cutscene": "p_bridge"}]},
+				{"id": "toll", "text": "quest.p_ash_road.s.toll", "goal": {"type": "boss", "enemy": "risen_reeve"}},
+				{"id": "gate", "text": "quest.p_ash_road.s.gate", "goal": {"type": "talk", "npc": "edda"}},
+				{"id": "runehold", "text": "quest.p_ash_road.s.runehold", "goal": {"type": "enter", "zone": "hub"}}
+			],
+			"rewards": {"gold": 40},
+			"on_done": [{"act": 1}, {"beat": "prologue_done"}, {"cutscene": "p_arrival"}, {"start": "a1_call"}]
+		}
+	]
+}

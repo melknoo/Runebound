@@ -1,0 +1,487 @@
+{
+ "id": "ash_road",
+ "size_m": 256,
+ "resolution": 257,
+ "origin": [
+  -128,
+  -128
+ ],
+ "height_max": 80.0,
+ "seed": 1410,
+ "base": {
+  "south_y": 18.0,
+  "north_y": 24.0,
+  "noise_octaves": [
+   [
+    3,
+    0.55
+   ],
+   [
+    7,
+    0.3
+   ],
+   [
+    15,
+    0.15
+   ]
+  ],
+  "amplitude": 4.0
+ },
+ "ridges": [
+  {
+   "a": [
+    -62,
+    120
+   ],
+   "b": [
+    -58,
+    -120
+   ],
+   "height": 18.0,
+   "width": 34.0
+  },
+  {
+   "a": [
+    62,
+    120
+   ],
+   "b": [
+    60,
+    -120
+   ],
+   "height": 18.0,
+   "width": 34.0
+  },
+  {
+   "a": [
+    -80,
+    -40
+   ],
+   "b": [
+    80,
+    -40
+   ],
+   "height": -14.0,
+   "width": 13.0
+  }
+ ],
+ "plateaus": [],
+ "rim": {
+  "start_m": 112.0,
+  "height": 30.0
+ },
+ "routes": [
+  {
+   "id": "road_south",
+   "width": 3.2,
+   "grade_max": 0.45,
+   "points": [
+    [
+     0,
+     104
+    ],
+    [
+     -6,
+     86
+    ],
+    [
+     -18,
+     66
+    ],
+    [
+     -28,
+     46
+    ],
+    [
+     -30,
+     28
+    ],
+    [
+     -20,
+     12
+    ],
+    [
+     0,
+     2
+    ],
+    [
+     16,
+     -8
+    ],
+    [
+     18,
+     -18
+    ],
+    [
+     8,
+     -24
+    ],
+    [
+     0,
+     -27
+    ]
+   ]
+  },
+  {
+   "id": "road_north",
+   "width": 3.2,
+   "grade_max": 0.45,
+   "points": [
+    [
+     0,
+     -53
+    ],
+    [
+     2,
+     -62
+    ],
+    [
+     10,
+     -72
+    ],
+    [
+     8,
+     -88
+    ],
+    [
+     2,
+     -98
+    ],
+    [
+     0,
+     -106
+    ]
+   ]
+  }
+ ],
+ "bands": {
+  "cell_m": 32,
+  "grid": [
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  ]
+ },
+ "areas": [
+  {
+   "id": "camp",
+   "name": "The Last Camp",
+   "name_key": "area.ash_camp",
+   "pos": [
+    0,
+    100
+   ],
+   "radius": 18,
+   "y": 17.473,
+   "biome": "ash"
+  },
+  {
+   "id": "clearing",
+   "name": "The Clearing",
+   "name_key": "area.ash_clearing",
+   "pos": [
+    -30,
+    28
+   ],
+   "radius": 14,
+   "y": 22.06,
+   "biome": "ash"
+  },
+  {
+   "id": "gorge",
+   "name": "The Gorge",
+   "name_key": "area.ash_gorge",
+   "pos": [
+    0,
+    -40
+   ],
+   "radius": 24,
+   "y": 12.241,
+   "biome": "ash"
+  },
+  {
+   "id": "toll",
+   "name": "The Toll Gate",
+   "name_key": "area.ash_toll",
+   "pos": [
+    8,
+    -80
+   ],
+   "radius": 18,
+   "y": 23.369,
+   "biome": "ash"
+  }
+ ],
+ "biomes": [],
+ "pois": [
+  {
+   "id": "spawn",
+   "type": "spawn",
+   "pos": [
+    0,
+    100
+   ],
+   "yaw": 3.1416,
+   "pad": 9,
+   "y": 17.473,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_camp",
+   "type": "vignette",
+   "kind": "abandoned_camp",
+   "pos": [
+    12,
+    104
+   ],
+   "yaw": 0.4,
+   "pad": 0,
+   "y": 17.41,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_cart_camp",
+   "type": "vignette",
+   "kind": "cart",
+   "pos": [
+    -9,
+    96
+   ],
+   "yaw": -0.5,
+   "pad": 0,
+   "y": 17.475,
+   "biome": "ash"
+  },
+  {
+   "id": "ambush_dead",
+   "type": "ambush",
+   "pos": [
+    -22,
+    58
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "radius": 8.0,
+   "composition": [
+    "grave_shambler",
+    "grave_shambler",
+    "grave_shambler"
+   ],
+   "respawn_min": 9999.0,
+   "y": 19.473,
+   "biome": "ash"
+  },
+  {
+   "id": "clearing",
+   "type": "story",
+   "pos": [
+    -30,
+    28
+   ],
+   "yaw": 0.0,
+   "pad": 8,
+   "y": 22.06,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_fallen_road",
+   "type": "vignette",
+   "kind": "fallen",
+   "pos": [
+    -40,
+    20
+   ],
+   "yaw": 1.2,
+   "pad": 0,
+   "y": 23.118,
+   "biome": "ash"
+  },
+  {
+   "id": "ambush_raiders",
+   "type": "ambush",
+   "pos": [
+    12,
+    -6
+   ],
+   "yaw": 0.0,
+   "pad": 6,
+   "radius": 9.0,
+   "composition": [
+    "rusher",
+    "rusher",
+    "caster"
+   ],
+   "respawn_min": 9999.0,
+   "y": 21.158,
+   "biome": "ash"
+  },
+  {
+   "id": "cart",
+   "type": "story",
+   "pos": [
+    26,
+    -14
+   ],
+   "yaw": 0.0,
+   "pad": 4,
+   "y": 21.285,
+   "biome": "ash"
+  },
+  {
+   "id": "bridge_s",
+   "type": "story",
+   "pos": [
+    0,
+    -27
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "y": 20.601,
+   "biome": "ash"
+  },
+  {
+   "id": "bridge_n",
+   "type": "story",
+   "pos": [
+    0,
+    -53
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "y": 21.177,
+   "biome": "ash"
+  },
+  {
+   "id": "toll",
+   "type": "story",
+   "pos": [
+    8,
+    -80
+   ],
+   "yaw": 0.0,
+   "pad": 14,
+   "y": 23.369,
+   "biome": "ash"
+  },
+  {
+   "id": "vig_barricade_toll",
+   "type": "vignette",
+   "kind": "barricade",
+   "pos": [
+    -6,
+    -92
+   ],
+   "yaw": 0.2,
+   "pad": 0,
+   "y": 23.498,
+   "biome": "ash"
+  },
+  {
+   "id": "gate_north",
+   "type": "portal",
+   "pos": [
+    0,
+    -108
+   ],
+   "yaw": 0.0,
+   "pad": 5,
+   "dest": "hub",
+   "label": "RUNEHOLD",
+   "arrival": "",
+   "y": 24.468,
+   "biome": "ash"
+  }
+ ],
+ "baked": {
+  "height_file": "height.r16",
+  "min_y": 7.258,
+  "max_y": 72.768,
+  "map_px_per_m": 2,
+  "mask_bounds": [
+   -128,
+   -128,
+   256,
+   256
+  ],
+  "biome_file": "biome_mask.png",
+  "biome_px_per_m": 1,
+  "biome_ids": []
+ }
+}

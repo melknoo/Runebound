@@ -9,6 +9,21 @@ shrines with fade + save. Player gear, attuned shrines and map discovery
 persist per character through `SaveGame`; cleared camps persist in the world
 (see TECHNICAL_ARCHITECTURE).
 
+## THE ASH ROAD (the prologue — scenes/ash_road.tscn, M14a)
+A new character's first zone (STORY_DESIGN "The campaign"): 256 x 256 m,
+baked like the Highlands (`tools/worldgen/ash_road_layout.py`), at night,
+level 1 throughout. One S-shaped road runs north through a valley between two
+long ridges (invisible walls keep it linear): the last camp (fire, tents, the
+cart, Ashwick's graves behind it) -> the dead climbing out of the ground (an
+ambush of three grave shamblers) -> the clearing where the shard falls -> the
+raiders at the bend (rusher, rusher, caster) and the supply cart with two
+draughts -> the old bridge over a 14 m gorge (it breaks behind the hero) ->
+the Reeve's toll gate (pillars, a beam across the road, his booth,
+braziers; the Risen Reeve) -> the gate to Runehold. Edda waits at the camp,
+the clearing and the gate. No shrine: a hero who falls comes back at the last
+place the story reached. Named areas: The Last Camp, The Clearing, The Gorge,
+The Toll Gate.
+
 ## RUNEHOLD (hub — scenes/hub.tscn)
 34x34 safe settlement, warm dawn palette. Campfire heart (flicker light,
 ember loop, crackle ambience), three stone shelters with rune lintels.

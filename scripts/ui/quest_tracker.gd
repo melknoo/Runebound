@@ -21,6 +21,11 @@ var _title: Label
 var _step: Label
 var _level: Label
 var _hint: Label
+## M14a phase 5: a tutorial line (the prologue's "WASD: walk ...") until the
+## next step or hint replaces it.
+var _tut: Label
+var _tut_key: String = ""
+var _tut_actions: Array = []
 
 
 func _ready() -> void:
@@ -36,6 +41,8 @@ func _ready() -> void:
 	_step = _label(UiTheme.TEXT, false)
 	_level = _label(Color("#E07A5F"), false)
 	_hint = _label(UiTheme.MUTED, false)
+	_tut = _label(Color("#9FF2E6"), false)
+	_tut.visible = false
 	GameSettings.changed.connect(_on_setting_changed)
 	visible = false
 
@@ -50,6 +57,8 @@ func bind(log_: QuestLog, p: Player) -> void:
 	hero = p
 	if not qlog.changed.is_connected(refresh):
 		qlog.changed.connect(refresh)
+	if not qlog.step_done.is_connected(_on_step_done):
+		qlog.step_done.connect(_on_step_done)
 	if hero != null and not hero.progression.leveled_up.is_connected(_on_level):
 		hero.progression.leveled_up.connect(_on_level)
 	refresh()
@@ -59,9 +68,39 @@ func _on_level(_l: int) -> void:
 	refresh()
 
 
+## A step finished: its tutorial line goes (the step's effects may set the next).
+func _on_step_done(_q: String, _s: String) -> void:
+	set_hint("", [])
+
+
+## Shows tutorial text `key` formatted with the current keys of `actions`
+## ("" clears it).
+func set_hint(key: String, actions: Array) -> void:
+	_tut_key = key
+	_tut_actions = actions.duplicate()
+	_render_hint()
+
+
+func hint_text() -> String:
+	return _tut.text if _tut.visible else ""
+
+
+func _render_hint() -> void:
+	if _tut_key == "":
+		_tut.text = ""
+		_tut.visible = false
+		return
+	var args: Array = []
+	for a: Variant in _tut_actions:
+		args.append(InputSetup.key_label(StringName(str(a))))
+	_tut.text = Texts.t(_tut_key, args)
+	_tut.visible = true
+
+
 func _on_setting_changed(key: String) -> void:
 	if key == "general/language" or key == "keys":
 		refresh()
+		_render_hint()
 
 
 ## The text the tracker shows now: [title, step] ("" when hidden).
