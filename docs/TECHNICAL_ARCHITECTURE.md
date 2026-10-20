@@ -1425,6 +1425,64 @@ are in [dev-notes/release-builds.md](dev-notes/release-builds.md). In the code:
   numbers). The title screen shows it as a button; a refusal containing
   "Update your game" shows a download button in a player build.
 
+## Story (M14a, since 2026-10-20)
+The campaign "The Runebound" (STORY_DESIGN "The campaign"): quests, a
+journal, a tracker and quest markers; dialogue and camera pans follow in
+phases 2 and 3. Everything lives in `scripts/story/` and data files, so the
+Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
+- **QuestLog** (`quest_log.gd`, RefCounted): one hero's story - `act`,
+  `beats` (story facts that stay true: `legacy`, `boss:<type>`,
+  `act1_done`), running `quests` (`{id: {s: step index, n: counter}}`),
+  `done`, `tracked`, `seen` (camera pans), `choices` (dialogue), `pending`
+  (quests waiting for their requirements). It hangs on the hero as meta
+  (`QuestLog.of(hero)`), is saved as `characters[i].story`
+  (`SaveGame.character_dict` / `restore_character`) and so travels with the
+  CHARACTER message to a co-op server. A character without a `story` key has
+  an **inactive** log: lab heroes, bots, net-test and server heroes never
+  start or advance quests.
+- **Goals** (a step's `goal.type`): `talk {npc}`, `kill {enemies, count, area?,
+  elite?}`, `boss {enemy}`, `collect {ids|prefix, count}`, `read {ids|prefix}`,
+  `reach {poi|at|area|marker, radius}`, `enter {zone}`, `interact {marker}`,
+  `level {min}`, `beat {id}`, `attune {waypoint}`. Records-based goals
+  (collect, read, level, beat, boss, attune) are **retroactive**: a step whose
+  goal already holds completes when it starts, which fast-forwards migrated
+  characters. **World flags are never goals**: online the session's flags are
+  the server's (`SaveGame.begin_online_session`).
+- **StoryDB** (`story_db.gd`): reads `resources/story/quests/*.json`
+  (`{"quests": [...]}`), `dialogue/<npc>.json`, `npcs.json`, `stage.json`,
+  `cutscenes.json` once; `problems()` checks every reference and text key
+  (the smoke test). Texts: `resources/i18n/story/*.json`, which `Texts` loads
+  next to `FILES` (no `FILES` edit per table).
+- **StoryCond** / **StoryEffects**: one condition dict (`done`, `quest_step`,
+  `beat`, `act`, `class`, `level`, `choice`, `legacy` ...) and one-key effect
+  dicts (`start`, `beat`, `act`, `event`, `give`, `toast`, `cutscene`, `open`
+  ...) for quests, dialogue and the stage. Rewards always go through
+  `ZoneBase.give_reward`.
+- **QuestDirector** (one Node per zone, `zone.quest_director`; `begin()` runs
+  after the restore and `_discover()`): only for the local hero, and only
+  when its log is active (off under `--net-test` unless `--story`). Events:
+  kills and bosses from `enemies_root` (`state_entered` DEAD fires on the
+  authority and on puppets) when the enemy died within `REWARD_RADIUS` of
+  the hero (the XP rule, so in co-op every hero present counts on its own
+  machine; a boss kill also adds the beat `boss:<type>`), `chronicle_changed`
+  (read, collect), `leveled_up`, `waypoint_discovered`, a 0.25 s tick for
+  `reach` goals, `enter` on begin. It toasts started and finished quests and
+  hands `zone.story_markers()` (the shown quest's current step) to the map
+  and the compass (icons `quest` / `quest_turnin` from `tools/texgen/ui.py`).
+- **UI:** `JournalUI` (key U, `journal_toggle`, rebindable; LoreUI pattern,
+  in `close_windows`) and `QuestTracker` (top right in the HUD's root:
+  title, step with progress, recommended level when below it, the journal
+  key).
+- **Save v7:** `new_character` starts with `QuestLog.new_story()` (act 0,
+  the prologue pending). v6 -> v7 gives every character act 1, the beat
+  `legacy` (keeps its gates open), `boss:colossus` / `boss:vessel` from its
+  own world flags, `a1_call` pending and the note `m14_call` (a toast "Sigrun
+  wants to see you"). Before the first v7 write the old file is copied to
+  `<save>.v6.bak`: an older build drops a newer save as unknown.
+- **Tests:** `tests/story_checks.gd` (run at the end of the smoke test, loaded
+  at runtime so a parse error fails one check) and on their own with
+  `tools\run_godot.cmd story` (`tests/story_test.tscn`, seconds).
+
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
 M12: 7 foliage (forest trunks; heroes and enemies mask it, the camera does not)

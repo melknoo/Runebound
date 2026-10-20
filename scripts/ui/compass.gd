@@ -64,7 +64,11 @@ func heading() -> float:
 
 
 func markers() -> Array[Dictionary]:
-	return zone.compass_markers() if zone != null else []
+	if zone == null:
+		return []
+	var out := zone.compass_markers()
+	out.append_array(zone.story_markers())  # M14a: the tracked quest
+	return out
 
 
 ## Bearing from `from` to `to` (radians, 0 = north).

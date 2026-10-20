@@ -2,6 +2,7 @@
 # Usage:
 #   .\tools\run_godot.ps1 import                 # import assets headless
 #   .\tools\run_godot.ps1 smoke                  # headless smoke test (fails on SCRIPT ERROR too)
+#   .\tools\run_godot.ps1 story                  # M14a: only the story checks (tests/story_checks.gd), fast
 #   .\tools\run_godot.ps1 play                   # run the game windowed
 #   .\tools\run_godot.ps1 reset                  # delete the save: fresh character on next start
 #   .\tools\run_godot.ps1 capture                # automated lab playtest with screenshots
@@ -110,7 +111,7 @@ function Update-Import {
 }
 if ($Mode -notin @("import", "reset", "deploy", "release", "dist")) { Update-Import }
 
-if ($Mode -notin @("import", "smoke", "net", "server", "serverperf", "solocheck", "partycheck", "wsspike", "deploy", "release", "dist")) { Show-OtherGodot }  # headless modes share no GPU
+if ($Mode -notin @("import", "smoke", "story", "net", "server", "serverperf", "solocheck", "partycheck", "wsspike", "deploy", "release", "dist")) { Show-OtherGodot }  # headless modes share no GPU
 
 # Automated windowed runs get a hard frame cap (about 8 min at 60 FPS): a
 # script that fails to compile never attaches its runner, and the game would
@@ -134,13 +135,14 @@ switch ($Mode) {
 		else { Write-Output "No save to delete ($save)" }
 		exit 0
 	}
-	"smoke"   {
+	{ $_ -in @("smoke", "story") } {
 		# Script errors don't fail an assertion by themselves; surface them.
 		# Hard 8-minute limit: when a script fails to compile, the test's own
 		# watchdog never starts and a headless run would idle forever.
 		$outFile = [IO.Path]::GetTempFileName()
 		$errFile = [IO.Path]::GetTempFileName()
-		$p = Start-Process -FilePath $godot -ArgumentList "--headless", "--path", "`"$proj`"", "res://tests/smoke_test.tscn" `
+		$testScene = if ($Mode -eq "story") { "res://tests/story_test.tscn" } else { "res://tests/smoke_test.tscn" }
+		$p = Start-Process -FilePath $godot -ArgumentList "--headless", "--path", "`"$proj`"", $testScene `
 			-NoNewWindow -PassThru -RedirectStandardOutput $outFile -RedirectStandardError $errFile
 		$handle = $p.Handle  # keeps ExitCode readable after exit
 		$timedOut = -not $p.WaitForExit(480000)

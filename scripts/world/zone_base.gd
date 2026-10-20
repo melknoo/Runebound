@@ -25,6 +25,9 @@ var inventory_ui: InventoryUI  # the hero window's inventory tab
 var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
 var lore_ui: LoreUI          # M12 reading window (graves, notes, ghosts)
+var journal_ui: JournalUI    # M14a the quest journal (U)
+var quest_director: QuestDirector  # M14a the local hero's story in this zone
+var quest_tracker: QuestTracker    # M14a the shown quest, top right in the HUD
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
 var map_ui: MapUI            # M08 zone map (M)
 var playtest_ui: PlaytestUI  # the playtest checklist (J)
@@ -103,6 +106,7 @@ func _ready() -> void:
 	SaveGame.restore_vitals(player)  # M11: health (and Sap) carry over from the last zone
 	_zone_ready()
 	_discover()
+	quest_director.begin()  # M14a: after the restore and the arrival card
 	# M10 save migration: a Runebreaker's elemental spells went to the Elementalist.
 	var refund := SaveGame.pop_note("m10_refund:")
 	if refund != "":
@@ -172,6 +176,15 @@ func _build_player_ui() -> void:
 	add_child(lore_ui)
 	lore_ui.setup(player)
 
+	journal_ui = JournalUI.new()  # M14a: the quest journal on U
+	add_child(journal_ui)
+	journal_ui.setup(player)
+	quest_director = QuestDirector.new()  # M14a: quest events, toasts, markers (begin() after the restore)
+	quest_director.setup(self)
+	add_child(quest_director)
+	quest_tracker = QuestTracker.new()
+	hud.get_child(0).add_child(quest_tracker)  # the HUD's root stays its child 0
+
 	waypoint_ui = WaypointUI.new()  # M08: hidden until a Waypoint opens it
 	add_child(waypoint_ui)
 	waypoint_ui.setup(player)
@@ -199,7 +212,8 @@ func debug_swap_class(class_id: StringName) -> Player:
 		return player
 	var old := player
 	var pos := old.global_position
-	for ui: Node in [hud, debug_overlay, pause_menu, hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks]:
+	for ui: Node in [hud, debug_overlay, pause_menu, hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks,
+			journal_ui, quest_director]:
 		if ui != null:
 			remove_child(ui)
 			ui.queue_free()
@@ -346,6 +360,11 @@ func map_markers() -> Array[Dictionary]:
 ## Points the compass strip shows (zones filter to what matters at range).
 func compass_markers() -> Array[Dictionary]:
 	return map_markers()
+
+
+## M14a: where the shown quest goes next in this zone (map and compass add them).
+func story_markers() -> Array[Dictionary]:
+	return quest_director.markers() if quest_director != null else [] as Array[Dictionary]
 
 
 const DISCOVERY_XP := 150
@@ -1438,7 +1457,7 @@ func travel_to(scene_path: String, arrival: String = "") -> void:
 ## map, playtest list; M12 the lore window); true when one was open.
 func close_windows() -> bool:
 	var closed := false
-	for ui: CanvasLayer in [hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui]:
+	for ui: CanvasLayer in [hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, journal_ui]:
 		if ui != null and ui.visible:
 			ui.call(&"close")
 			closed = true

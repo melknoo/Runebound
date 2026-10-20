@@ -856,6 +856,32 @@ def mk_lore() -> Image.Image:
     return outlined(img)
 
 
+def mk_quest() -> Image.Image:
+    """M14a map + compass: where the tracked quest goes next (a gold mark)."""
+    img, d = canvas12()
+    gold, hot = rgb("#E8B44A"), rgb("#FFE9A8")
+    d.polygon([(6, 0), (11, 5), (6, 11), (1, 5)], fill=rgb("#5A3E16"))
+    d.rectangle([5, 2, 6, 6], fill=gold)
+    d.line([5, 2, 5, 5], fill=hot)
+    d.rectangle([5, 8, 6, 9], fill=gold)
+    return outlined(img)
+
+
+def mk_quest_turnin() -> Image.Image:
+    """M14a map + compass: whom to report to (a gold question mark)."""
+    img, d = canvas12()
+    gold, hot = rgb("#E8B44A"), rgb("#FFE9A8")
+    d.polygon([(6, 0), (11, 5), (6, 11), (1, 5)], fill=rgb("#5A3E16"))
+    d.line([4, 3, 5, 2], fill=gold)
+    d.line([6, 2, 7, 3], fill=gold)
+    d.point((7, 4), fill=gold)
+    d.point((6, 5), fill=gold)
+    d.point((6, 6), fill=gold)
+    d.point((5, 2), fill=hot)
+    d.rectangle([6, 8, 6, 9], fill=gold)
+    return outlined(img)
+
+
 def mk_ghost() -> Image.Image:
     """M12 map: a ghost (a pale hooded shape, its hem frayed)."""
     img, d = canvas12()
@@ -1259,7 +1285,8 @@ def main() -> None:
                      ("camp_cleared", mk_camp_cleared), ("chest", mk_chest), ("ruin", mk_ruin),
                      ("landmark", mk_landmark), ("boss", mk_boss), ("dungeon", mk_dungeon),
                      ("lore", mk_lore), ("ghost", mk_ghost), ("puzzle", mk_puzzle), ("cave", mk_cave),
-                     ("trial", mk_trial), ("nest", mk_nest), ("cursed", mk_cursed)):
+                     ("trial", mk_trial), ("nest", mk_nest), ("cursed", mk_cursed),
+                     ("quest", mk_quest), ("quest_turnin", mk_quest_turnin)):
         save(fn(), "map", name + ".png")
     save(frame(24, PANEL, ACCENT_DIM, ACCENT), "frame.png")
     save(frame(22, rgb("#100C18", 235), rgb("#2E2A3A"), rgb("#4A4458")), "slot.png")

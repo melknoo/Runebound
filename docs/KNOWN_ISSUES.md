@@ -5,6 +5,15 @@
 > there (passt / Problem + note, saved in user://playtest.json). When a point
 > is added or resolved here, update the checklist too (keep ids stable).
 
+## M14a story (in progress since 2026-10-20)
+- **Save v7 and older builds:** a dev build from M14a on writes save v7. An
+  older build (the installed `v0.16.0`) treats v7 as unknown and starts
+  fresh, overwriting it on its next save. The v6 file is kept as
+  `runebound_save.json.v6.bak` next to the save; until the next release ships
+  v7, play either the dev build or the installed one on a PC, not both.
+- Quests count kills, bosses and places only for heroes within 60 m (the XP
+  rule); a hero far away from the party gets no step.
+
 ## Probably resolved: client crash after zone travel (reported 2026-10-02, retested 2026-10-09)
 - **Symptom:** a client on a second PC (NVIDIA GeForce RTX 2070, Windows,
   Vulkan 1.4 Forward+, **Godot 4.6.1**) joined the laptop server, travelled

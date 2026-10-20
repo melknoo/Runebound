@@ -52,5 +52,29 @@ Dev-environment and agent know-how that the architecture docs do not carry. Fact
 - Git Bash sometimes leaves a `bash.exe.stackdump` in the repo root (ignored by `.gitignore`).
 - Blender: convert colours sRGB -> linear before Base Color, else models render too light. GLB fronts land at Godot +Z (`rotation.y = PI`).
 
+## A second working copy for parallel work (M14a, 2026-10-20)
+When two sessions work at once on one machine (Rig v3 in `D:\fable_test`, the
+story in a worktree), the second one gets its own git worktree **outside**
+the project folder (inside it, Godot would import the copy as part of the
+project):
+- `git -C D:\fable_test worktree add -b story D:\fable_story origin/main`, then
+  `tools\run_godot.cmd import` there (a fresh copy imports every asset; the
+  first run may exit non-zero, run it again).
+- **Own `user://`:** an untracked `override.cfg` in the worktree with
+  `[application]` `config/use_custom_user_dir=true` and
+  `config/custom_user_dir_name="RUNEBOUND_story"` (listed in
+  `.git/info/exclude`). Without it both copies share
+  `%APPDATA%\Godot\app_userdata\RUNEBOUND` and their smoke, net and headless
+  runs overwrite each other's saves; with it they go to
+  `%APPDATA%\RUNEBOUND_story`.
+- Still never run two `net` suites, `coop`/`server` or windowed runs at once
+  (fixed ports 17780+ and 7777, one GPU), and never `reset` from the worktree
+  (it deletes the real save of the main copy).
+- Each piece: commit on `story`, `git fetch`, `git rebase origin/main`, smoke,
+  `git push origin story:main`. `release` only from `D:\fable_test`.
+- The `*.import` refresh above applies after the first import: `git -c
+  core.safecrlf=false add -u -- "*.import"` stages nothing and cleans
+  `git status`.
+
 ## Commit rhythm
 Commit and push `main` after every finished piece of work. Update the docs in the same piece (PROJECT_STATE, KNOWN_ISSUES, ROADMAP, the playtest checklist). After a `Net.PROTOCOL` bump remind the user to ship `release`.

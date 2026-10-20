@@ -15,6 +15,8 @@ extends Object
 const FILES: Array[String] = ["res://resources/i18n/m12_ui.json", "res://resources/i18n/m12_lore.json",
 	"res://resources/i18n/m13_ui.json", "res://resources/i18n/m13_lore.json", "res://resources/i18n/m13b_ui.json",
 	"res://resources/i18n/m13b_lore.json", "res://resources/i18n/dist_ui.json", "res://resources/i18n/rigv3_ui.json"]
+## M14a: every table in this folder loads too (the story's texts; no FILES edit).
+const STORY_DIR := "res://resources/i18n/story"
 const LANGUAGES: Array[String] = ["en", "de"]
 
 ## key -> {"en": text, "de": text}
@@ -30,7 +32,15 @@ static func ensure() -> void:
 		return
 	_loaded = true
 	_table = {}
-	for file in FILES:
+	var files: Array[String] = FILES.duplicate()
+	if DirAccess.dir_exists_absolute(STORY_DIR):
+		var story: Array[String] = []
+		for f in DirAccess.get_files_at(STORY_DIR):
+			if f.ends_with(".json"):
+				story.append(STORY_DIR + "/" + f)
+		story.sort()
+		files.append_array(story)
+	for file in files:
 		if not FileAccess.file_exists(file):
 			push_warning("Texts: missing table " + file)
 			continue

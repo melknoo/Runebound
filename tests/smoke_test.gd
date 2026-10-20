@@ -1860,7 +1860,7 @@ func _run() -> void:
 		"waypoints": [], "map_discovered": [], "discovered": []}], "active": 0}
 	var v6 := SaveGame.migrate(v5_old)
 	var v6_char: Dictionary = (v6.get("characters", [{}]) as Array)[0]
-	_check(int(v6.get("version", 0)) == 6 and not v6.has("world") and (v6_char["world"] as Dictionary)["flags"].has("colossus_defeated")
+	_check(int(v6.get("version", 0)) == SaveGame.VERSION and not v6.has("world") and (v6_char["world"] as Dictionary)["flags"].has("colossus_defeated")
 		and ((v6_char["world"] as Dictionary)["camps"] as Dictionary).has("camp_1") and v6_char["known_abilities"] == ["rune_cleave", "earthbreaker"]
 		and int(v6_char["gold"]) == 20 + 150 + 400 and (v6_char["notes"] as Array).has("m10_refund:550") and v6_char.has("name"),
 		"save v5 -> v6: the world moves into the character; a Runebreaker's spells come back as gold (+550) with a note")
@@ -6717,6 +6717,12 @@ func _run() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://settings_smoke_m17a.cfg"))
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(ClientSettings.path))
 	ClientSettings.path = real_settings
+
+	# M14a: the story's checks live in their own file (loaded at runtime: a parse error there fails one check)
+	var story_checks := load("res://tests/story_checks.gd") as GDScript
+	_check(story_checks != null, "M14a: tests/story_checks.gd loads")
+	if story_checks != null:
+		await story_checks.new().run(self)
 
 	SaveGame.wipe()
 	print("== %d failures (%.0f s) ==" % [_failures.size(), Time.get_ticks_msec() / 1000.0])

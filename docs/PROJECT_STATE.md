@@ -22,6 +22,27 @@ user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
+## M14a Story campaign "The Runebound" (in progress since 2026-10-20)
+Built alongside Rig v3, in a second git worktree (`D:\fable_story`, branch
+`story`, pushed to `main` after every phase; dev-notes/workflow.md "A second
+working copy"). The user's decisions (three rounds, 2026-10-20) are in
+ROADMAP M14 and STORY_DESIGN "The campaign": the existing world plus two new
+zones, a linear prologue zone, a guided Act 1, then an open world; dialogue
+with portraits and short camera pans; co-op credit for every hero present.
+Stages: **M14a** (story bible, quest/dialogue/journal/camera systems, co-op
+story, the prologue "The Ash Road", Act 1), M14b (Act 2 on the existing
+dungeons), M15a (Frostvales), M15b (The Breach and the finale).
+- Phase 0 built: the story bible (STORY_DESIGN "The campaign"), waiting for
+  the user's review before the content phases (5, 6).
+- Phase 1 built: the quest core (TECHNICAL_ARCHITECTURE "Story (M14a)"):
+  QuestLog per hero in the save (v7, with the v6 -> v7 migration into Act 1
+  and a `.v6.bak` copy), StoryDB, conditions and effects, the QuestDirector
+  (kills, bosses, places, lore, shards, levels, shrines), the journal on U,
+  the quest tracker, quest markers on the map and the compass;
+  `tools\run_godot.cmd story` runs the story checks alone.
+- Next: phase 2 dialogue + StoryNpc, 3 camera pans, 4 co-op story
+  (PROTOCOL 17), 5 the prologue zone, 6 Act 1, 7 wrap-up.
+
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more
 detailed; and equipped gear should show on the hero like in WoW. Decisions

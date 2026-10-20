@@ -9,7 +9,8 @@ signal flag_set(flag: StringName)
 ##   {version, characters: [{name, class_id, known_abilities, loadout, gold, inventory,
 ##                           equipped, progression, waypoints, map_discovered, discovered,
 ##                           consumables, vitals: {hp, resource} (M11, optional),
-##                           world: {zone, flags, camps: {id: {cleared_at}}}, notes}],
+##                           world: {zone, flags, camps: {id: {cleared_at}}}, notes,
+##                           story (M14a, QuestLog.to_dict; absent = no story, e.g. test heroes)}],
 ##    active}
 ## Every character has its own world (user, 2026-09-29): bosses, gates and
 ## camps are per character. A save without characters (the dedicated server's)
@@ -17,7 +18,7 @@ signal flag_set(flag: StringName)
 ## `camps` are the world being played (the active character's, the server's,
 ## or a co-op session's).
 
-const VERSION := 6  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map; v5 (M09): discovered zones per character; v6 (M10): world, name and loadout per character
+const VERSION := 7  # v2 (M07): progression; v3 (M07b): world/characters split; v4 (M08): camps, waypoints, map; v5 (M09): discovered zones per character; v6 (M10): world, name and loadout per character; v7 (M14a): the story per character
 const HUB_SCENE := "res://scenes/hub.tscn"
 ## Character keys the save keeps although the live hero doesn't hold them.
 const KEPT_KEYS: Array[String] = ["name", "notes"]
@@ -279,6 +280,7 @@ static func new_character(class_id: StringName, char_name: String) -> Dictionary
 		"inventory": [], "equipped": {}, "progression": {"level": 1, "xp": 0, "talents": {}},
 		"waypoints": [], "map_discovered": [], "discovered": [],
 		"lore_read": [], "collected": [], "gathered": {}, "blessings": [],
+		"story": QuestLog.new_story(),  # M14a: act 0, the prologue waiting
 		"world": {"zone": HUB_SCENE, "flags": {}, "camps": {}}}
 
 
@@ -459,6 +461,7 @@ static func restore_character(player: Player, ch: Dictionary) -> void:
 	player.blessings = PackedStringArray(ch.get("blessings", []))  # M12 phase 6, optional
 	var picked: Variant = ch.get("gathered", {})
 	player.gathered = (picked as Dictionary).duplicate() if picked is Dictionary else {}
+	QuestLog.of(player).from_dict(ch.get("story", {}))  # M14a, optional (no key = no story)
 	player.chronicle_changed.emit()
 	player.equipment._recompute()
 	player.equipment.changed.emit()
@@ -476,6 +479,9 @@ static func character_dict(player: Player) -> Dictionary:
 		"blessings": Array(player.blessings), "storm_shards": player.storm_shards,
 		"kit": true,  # Rig v3: the start kit was handed out (never again)
 		"hide_helm": player.helm_hidden()}  # Rig v3: co-op partners see the bare head too
+	var story := QuestLog.of(player).to_dict()  # M14a: only a hero with a story saves one
+	if not story.is_empty():
+		ch["story"] = story
 	for id in player.known_abilities:
 		(ch["known_abilities"] as Array).append(String(id))
 	for id in player.loadout:
@@ -548,7 +554,21 @@ func _read_file() -> Dictionary:
 		push_warning("SaveGame: corrupt save ignored")
 		return {}
 	var data := parsed as Dictionary
+	var from := int(data.get("version", -1))
+	if from > 0 and from < VERSION:
+		_backup(from)
 	return migrate(data)
+
+
+## M14a: before the first write in a newer format, the old file is kept as
+## `<save>.v<n>.bak` (an older build would drop the newer save as unknown).
+func _backup(version: int) -> void:
+	var bak := "%s.v%d.bak" % [save_path, version]
+	if FileAccess.file_exists(bak):
+		return
+	var err := DirAccess.copy_absolute(ProjectSettings.globalize_path(save_path), ProjectSettings.globalize_path(bak))
+	if err != OK:
+		push_warning("SaveGame: no backup of %s (%d)" % [save_path, err])
 
 
 ## Brings an older save up to VERSION; unknown versions start fresh.
@@ -630,6 +650,25 @@ static func migrate(data: Dictionary) -> Dictionary:
 			data.erase("world")
 		data["version"] = 6
 		version = 6
+	if version == 6:  # M14a: every character joins the story in Act 1 (Sigrun calls it); the bosses it
+		# already beat in its own world count, and "legacy" keeps every gate it knew open
+		for ch in data.get("characters", []):
+			if ch is not Dictionary:
+				continue
+			var c := ch as Dictionary
+			var world6: Dictionary = c.get("world", {})
+			var flags6: Dictionary = world6.get("flags", {})
+			var beats: Array = ["legacy"]
+			if bool(flags6.get("colossus_defeated", false)):
+				beats.append("boss:colossus")
+			if bool(flags6.get("spire_cleansed", false)):
+				beats.append("boss:vessel")
+			c["story"] = {"v": QuestLog.FORMAT, "act": 1, "beats": beats, "pending": ["a1_call"]}
+			var notes: Array = c.get("notes", []) as Array
+			notes.append("m14_call")
+			c["notes"] = notes
+		data["version"] = 7
+		version = 7
 	if version != VERSION:
 		push_warning("SaveGame: incompatible save version ignored")
 		return {}

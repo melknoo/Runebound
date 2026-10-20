@@ -205,6 +205,7 @@ func _refresh() -> void:
 	for child in _list.get_children():
 		child.queue_free()
 	var markers := zone.map_markers()
+	markers.append_array(zone.story_markers())  # M14a: the tracked quest
 	_marker_count = markers.size()
 	_sub.text = "%d places known. Walk the trails to reveal more." % markers.size()
 	_view.set_markers(markers)
