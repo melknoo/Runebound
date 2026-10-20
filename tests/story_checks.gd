@@ -27,6 +27,7 @@ func run(runner: Node) -> void:
 	await _quest_log()
 	await _save_v7()
 	await _director_in_the_lab()
+	await _dialogue()
 	StoryDB.reload()  # drops the test quests
 	if own != null:
 		own.queue_free()
@@ -217,3 +218,94 @@ func _director_in_the_lab() -> void:
 	for e in [far, near]:
 		if is_instance_valid(e):
 			e.queue_free()
+
+
+## Phase 2: talks. A story NPC with a test dialogue (conditions, effects, the
+## key that closes it must not reopen it), a trainer that talks while it has a
+## topic and opens its panel otherwise, a marker that counts an interact goal,
+## a stage entry shown by its condition, badges.
+func _dialogue() -> void:
+	var hero: Player = lab.player
+	var ql := QuestLog.of(hero)
+	ql.from_dict({"v": 1, "act": 1})
+	ql.bind(hero)
+	StoryDB.add_test_npc("t_friend", {"name": "npc.edda.name", "rig": "druid"})
+	StoryDB.add_test_dialogue("t_friend", {"npc": "t_friend", "entries": [{"start": "greet"}], "nodes": {
+		"greet": {"say": "dlg.sigrun.intro.0", "options": [
+			{"text": "dlg.sigrun.opt.place", "next": "more", "effects": [{"event": ["talk", "t_friend"]}]},
+			{"text": "dlg.common.train", "if": {"class": "no_such_class"}, "end": true},
+			{"text": "dlg.common.bye", "end": true}]},
+		"more": {"say": "dlg.sigrun.place.0", "effects": [{"choice": ["t.asked", "yes"]}], "next": "last"},
+		"last": {"say": "dlg.sigrun.place.1", "end": true}}})
+	StoryDB.add_test_quest({"id": "t_talk", "kind": "side", "act": 1, "title": "ui.journal.title", "steps": [
+		{"id": "talk", "text": "ui.journal.side", "goal": {"type": "talk", "npc": "t_friend"}}]})
+	var friend := StoryNpc.create("t_friend")
+	friend.position = lab.ground_point(hero.global_position + Vector3(2, 0, 0))
+	lab.world.add_child(friend)
+	ql.start("t_talk")
+	lab.quest_director.refresh_badges()
+	var badge := friend.get_node_or_null(^"StoryBadge") as Label3D
+	_check(badge != null and badge.visible and badge.text == "?", "a quest that wants a talk puts a ? over the NPC")
+	var dui := lab.dialogue_ui
+	friend.interacted.emit(hero)
+	_check(dui.visible and dui.npc_id == "t_friend" and hero.input_locked and dui.current_text() == Texts.t("dlg.sigrun.intro.0")
+		and dui.option_texts().size() == 2 and DialogueUI.speaker_name("t_friend") == "Edda",
+		"talking opens the dialogue: name, line, the answers whose conditions hold (2 of 3)")
+	dui.choose(0)
+	_check(dui.node_id == "more" and ql.is_done("t_talk") and ql.choice("t.asked") == "yes",
+		"an answer runs its effects (the talk goal) and the next line its own (a choice)")
+	dui.advance()
+	_check(dui.node_id == "last", "a line without answers goes on with the key")
+	dui.advance()
+	_check(not dui.visible and hero.input_locked, "the last line closes the talk; the hero stays locked this frame")
+	await t.get_tree().process_frame
+	await t.get_tree().process_frame
+	_check(not hero.input_locked, "and is free again a frame later (the same key can't reopen it)")
+	# a trainer: its story topic first, the panel when it has none
+	var trainer := TrainerNpc.new()
+	trainer.teaches_class = &"runebreaker"
+	trainer.position = lab.ground_point(hero.global_position + Vector3(-2, 0, 0))
+	lab.world.add_child(trainer)
+	lab.quest_director.refresh_badges()
+	var tb := trainer.get_node_or_null(^"StoryBadge") as Label3D
+	_check(trainer.story_id() == "sigrun" and tb != null and tb.text == "!", "Sigrun has a story to tell: a ! over her")
+	trainer.interacted.emit(hero)
+	var teaches := trainer.teaches(hero)
+	_check(dui.visible and dui.npc_id == "sigrun" and not lab.trainer_ui.visible and ql.has_beat("dlg:sigrun_intro")
+		and dui.option_texts().has(Texts.t("dlg.common.train")) == false,
+		"her first talk opens before the panel (the first line has no answers yet)")
+	dui.advance()
+	_check(dui.option_texts().has(Texts.t("dlg.common.train")) == teaches,
+		"\"Teach me\" is offered only to her own class")
+	if teaches:
+		dui.choose(dui.option_texts().find(Texts.t("dlg.common.train")))
+		_check(not dui.visible and lab.trainer_ui.visible and hero.input_locked, "\"Teach me\" opens the trainer panel")
+		lab.trainer_ui.close()
+	else:
+		dui.close()
+	await t.get_tree().process_frame
+	await t.get_tree().process_frame
+	trainer.interacted.emit(hero)
+	_check(not dui.visible and lab.trainer_ui.visible, "without a topic [E] opens her panel straight away")
+	_check(trainer.flavour_line() == Texts.t("dlg.sigrun.flavour.%d" % (int(trainer.get(&"_visit")) % 3))
+		and Texts.in_language("dlg.sigrun.flavour.0", "de").begins_with("Runen"), "her panel lines come from the text table (DE + EN)")
+	lab.trainer_ui.close()
+	lab.quest_director.refresh_badges()
+	_check(tb.text == "" and not tb.visible, "the ! goes once her story is told")
+	# a marker counts an interact goal; a stage entry follows its condition
+	StoryDB.add_test_quest({"id": "t_look", "kind": "side", "act": 1, "title": "ui.journal.title", "steps": [
+		{"id": "look", "text": "ui.journal.side", "goal": {"type": "interact", "marker": "t_mark"}}]})
+	var mark := lab.quest_director.place({"marker": "t_mark", "zone": "combat_lab",
+		"at": [hero.global_position.x, hero.global_position.z + 3.0], "show_if": {"quest_active": "t_look"}}) as StoryMarker
+	lab.quest_director.refresh_stage()
+	_check(mark != null and not mark.visible, "a stage marker stays hidden while its condition fails")
+	ql.start("t_look")
+	lab.quest_director.refresh_stage()
+	mark.use_by(hero)
+	_check(mark.visible and ql.is_done("t_look"), "shown once its quest runs; looking at it completes the interact goal")
+	ql.from_dict({})
+	await t.get_tree().process_frame
+	await t.get_tree().process_frame
+	for n in [friend, trainer, mark]:
+		if is_instance_valid(n):
+			n.queue_free()

@@ -40,8 +40,13 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   (kills, bosses, places, lore, shards, levels, shrines), the journal on U,
   the quest tracker, quest markers on the map and the compass;
   `tools\run_godot.cmd story` runs the story checks alone.
-- Next: phase 2 dialogue + StoryNpc, 3 camera pans, 4 co-op story
-  (PROTOCOL 17), 5 the prologue zone, 6 Act 1, 7 wrap-up.
+- Phase 2 built: dialogue (TECHNICAL_ARCHITECTURE "Story (M14a)"): the
+  dialogue window with a live portrait and answers, story NPCs and markers
+  placed by stage.json, badges ("!" a topic, "?" a quest wants a talk);
+  Sigrun, Maren, Hild, Ylva and Tova each tell a first story before their
+  panel opens, and their old placeholder lines are DE + EN now.
+- Next: phase 3 camera pans, 4 co-op story (PROTOCOL 17), 5 the prologue
+  zone, 6 Act 1, 7 wrap-up.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

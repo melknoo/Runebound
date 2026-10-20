@@ -187,8 +187,8 @@ static func problems() -> Array[String]:
 	for npc_id: Variant in _dialogue:
 		var d: Dictionary = _dialogue[npc_id]
 		var nodes: Dictionary = d.get("nodes", {})
-		if not _npcs.has(str(npc_id)):
-			out.append("dialogue for unknown npc %s" % npc_id)
+		if not _npcs.has(str(npc_id)) and not _marker_ids().has(str(npc_id)):
+			out.append("dialogue for unknown npc or marker %s" % npc_id)
 		for entry: Variant in d.get("entries", []):
 			var start := str((entry as Dictionary).get("start", ""))
 			if not nodes.has(start):
@@ -239,6 +239,27 @@ static func effect_problems(effects: Variant, where: String) -> Array[String]:
 		if not StoryEffects.KINDS.has(e.keys()[0] if not e.is_empty() else ""):
 			out.append(where + ": unknown effect " + str(e.keys()))
 	return out
+
+
+## Ids of the stage's story markers (a marker may have a dialogue file).
+static func _marker_ids() -> Array[String]:
+	var out: Array[String] = []
+	for entry: Variant in _stage:
+		if entry is Dictionary and (entry as Dictionary).has("marker"):
+			out.append(str((entry as Dictionary)["marker"]))
+	return out
+
+
+## Tests: a dialogue that exists for this run only (reload() drops it).
+static func add_test_dialogue(id: String, d: Dictionary) -> void:
+	ensure()
+	_dialogue[id] = d
+
+
+## Tests: an NPC that exists for this run only.
+static func add_test_npc(id: String, d: Dictionary) -> void:
+	ensure()
+	_npcs[id] = d
 
 
 static func _json_files(dir: String) -> Array[String]:

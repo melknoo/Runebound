@@ -1,0 +1,18 @@
+{
+	"npc": "hild",
+	"entries": [
+		{"if": {"not_beat": "dlg:hild_intro"}, "start": "intro", "topic": true}
+	],
+	"nodes": {
+		"intro": {"say": "dlg.hild.intro.0", "effects": [{"beat": "dlg:hild_intro"}], "next": "intro_1"},
+		"intro_1": {"say": "dlg.hild.intro.1", "options": [
+			{"text": "dlg.hild.opt.roots", "next": "roots"},
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"roots": {"say": "dlg.hild.roots.0", "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

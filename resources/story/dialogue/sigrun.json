@@ -1,0 +1,25 @@
+{
+	"npc": "sigrun",
+	"entries": [
+		{"if": {"not_beat": "dlg:sigrun_intro"}, "start": "intro", "topic": true}
+	],
+	"nodes": {
+		"intro": {"say": "dlg.sigrun.intro.0", "effects": [{"beat": "dlg:sigrun_intro"}], "next": "intro_1"},
+		"intro_1": {"say": "dlg.sigrun.intro.1", "options": [
+			{"text": "dlg.sigrun.opt.place", "next": "place"},
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"place": {"say": "dlg.sigrun.place.0", "next": "place_1"},
+		"place_1": {"say": "dlg.sigrun.place.1", "options": [
+			{"text": "dlg.sigrun.opt.rune", "next": "rune"},
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"rune": {"say": "dlg.sigrun.rune.0", "next": "rune_1"},
+		"rune_1": {"say": "dlg.sigrun.rune.1", "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

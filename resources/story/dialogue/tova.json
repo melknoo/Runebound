@@ -1,0 +1,18 @@
+{
+	"npc": "tova",
+	"entries": [
+		{"if": {"not_beat": "dlg:tova_intro"}, "start": "intro", "topic": true}
+	],
+	"nodes": {
+		"intro": {"say": "dlg.tova.intro.0", "effects": [{"beat": "dlg:tova_intro"}], "next": "intro_1"},
+		"intro_1": {"say": "dlg.tova.intro.1", "options": [
+			{"text": "dlg.tova.opt.circle", "next": "circle"},
+			{"text": "dlg.common.trade", "effects": [{"open": "storm"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"circle": {"say": "dlg.tova.circle.0", "options": [
+			{"text": "dlg.common.trade", "effects": [{"open": "storm"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

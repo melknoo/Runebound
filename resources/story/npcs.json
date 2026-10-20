@@ -1,0 +1,11 @@
+{
+	"_note": "M14a: who the story knows. name = text key (resources/i18n/story). Trainers and merchants stand in Runehold already (hub_zone.gd); entries with a rig are built by the stage (stage.json).",
+	"npcs": {
+		"sigrun": {"name": "npc.sigrun.name"},
+		"maren": {"name": "npc.maren.name"},
+		"hild": {"name": "npc.hild.name"},
+		"ylva": {"name": "npc.ylva.name"},
+		"tova": {"name": "npc.tova.name"},
+		"edda": {"name": "npc.edda.name", "rig": "druid", "tint": "#8C7B68", "rune": "#C9A86A"}
+	}
+}

@@ -23,6 +23,12 @@
 	"ui.reward.legendary": {"en": "a legendary item", "de": "ein legendärer Gegenstand"},
 	"ui.tracker.hint": {"en": "%s: journal", "de": "%s: Tagebuch"},
 	"ui.tracker.level": {"en": "Recommended level %d", "de": "Empfohlene Stufe %d"},
+	"ui.cutscene.skip": {"en": "%s / Esc: skip", "de": "%s / Esc: überspringen"},
+	"act.0.title": {"en": "PROLOGUE", "de": "PROLOG"},
+	"act.0.sub": {"en": "The Ash Road", "de": "Die Aschenstraße"},
+	"act.1.title": {"en": "ACT I", "de": "AKT I"},
+	"act.1.sub": {"en": "What the Shards Sing", "de": "Was die Splitter singen"},
+	"act.1.end": {"en": "END OF ACT I", "de": "ENDE VON AKT I"},
 	"story.toast.quest_new": {"en": "New quest: %s", "de": "Neue Quest: %s"},
 	"story.toast.quest_done": {"en": "Quest complete: %s", "de": "Quest erledigt: %s"},
 	"story.note.sigrun_calls": {"en": "Sigrun Runewright wants to see you in Runehold.", "de": "Sigrun Runewright will dich in Runehold sprechen."}

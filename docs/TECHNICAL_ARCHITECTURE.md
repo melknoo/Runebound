@@ -1473,6 +1473,33 @@ Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
   in `close_windows`) and `QuestTracker` (top right in the HUD's root:
   title, step with progress, recommended level when below it, the journal
   key).
+- **Dialogue (phase 2):** `DialogueUI` (`zone.dialogue_ui`, layer 8, in
+  `close_windows`): a bottom panel with a live `PortraitView` (a
+  SubViewport sharing the zone's World3D, a camera in front of the NPC's
+  head, rendered at 1/4 and scaled up with nearest filtering; nothing
+  headless), the speaker's name, one line, up to four answers (keys 1-4 or a
+  click), the interact key or Space to go on, Esc to end. Data:
+  `resources/story/dialogue/<id>.json` = `{entries: [{if, start, topic}],
+  nodes: {id: {say | say_pool, speaker, effects, next | options: [{text, if,
+  effects, next | end}], end}}}`; the first entry whose `if` holds starts the
+  talk. It locks the hero and frees it one frame after closing (the same
+  interact press would reopen the NPC: `InteractPrompt.pressed` checks
+  `input_locked`); when an answer's effect opens a panel, the panel owns the
+  lock.
+- **Runehold's people:** `TrainerNpc` (sigrun, maren, hild by class),
+  `MerchantNpc` (ylva) and `StormTraderNpc` (tova) are story NPCs (groups
+  `story_npc`, `story_target`, meta `story_id`). [E] opens the dialogue while
+  a `topic` entry holds, else their panel straight away (shopping stays one
+  key press); "Teach me" / "Show me your wares" call `open_panel`. Their
+  flavour lines are text keys `dlg.<id>.flavour.<n>` (DE + EN).
+- **Stage:** `resources/story/stage.json` places `StoryNpc`s (`{"npc": id}`,
+  looks from `npcs.json`: a class rig, tint, gear looks) and `StoryMarker`s
+  (`{"marker": id}`, [E] "Look": an `interact` goal, plus its own dialogue
+  file when it has one) by `at` [x, z] or `poi` + `offset`, with `show_if` /
+  `hide_if`; the director builds them on this machine only and re-checks
+  them when the log changes. A hidden StoryNpc neither draws, collides nor
+  ticks. Badges over story NPCs: "?" when a running quest wants to talk to
+  them, "!" when they have a topic.
 - **Save v7:** `new_character` starts with `QuestLog.new_story()` (act 0,
   the prologue pending). v6 -> v7 gives every character act 1, the beat
   `legacy` (keeps its gates open), `boss:colossus` / `boss:vessel` from its

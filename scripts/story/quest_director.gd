@@ -20,6 +20,9 @@ var running: bool = false
 
 var _tick: float = 0.0
 var _enemies_seen: Dictionary = {}  # instance id -> true (connected once)
+## M14a phase 2: what stage.json placed in this zone (StoryNpc, StoryMarker).
+var stage_nodes: Array[Node3D] = []
+var _stage_dirty: bool = false
 
 
 func setup(z: ZoneBase) -> void:
@@ -51,6 +54,8 @@ func begin() -> void:
 	running = true
 	if zone.quest_tracker != null:
 		zone.quest_tracker.bind(qlog, hero)
+	_build_stage()
+	qlog.changed.connect(_mark_stage_dirty)
 	qlog.quest_started.connect(_on_quest_started)
 	qlog.quest_done.connect(_on_quest_done)
 	qlog.step_done.connect(_on_step_done)
@@ -76,6 +81,9 @@ func zone_key() -> String:
 func _process(delta: float) -> void:
 	if not running or hero == null or not is_instance_valid(hero):
 		return
+	if _stage_dirty:
+		_stage_dirty = false
+		refresh_stage()
 	_tick -= delta
 	if _tick > 0.0:
 		return
@@ -206,6 +214,7 @@ func _on_attuned(_id: String) -> void:
 
 func _on_quest_started(id: String) -> void:
 	_toast("story.toast.quest_new", id)
+	_stage_dirty = true
 
 
 func _on_step_done(id: String, _step: String) -> void:
@@ -232,6 +241,111 @@ func play_cutscene(id: String) -> void:
 		return
 	qlog.mark_seen(id)
 	StoryEffects.apply(c.get("on_end", []), hero, qlog)
+
+
+# ---------------------------------------------------------------------------
+# Stage: story NPCs and markers, badges over the people with something to say
+# ---------------------------------------------------------------------------
+
+## Builds what stage.json places in this zone (this machine only).
+func _build_stage() -> void:
+	for entry: Variant in StoryDB.stage():
+		if str((entry as Dictionary).get("zone", "")) == zone_key():
+			place(entry as Dictionary)
+	refresh_stage()
+
+
+## Builds one stage entry: a StoryNpc ({"npc": id}) or a StoryMarker
+## ({"marker": id}) at its place. Null for anything else.
+func place(e: Dictionary) -> Node3D:
+	var node: Node3D = null
+	if e.has("npc"):
+		node = StoryNpc.create(str(e["npc"]))
+		(node as StoryNpc).stage = e
+	elif e.has("marker"):
+		node = StoryMarker.create(e)
+	if node == null:
+		return null
+	node.position = stage_position(e)
+	node.rotation.y = deg_to_rad(float(e.get("yaw", 0.0)))
+	zone.world.add_child(node)
+	stage_nodes.append(node)
+	if e.has("prop") and PoiBuilder.has_art(zone):
+		PoiBuilder.prop(zone, str(e["prop"]), node.position, node.rotation.y)
+	return node
+
+
+## Where a stage entry stands: `at` [x, z], or a POI plus an `offset` [x, z].
+func stage_position(e: Dictionary) -> Vector3:
+	var p := Vector3.ZERO
+	if e.has("poi"):
+		var poi := zone.poi_position(str(e["poi"]))
+		if poi != Vector3.INF:
+			p = poi
+	if e.has("at"):
+		var xz: Array = e["at"]
+		p = Vector3(float(xz[0]), 0.0, float(xz[1]))
+	if e.has("offset"):
+		var off: Array = e["offset"]
+		p += Vector3(float(off[0]), 0.0, float(off[1]))
+	return zone.ground_point(p)
+
+
+func _mark_stage_dirty() -> void:
+	_stage_dirty = true
+
+
+## Shows or hides the stage by its conditions and refreshes the badges.
+func refresh_stage() -> void:
+	for node in stage_nodes:
+		if not is_instance_valid(node):
+			continue
+		var e: Dictionary = node.get(&"stage")
+		var on := StoryCond.check(e.get("show_if", {}), qlog, hero) 			and (not e.has("hide_if") or not StoryCond.check(e["hide_if"], qlog, hero))
+		node.call(&"set_shown", on)
+	refresh_badges()
+
+
+## "?" over whom a running quest wants talked to, "!" over whom has a story
+## topic now; nothing otherwise.
+func refresh_badges() -> void:
+	for n in get_tree().get_nodes_in_group(&"story_npc"):
+		var npc := n as Node3D
+		if npc == null or not is_instance_valid(npc) or ZoneBase.zone_of(npc) != zone:
+			continue
+		var id := str(npc.get_meta(&"story_id", ""))
+		set_badge(npc, badge_for(id, npc))
+
+
+func badge_for(id: String, npc: Node3D) -> String:
+	if not running or id == "":
+		return ""
+	for qid in qlog.running():
+		var goal: Dictionary = qlog.current_step(qid).get("goal", {})
+		if str(goal.get("type", "")) == "talk" and str(goal.get("npc", "")) == id:
+			return "?"
+	if zone.dialogue_ui != null and zone.dialogue_ui.entry_for(id, npc, true) != "":
+		return "!"
+	return ""
+
+
+static func set_badge(npc: Node3D, text: String) -> void:
+	var badge := npc.get_node_or_null(^"StoryBadge") as Label3D
+	if badge == null:
+		if text == "":
+			return
+		badge = Label3D.new()
+		badge.name = "StoryBadge"
+		badge.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		badge.no_depth_test = true
+		badge.modulate = QUEST_GOLD
+		badge.outline_size = 12
+		badge.outline_modulate = Color(0.05, 0.03, 0.08)
+		badge.position = Vector3(0, 2.55, 0)
+		UiTheme.label3d(badge, UiTheme.BIG, true)
+		npc.add_child(badge)
+	badge.text = text
+	badge.visible = text != ""
 
 
 # ---------------------------------------------------------------------------

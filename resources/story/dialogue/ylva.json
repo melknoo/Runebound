@@ -1,0 +1,18 @@
+{
+	"npc": "ylva",
+	"entries": [
+		{"if": {"not_beat": "dlg:ylva_intro"}, "start": "intro", "topic": true}
+	],
+	"nodes": {
+		"intro": {"say": "dlg.ylva.intro.0", "effects": [{"beat": "dlg:ylva_intro"}], "next": "intro_1"},
+		"intro_1": {"say": "dlg.ylva.intro.1", "options": [
+			{"text": "dlg.ylva.opt.hand", "next": "hand"},
+			{"text": "dlg.common.trade", "effects": [{"open": "shop"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"hand": {"say": "dlg.ylva.hand.0", "options": [
+			{"text": "dlg.common.trade", "effects": [{"open": "shop"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

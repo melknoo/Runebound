@@ -3,26 +3,13 @@ extends Npc
 ## M07b: a Runehold trainer. Talking opens the zone's TrainerUI, which sells
 ## the TRAINER abilities of `teaches_class` for gold and level. M10: one
 ## trainer per class (ClassData.trainer_name); a hero of another class is
-## pointed to its own. The names and lines are placeholders until M14 gives
-## the trainers a story.
+## pointed to its own. M14a: each trainer is a story NPC too - [E] opens its
+## dialogue while it has a topic to tell (resources/story/dialogue/<id>.json),
+## otherwise the panel straight away; its flavour lines are in the text table.
 
-const FLAVOUR := {
-	&"runebreaker": [
-		"Runes don't care how hard you swing. They care that you paid attention. And paid.",
-		"Every rune I teach, I earned the same way you will: one scar at a time.",
-		"Stand in front. Hold. The ones behind you will do the rest.",
-	],
-	&"elementalist": [
-		"Fire listens to patience. Lightning to nerve. Frost listens to nobody - you'll learn it anyway.",
-		"Aether is borrowed, not owned. Spend it before it spends you.",
-		"Sigrun teaches walls. I teach what the walls are for.",
-	],
-	&"druid": [
-		"The ash remembers what grew here. I only remind it.",
-		"Sap is patient. It won't rise for you while you idle - only when the fight asks for it.",
-		"Mend the one in front, and the one in front keeps you standing. That's the whole secret.",
-	],
-}
+## The trainer of each class in the story's data (npcs.json, dialogue).
+const STORY_IDS := {&"runebreaker": "sigrun", &"elementalist": "maren", &"druid": "hild"}
+const FLAVOUR_LINES := 3
 
 ## The class whose abilities this trainer teaches (set before add_child).
 @export var teaches_class: StringName = ClassData.DEFAULT_ID
@@ -39,7 +26,15 @@ func _ready() -> void:
 	if cls != null and cls.trainer_name != "":
 		npc_name = cls.trainer_name
 	super()
+	add_to_group(&"story_npc")  # M14a: dialogue badges, quest markers
+	add_to_group(&"story_target")
+	set_meta(&"story_id", story_id())
 	interacted.connect(_on_interacted)
+
+
+## M14a: this trainer's id in the story's data.
+func story_id() -> String:
+	return str(STORY_IDS.get(teaches_class, "sigrun"))
 
 
 ## Does this trainer teach `player`'s class?
@@ -48,8 +43,7 @@ func teaches(player: Player) -> bool:
 
 
 func flavour_line() -> String:
-	var lines: Array = FLAVOUR.get(teaches_class, FLAVOUR[ClassData.DEFAULT_ID])
-	return str(lines[_visit % lines.size()])
+	return Texts.t("dlg.%s.flavour.%d" % [story_id(), _visit % FLAVOUR_LINES])
 
 
 ## What this trainer tells a hero of another class (who teaches it instead).
@@ -60,6 +54,14 @@ func referral_line(player: Player) -> String:
 
 
 func _on_interacted(player: Player) -> void:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone != null and zone.dialogue_ui != null and zone.dialogue_ui.try_open(story_id(), self, player, true):
+		return  # M14a: a story topic first; "Teach me" opens the panel from there
+	open_panel(player)
+
+
+## The trainer panel (also the dialogue's "Teach me").
+func open_panel(player: Player) -> void:
 	var zone := get_tree().current_scene as ZoneBase
 	if zone == null or zone.trainer_ui == null:
 		return

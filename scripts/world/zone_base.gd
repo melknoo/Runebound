@@ -26,6 +26,7 @@ var talent_ui: TalentUI        # the hero window's talent tab
 var trainer_ui: TrainerUI
 var lore_ui: LoreUI          # M12 reading window (graves, notes, ghosts)
 var journal_ui: JournalUI    # M14a the quest journal (U)
+var dialogue_ui: DialogueUI  # M14a talks with NPCs
 var quest_director: QuestDirector  # M14a the local hero's story in this zone
 var quest_tracker: QuestTracker    # M14a the shown quest, top right in the HUD
 var waypoint_ui: WaypointUI  # M08 travel panel (opened at a shrine)
@@ -179,6 +180,9 @@ func _build_player_ui() -> void:
 	journal_ui = JournalUI.new()  # M14a: the quest journal on U
 	add_child(journal_ui)
 	journal_ui.setup(player)
+	dialogue_ui = DialogueUI.new()  # M14a: hidden until an NPC talks
+	add_child(dialogue_ui)
+	dialogue_ui.setup(player)
 	quest_director = QuestDirector.new()  # M14a: quest events, toasts, markers (begin() after the restore)
 	quest_director.setup(self)
 	add_child(quest_director)
@@ -213,7 +217,7 @@ func debug_swap_class(class_id: StringName) -> Player:
 	var old := player
 	var pos := old.global_position
 	for ui: Node in [hud, debug_overlay, pause_menu, hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, aggro_marks,
-			journal_ui, quest_director]:
+			journal_ui, dialogue_ui, quest_director]:
 		if ui != null:
 			remove_child(ui)
 			ui.queue_free()
@@ -1457,7 +1461,7 @@ func travel_to(scene_path: String, arrival: String = "") -> void:
 ## map, playtest list; M12 the lore window); true when one was open.
 func close_windows() -> bool:
 	var closed := false
-	for ui: CanvasLayer in [hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, journal_ui]:
+	for ui: CanvasLayer in [hero_ui, trainer_ui, lore_ui, waypoint_ui, map_ui, playtest_ui, journal_ui, dialogue_ui]:
 		if ui != null and ui.visible:
 			ui.call(&"close")
 			closed = true

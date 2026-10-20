@@ -1,0 +1,18 @@
+{
+	"npc": "maren",
+	"entries": [
+		{"if": {"not_beat": "dlg:maren_intro"}, "start": "intro", "topic": true}
+	],
+	"nodes": {
+		"intro": {"say": "dlg.maren.intro.0", "effects": [{"beat": "dlg:maren_intro"}], "next": "intro_1"},
+		"intro_1": {"say": "dlg.maren.intro.1", "options": [
+			{"text": "dlg.maren.opt.name", "next": "name"},
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"name": {"say": "dlg.maren.name.0", "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

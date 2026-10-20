@@ -3,8 +3,11 @@ extends Npc
 ## M13b: Tova Stormward in Runehold trades storm shards (the Stormwatch's
 ## bosses give them) for the storm legendaries - two per class, sold only
 ## here (AffixPool.STORM_LEGENDARIES). Talking opens the zone's TrainerUI in
-## her shelf view. Her lines are in the player's language; name and rig are
-## placeholders until M14 gives Runehold its people.
+## her shelf view. Her lines are in the player's language. M14a: a story NPC
+## too (`tova`): [E] opens her dialogue while she has a topic, otherwise the
+## shelf.
+
+const STORY_ID := "tova"
 
 const LINES := ["ui.storm_trader.line.0", "ui.storm_trader.line.1", "ui.storm_trader.line.2"]
 
@@ -18,6 +21,9 @@ func _init() -> void:
 
 func _ready() -> void:
 	super()
+	add_to_group(&"story_npc")
+	add_to_group(&"story_target")
+	set_meta(&"story_id", STORY_ID)
 	interacted.connect(_on_interacted)
 
 
@@ -26,6 +32,14 @@ func flavour_line() -> String:
 
 
 func _on_interacted(player: Player) -> void:
+	var zone := get_tree().current_scene as ZoneBase
+	if zone != null and zone.dialogue_ui != null and zone.dialogue_ui.try_open(STORY_ID, self, player, true):
+		return  # M14a: a story topic first
+	open_panel(player)
+
+
+## The shelf (also the dialogue's "Show me your wares").
+func open_panel(player: Player) -> void:
 	var zone := get_tree().current_scene as ZoneBase
 	if zone == null or zone.trainer_ui == null:
 		return
