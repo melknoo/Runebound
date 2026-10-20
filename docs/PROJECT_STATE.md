@@ -86,8 +86,9 @@ C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
     the local hero shows the bare head at once; it travels in CHARACTER.
   - **Protocol 16:** HERO_LOOK, `"kit"` / `"hide_helm"` in CHARACTER
     ([TECHNICAL_ARCHITECTURE](TECHNICAL_ARCHITECTURE.md) "Visible gear"):
-    partners see your gear, hide-helm and Cindermaw. **A release must follow
-    before co-op** (the laptop still runs protocol 15).
+    partners see your gear, hide-helm and Cindermaw. Shipped 2026-10-20:
+    `release` at 7f1f13e ("deploy: live at 7f1f13e"), player build `v0.16.0`
+    on GitHub Releases (installer 46 MB, ZIP 57 MB).
   - Smoke 934 green (puppet kit + HERO_LOOK, the payload, hide-helm in
     CHARACTER, the title hero's gear).
 
