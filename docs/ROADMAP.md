@@ -481,6 +481,26 @@ Phase 8 gebaut (Abschluss: Playtest-Gruppe „M13b: Koop-Dungeon“ auf J, 19 Pu
 **PROTOCOL 15** ist ausgeliefert (`release` = 71e8a71, 13.10.).
 
 ### M14 — Story & RPG
+**Entscheidungen des Spielers (2026-10-20, drei Runden), Kampagne „Die Runengebundenen“**
+(Details und Entwurf: [STORY_DESIGN](STORY_DESIGN.md) „The campaign“):
+- **Umfang:** bestehende Welt + 2 neue Zonen (Frosttäler, Der Bruch), etwa 5–7 h Hauptstory.
+- **Klassisch:** eigenes Prolog-Gebiet „Die Aschenstraße“ (linear, 25–35 min, Stufe 1→2), Akt 1
+  geführt (Sigrun → Splitter → Aschwick → Colossus → Spire: der leere Sockel, Spur zu Bruder Aldric),
+  Akt 2 frei (Cistern, Warrens, Frosttäler; Sturmwarte optional im Koop), Akt 3 Der Bruch + Finale.
+- **Präsentation:** Dialogfenster mit Porträt und Antwortoptionen + kurze Kamerafahrten.
+- **Story-NPCs an Story-Orten erlaubt** (kein Welt-Leben), dazu Runehold und je ein Außenposten.
+- **Stufen fest** je Region mit Empfehlung. **Akt-1-Sperre:** für neue Charaktere bleiben Cistern
+  und Warrens bis zum Ende von Akt 1 zu, bestehende behalten alles offen.
+- **Neue Charaktere** spielen den Prolog, ab dem zweiten Charakter überspringbar; bestehende steigen
+  in Akt 1 ein.
+- **Koop:** jeder anwesende Held bekommt den Quest-Schritt; Dialoge führt jeder für sich;
+  Story-Bosse erscheinen online wieder, solange ein Anwesender sie braucht (PROTOCOL 17).
+- **Alte Menüs/HUD zweisprachig:** erst nach der Story.
+Etappen: **M14a** Story-Bibel, Quest/Dialog/Journal/Kamera, Koop-Story, Prolog, Akt 1 · **M14b**
+Akt 2 auf bestehendem Inhalt · **M15a** Frosttäler · **M15b** Der Bruch + Finale. Gebaut wird in
+einem eigenen Worktree parallel zu Rig v3.
+
+Ursprünglicher Rahmen:
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein
   Extra-Satz), Quest-System (Haupt- + Nebenquests, Journal), Story-Bogen um die Shattered Rune
   über Hub und Zonen; Sigrun bekommt als Erste eine Geschichte.
