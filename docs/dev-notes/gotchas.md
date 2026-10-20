@@ -62,3 +62,5 @@ Hard-won, one line each. Dates are when it bit. Architecture rules are in CLAUDE
 - A test standing in the bone field wakes the elite patrol (55 m) and breaks later camp counts: test the brood enemies in trial_f's clearing.
 - Smoke runs unseeded (random drops are flaky); automated windowed runs use the scratch save and a fixed seed.
 - Headless and test runs use default settings and never touch `settings.cfg`; `--snap` is a test-run flag (capture save).
+- After a heavy load (a zone instantiated in a test) Godot catches up on physics frames without running `_process`: `await physics_frame` twice can pass with zero process frames. A test that waits for something done in `_process` (the QuestDirector's stage refresh, its reach tick) must await `process_frame` (M14a).
+- `SaveGame.create_character` in a test with a hero in the scene writes that hero over the new character (`_collect`): create characters with no hero in `current_scene`, like the title screen (M14a).

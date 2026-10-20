@@ -83,6 +83,9 @@ func _run() -> void:
 	_check("zone layouts", layouts >= 5, "%d parsed" % layouts)
 	Texts.ensure()
 	_check("text tables", Texts.keys().size() > 100, "%d keys" % Texts.keys().size())
+	var story_problems := StoryDB.problems()  # M14a: the story's JSON (quests, dialogue, stage) made it into the pack
+	_check("story data", StoryDB.quest_ids().size() >= 5 and story_problems.is_empty(),
+		"%d quests, problems: %s" % [StoryDB.quest_ids().size(), story_problems.slice(0, 3)])
 	_check("server list", not ServerList.all().is_empty(), "%d servers" % ServerList.all().size())
 	_check("playtest list", not PlaytestLog.groups().is_empty(), "%d groups" % PlaytestLog.groups().size())
 	_check("art spec", not ArtKit.spec().is_empty(), "%d keys" % ArtKit.spec().size())

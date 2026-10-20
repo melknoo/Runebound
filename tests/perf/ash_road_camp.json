@@ -1,0 +1,21 @@
+{
+	"zone": "res://scenes/ash_road.tscn",
+	"comment": "M14a the prologue at night: the last camp (fire, braziers' lights, ash fall), looking north up the valley road; the dead and raiders closing in.",
+	"player": {"poi": "spawn", "offset": [0, 0.2, 4]},
+	"yaw": 0.0,
+	"pitch": -0.25,
+	"warmup": 2.0,
+	"repeats": 3,
+	"duration": 12.0,
+	"budget_fps": 60,
+	"wave": [
+		["grave_shambler", [0, 0, -6]],
+		["grave_shambler", [2.5, 0, -7]],
+		["grave_shambler", [-2.5, 0, -7]],
+		["rusher", [1, 0, -10]],
+		["rusher", [-1, 0, -11]],
+		["caster", [4, 0, -11]],
+		["caster", [-4, 0, -12]],
+		["brute", [0, 0, -13]]
+	]
+}

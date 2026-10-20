@@ -19,6 +19,9 @@
   toll ring 12 every 12 s, two shamblers at half health), the ambushes, the
   prologue ending at level 2. The solo-check bot never dodges: the
   Runebreaker bot clears the Reeve with 27 % health left.
+- Perf: the prologue's camp (fire and brazier lights, ash fall, a pull of
+  eight) runs 51 FPS on the main PC's iGPU, the Highlands' open pull 53 FPS
+  in the same run (both GPU-bound; the budget is 60).
 - The smoke test plays the prologue through now: 294-338 s (watchdog
   420 s, the wrapper's limit 480 s). Raise both if it creeps up.
 - Fixed in phase 4: online, the Ashvein Colossus and the Vessel appeared as

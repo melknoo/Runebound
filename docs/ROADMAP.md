@@ -499,6 +499,12 @@ Phase 8 gebaut (Abschluss: Playtest-Gruppe „M13b: Koop-Dungeon“ auf J, 19 Pu
 Etappen: **M14a** Story-Bibel, Quest/Dialog/Journal/Kamera, Koop-Story, Prolog, Akt 1 · **M14b**
 Akt 2 auf bestehendem Inhalt · **M15a** Frosttäler · **M15b** Der Bruch + Finale. Gebaut wird in
 einem eigenen Worktree parallel zu Rig v3.
+**Stand M14a (gebaut 2026-10-20, dein Playtest ist das Gate, J-Gruppe „M14a: Story - Prolog & Akt 1“):**
+Story-Bibel (von dir abgenommen); Quest-System mit Tagebuch (U), Quest-Anzeige und Markern; Dialoge mit
+Porträt und Antworten; Kamerafahrten; Koop-Story (Story-Bosse stehen online wieder auf, **PROTOCOL 17**, vor dem
+Koop ein Release); der Prolog „Die Aschenstraße“ als eigene Nacht-Zone mit dem auferstandenen Vogt; Akt 1 bis zum
+leeren Sockel und „Aldric“, Zisterne und Warrens für neue Charaktere bis dahin versiegelt; vier Nebenquests.
+Als Nächstes: **M14b** (Akt 2 in Zisterne und Warrens), mit eigenen Rückfragen.
 
 Ursprünglicher Rahmen:
 - NPCs mit Dialog und **Antwortoptionen** (meist Geschmack: andere Reaktion, kleine Belohnung, ein

@@ -22,7 +22,7 @@ user; the notes from that playtest were built on 2026-09-28. M07 and M07b were
 accepted on 2026-09-24. Status snapshot and second-machine setup:
 [HANDOFF.md](HANDOFF.md) (German). Server laptop: [SERVER_SETUP.md](SERVER_SETUP.md).
 
-## M14a Story campaign "The Runebound" (in progress since 2026-10-20)
+## M14a Story campaign "The Runebound" (built 2026-10-20, the user's playtest is the gate)
 Built alongside Rig v3, in a second git worktree (`D:\fable_story`, branch
 `story`, pushed to `main` after every phase; dev-notes/workflow.md "A second
 working copy"). The user's decisions (three rounds, 2026-10-20) are in
@@ -69,7 +69,25 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   letter, a name for the nameless grave, Bram's ten raiders, the Charwood
   for Hild), Sigrun's mentor joke after the act, Act II waiting in the
   journal.
-- Next: phase 7 wrap-up (playtest group, docs).
+- Phase 7 built: the playtest group "M14a: Story - Prolog & Akt 1" on J (17
+  points), the export check reads the story data, perf scenario
+  `ash_road_camp` (51 FPS on the main PC's iGPU, the Highlands' open pull
+  53 FPS in the same run: GPU-bound as before), docs.
+- **Gate walk** (the user):
+  1. `toolsun_godot.cmd play`, create a new character, Play solo: the Ash
+     Road at night. Edda, the dead, the shard, the cart, the bridge, the
+     Reeve, the gate, Runehold (Sigrun, ACT I).
+  2. Talk to Sigrun, then the chain: three shards, Ashwick (the cursed
+     graveyard's lanterns, the priest, the cord), the Colossus, the Spire and
+     its socket, Sigrun again: END OF ACT I. On the way: the Cistern's gate
+     is sealed (read the seal), Edda's letter, the nameless grave, Bram (the
+     south-west ruin), Hild's Charwood (level 3).
+  3. An existing character: the toast "Sigrun wants to see you", the chain
+     fast-forwards through what it has done.
+  4. A second new character: "Skip the prologue" at creation.
+  5. Co-op only after a release (protocol 17): a friend whose story still
+     needs the Colossus wakes it on the server.
+- Next: M14b (Act 2 in the Cistern and the Warrens), with its own questions.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

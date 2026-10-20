@@ -3,6 +3,29 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m14a",
+			"title": "M14a: Story - Prolog & Akt 1",
+			"items": [
+				{"id": "m14a_new", "src": "M14a", "title": "Neuer Charakter: Prolog", "hint": "Neuen Charakter anlegen und solo spielen: startest du nachts auf der Aschenstraße bei Edda? Ab dem zweiten Charakter bietet das Erstellen „Prolog überspringen“ an."},
+				{"id": "m14a_tutorial", "src": "M14a", "title": "Tutorial-Hinweise", "hint": "Oben rechts unter der Quest: Laufen, Angreifen/Ausweichen, deine Rune, Trinken, Bodenzeichen - mit deinen eigenen Tasten. Hilfreich oder störend?"},
+				{"id": "m14a_shard", "src": "M14a", "title": "Der Splitter fällt", "hint": "Auf der Lichtung: Kamerafahrt, der Splitter fällt brennend vom Himmel, Edda sieht deine Hand. Wirkt der Moment, ist die Fahrt zu lang/kurz, Überspringen mit E/Leertaste/Esc ok?"},
+				{"id": "m14a_bridge", "src": "M14a", "title": "Die Brücke", "hint": "Über die Schlucht: die Brücke bricht hinter dir. Sieht man es, kommt man nirgends herunter oder zurück, hängt man nirgends fest?"},
+				{"id": "m14a_reeve", "src": "M14a", "title": "Der auferstandene Vogt", "hint": "Keulenschlag, Zoll-Ring um ihn, zwei Tote bei halber Gesundheit: als erster Boss zu leicht/zu schwer? Stirbst du, kommst du an der Brücke zurück und er heilt sich: fair?"},
+				{"id": "m14a_length", "src": "M14a", "title": "Länge & Stufe des Prologs", "hint": "Etwa 25-35 Minuten, Ende auf Stufe 2? Zu leer, zu lang, wo langweilig?"},
+				{"id": "m14a_arrival", "src": "M14a", "title": "Ankunft in Runehold", "hint": "Durchs Tor: Kamerafahrt zu Sigrun („Zeig mir deine Hand ... Nicht auch du.“), Karte „AKT I“, Edda steht danach am Herd. Wirkt das?"},
+				{"id": "m14a_dialogue", "src": "M14a", "title": "Dialoge", "hint": "Fenster unten mit Porträt, Antworten mit 1-4 oder Klick, E/Leertaste weiter: gut lesbar? Porträt erkennbar? Trainer und Händler erzählen beim ersten Mal, danach direkt ihr Fenster: passt das?"},
+				{"id": "m14a_journal", "src": "M14a", "title": "Tagebuch & Quest-Anzeige", "hint": "U öffnet das Tagebuch (Haupt-/Nebenquests, Erledigt, Verfolgen); oben rechts die verfolgte Quest mit Fortschritt: klar? Was fehlt?"},
+				{"id": "m14a_markers", "src": "M14a", "title": "Quest-Marker", "hint": "Goldene Rauten auf Karte (M) und Kompass zeigen das nächste Ziel (beim Splitter-Sammeln den nächsten Splitter); „!“ und „?“ über NPCs: helfen sie?"},
+				{"id": "m14a_act1", "src": "M14a", "title": "Akt 1: Sigruns Kette", "hint": "Splitter -> Aschwick (Priester, Schnur der Wächter) -> Koloss -> Spitze (leerer Sockel, Kamerafahrt) -> „Aldric“ -> ENDE AKT I. Roter Faden verständlich? Zu viel Hin und Her?"},
+				{"id": "m14a_gates", "src": "M14a", "title": "Versiegelte Dungeons", "hint": "Neue Charaktere: Zisterne und Warrens bleiben bis Ende Akt 1 zu, das Siegel liest sich mit E (Sprachmodell-Satz). Bestehende Charaktere: alles offen wie vorher?"},
+				{"id": "m14a_side", "src": "M14a", "title": "Nebenquests", "hint": "Eddas Brief (Wahrheit oder Trost, ein Ring), der Namenlose (Bernd/Rune/Gerald), Brams zehn Raider, der Kohlwald für Hild (ab Stufe 3): Lust drauf, Belohnungen ok?"},
+				{"id": "m14a_meta", "src": "M14a", "title": "Meta-Würze", "hint": "Das Siegel, Sigruns Mentoren-Witz nach Akt 1, „Zehn ist eine gute Zahl“, der Namenlose, „Akt II wird gerade geschrieben“ im Tagebuch: Dosis richtig, Ton liebevoll?"},
+				{"id": "m14a_legacy", "src": "M14a", "title": "Bestehender Charakter", "hint": "Ein alter Charakter: Hinweis „Sigrun will dich sprechen“, Akt 1 spult vor, was du schon hast (Splitter, Koloss, Vessel), der Sockel spielt trotzdem. Save liegt als .v6.bak daneben."},
+				{"id": "m14a_coop", "src": "M14a", "title": "Story im Koop (nach Release)", "hint": "Ein Freund ohne Koloss: steht er auf dem Server für ihn wieder auf, nur er bekommt das Legendary? Siehst du Koloss und Vessel online jetzt richtig (vorher als Rusher)? Braucht vorher ein Release (Protokoll 17)."},
+				{"id": "m14a_language", "src": "M14a", "title": "Deutsch & Englisch", "hint": "Settings -> Gameplay -> Language: alle neuen Story-Texte in beiden Sprachen? Holprige Sätze notieren."}
+			]
+		},
+		{
 			"id": "rigv3",
 			"title": "Rig v3: Modelle & Ausrüstung",
 			"items": [
