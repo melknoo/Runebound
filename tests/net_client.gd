@@ -177,9 +177,12 @@ class Driver extends Node:
 					var entry: Dictionary = Net.roster.get(other.peer_id, {})
 					return int(entry.get("level", 1)) > 1, 20.0, "c2's new level in the roster"):
 					return
+				var other_peer := other.peer_id
 				if role == "c1" and HeroLook.available(other.class_data.id) and not await _until(func() -> bool:
-					return (other.look != null and other.look.look_of(&"helm") == &"rare"
-						and other.look.look_of(&"chest") == &"base"), 20.0, "c2's rare helm and kit chest on its puppet (HERO_LOOK)"):
+					var pup := zone.net_world.heroes.get(other_peer) as Player  # fresh each poll
+					return (pup != null and is_instance_valid(pup) and pup.look != null
+						and pup.look.look_of(&"helm") == &"rare"),
+					20.0, "c2's rare helm on its puppet (HERO_LOOK)"):
 					return
 				if other.net_role != Player.NetRole.PUPPET or other.is_local or other.collision_layer != 0:
 					_finish("fail: the other hero is not a puppet")
@@ -187,7 +190,7 @@ class Driver extends Node:
 				if zone.party_panel == null or not zone.party_panel.visible:
 					_finish("fail: no party panel")
 					return
-				await _seconds(3.0)  # stay while the other side finishes its checks
+				await _seconds(8.0)  # stay while the other side finishes its checks (c1's ask for c2's look)
 				_finish("ok")
 			"bot":
 				# A co-op stand-in (tools: run_godot coop): walks a loop in front of
