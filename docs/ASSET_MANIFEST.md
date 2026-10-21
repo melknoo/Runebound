@@ -206,6 +206,18 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   upper arms): `lib.fit._prune_far` keeps a vertex's dominant bone and its
   neighbours within 12 cm, else the A-pose arms swinging down drag the helm
   up (`ai_fit_report.json` "top" names the highest vertex's bone).
+- Lessons from the first Elementalist try (2026-10-21, concept 86, not
+  promoted): arms resting on a coat fuse in TRELLIS. Edges shared by 3+ faces
+  there defeat collapse decimation, which then ate both legs to reach its
+  ratio. Open fingers became spikes, and the hand-to-coat faces stretched
+  into planks once the arm moved. Concepts therefore need fists and a visible
+  background gap between arms and body (`FRAME` asks for both now). New
+  `fit.json` proposals carry `"split_fans": true` (`lib.aimesh.clean` splits
+  those edges first; the Runebreaker sources build byte-identically without
+  it). Optional `"limb_radius": {"forearm": 0.06, "hand": 0.06}` drops limb
+  influences beyond that distance from the bone (`lib.fit._cap_limbs`). The
+  Elementalist's v3 skeleton `EL3_BONES` (shoulders 0.21, arm_len 0.48) suits
+  a slender AI mage; re-check it against the first promoted source.
 
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's

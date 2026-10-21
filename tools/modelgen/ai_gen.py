@@ -44,10 +44,11 @@ TRELLIS = "microsoft/TRELLIS.2"
 # Shared framing: what ai_fit needs to rig the result (A-pose, open silhouette,
 # empty fists, weapons and glow stay script kit) + the house style.
 FRAME = ("full body character concept, front view, orthographic, standing straight in an A-pose with both arms "
-         "held 45 degrees down and away from the body, elbows straight, legs slightly apart, feet flat, "
-         "empty clenched fists, no weapon, no cape, nothing held, plain light grey background, even soft "
-         "lighting, no cast shadow, stylized fantasy RPG game character, 3D game character render, chunky "
-         "exaggerated proportions, clean readable shapes, hand-painted texture style, high detail")
+         "straight and angled 45 degrees down and out to the sides, a wide gap of empty background between "
+         "each arm and the body, hands closed into fists pointing at the ground well away from the hips, "
+         "legs slightly apart, feet flat, no weapon, no cape, nothing held, plain light grey "
+         "background, even soft lighting, no cast shadow, stylized fantasy RPG game character, 3D game "
+         "character render, clean readable shapes, hand-painted texture style, high detail")
 
 # Weapons (keys "<class>/<look>/weapon"): one upright object, its flat to the
 # camera, so lib.fit.place_weapon can lay it along the rig's forward axis.

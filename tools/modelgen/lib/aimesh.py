@@ -96,13 +96,21 @@ def _islands(bm):
     return out
 
 
-def clean(obj, merge=1e-5, min_area_frac=0.003):
+def clean(obj, merge=1e-5, min_area_frac=0.003, split_fans=False):
     """Weld coincident verts, drop degenerate faces and small loose shells
-    (specks, floating bits) and loose verts. Returns the dropped shell count."""
+    (specks, floating bits) and loose verts. split_fans: edges shared by 3+
+    faces (where TRELLIS fuses touching parts, e.g. hands resting on a coat)
+    are split first - collapse decimation cannot thin those fans and eats
+    whole limbs elsewhere to reach its ratio (ai_fit: fit.json "split_fans",
+    on for sources promoted after the Runebreaker). Returns the dropped shell
+    count."""
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=merge)
     bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-7)
+    fans = [e for e in bm.edges if len(e.link_faces) > 2] if split_fans else []
+    if fans:
+        bmesh.ops.split_edges(bm, edges=fans)
     bm.faces.ensure_lookup_table()
     bm.faces.index_update()
     islands = _islands(bm)

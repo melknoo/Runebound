@@ -40,6 +40,7 @@ UV_MARGIN = 0.003       # ~3 px at 1024: an AI body unwraps into hundreds of isl
 # legacy Runebreaker's arms reach 0.82 m, an AI knight's wrist sits ~0.1 higher;
 # clips re-solve their reach intents on whatever armature they are keyed on).
 RB3_BONES = {**gen.RB_BONES, "arm_len": 0.52}
+EL3_BONES = {**gen.EL_BONES, "shoulder_x": 0.21, "arm_len": 0.48}  # a slender AI mage: narrow shoulders, wrist ~0.93
 
 AI = {
     # heroes: one source + GLB per gear look (--look), cut into gear regions
@@ -51,7 +52,7 @@ AI = {
                                "rare": {"tier": "rare"}, "legendary": {"tier": "legendary"}},
                         grip=gen.runebreaker_grip, weapon=dict(length=1.3, grip_frac=0.08, tris=1600)),
     "elementalist": dict(rig="elementalist", glb="elementalist", atlas="elementalist", palette="elementalist",
-                         bone_args=gen.EL_BONES, kit=gen.elementalist_kit, clips=gen.elementalist_clips, skip=(1,),
+                         bone_args=EL3_BONES, kit=gen.elementalist_kit, clips=gen.elementalist_clips, skip=(1,),
                          budget=10000, height=1.85,
                          looks={"bare": {"circlet": False, "weapon": False}, "base": {"tier": "base"},
                                 "common": {"tier": "common"}, "magic": {"tier": "magic"}, "rare": {"tier": "rare"},
@@ -103,9 +104,10 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     gen.SHEETS.clear()
     bones = gen.humanoid_bones(**cfg["bone_args"])
     have_fit = os.path.exists(fit_path)
-    fj = _read_json(fit_path) if have_fit else {"yaw_deg": 0.0, "height": cfg["height"]}
+    # new proposals split fused fans (lib.aimesh.clean); older sources keep their build
+    fj = _read_json(fit_path) if have_fit else {"yaw_deg": 0.0, "height": cfg["height"], "split_fans": True}
     obj = aimesh.load(os.path.join(src, "raw.glb"), cfg["glb"] + "_ai")
-    dropped = aimesh.clean(obj)
+    dropped = aimesh.clean(obj, split_fans=bool(fj.get("split_fans")))
     aimesh.normalize(obj, fj["yaw_deg"], fj["height"])
     has_weapon = look is not None and os.path.exists(os.path.join(src, "weapon", "raw.glb"))
     weapon_tris = int(cfg["weapon"]["tris"]) if has_weapon else 0
@@ -121,7 +123,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
         return None
 
     fit_arm = fit.fit_armature(cfg["rig"], bones, fj["landmarks"])
-    method, leftovers = fit.auto_weights(obj, fit_arm)
+    method, leftovers = fit.auto_weights(obj, fit_arm, limb_radius=fj.get("limb_radius"))
     ratios = fit.warp(obj, fit_arm, bones)
     aimesh.smooth(obj)
     arm = rig.build_armature(cfg["rig"], bones)

@@ -146,10 +146,11 @@ def _nearest_bone(obj, arm, idx):
         vg.add([i], 1.0, "REPLACE")
 
 
-def auto_weights(obj, arm, voxel=0.012):
+def auto_weights(obj, arm, voxel=0.012, limb_radius=None):
     """Bone heat on the mesh; if verts stay weightless (loose shells,
     intersections), heat on a voxel-remeshed proxy and transfer; leftovers
-    go to their nearest bone. Then top-4 influences, normalized."""
+    go to their nearest bone. Optionally caps limb bones to a radius
+    (_cap_limbs). Then top-4 influences, normalized."""
     _heat(obj, arm)
     method = "heat"
     if len(_weightless(obj)) > 0.002 * len(obj.data.vertices):
@@ -187,8 +188,37 @@ def auto_weights(obj, arm, voxel=0.012):
     if left:
         _nearest_bone(obj, arm, left)
     _prune_far(obj, arm)
+    if limb_radius:
+        left = left + _cap_limbs(obj, arm, limb_radius)
     _limit_normalize(obj, 4)
     return method, len(left)
+
+
+def _cap_limbs(obj, arm, limb_radius):
+    """Drops influences of the bones named in `limb_radius` ({bone name
+    prefix: radius}) on verts farther than that radius from the bone: hands
+    resting on a coat (fused by TRELLIS) would otherwise drag the coat
+    along. Verts left weightless go to their nearest other bone. Returns
+    those verts."""
+    seg = {b.name: (b.head_local, b.tail_local) for b in arm.data.bones}
+    names = {vg.index: vg.name for vg in obj.vertex_groups}
+    groups = {vg.name: vg for vg in obj.vertex_groups}
+    capped = {n: r for n in seg for p, r in limb_radius.items() if n.startswith(p)}
+    orphans = []
+    for v in obj.data.vertices:
+        for g in list(v.groups):
+            name = names[g.group]
+            if name in capped and _segment_dist(v.co, *seg[name]) > capped[name]:
+                groups[name].remove([v.index])
+        if sum(g.weight for g in v.groups) <= 1e-6:
+            orphans.append(v.index)
+    segs = [(b.name, b.head_local, b.tail_local) for b in arm.data.bones if b.use_deform and b.name not in capped]
+    for i in orphans:
+        p = obj.data.vertices[i].co
+        name = min(segs, key=lambda s: _segment_dist(p, s[1], s[2]))[0]
+        vg = obj.vertex_groups.get(name) or obj.vertex_groups.new(name=name)
+        vg.add([i], 1.0, "REPLACE")
+    return orphans
 
 
 def _prune_far(obj, arm):
