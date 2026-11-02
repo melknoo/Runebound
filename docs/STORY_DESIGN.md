@@ -155,7 +155,13 @@ quickly: retroactive steps count at once, but the socket scene still plays.
 - **The Charwood breathes** (Hild): check the warm roots behind the hunter's
   note, put out the wisps; the first hint of the fire thread.
 
-### Act 2, part 1: "Four Anchors" (M14b, decided 2026-11-02)
+### Act 2, part 1: "Four Anchors" (M14b, decided and built 2026-11-02)
+Built as drafted below; the shipped lines live in
+`resources/i18n/story/m14b_act2.json`. Quest ids: `a2_soon` (the frame),
+`a2_water`, `a2_fire`, `a2_storm`, `s_last_shift`, `s_roots`. The echo's
+answers are kept as the choices `aldric_water`, `aldric_fire`,
+`aldric_storm` (why / answer / silent) for an Act 3 line.
+
 The user's decisions: the story goes into the dungeons' existing rooms (no
 new rooms); every core shard is a lasting rune blessing worth having; Aldric
 shows himself as an echo at each anchor (a pale figure, a camera pan, a few

@@ -1,9 +1,20 @@
 {
 	"npc": "tova",
 	"entries": [
+		{"if": {"quest_step": ["a2_storm", "return"]}, "start": "storm_back", "topic": true},
+		{"if": {"beat": "act1_done", "not_done": ["a2_storm"], "not_active": "a2_storm"}, "start": "storm_offer", "topic": true},
 		{"if": {"not_beat": "dlg:tova_intro"}, "start": "intro", "topic": true}
 	],
 	"nodes": {
+		"storm_offer": {"say": "dlg.tova.storm.0", "next": "storm_offer_1"},
+		"storm_offer_1": {"say": "dlg.tova.storm.1", "effects": [{"start": "a2_storm"}], "options": [
+			{"text": "dlg.tova.opt.go", "end": true},
+			{"text": "dlg.common.trade", "effects": [{"open": "storm"}], "end": true}
+		]},
+		"storm_back": {"say": "dlg.tova.storm.back", "effects": [{"event": ["talk", "tova"]}], "options": [
+			{"text": "dlg.common.trade", "effects": [{"open": "storm"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]},
 		"intro": {"say": "dlg.tova.intro.0", "effects": [{"beat": "dlg:tova_intro"}], "next": "intro_1"},
 		"intro_1": {"say": "dlg.tova.intro.1", "options": [
 			{"text": "dlg.tova.opt.circle", "next": "circle"},

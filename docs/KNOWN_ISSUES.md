@@ -5,7 +5,19 @@
 > there (passt / Problem + note, saved in user://playtest.json). When a point
 > is added or resolved here, update the checklist too (keep ids stable).
 
-## M14a story (in progress since 2026-10-20)
+## M14b Act 2, part 1 (built 2026-11-02, the user's playtest is the gate)
+- Numbers to feel: the core blessings (+8 % health, +6 % damage, 6 % faster
+  cooldowns), the anchor quests' rewards (500-600 XP, 150-200 gold, a rare).
+- A beaten Deepmaw or Broodmother stands again for the anchor (a fresh boss
+  goal), also for a hero who killed it after M14a; online the server wakes
+  it only for a present hero whose story is at that step.
+- Ilse and Joren wait behind plate gates (the pump chamber, the ore store):
+  a hero who skips those puzzles has to solve them for the story.
+- The Stormwatch thread needs three heroes and a release (protocol 17).
+- One echo NPC for all anchors: its talk is picked by the dungeon (StoryCond
+  `zone`); a story that left an echo unspoken finds it again on return.
+
+## M14a story (built 2026-10-20, the user's playtest is the gate)
 - **Save v7 and older builds:** a dev build from M14a on writes save v7. An
   older build (the installed `v0.16.0`) treats v7 as unknown and starts
   fresh, overwriting it on its next save. The v6 file is kept as
@@ -247,6 +259,12 @@
 - Smoke "M13 elements: a frost-charged strike freezes the strip" failed once
   on a slow run (335 s instead of ~270 s, 2026-10-15) and passed on the rerun:
   it waits a fixed number of frames for the ice to form.
+- 2026-11-02, two slow smoke runs in the story worktree (315-342 s), each
+  with different combat checks failing, the story untouched by them: "no
+  input: dash follows the camera", "storm step zaps enemies on the path" /
+  "applies Shock", the frost strip above, and "M13b storm: a bolt leaps
+  once ...". All wait a fixed number of frames (e.g. 4 frames for a bolt);
+  under load physics lags behind. Candidates for time-based waits.
 
 ## M09 open items (needs the user's playtest)
 - Numbers to feel in play: party countdown 5 s, reward radius 60 m, chest

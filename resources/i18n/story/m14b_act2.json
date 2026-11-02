@@ -110,5 +110,30 @@
 	"quest.s_roots.s.return": {"en": "Tell Hild", "de": "Erzähl es Hild"},
 	"dlg.hild.deep.0": {"en": "The Charwood's roots don't end under the forest. I followed the warmth with my hands. It goes down - towards the deep kilns.", "de": "Die Wurzeln des Kohlwalds hören nicht unter dem Wald auf. Ich bin der Wärme mit den Händen gefolgt. Sie geht nach unten - zu den tiefen Öfen."},
 	"dlg.hild.deep.1": {"en": "Whatever burns down there feeds the fire up here. Put it out, then go and feel the roots for me.", "de": "Was da unten brennt, nährt das Feuer hier oben. Lösch es, dann geh und fühl für mich die Wurzeln."},
-	"dlg.hild.deep.back": {"en": "Cold? ... Good. Then the forest can grow back the slow way. The way it's meant to.", "de": "Kalt? ... Gut. Dann wächst der Wald auf die langsame Art nach. So, wie es gedacht ist."}
+	"dlg.hild.deep.back": {"en": "Cold? ... Good. Then the forest can grow back the slow way. The way it's meant to.", "de": "Kalt? ... Gut. Dann wächst der Wald auf die langsame Art nach. So, wie es gedacht ist."},
+
+	"quest.a2_storm.title": {"en": "The Storm Anchor", "de": "Der Sturmanker"},
+	"quest.a2_storm.summary": {"en": "Master Vey went up to the Stormwatch's heart, and the blades stopped turning. Tova thinks he took the storm anchor with him. Nobody goes up there alone.", "de": "Meister Vey ist ins Herz der Sturmwarte hinaufgestiegen, und die Flügel standen still. Tova glaubt, er hat den Sturmanker mitgenommen. Allein geht da keiner hoch."},
+	"quest.a2_storm.s.enter": {"en": "Enter the Stormwatch (three heroes or more)", "de": "Betritt die Sturmwarte (ab drei Helden)"},
+	"quest.a2_storm.s.boss": {"en": "Defeat the Last Stormcaller in the heart", "de": "Besiege den letzten Sturmrufer im Herz"},
+	"quest.a2_storm.s.anchor": {"en": "Take the storm anchor", "de": "Nimm den Sturmanker"},
+	"quest.a2_storm.s.echo": {"en": "Face the pale figure", "de": "Stell dich der blassen Gestalt"},
+	"quest.a2_storm.s.return": {"en": "Go back to Tova", "de": "Geh zurück zu Tova"},
+	"dlg.tova.storm.0": {"en": "Nobody comes down from the Stormwatch alone. Vey went up to the heart and the blades stopped. He took the storm anchor with him - I'd bet my shards on it.", "de": "Niemand kommt allein von der Sturmwarte herunter. Vey ist ins Herz hinauf, und die Flügel standen still. Er hat den Sturmanker mitgenommen - darauf wette ich meine Splitter."},
+	"dlg.tova.storm.1": {"en": "Take friends. Three at least - the doors up there count. Bring me the storm's quiet and we're even.", "de": "Nimm Freunde mit. Mindestens drei - die Türen da oben zählen mit. Bring mir die Stille des Sturms, dann sind wir quitt."},
+	"dlg.tova.opt.go": {"en": "We'll go up.", "de": "Wir gehen hoch."},
+	"dlg.tova.storm.back": {"en": "You came down. Together, I see. ... The copper's stopped singing. Here - Vey would have wanted it spent.", "de": "Ihr seid runtergekommen. Zusammen, wie ich sehe. ... Das Kupfer singt nicht mehr. Hier - Vey hätte gewollt, dass es ausgegeben wird."},
+	"cut.a2_anchor_storm.0": {"en": "Where the Stormcaller fell the air still crackles. Something in it turns towards your hand.", "de": "Wo der Sturmrufer gefallen ist, knistert noch die Luft. Etwas darin dreht sich zu deiner Hand."},
+	"cut.a2_anchor_storm.1": {"en": "Beyond the copper a pale figure waits, as if it had all the time in the world.", "de": "Hinter dem Kupfer wartet eine blasse Gestalt, als hätte sie alle Zeit der Welt."},
+	"dlg.aldric_echo.storm.0": {"en": "Vey asked the storm nothing. I asked it everything.", "de": "Vey hat den Sturm nichts gefragt. Ich habe ihn alles gefragt."},
+	"dlg.aldric_echo.storm.1": {"en": "He chained it to a dome and called it a watch. I let it go, and they call it the Breaking. Tell me which of us was the monster.", "de": "Er hat ihn an eine Kuppel gekettet und es Wache genannt. Ich habe ihn losgelassen, und sie nennen es das Zerbrechen. Sag mir, wer von uns das Ungeheuer war."},
+	"dlg.aldric_echo.storm.why": {"en": "Because everything bound wants to be free. At the end you'll understand - or you'll stop me. Both are honest.", "de": "Weil alles Gebundene frei sein will. Am Ende wirst du es verstehen - oder mich aufhalten. Beides ist ehrlich."},
+	"dlg.aldric_echo.storm.answer": {"en": "Ashwick, still. You'll carry that list all the way to me. I'll be waiting with mine.", "de": "Immer noch Aschwick. Du wirst diese Liste bis zu mir tragen. Ich warte mit meiner."},
+	"dlg.aldric_echo.storm.silent": {"en": "So many of you, and not one word. The storm would have liked you.", "de": "So viele von euch, und kein einziges Wort. Der Sturm hätte euch gemocht."},
+
+	"dlg.bram.hub.0": {"en": "Sigrun put me on the gate. Me. A raider. She says I know what to look for.", "de": "Sigrun hat mich ans Tor gestellt. Mich. Einen Raider. Sie sagt, ich weiß, wonach man Ausschau hält."},
+	"dlg.bram.hub.1": {"en": "I count everyone who comes through. Today: eleven. Don't tell anyone - it ruins the story.", "de": "Ich zähle jeden, der durchkommt. Heute: elf. Erzähl's keinem - das versaut die Geschichte."},
+
+	"act.2.part1_end": {"en": "END OF ACT II, PART 1", "de": "ENDE VON AKT II, TEIL 1"},
+	"act.2.part1_sub": {"en": "Four Anchors - the frost is still being written", "de": "Vier Anker - der Frost wird noch geschrieben"}
 }

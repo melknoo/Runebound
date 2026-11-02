@@ -2,7 +2,8 @@
 	"npc": "aldric_echo",
 	"entries": [
 		{"if": {"quest_step": ["a2_water", "echo"], "zone": "hollow_cistern"}, "start": "water"},
-		{"if": {"quest_step": ["a2_fire", "echo"], "zone": "ember_warrens"}, "start": "fire"}
+		{"if": {"quest_step": ["a2_fire", "echo"], "zone": "ember_warrens"}, "start": "fire"},
+		{"if": {"quest_step": ["a2_storm", "echo"], "zone": "stormwatch"}, "start": "storm"}
 	],
 	"nodes": {
 		"water": {"say": "dlg.aldric_echo.water.0", "next": "water_1"},
@@ -34,6 +35,21 @@
 		]},
 		"fire_silent": {"say": "dlg.aldric_echo.fire.silent", "options": [
 			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_fire"}], "end": true}
+		]},
+		"storm": {"say": "dlg.aldric_echo.storm.0", "next": "storm_1"},
+		"storm_1": {"say": "dlg.aldric_echo.storm.1", "options": [
+			{"text": "dlg.aldric_echo.opt.why", "effects": [{"choice": ["aldric_storm", "why"]}], "next": "storm_why"},
+			{"text": "dlg.aldric_echo.opt.answer", "effects": [{"choice": ["aldric_storm", "answer"]}], "next": "storm_answer"},
+			{"text": "dlg.aldric_echo.opt.silent", "effects": [{"choice": ["aldric_storm", "silent"]}], "next": "storm_silent"}
+		]},
+		"storm_why": {"say": "dlg.aldric_echo.storm.why", "options": [
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_storm"}], "end": true}
+		]},
+		"storm_answer": {"say": "dlg.aldric_echo.storm.answer", "options": [
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_storm"}], "end": true}
+		]},
+		"storm_silent": {"say": "dlg.aldric_echo.storm.silent", "options": [
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_storm"}], "end": true}
 		]}
 	}
 }

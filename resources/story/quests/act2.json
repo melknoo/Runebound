@@ -42,7 +42,12 @@
 					"goal": {
 						"type": "talk",
 						"npc": "sigrun"
-					}
+					},
+					"effects": [
+						{
+							"cutscene": "a2_part1_end"
+						}
+					]
 				},
 				{
 					"id": "wait",
@@ -292,6 +297,79 @@
 				"xp": 250,
 				"gold": 60,
 				"draughts": 2
+			}
+		},
+		{
+			"id": "a2_storm",
+			"act": 2,
+			"kind": "side",
+			"level": 7,
+			"title": "quest.a2_storm.title",
+			"summary": "quest.a2_storm.summary",
+			"steps": [
+				{
+					"id": "enter",
+					"text": "quest.a2_storm.s.enter",
+					"goal": {
+						"type": "enter",
+						"zone": "stormwatch"
+					}
+				},
+				{
+					"id": "boss",
+					"text": "quest.a2_storm.s.boss",
+					"goal": {
+						"type": "boss",
+						"enemy": "last_stormcaller",
+						"fresh": true,
+						"poi": "sw_arena_caller",
+						"zone": "stormwatch"
+					}
+				},
+				{
+					"id": "anchor",
+					"text": "quest.a2_storm.s.anchor",
+					"goal": {
+						"type": "interact",
+						"marker": "a2_anchor_storm",
+						"zone": "stormwatch"
+					},
+					"effects": [
+						{
+							"cutscene": "a2_anchor_storm"
+						}
+					]
+				},
+				{
+					"id": "echo",
+					"text": "quest.a2_storm.s.echo",
+					"goal": {
+						"type": "talk",
+						"npc": "aldric_echo"
+					},
+					"effects": [
+						{
+							"bless": "core_storm"
+						}
+					]
+				},
+				{
+					"id": "return",
+					"text": "quest.a2_storm.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "tova"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 600,
+				"gold": 200,
+				"items": [
+					{
+						"rarity": 2
+					}
+				]
 			}
 		}
 	]

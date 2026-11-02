@@ -89,7 +89,7 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
      needs the Colossus wakes it on the server.
 - Next: M14b (Act 2 in the Cistern and the Warrens), with its own questions.
 
-## M14b Act 2, part 1 "Four Anchors" (in progress since 2026-11-02)
+## M14b Act 2, part 1 "Four Anchors" (built 2026-11-02, the user's playtest is the gate)
 Same worktree as M14a. The user's decisions (2026-11-02): the story goes into
 the existing dungeon rooms; each core shard gives a lasting rune blessing;
 Aldric appears as an echo; extras: Maren's story (her brother Joren, rescued
@@ -119,6 +119,29 @@ Runehold, 5 wrap-up.
   "Roots of Fire" for Hild: once the fire anchor is taken, the Charwood's
   roots go cold. The tracker now follows the thread that moved on in this
   zone. Shots `m14b_fire`.
+- Phase 4 built: the storm thread and a growing Runehold. "The Storm Anchor"
+  (optional, co-op, from Tova): the Last Stormcaller, the anchor, the echo
+  ("tell me which of us was the monster"), the Blessing of the Storm, back
+  to Tova. Ilse, Joren and Bram (at the north gate) now live in Runehold.
+  Sigrun's Frostvales talk ends the part with the card "END OF ACT II, PART
+  1". Fixed on the way: Bram kept a "!" after his quest (his offer had no
+  condition). Shots `m14b_hub`.
+- Phase 5 built: the playtest group "M14b: Akt 2 - Vier Anker" on J (14
+  points), docs. No protocol change (still 17; the release before co-op is
+  still pending).
+- **Gate walk** (the user):
+  1. A character at the end of Act 1 (or an old one waiting for Act II):
+     Sigrun explains the four anchors; the water and fire quests start.
+  2. The Cistern: the pump chamber's plates open Ilse's alcove; Aldric's cell
+     in the antechamber; the Deepmaw (again, if beaten before); the anchor's
+     camera pan; the echo and its three answers; the Blessing of the Depths.
+  3. The Ember Warrens: the ledger at the Adit, the Broodmother, the anchor,
+     the echo, the Blessing of the Embers. Maren's "The Last Shift" (Joren
+     behind the ore store's plate gate), Hild's "Roots of Fire".
+  4. Runehold: Ilse by the huts, Joren at Maren's side, Bram at the north
+     gate; Sigrun's Frostvales talk and "END OF ACT II, PART 1".
+  5. Optional, after a release and with three heroes (`coop 2`): Tova's
+     storm anchor in the Stormwatch.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

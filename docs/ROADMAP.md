@@ -525,6 +525,13 @@ Segen des Sturms +6 % Abklingzeit) optional; danach zeigt Sigrun zu den Frosttä
 besiegte Endbosse stehen für die Story wieder auf. Kein neues Netz-Protokoll erwartet.
 Phasen: 0 Story-Bibel, 1 Technik (Boss-Wiederkehr in Dungeons, Kern-Segen, Echo-Look), 2 Wasser, 3 Feuer, 4 Sturm +
 Runehold wächst, 5 Abschluss.
+**Stand M14b (gebaut 2026-11-02, dein Playtest ist das Gate, J-Gruppe „M14b: Akt 2 - Vier Anker“):** Rahmenquest
+„Vier Anker“ bei Sigrun; „Was die Wächter nicht ertränken konnten“ (Zisterne: Ilse, Aldrics Zelle, der Tiefenschlund
+steht wieder auf, Anker, Echo, Segen der Tiefe); „Die Öfen zünden sich selbst“ (Glutstollen: Schichtbuch,
+Glutbrutmutter, Anker, Echo, Segen der Glut); „Der Sturmanker“ von Tova (Koop, optional, Segen des Sturms);
+Nebenquests „Die letzte Schicht“ (Maren, Joren lebt) und „Wurzeln aus Feuer“ (Hild); Ilse, Joren und Bram leben jetzt
+in Runehold; Karte „ENDE VON AKT II, TEIL 1“. Kein neues Netz-Protokoll (bleibt 17, Release vor dem Koop weiterhin
+nötig). Als Nächstes: **M15a Frosttäler** (Akt II, Teil 2), mit eigenen Rückfragen.
 
 ### M15 — Open World II: zwei weitere Zonen
 Mit der M08-Technik und dem M12-Muster: zwei neue Regionen mit eigener Identität (Palette,

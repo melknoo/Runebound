@@ -36,6 +36,7 @@ func run(runner: Node) -> void:
 	await _prologue()  # drops the test quests
 	await _act2_water()
 	await _act2_fire()
+	await _act2_storm()
 	if own != null:
 		own.queue_free()
 		if prev != null and is_instance_valid(prev):
@@ -720,7 +721,8 @@ func _act2_fire() -> void:
 	_check(ql.step_id("s_roots") == "return" and dui.entry_for("hild", null, true) == "deep_back", "the roots are cold: Hild")
 	ql.event("talk", "hild")
 	ql.event("talk", "sigrun")
-	_check(ql.is_done("s_roots") and ql.step_id("a2_soon") == "wait", "Roots of Fire done; Sigrun names the Frostvales, part 2 waits")
+	_check(ql.is_done("s_roots") and ql.step_id("a2_soon") == "wait" and ql.seen.has("a2_part1_end"),
+		"Roots of Fire done; Sigrun names the Frostvales: END OF ACT II, PART 1, part 2 waits")
 	zone.queue_free()
 	await t.call(&"_wait_frames", 2)
 	SaveGame.wipe()
@@ -728,6 +730,79 @@ func _act2_fire() -> void:
 	SaveGame.reload_from_disk()
 	if prev != null and is_instance_valid(prev):
 		tree.current_scene = prev
+
+
+## M14b phase 4: the optional storm anchor in the Stormwatch (co-op only, so
+## the boss's death is an event here), Tova's offer and return; Runehold
+## grows (Bram leaves his ruin for the north gate).
+func _act2_storm() -> void:
+	var tree := t.get_tree()
+	var prev := tree.current_scene
+	var keep_save := SaveGame.save_path
+	SaveGame.save_path = "user://story_storm_test.json"
+	SaveGame.wipe()
+	var title_like := Node.new()
+	tree.root.add_child(title_like)
+	tree.current_scene = title_like
+	SaveGame.create_character(&"elementalist", "Vey", true)
+	title_like.queue_free()
+	var zone := (load("res://scenes/stormwatch.tscn") as PackedScene).instantiate() as DungeonZone
+	tree.root.add_child(zone)
+	tree.current_scene = zone
+	await t.call(&"_wait_frames", 8)
+	var hero := zone.player
+	hero.god_mode = true
+	var ql := QuestLog.of(hero)
+	var dir := zone.quest_director
+	var dui := zone.dialogue_ui
+	ql.from_dict({"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done", "dlg:tova_intro"],
+		"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire", "s_ten"]})
+	ql.bind(hero)
+	_check(dui.entry_for("tova", null, true) == "storm_offer", "after Act 1 Tova talks of Vey and the storm anchor")
+	dui.try_open("tova", null, hero)
+	dui.advance()
+	dui.close()
+	_check(ql.is_running("a2_storm") and dui.entry_for("tova", null, true) == "", "told once, the quest waits in the journal (her shop stays one key press)")
+	ql.event("enter", "stormwatch")
+	ql.event("boss", "last_stormcaller", {"zone": "stormwatch"})
+	dir.refresh_stage()
+	await _frames(3)
+	var anchor := _stage_node(zone, "a2_anchor_storm") as StoryMarker
+	_check(ql.step_id("a2_storm") == "anchor" and anchor != null and anchor.visible and zone.room_id_at(anchor.global_position) == "sw_heart",
+		"the Last Stormcaller falls: the storm anchor in the heart")
+	anchor.use_by(hero)
+	await _frames(3)
+	var echo := _stage_node(zone, "aldric_echo_storm") as StoryNpc
+	_check(ql.step_id("a2_storm") == "echo" and echo != null and echo.visible and dui.entry_for("aldric_echo", echo) == "storm",
+		"the echo again: which of them was the monster?")
+	var cd0 := hero.stat(&"cooldown_pct")
+	dui.try_open("aldric_echo", echo, hero)
+	dui.advance()
+	dui.choose(1)
+	dui.choose(0)
+	await _frames(3)
+	_check(ql.step_id("a2_storm") == "return" and ql.choice("aldric_storm") == "answer" and hero.blessings.has("core_storm")
+		and hero.stat(&"cooldown_pct") - cd0 > 5.9 and not echo.visible, "Ashwick, still; the Blessing of the Storm")
+	_check(dui.entry_for("tova", null, true) == "storm_back", "back to Tova")
+	ql.event("talk", "tova")
+	_check(ql.is_done("a2_storm"), "The Storm Anchor done")
+	_check(_stage_cond("bram_hub", ql, hero) and StoryCond.check(_stage_entry("bram").get("hide_if", {}), ql, hero)
+		and dui.entry_for("bram", null, true) == "",
+		"Runehold grows: Bram guards the north gate once his ten are done (no more '!' over him)")
+	zone.queue_free()
+	await t.call(&"_wait_frames", 2)
+	SaveGame.wipe()
+	SaveGame.save_path = keep_save
+	SaveGame.reload_from_disk()
+	if prev != null and is_instance_valid(prev):
+		tree.current_scene = prev
+
+
+func _stage_entry(stage_id: String) -> Dictionary:
+	for e: Variant in StoryDB.stage():
+		if str((e as Dictionary).get("id", "")) == stage_id:
+			return e as Dictionary
+	return {}
 
 
 ## Does stage entry `stage_id`'s show_if hold for this story?

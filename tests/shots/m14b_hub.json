@@ -1,0 +1,14 @@
+{
+	"zone": "res://scenes/hub.tscn",
+	"out": "captures_shots/m14b_hub",
+	"comment": "M14b phase 4: Runehold grows - Ilse by the huts, Joren at Maren's side, Bram at the north gate.",
+	"shots": [
+		{"name": "overview", "player": [0, 0.2, 9], "face": 3.14159, "yaw": 0.0, "pitch": -0.62, "zoom": 15.0,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done", "legacy"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire", "s_ten", "a2_water", "a2_fire", "s_last_shift"],
+				"quests": {"a2_soon": {"s": 2, "n": 0}}}}, {"wait": 0.4}], "settle": 0.4},
+		{"name": "ilse", "player": [4, 0.2, -1], "face": 1.0, "yaw": -1.2, "pitch": -0.25, "zoom": 6.0, "settle": 0.3},
+		{"name": "joren", "player": [9, 0.2, 13], "face": 0.0, "yaw": -0.9, "pitch": -0.25, "zoom": 6.0, "settle": 0.3},
+		{"name": "bram", "player": [-1, 0.2, -6], "face": 3.14159, "yaw": 0.3, "pitch": -0.25, "zoom": 6.0, "settle": 0.3}
+	]
+}

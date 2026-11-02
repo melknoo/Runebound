@@ -1658,6 +1658,16 @@ existing dungeon rooms, no new layout.
 - **The tracker follows the thread:** when a quest's step completes and its
   next goal points into this zone (or names it), the director tracks that
   quest (two anchors run at once; the last one started would win otherwise).
+- **The storm anchor (phase 4, optional, co-op):** `a2_storm` from Tova after
+  Act 1 (her offer starts it once, so her shop stays one key press): enter
+  the Stormwatch -> the Last Stormcaller (fresh; a fresh run anyway) -> the
+  anchor marker in the heart -> camera pan `a2_anchor_storm` -> the echo
+  (choice `aldric_storm`; the step's effect is `bless core_storm`) -> Tova.
+- **Runehold grows:** stage entries in `hub` for Ilse (`done a2_water`), Joren
+  (`done s_last_shift`) and Bram (`done s_ten`; his ruin entry hides then).
+  Nobody vanishes mid-sentence: `refresh_stage` keeps the NPC the dialogue
+  is with until it closes. The frame's Frostvales talk plays `a2_part1_end`
+  (Sigrun, the card "END OF ACT II, PART 1").
 
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile

@@ -343,6 +343,11 @@ func _mark_stage_dirty() -> void:
 	_stage_dirty = true
 
 
+func _talking_to(node: Node3D) -> bool:
+	var dui := zone.dialogue_ui
+	return dui != null and dui.visible and dui.npc == node
+
+
 ## Shows or hides the stage by its conditions and refreshes the badges.
 func refresh_stage() -> void:
 	for node in stage_nodes:
@@ -350,6 +355,9 @@ func refresh_stage() -> void:
 			continue
 		var e: Dictionary = node.get(&"stage")
 		var on := StoryCond.check(e.get("show_if", {}), qlog, hero) 			and (not e.has("hide_if") or not StoryCond.check(e["hide_if"], qlog, hero))
+		if not on and _talking_to(node):
+			_stage_dirty = true  # M14b: nobody vanishes mid-sentence; they go once the talk ends
+			continue
 		node.call(&"set_shown", on)
 	refresh_badges()
 

@@ -124,6 +124,11 @@
 			"yaw": 200,
 			"show_if": {
 				"act_min": 1
+			},
+			"hide_if": {
+				"done": [
+					"s_ten"
+				]
 			}
 		},
 		{
@@ -291,6 +296,60 @@
 			"show_if": {
 				"done": [
 					"s_last_shift"
+				]
+			}
+		},
+		{
+			"id": "a2_anchor_storm",
+			"marker": "a2_anchor_storm",
+			"zone": "stormwatch",
+			"poi": "sw_arena_caller",
+			"offset": [
+				0,
+				0
+			],
+			"yaw": 0,
+			"prop": "rune_shard",
+			"prop_scale": 2.2,
+			"prop_hides": true,
+			"glow": "#C9B6FF",
+			"prompt": "ui.prompt.take_anchor",
+			"show_if": {
+				"quest_step": [
+					"a2_storm",
+					"anchor"
+				]
+			}
+		},
+		{
+			"id": "aldric_echo_storm",
+			"npc": "aldric_echo",
+			"zone": "stormwatch",
+			"poi": "sw_arena_caller",
+			"offset": [
+				7,
+				-6
+			],
+			"yaw": 311,
+			"show_if": {
+				"quest_step": [
+					"a2_storm",
+					"echo"
+				]
+			}
+		},
+		{
+			"id": "bram_hub",
+			"npc": "bram",
+			"zone": "hub",
+			"at": [
+				-3.2,
+				-11.5
+			],
+			"yaw": 19,
+			"show_if": {
+				"done": [
+					"s_ten"
 				]
 			}
 		}
