@@ -1,11 +1,22 @@
 {
 	"npc": "hild",
 	"entries": [
+		{"if": {"quest_step": ["s_roots", "return"]}, "start": "deep_back", "topic": true},
 		{"if": {"quest_step": ["s_charwood", "return"]}, "start": "char_back", "topic": true},
+		{"if": {"done": ["s_charwood"], "beat": "act1_done", "not_done": ["s_roots"], "not_active": "s_roots"}, "start": "deep_offer", "topic": true},
 		{"if": {"act_min": 1, "level": 3, "not_done": ["s_charwood"], "not_active": "s_charwood"}, "start": "char_offer", "topic": true},
 		{"if": {"not_beat": "dlg:hild_intro"}, "start": "intro", "topic": true}
 	],
 	"nodes": {
+		"deep_offer": {"say": "dlg.hild.deep.0", "next": "deep_offer_1"},
+		"deep_offer_1": {"say": "dlg.hild.deep.1", "options": [
+			{"text": "dlg.hild.opt.go", "effects": [{"start": "s_roots"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"deep_back": {"say": "dlg.hild.deep.back", "effects": [{"event": ["talk", "hild"]}], "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]},
 		"char_offer": {"say": "dlg.hild.char.0", "next": "char_offer_1"},
 		"char_offer_1": {"say": "dlg.hild.char.1", "options": [
 			{"text": "dlg.hild.opt.go", "effects": [{"start": "s_charwood"}], "end": true},

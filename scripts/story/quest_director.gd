@@ -259,6 +259,10 @@ func _on_quest_started(id: String) -> void:
 func _on_step_done(id: String, _step: String) -> void:
 	if qlog.is_running(id):
 		Sfx.play_ui("pickup", -10.0)
+		# M14b: the thread that just moved on here is the one to show (two anchors run at once)
+		var goal: Dictionary = qlog.current_step(id).get("goal", {})
+		if qlog.tracked != id and (str(goal.get("zone", "")) == zone_key() or goal_position(goal) != Vector3.INF):
+			qlog.track(id)
 
 
 func _on_quest_done(id: String) -> void:

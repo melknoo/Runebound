@@ -111,6 +111,14 @@ Runehold, 5 wrap-up.
   echo speaks (the answer is kept for Act 3); the Blessing of the Depths;
   Ilse goes to Runehold. Story checks play it in the Cistern itself; shots
   `m14b_water`.
+- Phase 3 built: the fire anchor. "The Kilns Light Themselves" in the Ember
+  Warrens: the foreman's ledger, the Broodmother again, the anchor, the echo
+  (it talks of fire here, of water in the Cistern), the Blessing of the
+  Embers. "The Last Shift" for Maren: her brother Joren alive in the ore
+  store's alcove ("eleven down, ten up"), then at her forge in Runehold.
+  "Roots of Fire" for Hild: once the fire anchor is taken, the Charwood's
+  roots go cold. The tracker now follows the thread that moved on in this
+  zone. Shots `m14b_fire`.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

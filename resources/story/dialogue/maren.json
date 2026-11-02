@@ -1,9 +1,23 @@
 {
 	"npc": "maren",
 	"entries": [
+		{"if": {"quest_step": ["s_last_shift", "return"]}, "start": "shift_back", "topic": true},
+		{"if": {"beat": "act1_done", "not_done": ["s_last_shift"], "not_active": "s_last_shift"}, "start": "shift_offer", "topic": true},
 		{"if": {"not_beat": "dlg:maren_intro"}, "start": "intro", "topic": true}
 	],
 	"nodes": {
+		"shift_offer": {"say": "dlg.maren.shift.0", "next": "shift_offer_1"},
+		"shift_offer_1": {"say": "dlg.maren.shift.1", "options": [
+			{"text": "dlg.maren.opt.look", "effects": [{"start": "s_last_shift"}], "end": true},
+			{"text": "dlg.common.later", "end": true}
+		]},
+		"shift_back": {"say": "dlg.maren.shift.back", "options": [
+			{"text": "dlg.maren.opt.alive", "effects": [{"event": ["talk", "maren"]}], "next": "shift_alive"}
+		]},
+		"shift_alive": {"say": "dlg.maren.shift.alive", "options": [
+			{"text": "dlg.common.train", "if": {"npc_teaches_hero": true}, "effects": [{"open": "trainer"}], "end": true},
+			{"text": "dlg.common.bye", "end": true}
+		]},
 		"intro": {"say": "dlg.maren.intro.0", "effects": [{"beat": "dlg:maren_intro"}], "next": "intro_1"},
 		"intro_1": {"say": "dlg.maren.intro.1", "options": [
 			{"text": "dlg.maren.opt.name", "next": "name"},

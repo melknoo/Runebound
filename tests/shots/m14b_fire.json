@@ -1,0 +1,23 @@
+{
+	"zone": "res://scenes/ember_warrens.tscn",
+	"out": "captures_shots/m14b_fire",
+	"comment": "M14b phase 3: the fire anchor in the Ember Warrens - Joren in the ore store's alcove, the anchor in the Brood Hall, Aldric's echo, the anchor's camera pan.",
+	"shots": [
+		{"name": "joren", "player": [-30, 0.2, 10], "face": 3.5, "yaw": 2.57, "pitch": -0.22, "zoom": 3.6,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_fire": {"s": 1, "n": 0}, "s_last_shift": {"s": 0, "n": 0}}}}, {"wait": 0.3}], "settle": 0.4},
+		{"name": "anchor", "player": [25, 0.2, 77.5], "face": -1.5708, "yaw": 1.5708, "pitch": -0.3, "zoom": 6.0,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_fire": {"s": 3, "n": 0}}}}, {"wait": 0.3}], "settle": 0.4},
+		{"name": "echo", "player": [17, 0.2, 75], "face": 1.5708, "yaw": -1.5708, "pitch": -0.22, "zoom": 5.5,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_fire": {"s": 4, "n": 0}}}}, {"wait": 0.6}], "settle": 0.4},
+		{"name": "pan_rise", "player": [22, 0.2, 75], "face": 1.5708, "yaw": -1.5708, "pitch": -0.3, "zoom": 6.0,
+			"actions": [{"story_cut": "a2_anchor_fire"}, {"wait": 1.9}], "settle": 0.0},
+		{"name": "pan_echo", "player": [22, 0.2, 75], "face": 1.5708, "yaw": -1.5708, "pitch": -0.3, "zoom": 6.0,
+			"actions": [{"wait": 3.0}], "settle": 0.0}
+	]
+}

@@ -1642,6 +1642,22 @@ existing dungeon rooms, no new layout.
   choice `aldric_water`) -> `bless core_water`; Ilse moves to Runehold.
   Shot list `m14b_water`; the shot runner takes `{"story": {QuestLog dict}}`
   and `{"story_cut": id}`.
+- **The fire anchor (phase 3):** `a2_fire` in the Warrens: enter -> read the
+  foreman's ledger (a `read` goal with `poi` for its marker) -> the
+  Broodmother (fresh) -> the anchor marker -> camera pan `a2_anchor_fire` ->
+  the echo (choice `aldric_fire`) -> `bless core_fire`. Both anchors start
+  from Sigrun's talk; the frame's `quests` goal waits for both. Side quests:
+  `s_last_shift` (Maren, after Act 1: Joren alive in the ore store's alcove
+  behind the plate gate, then Maren; he moves to Runehold) and `s_roots`
+  (Hild, after The Charwood Breathes: a `quests` goal for the fire anchor,
+  then reach the Charwood, then Hild).
+- **One echo, several anchors:** StoryCond key `zone` (the scene the hero is
+  in) picks the echo's talk per dungeon, and each branch ends with
+  `complete_step` for its own quest (a `talk` event would finish every
+  anchor waiting at its echo).
+- **The tracker follows the thread:** when a quest's step completes and its
+  next goal points into this zone (or names it), the director tracks that
+  quest (two anchors run at once; the last one started would win otherwise).
 
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile

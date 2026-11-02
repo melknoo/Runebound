@@ -19,6 +19,9 @@
 					"effects": [
 						{
 							"start": "a2_water"
+						},
+						{
+							"start": "a2_fire"
 						}
 					]
 				},
@@ -28,7 +31,8 @@
 					"goal": {
 						"type": "quests",
 						"ids": [
-							"a2_water"
+							"a2_water",
+							"a2_fire"
 						]
 					}
 				},
@@ -134,6 +138,161 @@
 					"toast": "story.toast.ilse_runehold"
 				}
 			]
+		},
+		{
+			"id": "a2_fire",
+			"act": 2,
+			"kind": "main",
+			"level": 6,
+			"title": "quest.a2_fire.title",
+			"summary": "quest.a2_fire.summary",
+			"steps": [
+				{
+					"id": "enter",
+					"text": "quest.a2_fire.s.enter",
+					"goal": {
+						"type": "enter",
+						"zone": "ember_warrens"
+					}
+				},
+				{
+					"id": "ledger",
+					"text": "quest.a2_fire.s.ledger",
+					"goal": {
+						"type": "read",
+						"ids": [
+							"lore.warrens.foreman_log"
+						],
+						"poi": "wa_lore_adit",
+						"zone": "ember_warrens"
+					}
+				},
+				{
+					"id": "boss",
+					"text": "quest.a2_fire.s.boss",
+					"goal": {
+						"type": "boss",
+						"enemy": "broodmother",
+						"fresh": true,
+						"poi": "wa_arena_mother",
+						"zone": "ember_warrens"
+					}
+				},
+				{
+					"id": "anchor",
+					"text": "quest.a2_fire.s.anchor",
+					"goal": {
+						"type": "interact",
+						"marker": "a2_anchor_fire",
+						"zone": "ember_warrens"
+					},
+					"effects": [
+						{
+							"cutscene": "a2_anchor_fire"
+						}
+					]
+				},
+				{
+					"id": "echo",
+					"text": "quest.a2_fire.s.echo",
+					"goal": {
+						"type": "talk",
+						"npc": "aldric_echo"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 550,
+				"gold": 160,
+				"items": [
+					{
+						"rarity": 2
+					}
+				]
+			},
+			"on_done": [
+				{
+					"bless": "core_fire"
+				}
+			]
+		},
+		{
+			"id": "s_last_shift",
+			"act": 2,
+			"kind": "side",
+			"level": 6,
+			"title": "quest.s_last_shift.title",
+			"summary": "quest.s_last_shift.summary",
+			"steps": [
+				{
+					"id": "find",
+					"text": "quest.s_last_shift.s.find",
+					"goal": {
+						"type": "talk",
+						"npc": "joren"
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.s_last_shift.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "maren"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 300,
+				"gold": 80,
+				"items": [
+					{
+						"rarity": 2,
+						"slot": "weapon"
+					}
+				]
+			}
+		},
+		{
+			"id": "s_roots",
+			"act": 2,
+			"kind": "side",
+			"level": 6,
+			"title": "quest.s_roots.title",
+			"summary": "quest.s_roots.summary",
+			"steps": [
+				{
+					"id": "fire",
+					"text": "quest.s_roots.s.fire",
+					"goal": {
+						"type": "quests",
+						"ids": [
+							"a2_fire"
+						]
+					}
+				},
+				{
+					"id": "roots",
+					"text": "quest.s_roots.s.roots",
+					"goal": {
+						"type": "reach",
+						"zone": "ashen_highlands",
+						"area": "charwood"
+					}
+				},
+				{
+					"id": "return",
+					"text": "quest.s_roots.s.return",
+					"goal": {
+						"type": "talk",
+						"npc": "hild"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 250,
+				"gold": 60,
+				"draughts": 2
+			}
 		}
 	]
 }

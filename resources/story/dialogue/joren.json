@@ -1,0 +1,27 @@
+{
+	"npc": "joren",
+	"entries": [
+		{"if": {"quest_step": ["s_last_shift", "find"]}, "start": "meet"},
+		{"if": {"quest_active": "s_last_shift"}, "start": "wait"},
+		{"if": {"done": ["s_last_shift"], "not_beat": "dlg:joren_hub"}, "start": "hub_first", "topic": true},
+		{"start": "hub"}
+	],
+	"nodes": {
+		"meet": {"say": "dlg.joren.meet.0", "next": "meet_1"},
+		"meet_1": {"say": "dlg.joren.meet.1", "options": [
+			{"text": "dlg.joren.opt.walk", "next": "meet_leg"}
+		]},
+		"meet_leg": {"say": "dlg.joren.meet.leg", "effects": [{"event": ["talk", "joren"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"wait": {"say_pool": ["dlg.joren.wait.0", "dlg.joren.wait.1"], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"hub_first": {"say": "dlg.joren.hub.first", "effects": [{"beat": "dlg:joren_hub"}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"hub": {"say_pool": ["dlg.joren.hub.0", "dlg.joren.hub.1"], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

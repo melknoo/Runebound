@@ -1,7 +1,8 @@
 {
 	"npc": "aldric_echo",
 	"entries": [
-		{"if": {"quest_step": ["a2_water", "echo"]}, "start": "water"}
+		{"if": {"quest_step": ["a2_water", "echo"], "zone": "hollow_cistern"}, "start": "water"},
+		{"if": {"quest_step": ["a2_fire", "echo"], "zone": "ember_warrens"}, "start": "fire"}
 	],
 	"nodes": {
 		"water": {"say": "dlg.aldric_echo.water.0", "next": "water_1"},
@@ -11,13 +12,28 @@
 			{"text": "dlg.aldric_echo.opt.silent", "effects": [{"choice": ["aldric_water", "silent"]}], "next": "water_silent"}
 		]},
 		"water_why": {"say": "dlg.aldric_echo.water.why", "options": [
-			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"event": ["talk", "aldric_echo"]}], "end": true}
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_water"}], "end": true}
 		]},
 		"water_answer": {"say": "dlg.aldric_echo.water.answer", "options": [
-			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"event": ["talk", "aldric_echo"]}], "end": true}
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_water"}], "end": true}
 		]},
 		"water_silent": {"say": "dlg.aldric_echo.water.silent", "options": [
-			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"event": ["talk", "aldric_echo"]}], "end": true}
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_water"}], "end": true}
+		]},
+		"fire": {"say": "dlg.aldric_echo.fire.0", "next": "fire_1"},
+		"fire_1": {"say": "dlg.aldric_echo.fire.1", "options": [
+			{"text": "dlg.aldric_echo.opt.why", "effects": [{"choice": ["aldric_fire", "why"]}], "next": "fire_why"},
+			{"text": "dlg.aldric_echo.opt.answer", "effects": [{"choice": ["aldric_fire", "answer"]}], "next": "fire_answer"},
+			{"text": "dlg.aldric_echo.opt.silent", "effects": [{"choice": ["aldric_fire", "silent"]}], "next": "fire_silent"}
+		]},
+		"fire_why": {"say": "dlg.aldric_echo.fire.why", "options": [
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_fire"}], "end": true}
+		]},
+		"fire_answer": {"say": "dlg.aldric_echo.fire.answer", "options": [
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_fire"}], "end": true}
+		]},
+		"fire_silent": {"say": "dlg.aldric_echo.fire.silent", "options": [
+			{"text": "dlg.aldric_echo.opt.fade", "effects": [{"complete_step": "a2_fire"}], "end": true}
 		]}
 	}
 }

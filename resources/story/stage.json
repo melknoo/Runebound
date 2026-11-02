@@ -226,6 +226,73 @@
 					"echo"
 				]
 			}
+		},
+		{
+			"id": "a2_anchor_fire",
+			"marker": "a2_anchor_fire",
+			"zone": "ember_warrens",
+			"poi": "wa_arena_mother",
+			"offset": [
+				0,
+				0
+			],
+			"yaw": 0,
+			"prop": "rune_shard",
+			"prop_scale": 2.2,
+			"prop_hides": true,
+			"glow": "#F08A3C",
+			"prompt": "ui.prompt.take_anchor",
+			"show_if": {
+				"quest_step": [
+					"a2_fire",
+					"anchor"
+				]
+			}
+		},
+		{
+			"id": "aldric_echo_fire",
+			"npc": "aldric_echo",
+			"zone": "ember_warrens",
+			"poi": "wa_arena_mother",
+			"offset": [
+				6.5,
+				1
+			],
+			"yaw": 260,
+			"show_if": {
+				"quest_step": [
+					"a2_fire",
+					"echo"
+				]
+			}
+		},
+		{
+			"id": "joren_warrens",
+			"npc": "joren",
+			"zone": "ember_warrens",
+			"at": [
+				-33.5,
+				15.5
+			],
+			"yaw": 164,
+			"show_if": {
+				"quest_active": "s_last_shift"
+			}
+		},
+		{
+			"id": "joren_hub",
+			"npc": "joren",
+			"zone": "hub",
+			"at": [
+				14.6,
+				10.6
+			],
+			"yaw": 230,
+			"show_if": {
+				"done": [
+					"s_last_shift"
+				]
+			}
 		}
 	]
 }

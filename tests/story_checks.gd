@@ -35,6 +35,7 @@ func run(runner: Node) -> void:
 	await _act1()
 	await _prologue()  # drops the test quests
 	await _act2_water()
+	await _act2_fire()
 	if own != null:
 		own.queue_free()
 		if prev != null and is_instance_valid(prev):
@@ -573,6 +574,7 @@ func _act2_water() -> void:
 	_check(ql.step_id("a2_soon") == "anchors" and Texts.t("quest.a2_soon.title") == "Four Anchors",
 		"Four Anchors: a story that waited for Act II now has Sigrun to talk to")
 	ql.event("talk", "sigrun")
+	_check(ql.is_running("a2_water") and ql.is_running("a2_fire"), "Sigrun names both anchors: the Cistern's and the Warrens' quests start")
 	ql.event("enter", "hollow_cistern")
 	dir.refresh_stage()
 	await _frames(3)
@@ -581,7 +583,8 @@ func _act2_water() -> void:
 		and zone.room_id_at(ilse.global_position) == "ci_pump_alcove" and dir.badge_for("ilse", ilse) == "?",
 		"Sigrun names the anchors; in the Cistern a survivor waits in the pump alcove")
 	var mk := dir.markers()
-	_check(not mk.is_empty() and (mk[0]["pos"] as Vector3).distance_to(ilse.global_position) < 1.0, "the quest marker points at her")
+	_check(ql.tracked == "a2_water" and not mk.is_empty() and (mk[0]["pos"] as Vector3).distance_to(ilse.global_position) < 1.0,
+		"the tracker follows the water anchor here, its marker points at her")
 	dui.try_open("ilse", ilse, hero)
 	dui.advance()
 	dui.choose(0)
@@ -624,12 +627,9 @@ func _act2_water() -> void:
 	await _frames(3)
 	_check(ql.is_done("a2_water") and ql.choice("aldric_water") == "silent" and hero.blessings.has("core_water")
 		and hero.health.max_health > hp0, "silence, kept for later; the Blessing of the Depths (%d -> %d health)" % [hp0, hero.health.max_health])
-	var hub_ilse := {}
-	for e: Variant in StoryDB.stage():
-		if str((e as Dictionary).get("id", "")) == "ilse_hub":
-			hub_ilse = e
-	_check(not echo.visible and not ilse.visible and StoryCond.check(hub_ilse.get("show_if", {}), ql, hero)
-		and ql.step_id("a2_soon") == "frost", "the echo fades, Ilse leaves for Runehold, the frame quest moves on")
+	_check(not echo.visible and not ilse.visible and _stage_cond("ilse_hub", ql, hero)
+		and ql.step_id("a2_soon") == "hold" and ql.progress("a2_soon") == Vector2i(1, 2),
+		"the echo fades, Ilse leaves for Runehold, one anchor of two")
 	zone.queue_free()
 	await t.call(&"_wait_frames", 2)
 	SaveGame.wipe()
@@ -637,6 +637,105 @@ func _act2_water() -> void:
 	SaveGame.reload_from_disk()
 	if prev != null and is_instance_valid(prev):
 		tree.current_scene = prev
+
+
+## M14b phase 3: the fire anchor in the Ember Warrens - the foreman's ledger,
+## Joren alive in the ore store's alcove (Maren's side quest), the
+## Broodmother standing again, the anchor, the echo's fire lines (one echo,
+## its talk picked by the dungeon), the blessing; then Maren and Hild.
+func _act2_fire() -> void:
+	var tree := t.get_tree()
+	var prev := tree.current_scene
+	var keep_save := SaveGame.save_path
+	SaveGame.save_path = "user://story_warrens_test.json"
+	SaveGame.wipe()
+	var title_like := Node.new()
+	tree.root.add_child(title_like)
+	tree.current_scene = title_like
+	SaveGame.create_character(&"druid", "Kiln", true)
+	title_like.queue_free()
+	var zone := (load("res://scenes/ember_warrens.tscn") as PackedScene).instantiate() as DungeonZone
+	tree.root.add_child(zone)
+	tree.current_scene = zone
+	await t.call(&"_wait_frames", 8)
+	SaveGame.flags["wa_mother_down"] = true
+	var hero := zone.player
+	hero.god_mode = true
+	var ql := QuestLog.of(hero)
+	var dir := zone.quest_director
+	var dui := zone.dialogue_ui
+	ql.from_dict({"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done", "boss:broodmother"],
+		"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire", "a2_water", "s_charwood"],
+		"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_fire": {"s": 0, "n": 0}, "s_last_shift": {"s": 0, "n": 0}, "s_roots": {"s": 0, "n": 0}}})
+	ql.bind(hero)
+	ql.event("enter", "ember_warrens")
+	dir.refresh_stage()
+	await _frames(3)
+	var joren := _stage_node(zone, "joren_warrens")
+	_check(ql.step_id("a2_fire") == "ledger" and ql.tracked == "a2_fire" and joren != null and joren.visible
+		and zone.room_id_at(joren.global_position) == "wa_store_alcove", "the Warrens: the ledger first; Joren hides in the ore store's alcove")
+	hero.read_lore("lore.warrens.foreman_log")
+	ql.event("read", "")
+	_check(ql.step_id("a2_fire") == "boss", "eleven down, nine up: on to the Brood Hall")
+	dui.try_open("joren", joren, hero)
+	dui.advance()
+	dui.choose(0)
+	dui.close()
+	_check(ql.step_id("s_last_shift") == "return" and joren.visible and dui.entry_for("maren", null, true) == "shift_back",
+		"Joren is alive (ten up, not nine): Maren has to hear it")
+	var arena := zone.arenas.get("wa_arena_mother") as BossArena
+	hero.global_position = zone.ground_point(arena.global_position + Vector3(-4, 0, 0), 0.2)
+	await _until(func() -> bool: return arena.fighting(), 120)
+	_check(arena.fighting(), "the Broodmother stands again for the fire anchor")
+	var until_ms := Time.get_ticks_msec() + 12000
+	while Time.get_ticks_msec() < until_ms:
+		if ql.step_id("a2_fire") != "boss":
+			break
+		if arena.boss != null and is_instance_valid(arena.boss):
+			arena.boss.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, arena.boss.global_position))
+		await tree.process_frame
+	await _frames(3)
+	var anchor := _stage_node(zone, "a2_anchor_fire") as StoryMarker
+	_check(ql.step_id("a2_fire") == "anchor" and anchor != null and anchor.visible, "she falls: the fire anchor in her hall")
+	anchor.use_by(hero)
+	await _frames(3)
+	var echo := _stage_node(zone, "aldric_echo_fire") as StoryNpc
+	_check(ql.step_id("a2_fire") == "echo" and ql.seen.has("a2_anchor_fire") and echo != null and echo.visible
+		and dui.entry_for("aldric_echo", echo) == "fire", "the anchor rises; the echo speaks of fire here, not water")
+	var dmg0 := hero.stat(&"damage_pct")
+	dui.try_open("aldric_echo", echo, hero)
+	dui.advance()
+	dui.choose(0)
+	dui.choose(0)
+	await _frames(3)
+	_check(ql.is_done("a2_fire") and ql.choice("aldric_fire") == "why" and hero.blessings.has("core_fire")
+		and hero.stat(&"damage_pct") - dmg0 > 5.9 and ql.step_id("a2_soon") == "frost" and not echo.visible,
+		"why, it asks back; the Blessing of the Embers; both anchors: Sigrun waits")
+	_check(ql.step_id("s_roots") == "roots" and dui.entry_for("sigrun", null, true) == "frost",
+		"Hild's roots: the fire is out below, now feel the Charwood")
+	ql.event("talk", "maren")
+	_check(ql.is_done("s_last_shift") and _stage_cond("joren_hub", ql, hero) and not _stage_cond("joren_warrens", ql, hero),
+		"Maren hears it; Joren comes up to Runehold")
+	ql.event("reach", "charwood", {"zone": "ashen_highlands"})
+	_check(ql.step_id("s_roots") == "return" and dui.entry_for("hild", null, true) == "deep_back", "the roots are cold: Hild")
+	ql.event("talk", "hild")
+	ql.event("talk", "sigrun")
+	_check(ql.is_done("s_roots") and ql.step_id("a2_soon") == "wait", "Roots of Fire done; Sigrun names the Frostvales, part 2 waits")
+	zone.queue_free()
+	await t.call(&"_wait_frames", 2)
+	SaveGame.wipe()
+	SaveGame.save_path = keep_save
+	SaveGame.reload_from_disk()
+	if prev != null and is_instance_valid(prev):
+		tree.current_scene = prev
+
+
+## Does stage entry `stage_id`'s show_if hold for this story?
+func _stage_cond(stage_id: String, ql: QuestLog, hero: Player) -> bool:
+	for e: Variant in StoryDB.stage():
+		if str((e as Dictionary).get("id", "")) == stage_id:
+			return StoryCond.check((e as Dictionary).get("show_if", {}), ql, hero)
+	return false
 
 
 func _stage_node(zone: ZoneBase, stage_id: String) -> Node3D:

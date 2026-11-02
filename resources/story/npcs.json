@@ -34,6 +34,12 @@
 			"tint": "#8A9BA6",
 			"rune": "#7FB6D9"
 		},
+		"joren": {
+			"name": "npc.joren.name",
+			"rig": "runebreaker",
+			"tint": "#7A6650",
+			"rune": "#E08A3A"
+		},
 		"aldric_echo": {
 			"name": "npc.aldric_echo.name",
 			"rig": "elementalist",

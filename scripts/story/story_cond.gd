@@ -9,10 +9,11 @@ extends Object
 ##   level: n (at least)              seen / not_seen: cutscene id
 ##   choice: [key, value]             npc_teaches_hero: true (the talking NPC trains this class)
 ##   legacy: true/false (an existing character from before M14)
+##   zone: scene name the hero is in (M14b: one echo, a different anchor per dungeon)
 ## An empty dict holds. Unknown keys fail (and StoryDB reports them).
 
 const KEYS: Array[String] = ["done", "not_done", "quest_active", "not_active", "quest_step", "beat", "not_beat",
-	"act", "act_min", "class", "level", "seen", "not_seen", "choice", "npc_teaches_hero", "legacy"]
+	"act", "act_min", "class", "level", "seen", "not_seen", "choice", "npc_teaches_hero", "legacy", "zone"]
 
 
 ## `ctx` may carry {"npc": Npc} for npc_teaches_hero.
@@ -80,6 +81,9 @@ static func _one(key: String, v: Variant, qlog: QuestLog, hero: Player, ctx: Dic
 			return teaches == bool(v)
 		"legacy":
 			return qlog.has_beat("legacy") == bool(v)
+		"zone":
+			var zone := ZoneBase.zone_of(hero) if hero != null and is_instance_valid(hero) and hero.is_inside_tree() else null
+			return zone != null and zone.scene_file_path.get_file().get_basename() == str(v)
 	push_warning("StoryCond: unknown key " + key)
 	return false
 
