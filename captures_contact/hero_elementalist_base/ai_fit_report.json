@@ -1,0 +1,149 @@
+{
+  "tris": 9480,
+  "budget": 10000,
+  "tris_ok": true,
+  "bones": [
+    "root",
+    "hips",
+    "spine",
+    "chest",
+    "head",
+    "upper_arm.L",
+    "forearm.L",
+    "hand.L",
+    "upper_arm.R",
+    "forearm.R",
+    "hand.R",
+    "thigh.L",
+    "shin.L",
+    "foot.L",
+    "thigh.R",
+    "shin.R",
+    "foot.R"
+  ],
+  "bones_ok": true,
+  "slots": [
+    "el_body",
+    "el_glow",
+    "el_blade"
+  ],
+  "slots_used": [
+    0,
+    1,
+    2
+  ],
+  "slots_ok": true,
+  "weights_over4": 0,
+  "weightless": 0,
+  "weights_ok": true,
+  "bbox_min": [
+    -0.2834,
+    -0.82,
+    0.0035
+  ],
+  "bbox_max": [
+    0.2848,
+    0.1847,
+    1.8402
+  ],
+  "height_ok": true,
+  "body_radius_wo_hands": 0.296,
+  "top": {
+    "z": 1.84,
+    "bone": "head",
+    "xy": [
+      0.017,
+      -0.0481
+    ]
+  },
+  "clips": {
+    "ball_lightning": [
+      0,
+      24
+    ],
+    "bolt": [
+      0,
+      16
+    ],
+    "chain_spark": [
+      0,
+      22
+    ],
+    "dodge": [
+      0,
+      19
+    ],
+    "ember": [
+      0,
+      24
+    ],
+    "ember_fall": [
+      0,
+      35
+    ],
+    "flame_wall": [
+      0,
+      26
+    ],
+    "flinch": [
+      0,
+      16
+    ],
+    "fracture_rune": [
+      0,
+      26
+    ],
+    "frost_nova": [
+      0,
+      30
+    ],
+    "idle": [
+      0,
+      90
+    ],
+    "run": [
+      0,
+      36
+    ],
+    "storm_step": [
+      0,
+      16
+    ]
+  },
+  "atlas_off_palette": 0,
+  "ok": true,
+  "regions": {
+    "boots": 931,
+    "chest": 6306,
+    "gloves": 1688,
+    "helm": 829,
+    "weapon": 168
+  },
+  "char": "elementalist",
+  "look": "base",
+  "atlas_id": "hero/elementalist_base",
+  "src": "tools/modelgen/ai_src/elementalist/base",
+  "weights": "proxy",
+  "nearest_bone_fill": 6337,
+  "length_ratios": {
+    "root": 1.0,
+    "hips": 1.0,
+    "spine": 1.0,
+    "chest": 1.0,
+    "head": 1.0,
+    "upper_arm.L": 1.152,
+    "forearm.L": 1.314,
+    "hand.L": 0.646,
+    "thigh.L": 1.0,
+    "shin.L": 1.0,
+    "foot.L": 1.0,
+    "upper_arm.R": 1.152,
+    "forearm.R": 1.314,
+    "hand.R": 0.646,
+    "thigh.R": 1.0,
+    "shin.R": 1.0,
+    "foot.R": 1.0
+  },
+  "atlas_px": 1024,
+  "px_per_m": 128
+}

@@ -182,14 +182,22 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   their neighbours. Import settings copy the legacy rigs' (60 fps, named
   skins, shadow meshes): after a new look run `toolsun_godot.cmd import`,
   `python tools/modelgen/hero_import.py`, import again. Built:
-  `runebreaker/{bare, base, common, magic, rare, legendary}` (complete).
+  `runebreaker/{bare, base, common, magic, rare, legendary}` (complete),
+  `elementalist/base` (2026-11-02, concept 90; the other looks fall back to it).
 - Workflow per look: `ai_gen.py concept <class>/<look> --seeds ...` (review
   the PNGs, pick an A-pose with open arms), `ai_gen.py mesh <class>/<look>
   concept_<seed>.png --seed 7`, `blender ... ai_ingest.py -- <candidate dir>`,
   `ai_fit.py -- <class> --look <look> --src <candidate dir> --detect` (check
   `landmarks.png`), `... --sheets` (contact sheets in
   `captures_contact/hero_<class>_<look>/`), then promote the candidate
-  (`ai_ingest.promote`) and rebuild from `ai_src`.
+  (`ai_ingest.promote`) and rebuild from `ai_src`. When `--detect` misses the
+  arms (they touch the body or reach out sideways), `tools/modelgen/ai_view.py`
+  helps place them by hand: `raw` renders the source front / side / back on a
+  0.1 m grid, `arms` lists the outermost vertex cluster per height band, `zoom`
+  builds big close contact sheets for a few clips. Check a new look in game
+  with a shot list (`tests/shots/rigv3_elementalist.json`; an Elementalist
+  cast is `{"do": "rune_bolt"}`, `"melee"` casts the Runebreaker's cleave and
+  swaps the class).
 - Weapons: the looks' weapons stay script-built (2026-10-15: the free GPU
   quota goes to bodies and enemies): `rune_sword(pm, grip, tier)` in
   `generate_characters_v2.py`, one per look (`RB_SWORDS`: blade width, guard
@@ -211,13 +219,24 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   there defeat collapse decimation, which then ate both legs to reach its
   ratio. Open fingers became spikes, and the hand-to-coat faces stretched
   into planks once the arm moved. Concepts therefore need fists and a visible
-  background gap between arms and body (`FRAME` asks for both now). New
-  `fit.json` proposals carry `"split_fans": true` (`lib.aimesh.clean` splits
-  those edges first; the Runebreaker sources build byte-identically without
-  it). Optional `"limb_radius": {"forearm": 0.06, "hand": 0.06}` drops limb
-  influences beyond that distance from the bone (`lib.fit._cap_limbs`). The
-  Elementalist's v3 skeleton `EL3_BONES` (shoulders 0.21, arm_len 0.48) suits
-  a slender AI mage; re-check it against the first promoted source.
+  background gap between arms and body (`FRAME` asks for both now; FLUX
+  still answers with arms held out and open hands, which mesh cleanly).
+  Optional `"limb_radius": {"forearm": 0.06, "hand": 0.06}` in `fit.json`
+  drops limb influences beyond that distance from the bone
+  (`lib.fit._cap_limbs`).
+- `fit.json` `"rev": 2` (every new `--detect` proposal; the Runebreaker
+  sources have none and build byte-identically): `lib.aimesh.clean` splits
+  edges shared by 3+ faces after its speck pass (splitting first cut hands and
+  cuffs into "specks"), and `texbake.quantize` picks the palette ramp on the
+  lightness before the lift (a dark coat lifts the median by up to 1.6, pale
+  skin then reached the top where the gold ramp's highlight won). `"kit"`
+  passes per-source kit arguments (Elementalist base: `{"circlet_z": 1.735}`,
+  the gem on this face's forehead).
+- Elementalist concept 90 (promoted): forearms pointing at the camera came
+  out short (shoulder to wrist 0.37 m), so `EL3_BONES` (shoulders 0.19,
+  arm_len 0.44) meets it halfway; the warp stretches the forearms by 1.31.
+  Bone heat fails on it, the voxel proxy weights it. Other looks of the class
+  share this skeleton: give them their own landmarks, not new bones.
 
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's

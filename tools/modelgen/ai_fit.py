@@ -40,7 +40,8 @@ UV_MARGIN = 0.003       # ~3 px at 1024: an AI body unwraps into hundreds of isl
 # legacy Runebreaker's arms reach 0.82 m, an AI knight's wrist sits ~0.1 higher;
 # clips re-solve their reach intents on whatever armature they are keyed on).
 RB3_BONES = {**gen.RB_BONES, "arm_len": 0.52}
-EL3_BONES = {**gen.EL_BONES, "shoulder_x": 0.21, "arm_len": 0.48}  # a slender AI mage: narrow shoulders, wrist ~0.93
+REV = 2  # the fit.json revision new proposals get (see build)
+EL3_BONES = {**gen.EL_BONES, "shoulder_x": 0.19, "arm_len": 0.44}  # the slender AI mage (concept 90): narrow shoulders, short forearms
 
 AI = {
     # heroes: one source + GLB per gear look (--look), cut into gear regions
@@ -104,10 +105,13 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     gen.SHEETS.clear()
     bones = gen.humanoid_bones(**cfg["bone_args"])
     have_fit = os.path.exists(fit_path)
-    # new proposals split fused fans (lib.aimesh.clean); older sources keep their build
-    fj = _read_json(fit_path) if have_fit else {"yaw_deg": 0.0, "height": cfg["height"], "split_fans": True}
+    # fit.json "rev" 2 (new proposals): fused fans split (lib.aimesh.clean), the
+    # palette ramp picked before the lightness lift (lib.texbake.quantize);
+    # sources without it (the Runebreaker's) keep building byte-identically
+    fj = _read_json(fit_path) if have_fit else {"rev": REV, "yaw_deg": 0.0, "height": cfg["height"]}
+    rev = int(fj.get("rev", 1))
     obj = aimesh.load(os.path.join(src, "raw.glb"), cfg["glb"] + "_ai")
-    dropped = aimesh.clean(obj, split_fans=bool(fj.get("split_fans")))
+    dropped = aimesh.clean(obj, split_fans=rev >= 2)
     aimesh.normalize(obj, fj["yaw_deg"], fj["height"])
     has_weapon = look is not None and os.path.exists(os.path.join(src, "weapon", "raw.glb"))
     weapon_tris = int(cfg["weapon"]["tris"]) if has_weapon else 0
@@ -129,6 +133,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     arm = rig.build_armature(cfg["rig"], bones)
 
     kit_args = dict((cfg.get("looks") or {}).get(look, {}))
+    kit_args.update(fj.get("kit", {}))  # per-source kit tweaks (e.g. the circlet gem's height)
     weapon_src = os.path.join(src, "weapon")
     if has_weapon:
         # the look's AI weapon replaces the script sword (lib.fit.place_weapon)
@@ -157,7 +162,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     size = atlas.unwrap(body, PX_PER_M, sizes=ATLAS_SIZES, upscale=False, margin=UV_MARGIN)
     base_lin, ao = texbake.transfer(body, size)
     ramps = texbake.ramps_of(gen.PAL[cfg["palette"]])
-    base = texbake.quantize(base_lin, ao, ramps)
+    base = texbake.quantize(base_lin, ao, ramps, ramp_unlifted=rev >= 2)
     atlas.bake(body, size, atlas_path, skip_material_indices=cfg["skip"], base=base)
     body.data.uv_layers.remove(body.data.uv_layers[aimesh.SRC_UV])
     report = fit.verify(body, arm, bones, cfg["budget"], atlas_path, [h for r in ramps for h in r],

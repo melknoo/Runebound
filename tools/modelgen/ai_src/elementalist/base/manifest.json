@@ -1,0 +1,65 @@
+{
+  "char_id": "elementalist/base",
+  "tag": "trellis_concept_90_s7",
+  "date": "2026-11-02",
+  "key": "elementalist/base",
+  "service": "TRELLIS.2 (microsoft/TRELLIS.2-4B, MIT) via HF Space microsoft/TRELLIS.2",
+  "space_revision": "ebf60b20fc5a4607f90a1c11c0aab0ceeda5429d",
+  "model_license": "MIT",
+  "seed": 7,
+  "resolution": "1024",
+  "decimation_target": 100000,
+  "texture_size": 2048,
+  "concept": {
+    "space": "black-forest-labs/FLUX.1-schnell",
+    "space_revision": "2569ee41266dd6d3a5e84c2a5ea3f4ad6e4ff25e",
+    "model_license": "Apache-2.0",
+    "prompt": "a slender adult elementalist mage in his thirties, realistic heroic proportions, about 7 heads tall, swept-back dark auburn hair tied in a short tail, clean-shaven, a clearly visible gold circlet with a magenta gem on the forehead, a steel-blue knee-length travelling coat with teal trim and lapels, a short teal capelet over the shoulders with a gold clasp, brown leather belt, leather bracers with gold rings, tall brown leather boots with teal cuffs, full body character concept, front view, orthographic, standing straight in an A-pose with both arms straight and angled 45 degrees down and out to the sides, a wide gap of empty background between each arm and the body, hands closed into fists pointing at the ground well away from the hips, legs slightly apart, feet flat, no weapon, no cape, nothing held, plain light grey background, even soft lighting, no cast shadow, stylized fantasy RPG game character, 3D game character render, clean readable shapes, hand-painted texture style, high detail",
+    "key": "elementalist/base",
+    "seed": 90,
+    "width": 768,
+    "height": 1024,
+    "steps": 4,
+    "date": "2026-11-02",
+    "foreground_cover": 0.1818
+  },
+  "original": {
+    "tris": 97404,
+    "textures": [
+      [
+        2048,
+        2048
+      ]
+    ],
+    "bbox_min": [
+      -0.3071,
+      -0.1139,
+      -0.5007
+    ],
+    "bbox_max": [
+      0.3068,
+      0.1243,
+      0.5006
+    ]
+  },
+  "compact": {
+    "max_tris": 50000,
+    "tris": 49999,
+    "max_tex": 2048,
+    "jpeg_quality": 90,
+    "blender": "5.2.2 LTS",
+    "sha256": "92f7ab4961caff6a9be88290432f6f1a28a9927c82e6db5efd18c6889d0399a3",
+    "bytes": 2740368
+  },
+  "license": {
+    "route": "MCP for Blender Premium (mcp-for-blender.com), paid plan",
+    "terms": {
+      "mcp_for_blender": "https://mcp-for-blender.com/terms (updated 2026-10-01): 'What you create is yours'; outputs come from third-party providers, the user checks fitness for purpose",
+      "tripo": "https://www.tripo3d.ai/help/privacy-policy/can-i-use-models-commercially : paid users may use, modify, distribute and commercially exploit generated models",
+      "rodin": "https://hyper3d.ai/legal/copyright-license : licence to sell, redistribute, modify, publish; no competing service, no training of competing AI models"
+    },
+    "checked": "2026-10-14",
+    "commercial": true,
+    "public_redistribution": true
+  }
+}

@@ -158,6 +158,18 @@ C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
     on GitHub Releases (installer 46 MB, ZIP 57 MB).
   - Smoke 934 green (puppet kit + HERO_LOOK, the payload, hide-helm in
     CHARACTER, the title hero's gear).
+- **Phase 5 (in progress): the Elementalist and the druid.** Elementalist
+  `base` built 2026-11-02 (concept 90: steel-blue coat, teal capelet, belt
+  and boots, the rune rod script-built; its v3 skeleton `EL3_BONES`), so the
+  class now plays as a HeroLook; its other looks fall back to `base` until
+  their meshes exist. Shots `tests/shots/rigv3_elementalist.json`; smoke
+  green (0 failures, 298 s). Pipeline fixes on the way (fused hands, the gold
+  skin, `fit.json` `"rev": 2`) in ASSET_MANIFEST "Rig v3". Still to build:
+  Elementalist bare/common/magic/rare/legendary, the druid's six looks, then
+  phase 6, the 29 enemies (13 on the humanoid skeleton; 16 on caster, bird,
+  quadruped, serpent, beetle, wisp and vessel rigs, which need `ai_fit`
+  landmarks for those skeletons first). The free quota covers about three
+  concepts and one mesh a day.
 
 ## M13b the Stormwatch, the co-op dungeon (built 2026-10-13, the user's playtest is the gate)
 Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -

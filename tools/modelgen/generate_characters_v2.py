@@ -1375,11 +1375,12 @@ def root_staff(pm, grip, tier="base"):
                 mat_index=1)
 
 
-def elementalist_kit(pm, snap, bones=EL_BONES, circlet=True, weapon=True, tier="base"):
-    """Rig v3: the circlet's gem (glow, snapped onto the AI brow; looks
-    without a circlet pass circlet=False) and the look's rune rod."""
+def elementalist_kit(pm, snap, bones=EL_BONES, circlet=True, weapon=True, tier="base", circlet_z=1.695):
+    """Rig v3: the circlet's gem (glow, snapped onto the AI brow at
+    `circlet_z`; looks without a circlet pass circlet=False) and the look's
+    rune rod."""
     if circlet:
-        snap(pm.box("head", (0.03, 0.02, 0.03), (0, -0.125, 1.695), mat_index=1))
+        snap(pm.box("head", (0.03, 0.02, 0.03), (0, -0.125, circlet_z), mat_index=1))
     if weapon:
         rune_rod(pm, elementalist_grip(bones), tier)
     return [rig.make_material("el_body", "#FFFFFF"),

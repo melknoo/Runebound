@@ -1,0 +1,17 @@
+{
+	"zone": "res://scenes/combat_lab.tscn",
+	"out": "captures_shots/rigv3_elementalist",
+	"comment": "Rig v3: the Elementalist's AI looks. The start kit (base), close from the front, 3/4 and behind, at the gameplay zoom, and a cast.",
+	"shots": [
+		{"name": "base_front", "class": "elementalist", "player": [0, 0.2, 6], "face": 3.1416, "yaw": 0.0, "pitch": -0.1, "zoom": 3.2,
+			"actions": [{"wear": {"helm": "", "chest": "", "gloves": "", "boots": "", "weapon": ""}}, {"wear_kit": true}], "settle": 0.8},
+		{"name": "base_three_quarter", "player": [0, 0.2, 6], "face": 2.4, "yaw": 0.0, "pitch": -0.14, "zoom": 3.3, "settle": 0.5},
+		{"name": "base_back", "player": [0, 0.2, 6], "face": 0.0, "yaw": 0.4, "pitch": -0.16, "zoom": 3.6, "settle": 0.5},
+		{"name": "base_gameplay", "class": "elementalist", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.35, "pitch": -0.3, "zoom": 4.6,
+			"spawn": [{"id": "rusher", "at": [0.6, 0.2, 5.5], "freeze": true, "face": 3.1416}],
+			"actions": [{"wear_kit": true}], "settle": 0.6},
+		{"name": "base_cast", "class": "elementalist", "player": [0, 0.2, 8], "face": 0.0, "yaw": 0.6, "pitch": -0.22, "zoom": 4.0,
+			"spawn": [{"id": "rusher", "at": [0.3, 0.2, 4.0], "freeze": true, "face": 3.1416}],
+			"actions": [{"wear_kit": true}, {"wait": 0.2}, {"do": "rune_bolt"}, {"wait": 0.12}], "settle": 0.0}
+	]
+}

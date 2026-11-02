@@ -143,11 +143,14 @@ def ramps_of(palette):
     return [v for v in palette.values() if isinstance(v, list)]
 
 
-def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chunk=1 << 18):
+def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chunk=1 << 18, ramp_unlifted=False):
     """Ramp colour per texel in OKLab after lifting the body's median
     lightness to `lift_target` (gain 1..LIFT_MAX, hue kept): the ramp by hue
     and chroma, the step by lightness; AO darkens one step; isolated texels (all 4 neighbours agree on another colour) take that
-    colour. Returns sRGB floats (size, size, 3) holding palette colours only."""
+    colour. ramp_unlifted: the ramp's lightness share uses the texel before
+    the lift (a dark coat lifts pale skin to the top, where the gold ramp's
+    highlight wins). Returns sRGB floats (size, size, 3) holding palette
+    colours only."""
     entries = [(ri, si) for ri, ramp in enumerate(ramps) for si in range(len(ramp))]
     pal_srgb = np.array([rig.hex_to_srgb(ramps[ri][si]) for ri, si in entries], dtype=np.float32)
     pal_lin = np.array([rig.hex_to_linear(ramps[ri][si]) for ri, si in entries], dtype=np.float32)
@@ -155,6 +158,7 @@ def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chun
     h, w, _ = base_lin.shape
     lab = _oklab(base_lin.reshape(-1, 3).astype(np.float32))
     covered = base_lin.reshape(-1, 3).max(axis=1) > 0.002
+    hue_l = lab[:, 0].copy() if ramp_unlifted else None
     if covered.any() and lift_target:
         gain = float(np.clip(lift_target / max(np.median(lab[covered, 0]), 1e-3), 1.0, LIFT_MAX))
         lab[:, 0] = np.minimum(lab[:, 0] * gain, 0.97)
@@ -166,8 +170,9 @@ def quantize(base_lin, ao, ramps, ao_step=AO_STEP, lift_target=LIFT_TARGET, chun
     idx = np.empty(len(lab), dtype=np.int32)
     for i in range(0, len(lab), chunk):
         part = lab[i:i + chunk]
+        part_l = part[:, 0] if hue_l is None else hue_l[i:i + chunk]
         d = (part[:, None, 1:] - pal_lab[None, :, 1:]) ** 2
-        cost = d.sum(axis=2) + (HUE_L_WEIGHT * (part[:, None, 0] - pal_lab[None, :, 0])) ** 2
+        cost = d.sum(axis=2) + (HUE_L_WEIGHT * (part_l[:, None] - pal_lab[None, :, 0])) ** 2
         ramp_cost = np.full((len(part), n_ramps), np.inf, dtype=np.float32)
         for r in range(n_ramps):
             ramp_cost[:, r] = cost[:, ramp_of == r].min(axis=1)
