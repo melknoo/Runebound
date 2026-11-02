@@ -514,6 +514,18 @@ Ursprünglicher Rahmen:
 - Die bestehende UI wird zweisprachig nachgezogen; Händler (Gold-Senke: Tränke, Reparatur,
   Umskillen kostet später Gold?).
 
+### M14b — Akt 2 „Vier Anker“, Teil 1 (Plan 2026-11-02)
+**Entscheidungen des Spielers (2026-11-02):** Story in die **bestehenden Räume** von Zisterne und Warrens (keine
+neuen Räume); jeder **Kernsplitter ist ein dauerhafter Runensegen**; **Aldric erscheint als Echo** am Kernsplitter
+(bleiche Gestalt, Kamerafahrt, kurzer Dialog, kein Kampf); dazu **Marens Geschichte** (ihr Bruder Joren wird gerettet),
+**Hilds Faden**, der **Sturm-Faden** (Koop, optional) und **Runehold wächst** (Ilse, Joren, Bram).
+Ablauf und Entwürfe: [STORY_DESIGN](STORY_DESIGN.md) „Act 2, part 1“. Wasser (Zisterne, Ilse, Aldrics Zelle, Segen der
+Tiefe +8 % Leben) und Feuer (Warrens, Segen der Glut +6 % Schaden) in freier Reihenfolge, Sturm (Sturmwarte, Koop ab 3,
+Segen des Sturms +6 % Abklingzeit) optional; danach zeigt Sigrun zu den Frosttälern (M15a). Bestehende Charaktere: schon
+besiegte Endbosse stehen für die Story wieder auf. Kein neues Netz-Protokoll erwartet.
+Phasen: 0 Story-Bibel, 1 Technik (Boss-Wiederkehr in Dungeons, Kern-Segen, Echo-Look), 2 Wasser, 3 Feuer, 4 Sturm +
+Runehold wächst, 5 Abschluss.
+
 ### M15 — Open World II: zwei weitere Zonen
 Mit der M08-Technik und dem M12-Muster: zwei neue Regionen mit eigener Identität (Palette,
 Unter-Biome, Gegnerfamilien), je ein Dungeon + Boss. Alles von Anfang an im Koop gebaut und

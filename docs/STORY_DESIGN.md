@@ -155,6 +155,53 @@ quickly: retroactive steps count at once, but the socket scene still plays.
 - **The Charwood breathes** (Hild): check the warm roots behind the hunter's
   note, put out the wisps; the first hint of the fire thread.
 
+### Act 2, part 1: "Four Anchors" (M14b, decided 2026-11-02)
+The user's decisions: the story goes into the dungeons' existing rooms (no
+new rooms); every core shard is a lasting rune blessing worth having; Aldric
+shows himself as an echo at each anchor (a pale figure, a camera pan, a few
+lines, no fight); also Maren's story, Hild's thread, the optional storm
+thread (co-op) and a Runehold that grows. Maren's brother is saved.
+
+**Structure.** `a2_soon` becomes the act's frame quest "Four Anchors":
+Sigrun names the two anchors a hero can reach now, then waits until both are
+taken, then sends the hero towards the third (the Frostvales, M15a); the last
+step waits for "Act II, part 2" (still being written). The two anchors run in
+any order:
+
+| Quest | Where | Steps (draft) | Reward |
+|---|---|---|---|
+| **What the Keepers Could Not Drown** (water) | Hollow Cistern | enter; find Ilse (hiding in the pump alcove); read Aldric's cell (a marker in the antechamber); the Deepmaw; the anchor rises from the heart's water (camera pan); Aldric's echo | blessing of the depths (+8 % health); Ilse goes to Runehold |
+| **The Kilns Light Themselves** (fire) | Ember Warrens | enter; the Broodmother; the anchor in her brood hall (camera pan); Aldric's echo | blessing of the embers (+6 % damage) |
+| **The Storm Anchor** (optional, co-op) | Stormwatch | from Tova after Act 1; the Last Stormcaller (Master Vey); the anchor; the echo | blessing of the storm (+6 % faster cooldowns); the finale goes easier |
+
+Side threads:
+- **The Last Shift** (Maren): her brother Joren went down with the last shift
+  ("eleven down, nine up"). He hides in the Warrens' store alcove, alive;
+  bring word to Maren; Joren comes to Runehold and works her forge.
+- **Roots of Fire** (Hild, after The Charwood Breathes): the fire under the
+  Charwood runs down to the deep kilns. Once the fire anchor is taken, the
+  roots go cold; tell Hild.
+- **Runehold grows:** Ilse by the huts, Joren at Maren's side, Bram (after his
+  quest) at the north gate, each with a few lines.
+
+**Ilse**, the last keeper: practical, angry at herself. "You're not a keeper.
+Good. The keepers are what's in the water now." Aldric was the keepers'
+scholar; he sat with the Rune's old texts and spoke of the anchors as if they
+were people.
+
+**Aldric's echo** (drafts; his words come from the anchor, not from him):
+- Water: "You carry one of them. So the Rune picks its keepers after all."
+- Fire: "The fire carried Emberfall for nine hundred years. Ask it whether it
+  wanted to."
+- Storm: "Vey asked the storm nothing. I asked everything. Tell me which of us
+  was the monster."
+The hero answers (flavour, kept as a choice for an Act 3 line): ask why /
+promise he will answer for Ashwick / say nothing.
+
+**Existing characters** who beat the Deepmaw or the Broodmother before: the
+boss stands again for their story (like the Colossus and the Vessel), its
+loot only for those who need it.
+
 ### Act 2 and Act 3 (outline, not built)
 - **Water** (Cistern): Aldric's cell among the keepers; the Deepmaw swallowed
   the water anchor.
