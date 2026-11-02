@@ -41,6 +41,7 @@ UV_MARGIN = 0.003       # ~3 px at 1024: an AI body unwraps into hundreds of isl
 # clips re-solve their reach intents on whatever armature they are keyed on).
 RB3_BONES = {**gen.RB_BONES, "arm_len": 0.52}
 REV = 2  # the fit.json revision new proposals get (see build)
+REGION_MIN = {"helm": 400, "gloves": 400}  # tris below which a look's head or hands count as starved
 EL3_BONES = {**gen.EL_BONES, "shoulder_x": 0.19, "arm_len": 0.44}  # the slender AI mage (concept 90): narrow shoulders, short forearms
 
 AI = {
@@ -173,6 +174,13 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
         regions = fit.split_regions(body, bones=bones, robe_radius=cfg.get("robe_radius"))
         parts = [regions[r] for r in sorted(regions)]
         report["regions"] = {r: sum(len(p.vertices) - 2 for p in o.data.polygons) for r, o in sorted(regions.items())}
+        # collapse decimation starves the head and hands when it cannot thin
+        # fused folds elsewhere (lib.aimesh.clean): flag it
+        starved = {r: n for r, n in report["regions"].items() if r in REGION_MIN and n < REGION_MIN[r]}
+        report["regions_ok"] = not starved
+        report["ok"] = report["ok"] and not starved
+        if starved:
+            print("ai_fit: %s decimation starved %s" % (label, starved))
     rig.export_glb(glb_path, active_action=bpy.data.actions["idle"], arm_obj=arm)
 
     src_rel = src if os.path.splitdrive(src)[0].lower() != os.path.splitdrive(rig.ROOT)[0].lower()         else os.path.relpath(src, rig.ROOT)

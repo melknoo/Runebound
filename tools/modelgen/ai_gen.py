@@ -46,7 +46,7 @@ TRELLIS = "microsoft/TRELLIS.2"
 FRAME = ("full body character concept, front view, orthographic, standing straight in an A-pose with both arms "
          "straight and angled 45 degrees down and out to the sides, a wide gap of empty background between "
          "each arm and the body, hands closed into fists pointing at the ground well away from the hips, "
-         "legs slightly apart, feet flat, no weapon, no cape, nothing held, plain light grey "
+         "legs apart with a clear gap between them down to the feet, feet flat, no weapon, no cape, nothing held, plain light grey "
          "background, even soft lighting, no cast shadow, stylized fantasy RPG game character, 3D game "
          "character render, clean readable shapes, hand-painted texture style, high detail")
 
@@ -97,7 +97,7 @@ PROMPTS = {
     "runebreaker/legendary/weapon": ("a legendary runeblade, massive broad steel blade covered in glowing teal "
                                      "runes, winged gold crossguard with a teal gem, gold-wrapped grip, large gold "
                                      "pommel with a glowing rune stone"),
-    "elementalist/bare": ("a slender adult elementalist mage in his thirties, realistic heroic proportions, about 7 heads tall, swept-back dark auburn hair tied in a short tail, clean-shaven, a plain off-white linen undershirt with short sleeves, plain grey linen trousers, bare forearms and bare hands, barefoot"),
+    "elementalist/bare": ("a slender adult elementalist mage in his thirties, realistic heroic proportions, about 7 heads tall, swept-back dark auburn hair tied in a short tail, clean-shaven, a plain faded teal linen undershirt with short sleeves, plain slim dark navy linen trousers, bare forearms and bare hands, barefoot"),  # palette colours: no off-white ramp in this palette
     "elementalist/base": ("a slender adult elementalist mage in his thirties, realistic heroic proportions, about 7 heads tall, swept-back dark auburn hair tied in a short tail, clean-shaven, a clearly visible gold circlet with a magenta gem on the forehead, a steel-blue knee-length travelling coat with teal trim and lapels, a short teal capelet over the shoulders with a gold clasp, brown leather belt, leather bracers with gold rings, tall brown leather boots with teal cuffs"),
     "elementalist/common": ("a slender adult elementalist mage in his thirties, realistic heroic proportions, about 7 heads tall, swept-back dark auburn hair tied in a short tail, clean-shaven, a plain silver circlet, a sturdy steel-blue knee-length coat with padded shoulders and teal trim, a brown leather belt with pouches, leather gloves, buckled brown leather boots"),
     "elementalist/magic": ("a slender adult elementalist mage in his thirties, realistic heroic proportions, about 7 heads tall, swept-back dark auburn hair tied in a short tail, clean-shaven, a silver diadem with a magenta gem, a deep-blue knee-length embroidered spellcoat with glowing teal rune trim, a teal mantle with silver clasps, silk-wrapped forearms, high boots with silver buckles"),

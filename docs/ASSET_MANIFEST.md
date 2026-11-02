@@ -237,6 +237,16 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   arm_len 0.44) meets it halfway; the warp stretches the forearms by 1.31.
   Bone heat fails on it, the voxel proxy weights it. Other looks of the class
   share this skeleton: give them their own landmarks, not new bones.
+- Elementalist bare, concept 90 (2026-11-02, not promoted): the legs touched
+  in baggy trousers, and TRELLIS fused them into ~6000 zero-thickness fold
+  edges down the pants. Split, the cut seams soaked up collapse decimation's
+  budget and head and arms came out as shards; unsplit, it stalled at 34k
+  tris and shredded them anyway. `FRAME` now also asks for a gap between the
+  legs, and `ai_fit` flags a look whose head or hands fall below
+  `REGION_MIN` tris ("decimation starved", `ok` false). Underclothes are
+  prompted in palette colours (the Elementalist's palette has no off-white:
+  the linen came out as skin). `ai_view.py raw ... --split --tris N` shows
+  the decimated source before a fit.
 
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's
