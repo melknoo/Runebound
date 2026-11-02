@@ -1,0 +1,27 @@
+{
+	"zone": "res://scenes/hollow_cistern.tscn",
+	"out": "captures_shots/m14b_water",
+	"comment": "M14b phase 2: the water anchor in the Hollow Cistern - Ilse in the pump alcove, Aldric's cell, the anchor where the Deepmaw sank, Aldric's echo, the anchor's camera pan.",
+	"shots": [
+		{"name": "ilse", "player": [-75, 0.2, 20.5], "face": 3.5, "yaw": 0.39, "pitch": -0.22, "zoom": 3.6,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_water": {"s": 1, "n": 0}}}}, {"wait": 0.3}], "settle": 0.4},
+		{"name": "cell", "player": [-12.5, 2.2, -37], "face": 0.0, "yaw": 2.34, "pitch": -0.28, "zoom": 5.0,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_water": {"s": 2, "n": 0}}}}, {"wait": 0.3}], "settle": 0.4},
+		{"name": "anchor", "player": [86, 0.2, 31], "face": -1.5708, "yaw": 1.5708, "pitch": -0.3, "zoom": 6.0,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_water": {"s": 4, "n": 0}}}}, {"wait": 0.3}], "settle": 0.4},
+		{"name": "echo", "player": [81, 0.2, 26], "face": 1.5708, "yaw": -1.19, "pitch": -0.22, "zoom": 5.5,
+			"actions": [{"story": {"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done"],
+				"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+				"quests": {"a2_soon": {"s": 1, "n": 0}, "a2_water": {"s": 5, "n": 0}}}}, {"wait": 0.6}], "settle": 0.4},
+		{"name": "pan_rise", "player": [81, 0.2, 28.5], "face": 1.5708, "yaw": -1.5708, "pitch": -0.3, "zoom": 6.0,
+			"actions": [{"story_cut": "a2_anchor_water"}, {"wait": 1.9}], "settle": 0.0},
+		{"name": "pan_echo", "player": [81, 0.2, 28.5], "face": 1.5708, "yaw": -1.5708, "pitch": -0.3, "zoom": 6.0,
+			"actions": [{"wait": 3.0}], "settle": 0.0}
+	]
+}

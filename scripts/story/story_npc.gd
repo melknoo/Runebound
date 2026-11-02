@@ -10,6 +10,9 @@ extends Npc
 ## the Highlands' ghosts, no outline, no body to bump into, a slow float.
 
 const GHOST_TINT := Color(0.62, 0.86, 0.9)
+## How far its name and quest badge show (they draw through walls; a dungeon
+## would show them across every room).
+const PLATE_RANGE := 30.0
 
 ## npcs.json id; also the dialogue file's name.
 var story_id: String = ""
@@ -53,6 +56,8 @@ func _ready() -> void:
 	for child in get_children():
 		if child is StaticBody3D:
 			_body = child as StaticBody3D
+		elif child is Label3D:  # M14b: the name shows through walls (no depth test) - only nearby
+			(child as Label3D).visibility_range_end = PLATE_RANGE
 	if ghost:
 		_ghostify()
 	interacted.connect(_on_interacted)

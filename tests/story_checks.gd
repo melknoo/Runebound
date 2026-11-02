@@ -34,6 +34,7 @@ func run(runner: Node) -> void:
 	StoryDB.reload()
 	await _act1()
 	await _prologue()  # drops the test quests
+	await _act2_water()
 	if own != null:
 		own.queue_free()
 		if prev != null and is_instance_valid(prev):
@@ -539,6 +540,105 @@ func _prologue() -> void:
 		tree.current_scene = prev
 
 
+## M14b phase 2: the water anchor, played in the Hollow Cistern itself - the
+## frame quest from a story that waited at M14a's last step, Ilse in the pump
+## alcove, Aldric's cell, the Deepmaw standing again for a hero who beat it
+## long ago, the anchor's camera pan, the echo and its answer, the blessing.
+func _act2_water() -> void:
+	var tree := t.get_tree()
+	var prev := tree.current_scene
+	var keep_save := SaveGame.save_path
+	SaveGame.save_path = "user://story_cistern_test.json"
+	SaveGame.wipe()
+	var title_like := Node.new()
+	tree.root.add_child(title_like)
+	tree.current_scene = title_like
+	SaveGame.create_character(&"runebreaker", "Keeper", true)
+	title_like.queue_free()
+	var zone := (load("res://scenes/hollow_cistern.tscn") as PackedScene).instantiate() as DungeonZone
+	tree.root.add_child(zone)
+	tree.current_scene = zone
+	await t.call(&"_wait_frames", 8)
+	SaveGame.flags["ci_deepmaw_down"] = true  # beaten long ago: its arena is cleared
+	var hero := zone.player
+	hero.god_mode = true
+	var ql := QuestLog.of(hero)
+	var dir := zone.quest_director
+	var dui := zone.dialogue_ui
+	# a story that waited at "Wait for Act II" (M14a): the same quest, now at its first step
+	ql.from_dict({"v": 1, "act": 2, "beats": ["prologue_done", "runebound", "act1_done", "boss:deepmaw"],
+		"done": ["p_ash_road", "a1_call", "a1_shards", "a1_ashwick", "a1_colossus", "a1_spire"],
+		"quests": {"a2_soon": {"s": 0, "n": 0}}})
+	ql.bind(hero)
+	_check(ql.step_id("a2_soon") == "anchors" and Texts.t("quest.a2_soon.title") == "Four Anchors",
+		"Four Anchors: a story that waited for Act II now has Sigrun to talk to")
+	ql.event("talk", "sigrun")
+	ql.event("enter", "hollow_cistern")
+	dir.refresh_stage()
+	await _frames(3)
+	var ilse := _stage_node(zone, "ilse_cistern")
+	_check(ql.step_id("a2_soon") == "hold" and ql.step_id("a2_water") == "ilse" and ilse != null and ilse.visible
+		and zone.room_id_at(ilse.global_position) == "ci_pump_alcove" and dir.badge_for("ilse", ilse) == "?",
+		"Sigrun names the anchors; in the Cistern a survivor waits in the pump alcove")
+	var mk := dir.markers()
+	_check(not mk.is_empty() and (mk[0]["pos"] as Vector3).distance_to(ilse.global_position) < 1.0, "the quest marker points at her")
+	dui.try_open("ilse", ilse, hero)
+	dui.advance()
+	dui.choose(0)
+	dui.close()
+	await _frames(3)
+	var cell := _stage_node(zone, "a2_aldric_cell") as StoryMarker
+	_check(ql.step_id("a2_water") == "cell" and ilse.visible and cell != null and cell.visible
+		and zone.room_id_at(cell.global_position) == "ci_ante", "Ilse: Aldric's cell is in the antechamber (she stays put)")
+	cell.use_by(hero)
+	var cell_line := dui.visible and dui.current_text() == Texts.t("dlg.a2_cell.0")
+	dui.close()
+	_check(cell_line and ql.step_id("a2_water") == "boss", "the cell: four chalk circles; on to the heart")
+	var arena := zone.arenas.get("ci_arena_deepmaw") as BossArena
+	_check(arena != null and arena.is_done() and StoryBosses.needs(hero, "deepmaw"),
+		"the Deepmaw fell long ago, but the anchor needs it beaten again (a fresh goal)")
+	hero.global_position = zone.ground_point(arena.global_position + Vector3(-4, 0, 0), 0.2)
+	await _until(func() -> bool: return arena.fighting(), 120)
+	_check(arena.fighting(), "the Deepmaw stands again for this story")
+	var until_ms := Time.get_ticks_msec() + 12000  # it rises from a drain first (buried, then emerging: 2.4 s)
+	while Time.get_ticks_msec() < until_ms:
+		if ql.step_id("a2_water") != "boss":
+			break
+		if arena.boss != null and is_instance_valid(arena.boss):
+			arena.boss.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, arena.boss.global_position))
+		await tree.process_frame
+	await _frames(3)
+	var anchor := _stage_node(zone, "a2_anchor_water") as StoryMarker
+	_check(ql.step_id("a2_water") == "anchor" and SaveGame.has_flag(&"ci_deepmaw_down") and anchor != null and anchor.visible,
+		"the Deepmaw sinks again: the water anchor lies where it fell")
+	anchor.use_by(hero)
+	await _frames(3)
+	var echo := _stage_node(zone, "aldric_echo_water") as StoryNpc
+	_check(ql.step_id("a2_water") == "echo" and ql.seen.has("a2_anchor_water") and not anchor.visible
+		and echo != null and echo.visible and echo.ghost, "the anchor rises (its camera pan); a pale figure stands by the wall")
+	var hp0 := hero.health.max_health
+	_check(dui.try_open("aldric_echo", echo, hero) and dui.current_text() == Texts.t("dlg.aldric_echo.water.0"), "Aldric's echo speaks")
+	dui.advance()
+	dui.choose(2)
+	dui.choose(0)
+	await _frames(3)
+	_check(ql.is_done("a2_water") and ql.choice("aldric_water") == "silent" and hero.blessings.has("core_water")
+		and hero.health.max_health > hp0, "silence, kept for later; the Blessing of the Depths (%d -> %d health)" % [hp0, hero.health.max_health])
+	var hub_ilse := {}
+	for e: Variant in StoryDB.stage():
+		if str((e as Dictionary).get("id", "")) == "ilse_hub":
+			hub_ilse = e
+	_check(not echo.visible and not ilse.visible and StoryCond.check(hub_ilse.get("show_if", {}), ql, hero)
+		and ql.step_id("a2_soon") == "frost", "the echo fades, Ilse leaves for Runehold, the frame quest moves on")
+	zone.queue_free()
+	await t.call(&"_wait_frames", 2)
+	SaveGame.wipe()
+	SaveGame.save_path = keep_save
+	SaveGame.reload_from_disk()
+	if prev != null and is_instance_valid(prev):
+		tree.current_scene = prev
+
+
 func _stage_node(zone: ZoneBase, stage_id: String) -> Node3D:
 	for n in zone.quest_director.stage_nodes:
 		if is_instance_valid(n) and str((n.get(&"stage") as Dictionary).get("id", "")) == stage_id:
@@ -605,8 +705,11 @@ func _act1() -> void:
 	_check(ql.step_id("a1_spire") == "return" and ql.seen.has("a1_socket") and dui.entry_for("sigrun", null, true) == "reveal",
 		"the socket's camera pan; Sigrun hears it was opened")
 	ql.event("talk", "sigrun")
-	_check(ql.has_beat("act1_done") and ql.is_running("a2_soon") and dui.entry_for("sigrun", null, true) == "mentor",
-		"End of Act I: Act II waits in the journal, Sigrun checks the script")
+	_check(ql.has_beat("act1_done") and ql.is_running("a2_soon") and dui.entry_for("sigrun", null, true) == "anchors",
+		"End of Act I: Four Anchors begins, Sigrun has more to say")
+	ql.event("talk", "sigrun")
+	_check(ql.is_running("a2_water") and dui.entry_for("sigrun", null, true) == "mentor",
+		"the water anchor's quest starts; then Sigrun checks the script")
 	# the gates the story seals
 	var gate := DungeonGatePortal.new()
 	gate.dungeon_id = "cistern"

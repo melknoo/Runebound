@@ -1,6 +1,8 @@
 {
 	"npc": "sigrun",
 	"entries": [
+		{"if": {"quest_step": ["a2_soon", "frost"]}, "start": "frost", "topic": true},
+		{"if": {"quest_step": ["a2_soon", "anchors"]}, "start": "anchors", "topic": true},
 		{"if": {"quest_step": ["a1_spire", "return"]}, "start": "reveal", "topic": true},
 		{"if": {"quest_step": ["a1_ashwick", "return"]}, "start": "knot", "topic": true},
 		{"if": {"quest_step": ["a1_shards", "return"]}, "start": "shards", "topic": true},
@@ -38,6 +40,19 @@
 		]},
 		"reveal_1": {"say": "dlg.sigrun.reveal.1", "next": "reveal_2"},
 		"reveal_2": {"say": "dlg.sigrun.reveal.2", "effects": [{"event": ["talk", "sigrun"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"anchors": {"say": "dlg.sigrun.anchors.0", "next": "anchors_1"},
+		"anchors_1": {"say": "dlg.sigrun.anchors.1", "options": [
+			{"text": "dlg.sigrun.opt.why_me", "next": "anchors_why"},
+			{"text": "dlg.sigrun.opt.where", "next": "anchors_where"}
+		]},
+		"anchors_why": {"say": "dlg.sigrun.anchors.why", "next": "anchors_where"},
+		"anchors_where": {"say": "dlg.sigrun.anchors.where", "effects": [{"event": ["talk", "sigrun"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"frost": {"say": "dlg.sigrun.frost.0", "next": "frost_1"},
+		"frost_1": {"say": "dlg.sigrun.frost.1", "effects": [{"event": ["talk", "sigrun"]}], "options": [
 			{"text": "dlg.common.bye", "end": true}
 		]},
 		"mentor": {"say": "dlg.sigrun.mentor.0", "effects": [{"beat": "dlg:sigrun_mentor"}], "next": "mentor_1"},

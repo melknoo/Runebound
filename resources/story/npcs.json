@@ -27,6 +27,19 @@
 			"rig": "runebreaker",
 			"tint": "#5A4A3A",
 			"rune": "#B04A2A"
+		},
+		"ilse": {
+			"name": "npc.ilse.name",
+			"rig": "elementalist",
+			"tint": "#8A9BA6",
+			"rune": "#7FB6D9"
+		},
+		"aldric_echo": {
+			"name": "npc.aldric_echo.name",
+			"rig": "elementalist",
+			"tint": "#6E7F8C",
+			"rune": "#9FF2E6",
+			"ghost": true
 		}
 	}
 }

@@ -1,0 +1,10 @@
+{
+	"npc": "a2_aldric_cell",
+	"entries": [
+		{"if": {"quest_step": ["a2_water", "cell"]}, "start": "look"}
+	],
+	"nodes": {
+		"look": {"say": "dlg.a2_cell.0", "next": "look_1"},
+		"look_1": {"say": "dlg.a2_cell.1", "end": true}
+	}
+}

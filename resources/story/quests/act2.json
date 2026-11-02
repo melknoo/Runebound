@@ -1,0 +1,139 @@
+{
+	"_note": "M14b: Act 2, part 1 - Four Anchors (STORY_DESIGN). a2_soon keeps its id from M14a so a story waiting there moves on to its first step.",
+	"quests": [
+		{
+			"id": "a2_soon",
+			"act": 2,
+			"kind": "main",
+			"level": 5,
+			"title": "quest.a2_soon.title",
+			"summary": "quest.a2_soon.summary",
+			"steps": [
+				{
+					"id": "anchors",
+					"text": "quest.a2_soon.s.anchors",
+					"goal": {
+						"type": "talk",
+						"npc": "sigrun"
+					},
+					"effects": [
+						{
+							"start": "a2_water"
+						}
+					]
+				},
+				{
+					"id": "hold",
+					"text": "quest.a2_soon.s.hold",
+					"goal": {
+						"type": "quests",
+						"ids": [
+							"a2_water"
+						]
+					}
+				},
+				{
+					"id": "frost",
+					"text": "quest.a2_soon.s.frost",
+					"goal": {
+						"type": "talk",
+						"npc": "sigrun"
+					}
+				},
+				{
+					"id": "wait",
+					"text": "quest.a2_soon.s.wait",
+					"goal": {
+						"type": "beat",
+						"id": "act2_written"
+					}
+				}
+			]
+		},
+		{
+			"id": "a2_water",
+			"act": 2,
+			"kind": "main",
+			"level": 5,
+			"title": "quest.a2_water.title",
+			"summary": "quest.a2_water.summary",
+			"steps": [
+				{
+					"id": "enter",
+					"text": "quest.a2_water.s.enter",
+					"goal": {
+						"type": "enter",
+						"zone": "hollow_cistern"
+					}
+				},
+				{
+					"id": "ilse",
+					"text": "quest.a2_water.s.ilse",
+					"goal": {
+						"type": "talk",
+						"npc": "ilse"
+					}
+				},
+				{
+					"id": "cell",
+					"text": "quest.a2_water.s.cell",
+					"goal": {
+						"type": "interact",
+						"marker": "a2_aldric_cell",
+						"zone": "hollow_cistern"
+					}
+				},
+				{
+					"id": "boss",
+					"text": "quest.a2_water.s.boss",
+					"goal": {
+						"type": "boss",
+						"enemy": "deepmaw",
+						"fresh": true,
+						"poi": "ci_arena_deepmaw",
+						"zone": "hollow_cistern"
+					}
+				},
+				{
+					"id": "anchor",
+					"text": "quest.a2_water.s.anchor",
+					"goal": {
+						"type": "interact",
+						"marker": "a2_anchor_water",
+						"zone": "hollow_cistern"
+					},
+					"effects": [
+						{
+							"cutscene": "a2_anchor_water"
+						}
+					]
+				},
+				{
+					"id": "echo",
+					"text": "quest.a2_water.s.echo",
+					"goal": {
+						"type": "talk",
+						"npc": "aldric_echo"
+					}
+				}
+			],
+			"rewards": {
+				"xp": 500,
+				"gold": 150,
+				"items": [
+					{
+						"rarity": 2
+					}
+				]
+			},
+			"on_done": [
+				{
+					"bless": "core_water"
+				},
+				{
+					"toast": "story.toast.ilse_runehold"
+				}
+			]
+		}
+	]
+}

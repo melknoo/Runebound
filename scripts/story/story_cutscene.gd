@@ -12,8 +12,8 @@ extends CanvasLayer
 ##   "safe": true (wait until the hero is out of combat),
 ##   "shots": [{"from": anchor, "to": anchor, "look": anchor, "t": seconds,
 ##              "say": key, "speaker": npc id}],
-##   "fx": [{"t": seconds, "kind": "shard_fall" | "flash" | "shake" | "sfx" | "call",
-##           "at": anchor, "name": sfx or the zone's story_fx}],
+##   "fx": [{"t": seconds, "kind": "shard_fall" | "shard_rise" | "flash" | "shake" | "sfx" | "call",
+##           "at": anchor, "name": sfx or the zone's story_fx, "color": hex, "hold": s}],
 ##   "card": {"title": key, "sub": key}, "on_end": [effects]}}}
 ## An anchor is [x, y, z], or {"at": "hero" | "npc:<id>" | "marker:<id>" |
 ## "poi:<id>", "offset": [x, y, z], "local": true (offset turns with it)}.
@@ -256,6 +256,8 @@ func _play_fx(f: Dictionary) -> void:
 	match str(f.get("kind", "")):
 		"shard_fall":
 			_shard_fall(at, float(f.get("fall", 1.1)))
+		"shard_rise":
+			_shard_rise(at, Color(str(f.get("color", "#9FF2E6"))), float(f.get("hold", 2.4)))
 		"flash":
 			VFX.flash(zone.world, at + Vector3(0, 1.2, 0), ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")), 2.2, 0.3)
 			VFX.light_pop(zone.world, at + Vector3(0, 1.5, 0), ArtKit.color("color_roles.player_accent.hot", Color("#9FF2E6")), 4.0, 8.0, 0.5)
@@ -284,6 +286,31 @@ func _shard_fall(at: Vector3, fall: float) -> void:
 			if zone.camera_rig != null:
 				zone.camera_rig.add_trauma(0.6)
 			shard.queue_free())
+
+
+## M14b: a core shard (an anchor) rises out of `at`, turns in the air for
+## `hold` seconds, then goes into the hero's hand: flash, light, ring, sound.
+func _shard_rise(at: Vector3, color: Color, hold: float) -> void:
+	var shard := PoiBuilder.prop(zone, "rune_shard", at, randf() * TAU, 2.2) if PoiBuilder.has_art(zone) else null
+	VFX.ground_ring(zone.world, at, color, 3.0, 0.6)
+	VFX.light_pop(zone.world, at + Vector3(0, 1.0, 0), color, 4.0, 8.0, 0.8)
+	if shard == null:
+		return
+	shard.global_position = at + Vector3(0, -1.2, 0)
+	var tw := shard.create_tween()
+	tw.tween_property(shard, "global_position", at + Vector3(0, 1.6, 0), 1.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(shard, "rotation:y", shard.rotation.y + TAU * 1.5, 1.4 + hold)
+	tw.tween_interval(hold)
+	tw.tween_callback(func() -> void:
+		var hero := zone.player
+		var to := hero.global_position + Vector3(0, 1.1, 0) if hero != null and is_instance_valid(hero) else at
+		var fly := shard.create_tween()
+		fly.tween_property(shard, "global_position", to, 0.45).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		fly.tween_callback(func() -> void:
+			VFX.flash(zone.world, to, color, 2.4, 0.3)
+			VFX.light_pop(zone.world, to + Vector3(0, 0.4, 0), color, 5.0, 8.0, 0.5)
+			Sfx.play_ui("shatter_burst", -6.0)
+			shard.queue_free()))
 
 
 func _build() -> void:

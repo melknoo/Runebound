@@ -224,24 +224,6 @@
 			]
 		},
 		{
-			"id": "a2_soon",
-			"act": 2,
-			"kind": "main",
-			"level": 4,
-			"title": "quest.a2_soon.title",
-			"summary": "quest.a2_soon.summary",
-			"steps": [
-				{
-					"id": "wait",
-					"text": "quest.a2_soon.s.wait",
-					"goal": {
-						"type": "beat",
-						"id": "act2_written"
-					}
-				}
-			]
-		},
-		{
 			"id": "s_letter",
 			"act": 1,
 			"kind": "side",

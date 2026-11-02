@@ -372,6 +372,8 @@ func _retro_count(goal: Dictionary) -> int:
 		"beat":
 			return 1 if has_beat(str(goal.get("id", ""))) else 0
 		"boss":
+			if bool(goal.get("fresh", false)):
+				return -1  # M14b: this quest wants the boss beaten again, old beats don't count
 			return 1 if has_beat("boss:" + str(goal.get("enemy", ""))) else 0
 		"level":
 			return 1 if h != null and h.progression.level >= int(goal.get("min", 1)) else 0
@@ -405,7 +407,7 @@ static func _matches(goal: Dictionary, kind: String, id: String, data: Dictionar
 		# records-based goals re-check on their own events
 		return (type == "collect" and kind == "collect") or (type == "read" and kind == "read") \
 			or (type == "level" and kind == "level") or (type == "attune" and kind == "attune") \
-			or (type == "boss" and kind == "beat") or (type == "beat" and kind == "beat")
+			or (type == "boss" and kind == "beat" and not bool(goal.get("fresh", false))) or (type == "beat" and kind == "beat")
 	if goal.has("zone") and data.has("zone") and str(goal["zone"]) != str(data["zone"]):
 		return false
 	match type:

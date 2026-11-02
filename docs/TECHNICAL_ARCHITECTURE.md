@@ -1620,6 +1620,28 @@ existing dungeon rooms, no new layout.
   apparition: no collision (layer 0, also when shown again), duplicated
   materials without the outline pass, alpha `GHOST_TINT` at 0.5, emission,
   no shadow, a slow float. Aldric's echo uses it.
+- **Fresh boss goals (phase 2):** `boss {enemy, fresh: true}` wants the boss
+  beaten while the step runs: no retroactive count, no completion from the
+  old `boss:<type>` beat, and `StoryBosses.needs` wakes it even with that
+  beat (the anchors lie under the Deepmaw and the Broodmother, whoever beat
+  them before). A boss goal may carry `poi` + `zone` for its quest marker.
+- **Stage additions:** `prop_scale`; `prop_hides` (the prop becomes the
+  marker's child and goes with it: a core shard the hero takes); `glow` (a
+  hex colour: a small OmniLight on the marker). Story NPC names and quest
+  badges draw through walls, so they end at `StoryNpc.PLATE_RANGE` (30 m).
+- **Camera pan fx `shard_rise`** (`color`, `hold`): a core shard rises from
+  the anchor, turns, then flies into the hero's hand with a flash.
+- **The water anchor (phase 2):** `resources/story/quests/act2.json`.
+  `a2_soon` (kept id, so a story waiting at M14a's last step moves on) is
+  the frame "Four Anchors": talk to Sigrun (starts the anchors' quests) ->
+  `quests` goal -> Sigrun again (the Frostvales) -> wait for part 2.
+  `a2_water` in the Cistern: enter -> Ilse (StoryNpc in the pump alcove,
+  behind the plate gate) -> Aldric's cell (StoryMarker in the antechamber,
+  its own dialogue) -> the Deepmaw (fresh) -> the anchor marker at the
+  arena -> camera pan `a2_anchor_water` -> Aldric's echo (the answer is the
+  choice `aldric_water`) -> `bless core_water`; Ilse moves to Runehold.
+  Shot list `m14b_water`; the shot runner takes `{"story": {QuestLog dict}}`
+  and `{"story_cut": id}`.
 
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile

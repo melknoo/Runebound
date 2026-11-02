@@ -103,6 +103,14 @@ Runehold, 5 wrap-up.
   three core blessings and the effect `bless`, the goal `quests`, ghostly
   echoes (Aldric). Net scenarios `story_boss`, `dungeon_boss`,
   `warrens_boss`, `stormsworn`, `stormcaller` green.
+- Phase 2 built: the water anchor. `a2_soon` became the frame quest "Four
+  Anchors" (Sigrun explains the anchors); "What the Keepers Could Not Drown"
+  in the Cistern: Ilse, the last keeper, hiding in the pump alcove; Aldric's
+  cell with its chalk circles; the Deepmaw stands again for the anchor even
+  for a hero who beat it before; the anchor rises in a camera pan; Aldric's
+  echo speaks (the answer is kept for Act 3); the Blessing of the Depths;
+  Ilse goes to Runehold. Story checks play it in the Cistern itself; shots
+  `m14b_water`.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

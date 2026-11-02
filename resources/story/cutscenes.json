@@ -343,6 +343,84 @@
 				"title": "act.1.end",
 				"sub": "act.1.sub"
 			}
+		},
+		"a2_anchor_water": {
+			"safe": true,
+			"shots": [
+				{
+					"from": {
+						"at": "marker:a2_anchor_water",
+						"offset": [
+							-5,
+							3.6,
+							4
+						]
+					},
+					"to": {
+						"at": "marker:a2_anchor_water",
+						"offset": [
+							-3.2,
+							2.2,
+							2.6
+						]
+					},
+					"look": {
+						"at": "marker:a2_anchor_water",
+						"offset": [
+							0,
+							1.2,
+							0
+						]
+					},
+					"t": 3.6,
+					"say": "cut.a2_anchor_water.0"
+				},
+				{
+					"from": {
+						"at": "npc:aldric_echo",
+						"offset": [
+							-5,
+							2.4,
+							2.2
+						]
+					},
+					"to": {
+						"at": "npc:aldric_echo",
+						"offset": [
+							-3.2,
+							1.9,
+							1.2
+						]
+					},
+					"look": {
+						"at": "npc:aldric_echo",
+						"offset": [
+							0,
+							1.5,
+							0
+						]
+					},
+					"t": 3.4,
+					"say": "cut.a2_anchor_water.1"
+				}
+			],
+			"fx": [
+				{
+					"t": 0.1,
+					"kind": "sfx",
+					"name": "shatter_burst",
+					"db": -16.0
+				},
+				{
+					"t": 0.2,
+					"kind": "shard_rise",
+					"at": {
+						"at": "marker:a2_anchor_water"
+					},
+					"color": "#6FC3EA",
+					"hold": 1.6
+				}
+			]
 		}
 	}
 }

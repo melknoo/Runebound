@@ -142,6 +142,90 @@
 					"socket"
 				]
 			}
+		},
+		{
+			"id": "ilse_cistern",
+			"npc": "ilse",
+			"zone": "hollow_cistern",
+			"at": [
+				-77.5,
+				16.5
+			],
+			"yaw": 16,
+			"show_if": {
+				"quest_active": "a2_water"
+			}
+		},
+		{
+			"id": "ilse_hub",
+			"npc": "ilse",
+			"zone": "hub",
+			"at": [
+				8.0,
+				-4.6
+			],
+			"yaw": 288,
+			"show_if": {
+				"done": [
+					"a2_water"
+				]
+			}
+		},
+		{
+			"id": "a2_aldric_cell",
+			"marker": "a2_aldric_cell",
+			"zone": "hollow_cistern",
+			"at": [
+				-16,
+				-33.6
+			],
+			"yaw": 180,
+			"prop": "tome_lectern",
+			"show_if": {
+				"quest_step": [
+					"a2_water",
+					"cell"
+				]
+			}
+		},
+		{
+			"id": "a2_anchor_water",
+			"marker": "a2_anchor_water",
+			"zone": "hollow_cistern",
+			"poi": "ci_arena_deepmaw",
+			"offset": [
+				0,
+				0
+			],
+			"yaw": 0,
+			"prop": "rune_shard",
+			"prop_scale": 2.2,
+			"prop_hides": true,
+			"glow": "#6FC3EA",
+			"prompt": "ui.prompt.take_anchor",
+			"show_if": {
+				"quest_step": [
+					"a2_water",
+					"anchor"
+				]
+			}
+		},
+		{
+			"id": "aldric_echo_water",
+			"npc": "aldric_echo",
+			"zone": "hollow_cistern",
+			"poi": "ci_arena_deepmaw",
+			"offset": [
+				5.5,
+				-5
+			],
+			"yaw": 312,
+			"show_if": {
+				"quest_step": [
+					"a2_water",
+					"echo"
+				]
+			}
 		}
 	]
 }

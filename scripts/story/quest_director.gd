@@ -306,7 +306,16 @@ func place(e: Dictionary) -> Node3D:
 	zone.world.add_child(node)
 	stage_nodes.append(node)
 	if e.has("prop") and PoiBuilder.has_art(zone):
-		PoiBuilder.prop(zone, str(e["prop"]), node.position, node.rotation.y)
+		var prop := PoiBuilder.prop(zone, str(e["prop"]), node.position, node.rotation.y, float(e.get("prop_scale", 1.0)))
+		if prop != null and bool(e.get("prop_hides", false)):
+			prop.reparent(node)  # M14b: gone with its marker (a core shard the hero takes)
+	if e.has("glow"):  # M14b: a soft light that comes and goes with it (an anchor in the dark)
+		var light := OmniLight3D.new()
+		light.light_color = Color(str(e["glow"]))
+		light.light_energy = 1.6
+		light.omni_range = 5.0
+		light.position = Vector3(0, 0.9, 0)
+		node.add_child(light)
 	return node
 
 
@@ -377,6 +386,8 @@ static func set_badge(npc: Node3D, text: String) -> void:
 		badge.outline_size = 12
 		badge.outline_modulate = Color(0.05, 0.03, 0.08)
 		badge.position = Vector3(0, 2.55, 0)
+		if npc is StoryNpc:
+			badge.visibility_range_end = StoryNpc.PLATE_RANGE
 		UiTheme.label3d(badge, UiTheme.BIG, true)
 		npc.add_child(badge)
 	badge.text = text

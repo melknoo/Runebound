@@ -1,0 +1,30 @@
+{
+	"npc": "ilse",
+	"entries": [
+		{"if": {"quest_step": ["a2_water", "ilse"]}, "start": "meet"},
+		{"if": {"quest_active": "a2_water"}, "start": "wait"},
+		{"if": {"done": ["a2_water"], "not_beat": "dlg:ilse_hub"}, "start": "hub_first", "topic": true},
+		{"start": "hub"}
+	],
+	"nodes": {
+		"meet": {"say": "dlg.ilse.meet.0", "next": "meet_1"},
+		"meet_1": {"say": "dlg.ilse.meet.1", "options": [
+			{"text": "dlg.ilse.opt.aldric", "next": "meet_aldric"},
+			{"text": "dlg.ilse.opt.come", "next": "meet_stay"}
+		]},
+		"meet_stay": {"say": "dlg.ilse.meet.stay", "next": "meet_aldric"},
+		"meet_aldric": {"say": "dlg.ilse.meet.aldric", "effects": [{"event": ["talk", "ilse"]}], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"wait": {"say_pool": ["dlg.ilse.wait.0", "dlg.ilse.wait.1", "dlg.ilse.wait.2"], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"hub_first": {"say": "dlg.ilse.hub.first.0", "effects": [{"beat": "dlg:ilse_hub"}], "next": "hub_first_1"},
+		"hub_first_1": {"say": "dlg.ilse.hub.first.1", "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]},
+		"hub": {"say_pool": ["dlg.ilse.hub.0", "dlg.ilse.hub.1"], "options": [
+			{"text": "dlg.common.bye", "end": true}
+		]}
+	}
+}

@@ -28,7 +28,8 @@ static func needed_near(zone: ZoneBase, boss: String, at: Vector3, radius: float
 	return false
 
 
-## True when `hero`'s story is at a step that wants `boss` and hasn't beaten it.
+## True when `hero`'s story is at a step that wants `boss` and hasn't beaten it
+## (a `fresh` goal wants it beaten again, even with the beat).
 static func needs(hero: Player, boss: String) -> bool:
 	if hero == null or not is_instance_valid(hero):
 		return false
@@ -36,18 +37,24 @@ static func needs(hero: Player, boss: String) -> bool:
 	if not ql.active:
 		return false
 	var beat := "boss:" + boss
-	if ql.has_beat(beat) or bool((hero.get_meta(CREDITED, {}) as Dictionary).get(beat, false)):
+	if bool((hero.get_meta(CREDITED, {}) as Dictionary).get(beat, false)):
 		return false
-	return wants(ql, boss)
+	var goal := wanting_goal(ql, boss)
+	return not goal.is_empty() and (bool(goal.get("fresh", false)) or not ql.has_beat(beat))
 
 
 ## Is a running quest's current step a boss goal for `boss`?
 static func wants(ql: QuestLog, boss: String) -> bool:
+	return not wanting_goal(ql, boss).is_empty()
+
+
+## The boss goal for `boss` a running quest's current step has ({} if none).
+static func wanting_goal(ql: QuestLog, boss: String) -> Dictionary:
 	for qid in ql.running():
 		var goal: Dictionary = ql.current_step(qid).get("goal", {})
 		if str(goal.get("type", "")) == "boss" and str(goal.get("enemy", "")) == boss:
-			return true
-	return false
+			return goal
+	return {}
 
 
 ## The heroes within the reward radius that needed `boss`, now credited (the

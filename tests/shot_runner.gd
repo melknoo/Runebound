@@ -30,7 +30,8 @@ extends Node
 ## M12: {"poi": id, "act": "start"} acts on a zone puzzle (a trial shrine).
 ## M10b: {"draughts": n} fills the bag, {"hurt": 0.4} sets health to that
 ## fraction, {"do": "drink" | "merchant" | "draught_drops"} drinks one, opens
-## Ylva's shop, lays three flasks 6 m ahead.
+## Ylva's shop, lays three flasks 6 m ahead. M14b: {"story": {QuestLog dict}}
+## sets the hero's story (the stage follows), {"story_cut": id} plays a camera pan.
 
 var list_path: String = ""
 var _shot_critters: Array[Critter] = []
@@ -162,6 +163,14 @@ func _do(action: Dictionary) -> void:
 		var pz := puzzles.get(String(action["poi"])) as PoiPuzzle
 		if pz != null:
 			pz.request(String(action.get("act", "")), action.get("arg", 0), player)
+	elif action.has("story"):  # M14b: the hero's story ({QuestLog dict}); the stage follows
+		QuestLog.of(player).from_dict(action["story"])
+		if _zone.quest_director.running:
+			_zone.quest_director.refresh_stage()
+		else:
+			_zone.quest_director.begin()
+	elif action.has("story_cut"):  # M14b: a camera pan, played the windowed way
+		_zone.quest_director.cutscene.play_forced(String(action["story_cut"]))
 	elif action.has("wait"):
 		await _wait(float(action["wait"]))
 	elif action.has("press"):
