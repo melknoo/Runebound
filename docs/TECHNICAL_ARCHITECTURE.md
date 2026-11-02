@@ -1593,6 +1593,34 @@ Rig v3 files (`player.gd`, `npc.gd`, `hub_zone.gd` ...) stay untouched.
   at runtime so a parse error fails one check) and on their own with
   `tools\run_godot.cmd story` (`tests/story_test.tscn`, seconds).
 
+### Act 2, part 1 (M14b, since 2026-11-02)
+"Four Anchors" (STORY_DESIGN "Act 2, part 1"): the story goes into the
+existing dungeon rooms, no new layout.
+- **A story boss needs a quest:** `StoryBosses.needs(hero, boss)` now also
+  asks `wants(qlog, boss)`: a running quest's current step has the goal
+  `boss {enemy: boss}`. A missing `boss:<type>` beat alone wakes nothing
+  (legacy characters have no beats for the dungeon bosses). The Colossus and
+  the Vessel keep working because `a1_colossus` / `a1_spire` want them.
+- **BossArena replays** (`boss_arena.gd`, every dungeon boss): a cleared
+  arena wakes again while `StoryBosses.needed_near(zone, boss_id, ...)`
+  finds a hero within the trigger radius (or half the room's diagonal). A
+  replay sets no flag, hides the boss bar, pays its loot (`_give_loot`) only
+  to the heroes `StoryBosses.credit()` returns and rests `REARM` 20 s; a
+  first kill sets the flag, credits the present heroes and pays the whole
+  party as before. Fresh-run dungeons (the Stormwatch) never need it.
+- **Core blessings:** `Blessings.DEFS` gains `core_water` (+8 % max health),
+  `core_fire` (+6 % damage) and `core_storm` (6 % faster cooldowns), granted
+  for good by the effect `{"bless": id}` (`Player.grant_blessing` +
+  `zone.blessing_toast`), saved like the trial shrines' blessings. Texts:
+  `resources/i18n/story/m14b_act2.json`.
+- **Goal `quests {ids, count}`:** counts finished quests (retroactive; a quest
+  finishing re-checks it after its `on_done` effects), for the frame quest
+  that waits for both anchors.
+- **Echoes:** an `npcs.json` entry with `"ghost": true` builds a StoryNpc as an
+  apparition: no collision (layer 0, also when shown again), duplicated
+  materials without the outline pass, alpha `GHOST_TINT` at 0.5, emission,
+  no shadow, a slow float. Aldric's echo uses it.
+
 ## Physics layers
 1 world · 2 player · 3 enemy · 4 player_hurtbox · 5 enemy_hurtbox · 6 projectile
 M12: 7 foliage (forest trunks; heroes and enemies mask it, the camera does not)

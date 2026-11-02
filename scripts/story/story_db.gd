@@ -10,7 +10,7 @@ const DIR := "res://resources/story"
 
 ## Goal types a quest step may use (QuestLog evaluates them).
 const GOALS: Array[String] = ["talk", "kill", "boss", "collect", "read", "reach", "enter", "interact", "level",
-	"beat", "attune"]
+	"beat", "attune", "quests"]
 
 static var _quests: Dictionary = {}       # id -> quest dict
 static var _quest_order: Array[String] = []

@@ -332,6 +332,7 @@ func _finish(qid: String) -> void:
 		StoryEffects.apply([{"give": rewards}], hero(), self)
 	quest_done.emit(qid)
 	StoryEffects.apply(q.get("on_done", []), hero(), self)
+	_recheck_goal_type("quests")
 	if tracked == "":
 		tracked = shown_quest()
 	flush_pending()
@@ -380,6 +381,11 @@ func _retro_count(goal: Dictionary) -> int:
 			return _count_in(h.lore_read if h != null else PackedStringArray(), goal)
 		"attune":
 			return 1 if h != null and h.discovered_waypoints.has(str(goal.get("waypoint", ""))) else 0
+		"quests":  # M14b: these quests are done (the act's frame waits for its threads)
+			var n := 0
+			for id: Variant in goal.get("ids", []):
+				n += 1 if done.has(str(id)) else 0
+			return n
 	return -1
 
 

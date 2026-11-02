@@ -9,12 +9,13 @@ extends Object
 ##   {"complete_step": quest id}      {"track": quest id}
 ##   {"hint": {"text": key, "keys": [actions]}}  (a tutorial line under the tracker; {} clears it)
 ##   {"zone": name}                   (the zone's story_fx(name): the prologue's bridge breaks)
+##   {"bless": id}                    (M14b: a rune blessing for good, Blessings.DEFS - the core shards)
 ## Story state changes happen here on the quest log; the zone-side ones (rewards,
 ## toasts, windows, camera pans) go through the hero's zone and its
 ## QuestDirector, and are skipped when the hero isn't in one (unit tests).
 
 const KINDS: Array[String] = ["start", "beat", "act", "event", "seen", "choice", "give", "toast", "cutscene", "open",
-	"complete_step", "track", "hint", "zone"]
+	"complete_step", "track", "hint", "zone", "bless"]
 
 
 ## `ctx` may carry {"npc": Npc} (dialogue) for "open".
@@ -69,6 +70,9 @@ static func _one(e: Dictionary, hero: Player, qlog: QuestLog, ctx: Dictionary) -
 		"zone":
 			if zone != null and zone.has_method(&"story_fx"):
 				zone.call(&"story_fx", str(v))
+		"bless":
+			if hero != null and is_instance_valid(hero) and hero.grant_blessing(StringName(str(v))) and zone != null:
+				zone.blessing_toast(hero, StringName(str(v)))
 		_:
 			push_warning("StoryEffects: unknown effect " + kind)
 

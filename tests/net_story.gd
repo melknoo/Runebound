@@ -32,7 +32,9 @@ static func client(d: Variant, role: String) -> void:
 		return
 	var hero := zone.player
 	var ql := QuestLog.of(hero)
-	ql.from_dict({"v": 1, "act": 1, "beats": ["boss:colossus"] if role == "c1" else []})
+	# c1: beaten it before; c2: at the step that wants it (M14b: only a wanting step wakes a boss)
+	ql.from_dict({"v": 1, "act": 1, "beats": ["boss:colossus"] if role == "c1" else [],
+		"quests": {"a1_colossus": {"s": 0, "n": 0}}})
 	ql.bind(hero)
 	zone.quest_director.begin()  # the story arrived after the zone began (a fresh test character)
 	if zone.net_world != null:

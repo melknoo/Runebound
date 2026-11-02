@@ -9,7 +9,10 @@ extends Node3D
 ## rune, or walked out). The server never sees a dead proxy (its owner
 ## respawns it at once), so the rule is by position. The kill sets the
 ## arena's world flag (the server tells everyone: FLAG), opens what waits on
-## it and hands out the boss's loot. A set flag means the boss stays dead.
+## it and hands out the boss's loot. A set flag means the boss stays dead -
+## M14b: unless a hero in the room still needs it for its story (StoryBosses):
+## then it stands again, the gates stay open, its loot goes only to those who
+## needed it, and the arena rests StoryBosses.REARM seconds after.
 
 const RESET_GRACE := 6.0
 const CHECK_INTERVAL := 0.25
@@ -33,6 +36,8 @@ var starts: int = 0
 var resets: int = 0
 var _empty_for: float = 0.0
 var _check_left: float = 0.0
+var _replay: bool = false
+var _rearm: float = 0.0
 
 
 func is_done() -> bool:
@@ -61,7 +66,12 @@ func heroes_inside() -> Array[Player]:
 
 
 func _physics_process(delta: float) -> void:
-	if Net.is_client() or is_done():
+	if Net.is_client():
+		return
+	if _rearm > 0.0:
+		_rearm -= delta
+		return
+	if is_done() and not fighting() and not _story_wanted():
 		return
 	_check_left -= delta
 	if _check_left > 0.0:
@@ -83,11 +93,18 @@ func _physics_process(delta: float) -> void:
 		_empty_for = 0.0
 
 
+## M14b: does a hero in the room need this beaten boss for its story?
+func _story_wanted() -> bool:
+	var zone := _zone()
+	return zone != null and StoryBosses.needed_near(zone, boss_id, global_position, maxf(trigger_radius, rect.size.length() * 0.5))
+
+
 ## Authority: the boss wakes in the middle of the room.
 func start() -> void:
 	var zone := _zone()
-	if zone == null or fighting() or is_done():
+	if zone == null or fighting() or (is_done() and not _story_wanted()):
 		return
+	_replay = is_done()
 	starts += 1
 	_empty_for = 0.0
 	boss = ZoneBase.make_enemy(boss_id)
@@ -128,14 +145,28 @@ func _on_boss_died(_e: EnemyBase) -> void:
 	var zone := _zone()
 	var at := boss.global_position if boss != null and is_instance_valid(boss) else global_position
 	boss = null
+	if _replay:  # M14b: a story replay - no flag, the loot only for those who needed it
+		_replay = false
+		_rearm = StoryBosses.REARM
+		if zone == null:
+			return
+		if zone.hud != null:
+			zone.hud.hide_boss_bar()
+		_give_loot(zone, StoryBosses.credit(zone, boss_id, at), at)
+		return
 	if flag != &"":
 		SaveGame.set_flag(flag)  # co-op: the server tells every client (FLAG)
 	if zone == null:
 		return
 	zone.apply_world_flag(flag)
+	StoryBosses.credit(zone, boss_id, at)  # M14b: the server remembers who needed it
+	_give_loot(zone, zone.party(), at)
+
+
+func _give_loot(zone: ZoneBase, heroes: Array[Player], at: Vector3) -> void:
 	var ilvl := (zone as DungeonZone).boss_level() if zone is DungeonZone else 4  # M13b: the run's in the co-op dungeon
 	var shards := shards_for(zone, reward)
-	for hero in zone.party():  # personal loot (M09): every hero its own rolls
+	for hero in heroes:  # personal loot (M09): every hero its own rolls
 		var items: Array[ItemData] = []
 		if reward == "end":
 			var legendary := ItemGenerator.generate_legendary(hero.class_data.id)

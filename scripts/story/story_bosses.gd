@@ -8,6 +8,9 @@ extends Object
 ## stay open). The server knows each hero's story from its CHARACTER message
 ## (proxies carry the QuestLog); offline the only hero is the local one.
 ## After a replay only the heroes that needed it get the boss's legendary.
+## M14b: "needs" means a running quest's current step asks for the boss (the
+## dungeon bosses have no beats in older saves - they must not all wake for a
+## legacy character, only the one its story is at).
 
 ## How long a beaten story boss stays down before a needing hero may wake it
 ## again (a CHARACTER with the new beat is on its way meanwhile).
@@ -25,7 +28,7 @@ static func needed_near(zone: ZoneBase, boss: String, at: Vector3, radius: float
 	return false
 
 
-## True when `hero` has a story that hasn't beaten `boss` yet.
+## True when `hero`'s story is at a step that wants `boss` and hasn't beaten it.
 static func needs(hero: Player, boss: String) -> bool:
 	if hero == null or not is_instance_valid(hero):
 		return false
@@ -33,7 +36,18 @@ static func needs(hero: Player, boss: String) -> bool:
 	if not ql.active:
 		return false
 	var beat := "boss:" + boss
-	return not ql.has_beat(beat) and not bool((hero.get_meta(CREDITED, {}) as Dictionary).get(beat, false))
+	if ql.has_beat(beat) or bool((hero.get_meta(CREDITED, {}) as Dictionary).get(beat, false)):
+		return false
+	return wants(ql, boss)
+
+
+## Is a running quest's current step a boss goal for `boss`?
+static func wants(ql: QuestLog, boss: String) -> bool:
+	for qid in ql.running():
+		var goal: Dictionary = ql.current_step(qid).get("goal", {})
+		if str(goal.get("type", "")) == "boss" and str(goal.get("enemy", "")) == boss:
+			return true
+	return false
 
 
 ## The heroes within the reward radius that needed `boss`, now credited (the

@@ -1,0 +1,9 @@
+{
+	"_note": "M14b: Act 2, part 1 - Four Anchors (DE/EN, written, never machine-translated).",
+	"blessing.core_water": {"en": "Blessing of the Depths", "de": "Segen der Tiefe"},
+	"blessing.core_water.effect": {"en": "+8 % maximum health", "de": "+8 % maximales Leben"},
+	"blessing.core_fire": {"en": "Blessing of the Embers", "de": "Segen der Glut"},
+	"blessing.core_fire.effect": {"en": "+6 % damage", "de": "+6 % Schaden"},
+	"blessing.core_storm": {"en": "Blessing of the Storm", "de": "Segen des Sturms"},
+	"blessing.core_storm.effect": {"en": "6 % faster cooldowns", "de": "6 % schnellere Abklingzeiten"}
+}

@@ -74,7 +74,7 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   `ash_road_camp` (51 FPS on the main PC's iGPU, the Highlands' open pull
   53 FPS in the same run: GPU-bound as before), docs.
 - **Gate walk** (the user):
-  1. `toolsun_godot.cmd play`, create a new character, Play solo: the Ash
+  1. `tools\run_godot.cmd play`, create a new character, Play solo: the Ash
      Road at night. Edda, the dead, the shard, the cart, the bridge, the
      Reeve, the gate, Runehold (Sigrun, ACT I).
   2. Talk to Sigrun, then the chain: three shards, Ashwick (the cursed
@@ -88,6 +88,21 @@ dungeons), M15a (Frostvales), M15b (The Breach and the finale).
   5. Co-op only after a release (protocol 17): a friend whose story still
      needs the Colossus wakes it on the server.
 - Next: M14b (Act 2 in the Cistern and the Warrens), with its own questions.
+
+## M14b Act 2, part 1 "Four Anchors" (in progress since 2026-11-02)
+Same worktree as M14a. The user's decisions (2026-11-02): the story goes into
+the existing dungeon rooms; each core shard gives a lasting rune blessing;
+Aldric appears as an echo; extras: Maren's story (her brother Joren, rescued
+alive), Hild's thread, the storm thread (co-op, optional), Runehold grows.
+Plan: phases 0 bible, 1 tech, 2 water (Cistern), 3 fire (Warrens), 4 storm +
+Runehold, 5 wrap-up.
+- Phase 0 built: STORY_DESIGN "Act 2, part 1", ROADMAP M14b.
+- Phase 1 built: the tech (TECHNICAL_ARCHITECTURE "Act 2, part 1 (M14b)"):
+  a story boss wakes only for a quest that wants it, every dungeon boss arena
+  can be replayed for a story (no flag, loot only for who needed it), the
+  three core blessings and the effect `bless`, the goal `quests`, ghostly
+  echoes (Aldric). Net scenarios `story_boss`, `dungeon_boss`,
+  `warrens_boss`, `stormsworn`, `stormcaller` green.
 
 ## Rig v3: detailed models + visible gear (in progress since 2026-10-14)
 The user: every model reads "too much like Minecraft", make them far more

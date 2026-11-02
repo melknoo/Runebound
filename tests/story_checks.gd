@@ -30,6 +30,7 @@ func run(runner: Node) -> void:
 	await _dialogue()
 	await _cutscenes()
 	_story_bosses()
+	await _act2_tech()
 	StoryDB.reload()
 	await _act1()
 	await _prologue()  # drops the test quests
@@ -362,16 +363,82 @@ func _story_bosses() -> void:
 	var at := hero.global_position
 	_check(not StoryBosses.needed_near(lab, "colossus", at), "a hero without a story never wakes a story boss (test heroes, bots)")
 	ql.from_dict({"v": 1, "act": 1})
+	_check(not StoryBosses.needed_near(lab, "colossus", at), "M14b: a story that isn't at the boss's step doesn't wake it")
+	var at_step := {"v": 1, "act": 1, "quests": {"a1_colossus": {"s": 0, "n": 0}}}
+	ql.from_dict(at_step)
 	_check(StoryBosses.needed_near(lab, "colossus", at) and not StoryBosses.needed_near(lab, "colossus", at + Vector3(0, 0, 90)),
-		"a hero whose story lacks the Colossus wakes it when near the arena, not from 90 m")
-	ql.from_dict({"v": 1, "act": 1, "beats": ["boss:colossus"]})
-	_check(not StoryBosses.needed_near(lab, "colossus", at) and StoryBosses.needed_near(lab, "vessel", at),
-		"a veteran doesn't need it again; the Vessel it still needs")
-	ql.from_dict({"v": 1, "act": 1})
+		"a hero whose quest wants the Colossus wakes it when near the arena, not from 90 m")
+	ql.from_dict({"v": 1, "act": 1, "beats": ["boss:colossus"], "quests": {"a1_colossus": {"s": 0, "n": 0}}})
+	_check(not StoryBosses.needed_near(lab, "colossus", at) and not StoryBosses.needed_near(lab, "vessel", at),
+		"a veteran doesn't need it again; the Vessel waits for its own step")
+	ql.from_dict(at_step)
 	var credited := StoryBosses.credit(lab, "colossus", at)
 	_check(credited.size() == 1 and credited[0] == hero, "the heroes that needed it are the ones its replay pays")
 	ql.from_dict({})
 	_check(Net.PROTOCOL >= 17, "the story in CHARACTER bumped the protocol (17)")
+
+
+## M14b phase 1: a beaten dungeon boss stands again for a story that wants
+## it (BossArena), the core-shard blessings, the "quests" goal, echoes.
+func _act2_tech() -> void:
+	var hero: Player = lab.player
+	var ql := QuestLog.of(hero)
+	ql.from_dict({"v": 1, "act": 2})
+	ql.bind(hero)
+	StoryDB.add_test_quest({"id": "t_arena", "kind": "main", "act": 2, "title": "ui.journal.title", "steps": [
+		{"id": "boss", "text": "ui.journal.side", "goal": {"type": "boss", "enemy": "dungeon_boss"}}]})
+	var arena := BossArena.new()
+	arena.boss_id = "dungeon_boss"
+	arena.flag = &"t_arena_down"
+	arena.rect = Rect2(hero.global_position.x - 12, hero.global_position.z - 12, 24, 24)
+	lab.world.add_child(arena)
+	arena.global_position = hero.global_position + Vector3(0, 0, -4)
+	SaveGame.flags["t_arena_down"] = true
+	await _frames(20)
+	_check(arena.starts == 0, "a beaten arena stays quiet for a story that doesn't want its boss")
+	ql.start("t_arena")
+	await _until(func() -> bool: return arena.fighting(), 60)
+	_check(arena.fighting(), "a story at the boss's step wakes the beaten boss again")
+	if arena.boss != null:
+		arena.boss.take_hit(HitInfo.create(99999.0, HitInfo.DamageType.PHYSICAL, HitInfo.Weight.HEAVY, arena.boss.global_position))
+	await _until(func() -> bool: return ql.is_done("t_arena"), 60)
+	await _frames(20)
+	_check(ql.is_done("t_arena") and ql.has_beat("boss:dungeon_boss") and not arena.fighting() and arena.starts == 1
+		and SaveGame.has_flag(&"t_arena_down"), "beaten again: the quest goes on, the flag stays, the boss stays down")
+	arena.queue_free()
+	SaveGame.flags.erase("t_arena_down")
+	# the core-shard blessings
+	var dmg0 := hero.stat(&"damage_pct")
+	StoryEffects.apply([{"bless": "core_fire"}], hero, ql)
+	_check(hero.blessings.has("core_fire") and is_equal_approx(hero.stat(&"damage_pct") - dmg0, 6.0)
+		and Blessings.ORDER.has(&"core_water") and Blessings.ORDER.has(&"core_storm") and Texts.has("blessing.core_storm.effect"),
+		"a core shard's blessing: the fire's +6 % damage, water and storm ready")
+	hero.blessings.remove_at(hero.blessings.find("core_fire"))
+	hero.equipment._recompute()
+	# a frame quest waits for its threads
+	StoryDB.add_test_quest({"id": "t_a", "kind": "side", "act": 2, "title": "ui.journal.title", "steps": [
+		{"id": "x", "text": "ui.journal.side", "goal": {"type": "beat", "id": "t_a_done"}}]})
+	StoryDB.add_test_quest({"id": "t_b", "kind": "side", "act": 2, "title": "ui.journal.title", "steps": [
+		{"id": "x", "text": "ui.journal.side", "goal": {"type": "beat", "id": "t_b_done"}}]})
+	StoryDB.add_test_quest({"id": "t_frame", "kind": "main", "act": 2, "title": "ui.journal.title", "steps": [
+		{"id": "both", "text": "ui.journal.side", "goal": {"type": "quests", "ids": ["t_a", "t_b"]}}]})
+	ql.start("t_frame")
+	ql.start("t_a")
+	ql.start("t_b")
+	ql.add_beat("t_a_done")
+	var half := ql.progress("t_frame") == Vector2i(1, 2) and ql.is_running("t_frame")
+	ql.add_beat("t_b_done")
+	_check(half and ql.is_done("t_frame"), "a frame quest finishes once all of its threads are done (1/2, then 2/2)")
+	# an echo: pale, no body to bump into
+	StoryDB.add_test_npc("t_echo", {"name": "npc.edda.name", "rig": "runebreaker", "ghost": true})
+	var echo := StoryNpc.create("t_echo")
+	echo.position = lab.ground_point(hero.global_position + Vector3(3, 0, 0))
+	lab.world.add_child(echo)
+	await _frames(2)
+	var body := echo.get(&"_body") as StaticBody3D
+	_check(echo.ghost and body != null and body.collision_layer == 0, "an echo (Aldric) floats without a body")
+	echo.queue_free()
+	ql.from_dict({})
 
 
 ## Phase 5: the prologue, played through in its own zone: Edda, the road, the
