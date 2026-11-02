@@ -3,6 +3,26 @@
 	"note": "Playtest checklist for the in-game PLAYTEST log (key J). Built from the open playtest points in docs/KNOWN_ISSUES.md; keep ids stable (the player's ticks are keyed by them, user://playtest.json).",
 	"groups": [
 		{
+			"id": "m14b",
+			"title": "M14b: Akt 2 - Vier Anker",
+			"items": [
+				{"id": "m14b_frame", "src": "M14b", "title": "Vier Anker", "hint": "Nach Akt 1 (oder ein alter Charakter, der auf Akt II wartete): Sigrun erklärt die vier Anker, Wasser- und Feuer-Quest starten. Klar, warum es jetzt in die Dungeons geht?"},
+				{"id": "m14b_ilse", "src": "M14b", "title": "Ilse in der Zisterne", "hint": "Hinter dem Platten-Tor der Pumpenkammer wartet Ilse, die letzte Wächterin. Findest du sie (Marker, „?“)? Stört es, dass man dafür das Platten-Rätsel lösen muss?"},
+				{"id": "m14b_cell", "src": "M14b", "title": "Aldrics Zelle", "hint": "Im Vorraum hinter der Spiegelgalerie: das Pult mit den vier Kreisen. Fällt der Ort auf, wirkt der Text?"},
+				{"id": "m14b_boss_again", "src": "M14b", "title": "Bosse stehen wieder auf", "hint": "Schon besiegter Tiefenschlund oder Glutbrutmutter: stehen sie für den Anker wieder (Beute nur für dich)? Stört es, den Boss nochmal zu machen?"},
+				{"id": "m14b_anchor", "src": "M14b", "title": "Anker & Kamerafahrt", "hint": "Der Splitter leuchtet am Boden, E nimmt ihn: er steigt auf, fliegt in deine Hand, eine blasse Gestalt erscheint. Gut sichtbar, wirkt der Moment?"},
+				{"id": "m14b_echo", "src": "M14b", "title": "Aldrics Echo", "hint": "Durchsichtig, schwebend, drei Antworten (warum / Aschwick / schweigen), in jedem Dungeon andere Sätze. Unheimlich genug, Text gut?"},
+				{"id": "m14b_blessings", "src": "M14b", "title": "Kern-Segen", "hint": "Segen der Tiefe (+8 % Leben), der Glut (+6 % Schaden), des Sturms (6 % schnellere Abklingzeiten): spürbar, zu stark oder zu schwach?"},
+				{"id": "m14b_tracker", "src": "M14b", "title": "Zwei Fäden zugleich", "hint": "Wasser und Feuer laufen parallel: zeigt die Quest-Anzeige im jeweiligen Dungeon den passenden Faden und der Marker die richtige Stelle?"},
+				{"id": "m14b_joren", "src": "M14b", "title": "Die letzte Schicht", "hint": "Maren fragt nach ihrem Bruder; Joren lebt, hinter dem Platten-Tor im Erzlager der Glutstollen, danach steht er an ihrer Schmiede. Rührend oder zu knapp?"},
+				{"id": "m14b_roots", "src": "M14b", "title": "Wurzeln aus Feuer", "hint": "Nach dem Kohlwald: Hild schickt dich zum Feueranker, dann zurück zu den kalten Wurzeln. Lohnt der Weg?"},
+				{"id": "m14b_storm", "src": "M14b", "title": "Der Sturmanker (Koop)", "hint": "Tova erzählt einmal von Vey (danach wieder direkt der Laden). Zu dritt in die Sturmwarte: letzter Sturmrufer, Anker, Echo, zurück zu Tova. Braucht ein Release und drei Helden (coop 2)."},
+				{"id": "m14b_runehold", "src": "M14b", "title": "Runehold wächst", "hint": "Ilse bei den Hütten, Joren bei Maren, Bram am Nordtor (nach seinen zehn Raidern), je mit eigenen Sätzen: wirkt das Lager lebendiger?"},
+				{"id": "m14b_end", "src": "M14b", "title": "Ende von Teil 1", "hint": "Beide Anker, dann Sigrun: Hinweis auf die Frosttäler, Karte „ENDE VON AKT II, TEIL 1“. Wie lange hat Teil 1 gedauert (Ziel etwa 1 h)?"},
+				{"id": "m14b_language", "src": "M14b", "title": "Deutsch & Englisch", "hint": "Alle neuen Texte in beiden Sprachen? Holprige Sätze notieren."}
+			]
+		},
+		{
 			"id": "m14a",
 			"title": "M14a: Story - Prolog & Akt 1",
 			"items": [

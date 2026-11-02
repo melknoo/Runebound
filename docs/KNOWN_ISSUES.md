@@ -14,6 +14,10 @@
 - Ilse and Joren wait behind plate gates (the pump chamber, the ore store):
   a hero who skips those puzzles has to solve them for the story.
 - The Stormwatch thread needs three heroes and a release (protocol 17).
+- The smoke test loads the Cistern, the Warrens and the Stormwatch once more
+  for the story checks: 291-376 s now (watchdog 420 s, the wrapper's limit
+  480 s). Next step if it creeps up: raise both, or reuse the smoke's own
+  dungeon visits for the story checks.
 - One echo NPC for all anchors: its talk is picked by the dungeon (StoryCond
   `zone`); a story that left an echo unspoken finds it again on return.
 
