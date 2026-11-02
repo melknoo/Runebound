@@ -1,0 +1,56 @@
+{
+  "char_id": "channel_lurker",
+  "tag": "channel_lurker",
+  "date": "2026-11-02",
+  "key": "channel_lurker",
+  "service": "download",
+  "title": "Eel monster rigged",
+  "author": "KrazyKaijus (@pincers60)",
+  "source_page": "https://sketchfab.com/3d-models/eel-monster-rigged-7747294b15b348cabd6f6a7c3f741f74",
+  "file": "eel_monster_rigged.glb",
+  "exclude": [],
+  "rotate_deg": [
+    -90,
+    0,
+    180
+  ],
+  "file_sha256": "afcfa254f2f450c8bcfcce1dec5bfc24b5d5622f735f3af214c2dd0cc1af900a",
+  "original": {
+    "tris": 46876,
+    "textures": [
+      [
+        4096,
+        4096
+      ]
+    ],
+    "bbox_min": [
+      -0.1141,
+      -0.1217,
+      -0.5982
+    ],
+    "bbox_max": [
+      0.1143,
+      0.2485,
+      0.4894
+    ]
+  },
+  "compact": {
+    "max_tris": 50000,
+    "tris": 46876,
+    "max_tex": 2048,
+    "jpeg_quality": 90,
+    "blender": "5.2.2 LTS",
+    "sha256": "d3373f6e175c7a16eb2885645894ec4a7a5469201cef9a6768f87aa19bab78f9",
+    "bytes": 2065172
+  },
+  "license": {
+    "route": "download",
+    "licence": "CC Attribution",
+    "author": "KrazyKaijus (@pincers60)",
+    "source_page": "https://sketchfab.com/3d-models/eel-monster-rigged-7747294b15b348cabd6f6a7c3f741f74",
+    "checked": "2026-11-02",
+    "attribution_required": true,
+    "commercial": true,
+    "public_redistribution": true
+  }
+}

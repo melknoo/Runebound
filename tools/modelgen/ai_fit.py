@@ -23,6 +23,7 @@ import os
 import sys
 
 import bpy
+import mathutils
 
 sys.dont_write_bytecode = True
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +42,14 @@ UV_MARGIN = 0.003       # ~3 px at 1024: an AI body unwraps into hundreds of isl
 # clips re-solve their reach intents on whatever armature they are keyed on).
 RB3_BONES = {**gen.RB_BONES, "arm_len": 0.52}
 REV = 2  # the fit.json revision new proposals get (see build)
+IMP3_BONES = {**gen.IMP_BONES, "shoulder_x": 0.15, "arm_len": 0.34}  # the downloaded imp's shorter, T-pose arms
+# the downloaded hare stands tall on long legs; the legacy template crouches (warped
+# onto it, the haunches tore): a v3 template from its own joints, the clips re-pose it
+HARE3 = {"hip": (0.066, 0.173), "shoulder": (-0.083, 0.19), "neck": (-0.108, 0.206), "head": (-0.183, 0.227),
+         "jaw0": (-0.15, 0.2), "jaw1": (-0.18, 0.205), "tail": (0.108, 0.206),
+         "f_top": (-0.1, 0.14), "f_elbow": (-0.083, 0.098), "f_wrist": (-0.087, 0.032), "f_toe": (-0.12, 0.007),
+         "h_top": (0.075, 0.131), "h_stifle": (0.087, 0.098), "h_hock": (0.116, 0.073), "h_ankle": (0.116, 0.015),
+         "h_toe": (0.091, 0.005), "leg_x": 0.023}
 REGION_MIN = {"helm": 400, "gloves": 400}  # tris below which a look's head or hands count as starved
 EL3_BONES = {**gen.EL_BONES, "shoulder_x": 0.19, "arm_len": 0.44}  # the slender AI mage (concept 90): narrow shoulders, short forearms
 
@@ -71,6 +80,35 @@ AI = {
     "marauder": dict(rig="marauder", glb="cinder_marauder", atlas="cinder_marauder", palette="cinder_marauder",
                      bone_args=gen.CM_BONES, kit=gen.marauder_kit,
                      clips=gen.marauder_clips, skip=(1, 2), budget=6000, height=1.85),
+    # enemies from downloaded models (ai_ingest.ingest_ext; one mesh each, the
+    # legacy GLB name, skeleton and clips): "bones" builds a non-humanoid
+    # template, "src" shares one source between a family and its boss (each
+    # with its own "fit" file, the landmarks differ with the scale)
+    "imp": dict(rig="imp", glb="kiln_imp", atlas="kiln_imp", palette="kiln_imp", src="kiln_imp",
+                bone_args=IMP3_BONES, kit=gen.imp_kit, clips=gen.imp_clips, skip=(1,), budget=6000, kit_tris=100,
+                height=1.23),
+    "beetle": dict(rig="beetle", glb="cinder_beetle", atlas="cinder_beetle", palette="cinder_beetle", src="cinder_beetle",
+                   bones=lambda: gen.quadruped_bones(gen.BEETLE), kit=gen.beetle_kit, kit_args=dict(s=1.0),
+                   clips=lambda arm: gen.beetle_clips(arm, 1.0), skip=(1,), budget=6000, kit_tris=100, height=0.75),
+    "broodmother": dict(rig="broodmother", glb="broodmother", atlas="broodmother", palette="broodmother",
+                        src="cinder_beetle", fit="fit_broodmother.json",
+                        bones=lambda: gen.quadruped_bones(gen._scaled(gen.BEETLE, 1.6, (0.95, 0.4))),
+                        kit=gen.beetle_kit, kit_args=dict(s=1.6, sac=True, pal_key="broodmother"),
+                        clips=lambda arm: gen.broodmother_clips(arm, 1.6), skip=(1,), budget=12000, kit_tris=300,
+                        height=1.2),
+    "lurker": dict(rig="lurker", glb="channel_lurker", atlas="channel_lurker", palette="channel_lurker",
+                   src="channel_lurker", bones=lambda: gen.serpent_bones(1.0), kit=gen.serpent_kit,
+                   kit_args=dict(s=1.0, thick=1.0, pal_key="channel_lurker"),
+                   clips=lambda arm: gen.lurker_clips(arm, 1.0), skip=(1,), budget=6000, kit_tris=50, height=2.1,
+                   max_height=2.2),
+    "deepmaw": dict(rig="deepmaw", glb="deepmaw", atlas="deepmaw", palette="deepmaw", src="channel_lurker",
+                    fit="fit_deepmaw.json", bones=lambda: gen.serpent_bones(1.3), kit=gen.serpent_kit,
+                    kit_args=dict(s=1.3, thick=1.9, pal_key="deepmaw"), girth=1.45,
+                    clips=lambda arm: gen.deepmaw_clips(arm, 1.3), skip=(1,), budget=12000, kit_tris=50, height=2.8,
+                    max_height=3.0),
+    "hare": dict(rig="hare", glb="ash_hare", atlas="ash_hare", palette="ash_hare", src="ash_hare",
+                 bones=lambda: gen.quadruped_bones(HARE3), kit=gen.hare_kit, clips=gen.hare_clips, skip=(),
+                 budget=2000, kit_tris=0, height=0.37),
 }
 
 
@@ -99,12 +137,12 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     if cfg.get("looks") and look is None:
         raise ValueError("%s is a hero: pass --look (%s)" % (char, ", ".join(cfg["looks"])))
     label = char if look is None else "%s/%s" % (char, look)
-    src = src or os.path.join(HERE, "ai_src", *label.split("/"))
-    fit_path = os.path.join(src, "fit.json")
+    src = src or os.path.join(HERE, "ai_src", *cfg.get("src", label).split("/"))
+    fit_path = os.path.join(src, cfg.get("fit", "fit.json"))
     rig.reset_scene()
     gen.POSERS.clear()
     gen.SHEETS.clear()
-    bones = gen.humanoid_bones(**cfg["bone_args"])
+    bones = cfg["bones"]() if "bones" in cfg else gen.humanoid_bones(**cfg["bone_args"])
     have_fit = os.path.exists(fit_path)
     # fit.json "rev" 2 (new proposals): fused fans split (lib.aimesh.clean), the
     # palette ramp picked before the lightness lift (lib.texbake.quantize);
@@ -114,9 +152,12 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     obj = aimesh.load(os.path.join(src, "raw.glb"), cfg["glb"] + "_ai")
     dropped = aimesh.clean(obj, split_fans=rev >= 2)
     aimesh.normalize(obj, fj["yaw_deg"], fj["height"])
+    if cfg.get("girth"):  # a fatter body than the source (the Deepmaw from the lurker's eel)
+        g = float(cfg["girth"])
+        obj.data.transform(mathutils.Matrix.Diagonal((g, g, 1.0, 1.0)))
     has_weapon = look is not None and os.path.exists(os.path.join(src, "weapon", "raw.glb"))
     weapon_tris = int(cfg["weapon"]["tris"]) if has_weapon else 0
-    tris_in, tris_out = aimesh.decimate(obj, cfg["budget"] - KIT_TRIS - weapon_tris)
+    tris_in, tris_out = aimesh.decimate(obj, cfg["budget"] - cfg.get("kit_tris", KIT_TRIS) - weapon_tris)
     print("ai_fit: %s  %d -> %d tris, %d specks dropped" % (label, tris_in, tris_out, dropped))
 
     if detect:
@@ -134,6 +175,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     arm = rig.build_armature(cfg["rig"], bones)
 
     kit_args = dict((cfg.get("looks") or {}).get(look, {}))
+    kit_args.update(cfg.get("kit_args", {}))
     kit_args.update(fj.get("kit", {}))  # per-source kit tweaks (e.g. the circlet gem's height)
     weapon_src = os.path.join(src, "weapon")
     if has_weapon:
@@ -153,7 +195,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
         print("ai_fit: %s weapon from %s" % (label, weapon_src))
 
     pm = rig.PartMesh(px_per_m=PX_PER_M)
-    mats = cfg["kit"](pm, fit.snapper(obj), cfg["bone_args"], **kit_args)
+    mats = cfg["kit"](pm, fit.snapper(obj), cfg.get("bone_args"), **kit_args)
     kit = pm.to_object(cfg["glb"] + "_kit", mats, arm)
     body = fit.join_body(obj, kit, mats, cfg["glb"], arm)
     cfg["clips"](arm)
@@ -167,7 +209,7 @@ def build(char, look=None, src=None, detect=False, out=None, sheets=False):
     atlas.bake(body, size, atlas_path, skip_material_indices=cfg["skip"], base=base)
     body.data.uv_layers.remove(body.data.uv_layers[aimesh.SRC_UV])
     report = fit.verify(body, arm, bones, cfg["budget"], atlas_path, [h for r in ramps for h in r],
-                        all_slots=look is None)
+                        all_slots=look is None, max_height=cfg.get("max_height", 2.0))
 
     parts = [body]
     if look is not None:
@@ -217,8 +259,12 @@ def main():
         looks = [opts["look"]] if "look" in opts else ([None] if not AI[name].get("looks") else list(AI[name]["looks"]))
         for look in looks:
             label = name if look is None else "%s/%s" % (name, look)
-            if not opts.get("src") and not os.path.exists(os.path.join(HERE, "ai_src", *label.split("/"), "raw.glb")):
-                print("ai_fit: %s has no source yet (tools/modelgen/ai_src/%s), skipped" % (label, label))
+            key = AI[name].get("src", label)
+            fit_name = AI[name].get("fit", "fit.json")
+            src_dir = os.path.join(HERE, "ai_src", *key.split("/"))
+            if not opts.get("src") and not (os.path.exists(os.path.join(src_dir, "raw.glb"))
+                                            and os.path.exists(os.path.join(src_dir, fit_name))):
+                print("ai_fit: %s has no source yet (tools/modelgen/ai_src/%s/%s), skipped" % (label, key, fit_name))
                 continue
             build(name, look=look, src=opts.get("src"), detect=bool(opts.get("detect")), out=opts.get("out"),
                   sheets=bool(opts.get("sheets")))

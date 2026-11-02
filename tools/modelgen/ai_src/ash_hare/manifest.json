@@ -1,0 +1,61 @@
+{
+  "char_id": "ash_hare",
+  "tag": "ash_hare",
+  "date": "2026-11-02",
+  "key": "ash_hare",
+  "service": "download",
+  "title": "Hare (animated)",
+  "author": "bluekiwi.dog (@bluekiwi.dog)",
+  "source_page": "https://sketchfab.com/3d-models/hare-animated-948938cd237d49a9868662213fa05543",
+  "file": "hare_animated.glb",
+  "exclude": [],
+  "rotate_deg": [
+    90,
+    0,
+    0
+  ],
+  "file_sha256": "a338056850bc1c8d35c4f06b75b2cca36055c81beae6c9de2030f1a6d262bef7",
+  "original": {
+    "tris": 7136,
+    "textures": [
+      [
+        1024,
+        1024
+      ],
+      [
+        1024,
+        1024
+      ]
+    ],
+    "bbox_min": [
+      -0.3211,
+      71.9534,
+      112.6057
+    ],
+    "bbox_max": [
+      0.3211,
+      74.0415,
+      115.0805
+    ]
+  },
+  "compact": {
+    "max_tris": 50000,
+    "tris": 7136,
+    "max_tex": 2048,
+    "jpeg_quality": 90,
+    "merged_grid": 2,
+    "blender": "5.2.2 LTS",
+    "sha256": "075e26c31d749712fba94825633b12537573dbe32cc67d89e0f154bab59b8e4b",
+    "bytes": 309564
+  },
+  "license": {
+    "route": "download",
+    "licence": "CC Attribution",
+    "author": "bluekiwi.dog (@bluekiwi.dog)",
+    "source_page": "https://sketchfab.com/3d-models/hare-animated-948938cd237d49a9868662213fa05543",
+    "checked": "2026-11-02",
+    "attribution_required": true,
+    "commercial": true,
+    "public_redistribution": true
+  }
+}

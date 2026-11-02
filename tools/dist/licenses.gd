@@ -1,7 +1,8 @@
 extends SceneTree
 ## Writes LICENSES.txt for a player build (tools/dist/build_windows.ps1):
 ## the Godot Engine's licence and its third-party notices, as the engine
-## itself reports them, then the fonts' OFL texts.
+## itself reports them, then the fonts' OFL texts and the credits for the
+## downloaded (CC BY) models from CREDITS.md.
 ## `godot --headless --path . --script res://tools/dist/licenses.gd -- --out=<file>`
 
 const FONT_LICENSES: Array[String] = ["res://assets/fonts/OFL_PixelifySans.txt",
@@ -20,6 +21,7 @@ func _init() -> void:
 	text += RULE + "Fonts\n\n"
 	for path in FONT_LICENSES:
 		text += "%s:\n\n%s\n\n" % [path.get_file().trim_prefix("OFL_").trim_suffix(".txt"), FileAccess.get_file_as_string(path)]
+	text += RULE + FileAccess.get_file_as_string("res://CREDITS.md")
 	text += RULE + "Third-party components of the Godot Engine\n\n"
 	for info: Dictionary in Engine.get_copyright_info():
 		text += "- %s\n" % info["name"]

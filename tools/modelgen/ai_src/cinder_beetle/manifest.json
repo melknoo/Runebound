@@ -1,0 +1,56 @@
+{
+  "char_id": "cinder_beetle",
+  "tag": "cinder_beetle",
+  "date": "2026-11-02",
+  "key": "cinder_beetle",
+  "service": "download",
+  "title": "A Rhino beetle",
+  "author": "aaadragon (@aaadragon)",
+  "source_page": "https://sketchfab.com/3d-models/a-rhino-beetle-83b3e7f2c3d84678a06d68d360efac50",
+  "file": "a_rhino_beetle.glb",
+  "exclude": [],
+  "rotate_deg": [
+    90,
+    0,
+    0
+  ],
+  "file_sha256": "2eb1e986a05f8e2d478d357cf53624ec962bd39be828a418c3d41245a3aa2ed5",
+  "original": {
+    "tris": 4136,
+    "textures": [
+      [
+        1024,
+        1024
+      ]
+    ],
+    "bbox_min": [
+      -2.1734,
+      -3.9679,
+      -0.1001
+    ],
+    "bbox_max": [
+      2.1734,
+      3.5154,
+      2.8953
+    ]
+  },
+  "compact": {
+    "max_tris": 50000,
+    "tris": 4136,
+    "max_tex": 2048,
+    "jpeg_quality": 90,
+    "blender": "5.2.2 LTS",
+    "sha256": "4b41d4dd7804fac8edd0b720c9fcba711d96f317f33716b4be037970df68ff48",
+    "bytes": 464352
+  },
+  "license": {
+    "route": "download",
+    "licence": "CC Attribution",
+    "author": "aaadragon (@aaadragon)",
+    "source_page": "https://sketchfab.com/3d-models/a-rhino-beetle-83b3e7f2c3d84678a06d68d360efac50",
+    "checked": "2026-11-02",
+    "attribution_required": true,
+    "commercial": true,
+    "public_redistribution": true
+  }
+}

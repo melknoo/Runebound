@@ -1,0 +1,13 @@
+{
+  "key": "channel_lurker",
+  "file": "download/eel_monster_rigged.glb",
+  "title": "Eel monster rigged",
+  "author": "KrazyKaijus (@pincers60)",
+  "licence": "CC Attribution",
+  "source_page": "https://sketchfab.com/3d-models/eel-monster-rigged-7747294b15b348cabd6f6a7c3f741f74",
+  "rotate_deg": [
+    -90,
+    0,
+    180
+  ]
+}

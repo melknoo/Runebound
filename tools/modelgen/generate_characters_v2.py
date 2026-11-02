@@ -1414,6 +1414,64 @@ def marauder_kit(pm, snap, bones=CM_BONES):
             rig.make_material("cm_blade", "#9A9AA6")]
 
 
+def imp_kit(pm, snap, bones=None, grin_z=0.9, eye_z=1.0, eye_x=0.06, belly_z=0.56):
+    """Rig v3 (a fitted imp body): the furnace grin, the ember eyes (the
+    elite aura recolours them) and the belly's three cracks, glow decals
+    snapped onto the surface at the legacy places (heights per source in
+    fit.json "kit")."""
+    ki = PAL["kiln_imp"]
+    snap(pm.box("head", (0.16, 0.03, 0.03), (0, -0.25, grin_z), mat_index=1))
+    for x in (1.0, -1.0):
+        snap(pm.box("head", (0.05, 0.03, 0.04), (eye_x * x, -0.25, eye_z), mat_index=1))
+    for k in range(3):
+        snap(pm.box("spine", (0.12 - k * 0.02, 0.03, 0.025), (0.02 * (k - 1), -0.2, belly_z + k * 0.05), mat_index=1))
+    return [rig.make_material("ki_body", "#FFFFFF"),
+            rig.make_material("ki_glow", ki["glow"], emission_hex=ki["glow"], strength=3.0)]
+
+
+def beetle_kit(pm, snap, bones=None, s=1.0, sac=False, pal_key="cinder_beetle", eye_z=0.4, eye_y=-0.67):
+    """Rig v3 (a fitted beetle body): the ember seam between the wing cases
+    (snapped from above), the eyes; the Broodmother (sac=True) gets the
+    legacy egg sac on the tail bone with its brood glowing through."""
+    d = _scaled(BEETLE, s, (0.95, 0.4) if sac else None)
+    pal = PAL[pal_key]
+    hy, hz = d["hip"]
+    seg = 6  # the seam in short pieces, each snapped onto the curved shell
+    y0 = (hy + d["shoulder"][0]) * 0.5 - 0.4 * s
+    for k in range(seg):
+        snap(pm.box("spine", (0.035 * s, 0.8 * s / seg + 0.01, 0.04 * s),
+                    (0, y0 + (k + 0.5) * 0.8 * s / seg, hz + 0.31 * s), mat_index=1), top=True)
+    for x in (1.0, -1.0):
+        snap(pm.box("head", (0.06 * s, 0.04 * s, 0.035 * s), (0.13 * x * s, eye_y * s, eye_z * s), mat_index=1))
+    if sac:
+        sac_paint = pm.paint(pal["sac"], 2, "hide")
+        rot, ln = _along(d["hip"], d["tail"])
+        pm.loft("tail", [(0.0, 0.3 * s, 0.22 * s, 0, 0), (ln * 0.4, 0.42 * s, 0.32 * s, 0, 0.02 * s),
+                         (ln * 0.85, 0.34 * s, 0.26 * s, 0, 0.02 * s), (ln + 0.08 * s, 0.14 * s, 0.1 * s, 0, 0)],
+                center=(0, hy, hz), rot=rot, paint=sac_paint)
+        for k in range(5):
+            pm.box("tail", (0.07 * s, 0.07 * s, 0.05 * s),
+                   (0.22 * s * (1 if k % 2 else -1), hy + ln * (0.25 + k * 0.12), hz + 0.22 * s - k * 0.02 * s), mat_index=1)
+    return [rig.make_material(pal_key[:2] + "_body", "#FFFFFF"),
+            rig.make_material(pal_key[:2] + "_glow", pal["glow"], emission_hex=pal["glow"], strength=3.0)]
+
+
+def serpent_kit(pm, snap, bones=None, s=1.0, thick=1.0, pal_key="channel_lurker", eye_z=1.95, eye_y=-0.38, eye_x=0.15):
+    """Rig v3 (a fitted eel body): the bioluminescent eyes (heights per
+    source in fit.json "kit", in units of s)."""
+    pal = PAL[pal_key]
+    for x in (1.0, -1.0):
+        snap(pm.box("head", (0.05 * thick, 0.07 * thick, 0.04 * thick), (eye_x * thick * x, eye_y * s, eye_z * s),
+                    mat_index=1))
+    return [rig.make_material(pal_key[:2] + "_body", "#FFFFFF"),
+            rig.make_material(pal_key[:2] + "_eyes", pal["eyes"], emission_hex=pal["eyes"], strength=3.0)]
+
+
+def hare_kit(pm, snap, bones=None):
+    """Rig v3 (a fitted hare body): scenery, no glow - the body slot only."""
+    return [rig.make_material("ah_body", "#FFFFFF")]
+
+
 def marauder_clips(arm):
     windup = f(const_from("enemies/melee_rusher.gd", "WINDUP_TIME"))     # 33
     strike = f(const_from("enemies/melee_rusher.gd", "ATTACK_TIME"))     # 9
@@ -3633,10 +3691,13 @@ def build_broodmother(sheets=False):
 IMP_LEG = 0.45 - 0.1
 
 
+IMP_BONES = dict(hip=0.45, chest_top=0.85, shoulder_x=0.2, arm_len=0.46, leg_x=0.11, head_base=0.84, head_top=1.16,
+                 lean=-0.06)
+
+
 def build_imp(sheets=False):
     rig.reset_scene()
-    arm = rig.build_armature("imp", humanoid_bones(
-        hip=0.45, chest_top=0.85, shoulder_x=0.2, arm_len=0.46, leg_x=0.11, head_base=0.84, head_top=1.16, lean=-0.06))
+    arm = rig.build_armature("imp", humanoid_bones(**IMP_BONES))
     ki = PAL["kiln_imp"]
     pm = rig.PartMesh(px_per_m=CHAR_DENSITY)
     skin = pm.paint(ki["skin"], 2, "hide")

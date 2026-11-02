@@ -347,13 +347,33 @@ def join_weapon(body, weapon):
 
 def snapper(obj, proud=0.004):
     """snap(verts): move a kit decal along +-Y so its front face sits `proud`
-    metres in front of the body surface (most forward hit of a few rays)."""
+    metres in front of the body surface (most forward hit of a few rays);
+    snap(verts, top=True): along Z, its top face `proud` above the surface
+    seen from above (a seam on a shell)."""
     bm = bmesh.new()
     bm.from_mesh(obj.data)
     bvh = BVHTree.FromBMesh(bm)
     bm.free()
 
-    def snap(verts):
+    def snap_top(verts):
+        xs = [v.co.x for v in verts]
+        ys = [v.co.y for v in verts]
+        xm, ym = (min(xs) + max(xs)) * 0.5, (min(ys) + max(ys)) * 0.5
+        hits = []
+        for x, y in ((xm, ym), (min(xs), ym), (max(xs), ym), (xm, min(ys)), (xm, max(ys))):
+            loc, _n, _i, _d = bvh.ray_cast(Vector((x, y, 6.0)), Vector((0.0, 0.0, -1.0)), 12.0)
+            if loc is not None:
+                hits.append(loc.z)
+        if not hits:
+            print("fit: snap found no surface at x=%.2f y=%.2f" % (xm, ym))
+            return
+        dz = (max(hits) + proud) - max(v.co.z for v in verts)
+        for v in verts:
+            v.co.z += dz
+
+    def snap(verts, top=False):
+        if top:
+            return snap_top(verts)
         xs = [v.co.x for v in verts]
         zs = [v.co.z for v in verts]
         xm, zm = (min(xs) + max(xs)) * 0.5, (min(zs) + max(zs)) * 0.5
@@ -495,9 +515,10 @@ def split_regions(body, regions=HUMANOID_REGIONS, rings=2, weapon_bone="hand.R",
 # Verification
 # ---------------------------------------------------------------------------
 
-def verify(body, arm, bones, budget, atlas_path=None, palette=None, all_slots=True):
+def verify(body, arm, bones, budget, atlas_path=None, palette=None, all_slots=True, max_height=2.0):
     """all_slots: every material slot carries faces (the single-mesh contract);
-    a gear look needs only its body (no glow on the underclothes)."""
+    a gear look needs only its body (no glow on the underclothes).
+    max_height: the character's top (2 m; the serpent bosses rear higher)."""
     me = body.data
     tri = sum(len(p.vertices) - 2 for p in me.polygons)
     used = sorted({p.material_index for p in me.polygons})
@@ -515,7 +536,7 @@ def verify(body, arm, bones, budget, atlas_path=None, palette=None, all_slots=Tr
 
     def dominant(v):
         return names[max(v.groups, key=lambda g: g.weight).group] if len(v.groups) else ""
-    body_r = max(math.hypot(v.co.x, v.co.y) for v in me.vertices if not dominant(v).startswith("hand"))
+    body_r = max((math.hypot(v.co.x, v.co.y) for v in me.vertices if not dominant(v).startswith("hand")), default=0.0)
     top = max(me.vertices, key=lambda v: v.co.z)
     clips = {a.name: [int(a.frame_range[0]), int(a.frame_range[1])] for a in bpy.data.actions}
     report = {
@@ -525,7 +546,7 @@ def verify(body, arm, bones, budget, atlas_path=None, palette=None, all_slots=Tr
         "slots": [m.name for m in me.materials], "slots_used": used,
         "slots_ok": used == list(range(len(me.materials))) if all_slots else 0 in used,
         "weights_over4": over4, "weightless": zero, "weights_ok": over4 == 0 and zero == 0,
-        "bbox_min": _r(lo), "bbox_max": _r(hi), "height_ok": hi[2] <= 2.0 + 1e-3,
+        "bbox_min": _r(lo), "bbox_max": _r(hi), "height_ok": hi[2] <= max_height + 1e-3,
         "body_radius_wo_hands": round(body_r, 3),
         "top": {"z": round(top.co.z, 3), "bone": dominant(top), "xy": _r((top.co.x, top.co.y))},
         "clips": clips,

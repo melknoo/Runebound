@@ -224,6 +224,17 @@ C:\Users\mknop\.claude\plans\ich-h-tte-gerne-s-mtliche-snuggly-crab.md
   quadruped, serpent, beetle, wisp and vessel rigs, which need `ai_fit`
   landmarks for those skeletons first). The free quota covers about three
   concepts and one mesh a day.
+- **Phase 6 started with downloaded models (2026-11-02, user decision).**
+  Ready-made CC BY models from Sketchfab, credited in `CREDITS.md` and the
+  player build's LICENSES.txt, go through the same fit: kiln_imp,
+  cinder_beetle + the Broodmother (one source, the boss scaled with its egg
+  sac), channel_lurker + the Deepmaw (one source, thicker), ash_hare (a v3
+  quadruped template from its own joints). Same skeletons, clips and timings;
+  `ai_fit.py` now builds the quadruped and serpent templates too. Refused
+  after download: the hell wolf (broken GLB conversion), crow and vulture
+  (folded wings). Shots `m13_warrens`, `m13_cistern`. Generator still for
+  the heroes and the enemies without a ready-made match (survey: the private
+  artifact "RUNEBOUND Asset-Sichtung").
 
 ## M13b the Stormwatch, the co-op dungeon (built 2026-10-13, the user's playtest is the gate)
 Plan with the user's answers (2026-10-13, four rounds): ROADMAP M13b -

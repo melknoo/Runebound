@@ -9,7 +9,7 @@
   blender ... ai_view.py -- arms <candidate dir> <height>
       per 4 cm band the outermost vertex cluster on each side (the arm): x/y range
       for the shoulder, elbow, wrist and hand landmarks.
-  blender ... ai_view.py -- zoom <class> <look> <candidate dir> <out dir> <clip,clip,...>
+  blender ... ai_view.py -- zoom <class> <look | -> <candidate dir> <out dir> <clip,clip,...> [frame m]
       ai_fit.build with big, close contact sheets (3/4 front, front, side) for a few clips.
 """
 import math
@@ -38,13 +38,20 @@ def _load(src, height, split_fans=False, tris=0):
 
 
 def raw(src, height, out, split_fans=False, tris=0):
-    _load(src, height, split_fans, tris)
-    for i in range(0, int(height * 10) + 2):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0.6, i * 0.1))
-        bpy.context.active_object.scale = (2.0, 0.01, 0.003 if i % 5 else 0.008)
-    for i in range(-8, 9):
-        bpy.ops.mesh.primitive_cube_add(size=1, location=(i * 0.1, 0.6, height / 2))
-        bpy.context.active_object.scale = (0.003 if i % 5 else 0.008, 0.01, height + 0.2)
+    obj = _load(src, height, split_fans, tris)
+    co = np.array([obj.matrix_world @ v.co for v in obj.data.vertices])
+    reach = max(np.abs(co[:, 0]).max(), np.abs(co[:, 1]).max())
+    # the frame (700 x 1000 px) fits the tallest or the widest extent: the
+    # pixel scale is printed so landmarks can be read off the grid
+    scale = max(height, 2.0 * reach / 0.7) + 0.3
+    centre = height / 2 if scale <= height + 0.31 else scale / 2 - 0.15
+    print("ai_view: %.5f m/px, image centre at z %.3f" % (scale / 1000.0, centre))
+    for i in range(0, int(scale * 10) + 2):
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(0, 0.6 + reach, i * 0.1))
+        bpy.context.active_object.scale = (2.0 * scale, 0.01, 0.003 if i % 5 else 0.008)
+    for i in range(-int(scale * 5) - 1, int(scale * 5) + 2):
+        bpy.ops.mesh.primitive_cube_add(size=1, location=(i * 0.1, 0.6 + reach, scale / 2))
+        bpy.context.active_object.scale = (0.003 if i % 5 else 0.008, 0.01, scale + 0.2)
     sc = bpy.context.scene
     sc.render.engine = "BLENDER_WORKBENCH"
     sc.display.shading.light = "FLAT"
@@ -52,13 +59,14 @@ def raw(src, height, out, split_fans=False, tris=0):
     sc.render.resolution_x, sc.render.resolution_y = 700, 1000
     cam_data = bpy.data.cameras.new("view_cam")
     cam_data.type = "ORTHO"
-    cam_data.ortho_scale = height + 0.3
+    cam_data.ortho_scale = scale
     cam = bpy.data.objects.new("view_cam", cam_data)
     sc.collection.objects.link(cam)
     sc.camera = cam
-    for name, loc, rot in (("front", (0, -5, height / 2), (math.pi / 2, 0, 0)),
-                           ("side", (5, 0, height / 2), (math.pi / 2, 0, math.pi / 2)),
-                           ("back", (0, 5, height / 2), (math.pi / 2, 0, math.pi))):
+    d = 5 + reach
+    for name, loc, rot in (("front", (0, -d, centre), (math.pi / 2, 0, 0)),
+                           ("side", (d, 0, centre), (math.pi / 2, 0, math.pi / 2)),
+                           ("back", (0, d, centre), (math.pi / 2, 0, math.pi))):
         cam.location, cam.rotation_euler = loc, rot
         sc.render.filepath = out.replace(".png", "_%s.png" % name)
         bpy.ops.render.render(write_still=True)
@@ -85,14 +93,17 @@ def arms(src, height):
                 "gap from %.3f" % xs[gaps[-1]] if len(gaps) else "joined"))
 
 
-def zoom(char, look, src, out, clips):
+def zoom(char, look, src, out, clips, frame=1.7):
+    """frame: metres across the tile (small creatures: about twice their size)."""
     from lib import sheets
     import ai_fit
     sheets.TILE = 420
+    sheets.TARGET = (0.0, 0.0, min(0.95, frame * 0.45))
+    k = frame / 1.7
     sheets.VIEWS = (
-        ("front34", (-2.3, -3.4, 1.4), 1.7),
-        ("front", (0.0, -4.0, 1.0), 1.7),
-        ("side", (-4.0, 0.0, 0.95), 1.7),
+        ("front34", (-2.3 * k, -3.4 * k, 1.4 * k), frame),
+        ("front", (0.0, -4.0 * k, sheets.TARGET[2]), frame),
+        ("side", (-4.0 * k, 0.0, sheets.TARGET[2]), frame),
     )
     render = sheets.render
 
@@ -112,7 +123,8 @@ def main():
     elif cmd == "arms":
         arms(args[1], float(args[2]))
     elif cmd == "zoom":
-        zoom(args[1], args[2], args[3], args[4], args[5].split(","))
+        zoom(args[1], None if args[2] in ("", "-") else args[2], args[3], args[4], args[5].split(","),
+             float(args[6]) if len(args) > 6 else 1.7)
     else:
         raise SystemExit("ai_view: raw | arms | zoom")
 

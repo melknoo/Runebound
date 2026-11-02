@@ -1,0 +1,83 @@
+{
+  "char_id": "kiln_imp",
+  "tag": "kiln_imp",
+  "date": "2026-11-02",
+  "key": "kiln_imp",
+  "service": "download",
+  "title": "Hand painted imp",
+  "author": "Spider-Pig (@ilwsq)",
+  "source_page": "https://sketchfab.com/3d-models/hand-painted-imp-9bba7e791fc546bfb7a4d3a22352808b",
+  "file": "hand_painted_imp.glb",
+  "exclude": [
+    "wing_low"
+  ],
+  "rotate_deg": [
+    0,
+    0,
+    0
+  ],
+  "file_sha256": "5ceac958f93ee4e855a6b2f7e6c04721041fd1c4101639ef54cdbcb66c980bd0",
+  "original": {
+    "tris": 163658,
+    "textures": [
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ],
+      [
+        4096,
+        4096
+      ]
+    ],
+    "bbox_min": [
+      -0.2966,
+      0.3505,
+      -0.0225
+    ],
+    "bbox_max": [
+      0.2976,
+      1.2432,
+      0.6397
+    ]
+  },
+  "compact": {
+    "max_tris": 50000,
+    "tris": 50000,
+    "max_tex": 2048,
+    "jpeg_quality": 90,
+    "merged_grid": 3,
+    "blender": "5.2.2 LTS",
+    "sha256": "fd7edb10bf937d9f40eedb19fbd90fdf11e46efc629b74ef2a42857e4dff3b8e",
+    "bytes": 1757544
+  },
+  "license": {
+    "route": "download",
+    "licence": "CC Attribution",
+    "author": "Spider-Pig (@ilwsq)",
+    "source_page": "https://sketchfab.com/3d-models/hand-painted-imp-9bba7e791fc546bfb7a4d3a22352808b",
+    "checked": "2026-11-02",
+    "attribution_required": true,
+    "commercial": true,
+    "public_redistribution": true
+  }
+}

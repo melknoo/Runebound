@@ -76,7 +76,7 @@ in code if a GLB is missing.
 | assets/ui/items/{lightning_rod, thunder_wall, eye_of_the_storm, cloud_keeper, rain_heart, storm_seed}.png | tools/texgen/ui.py (`legendary_*`) | 16 px | M13b phase 7: the six storm legendaries' inventory icons |
 | assets/ui/map/{trial, nest, cursed}.png | tools/texgen/ui.py (`mk_trial`, `mk_nest`, `mk_cursed`) | 12 px | M12 phase 6 map marks |
 | assets/models/chars/{ash_jackal, carrion_vulture}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`jackal`, `vulture`) | 64 px/m | M12 phase 5, the carrion brood: jackal on the four-legged template (idle, run, trot, pounce, stagger), vulture on the winged one (idle, soar, charge, swoop, takeoff, stagger); 2 surfaces (body, eyes) |
-| assets/models/chars/{ash_hare, carrion_crow}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`hare`, `crow`) | 64 px/m | M12 phase 5 animals (scenery, no outline, no glow): hare (idle, hop, alert), crow (idle, fly, takeoff); 1 surface |
+| assets/models/chars/{ash_hare, carrion_crow}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`hare`, `crow`); ash_hare since 2026-11-02 from a downloaded model (CC BY, CREDITS.md) via tools/modelgen/ai_fit.py (`hare`) | 64 px/m (Rig v3: 128) | M12 phase 5 animals (scenery, no outline, no glow): hare (idle, hop, alert), crow (idle, fly, takeoff); 1 surface |
 | assets/sfx/{jackal_snarl_01-02, vulture_screech_01, wing_beat_01-02}.wav | tools/sfxgen/generate.py (appended) | 32 kHz mono | M12 phase 5: the jackal's snarl and bite, the vulture's screech from above, wing beats (vulture and crow) |
 | assets/models/chars/{grave_shambler, mourner, cinderbark, smoulder_wisp}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`shambler`, `mourner`, `cinderbark`, `wisp`) | 64 px/m | M12 families: shambler (idle, run, attack, stagger, emerge), mourner (idle, glide, charge, cast, stagger), cinderbark (idle, run, slam, stagger, dormant, wake), wisp (idle, glide, charge, cast, stagger); 2 surfaces (body, eyes) |
 | assets/models/env/highlands/{ash_tuft, stone_cluster}.glb + atlases | same | 32 px/m | scatter items (scripts/world/scatter.gd, MultiMesh); tuft = solid tapered blades on a `_cloth` material |
@@ -113,7 +113,7 @@ in code if a GLB is missing.
 | assets/textures/biome/wa_{floor, wall, wall_top} | tools/texgen/biome.py (`generate_warrens`, `python tools/texgen/biome.py warrens`) | 64 px = 2 m | M13 Warrens hewn rock with copper specks (floor) and streaks (wall strata) (`palettes.warrens`) |
 | assets/models/env/warrens/{wa_lamp, wa_timber, wa_ore_vein, wa_ember_grate, wa_lava_spout, wa_slag, wa_ore_chunk}.glb + textures/env/*_atlas.png | tools/modelgen/generate_props.py (`WARRENS_PROPS`) | 32 px/m | M13 warrens kit: cage lamp on an arm (ember `_glow`), mine timbering, a copper vein with warm spots, an ember grate, a lava spout frame, slag and ore scatter; placed by DungeonDressing, no collision |
 | shaders/lava_pixel.gdshader | — | 12 px/m snap | M13 opaque dungeon lava: dark crust plates, glowing cracks that pulse, no SCREEN / DEPTH reads |
-| assets/models/chars/{cinder_beetle, kiln_imp, slag_reeve, broodmother}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`beetle`, `imp`, `reeve`, `broodmother`) | 64 px/m | M13 phase 7, the Ember Brood and the Warrens' bosses: beetle and Broodmother on the quadruped template (`build_beetle`, the queen at 1.6 x with an egg sac on the tail bone), imp and Reeve on the humanoid one; timings read from the enemy scripts; 2 surfaces (body, glow); contact sheets in captures_contact/ |
+| assets/models/chars/{cinder_beetle, kiln_imp, slag_reeve, broodmother}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`beetle`, `imp`, `reeve`, `broodmother`); beetle, imp and Broodmother since 2026-11-02 from downloaded models (CC BY, CREDITS.md) via tools/modelgen/ai_fit.py | 64 px/m (Rig v3: 128) | M13 phase 7, the Ember Brood and the Warrens' bosses: beetle and Broodmother on the quadruped template (`build_beetle`, the queen at 1.6 x with an egg sac on the tail bone), imp and Reeve on the humanoid one; timings read from the enemy scripts; 2 surfaces (body, glow); contact sheets in captures_contact/ |
 | assets/sfx/{chitter_01-02, imp_cackle_01, steam_hiss_01, brood_shriek_01}.wav | tools/sfxgen/generate.py (appended after the rumble loop) | 32 kHz mono | M13 phase 7: the beetles' chitter, the imp's cackle, water on hot slag (troughs, valves), the Broodmother's shriek |
 | assets/sfx/warrens_rumble_loop_01.wav | tools/sfxgen/generate.py (appended after the phase 5 sounds) | 32 kHz mono, 9.4 s loop | M13 Warrens ambience: furnace rumble, ember crackle, a far hammer; loop_mode Forward in .import |
 | assets/world/stormwatch/{layout.json, map.png} | tools/worldgen/dungeon_bake.py (from stormwatch_layout.py) | map 3 px/m | M13b the Stormwatch: rooms, doors, the co-op puzzles (sync, plates, chain), the orrery's beam, POIs |
@@ -123,7 +123,7 @@ in code if a GLB is missing.
 | assets/models/chars/last_stormcaller.glb + textures/char/last_stormcaller_atlas.png | tools/modelgen/generate_characters_v2.py (`stormcaller`) | 64 px/m | M13b phase 6, the Stormwatch's end boss on the robed caster template (`robed_clips`), 1.25 x: a storm cloak, a copper crown, a floating staff with a caught bolt; timings read from `last_stormcaller.gd`; contact sheet in captures_contact/last_stormcaller |
 | assets/sfx/{storm_bolt_01, coil_charge_01, coil_discharge_01, gale_gust_01, wraith_shriek_01}.wav | tools/sfxgen/generate.py (appended after the wind loop) | 32 kHz mono | M13b phase 5: a bolt from the dome, a coil charging and letting go, a gust of bound wind, a gale wraith's shriek |
 | assets/sfx/stormwatch_wind_loop_01.wav | tools/sfxgen/generate.py (appended after brood_shriek) | 32 kHz mono, 11.2 s loop | M13b Stormwatch ambience: wind through a broken dome in gusts, the hum of charged copper, far thunder, static ticks; loop_mode Forward in .import |
-| assets/models/chars/{drowned_thrall, channel_lurker, bloated_keeper, deepmaw}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`thrall`, `lurker`, `keeper`, `deepmaw`) | 64 px/m | M13 phase 5, the Drowned and the Cistern's bosses: thrall on the humanoid template (idle, run, attack, stagger), keeper a swollen giant (idle, run, slam, stomp, stagger), lurker and Deepmaw on the new serpent template (`build_serpent`: base, seg1, seg2, neck, head, jaw, two fins; idle, emerge, submerge, charge/lunge, spit, stagger; the Deepmaw at 1.3 x with 1.9 x girth); timings read from the enemy scripts; 2 surfaces (body, eyes); contact sheets in captures_contact/ |
+| assets/models/chars/{drowned_thrall, channel_lurker, bloated_keeper, deepmaw}.glb + textures/char/*_atlas.png | tools/modelgen/generate_characters_v2.py (`thrall`, `lurker`, `keeper`, `deepmaw`); lurker and Deepmaw since 2026-11-02 from a downloaded model (CC BY, CREDITS.md) via tools/modelgen/ai_fit.py | 64 px/m (Rig v3: 128) | M13 phase 5, the Drowned and the Cistern's bosses: thrall on the humanoid template (idle, run, attack, stagger), keeper a swollen giant (idle, run, slam, stomp, stagger), lurker and Deepmaw on the new serpent template (`build_serpent`: base, seg1, seg2, neck, head, jaw, two fins; idle, emerge, submerge, charge/lunge, spit, stagger; the Deepmaw at 1.3 x with 1.9 x girth); timings read from the enemy scripts; 2 surfaces (body, eyes); contact sheets in captures_contact/ |
 | assets/sfx/{water_splash_01-02, deep_roar_01, wave_surge_01}.wav | tools/sfxgen/generate.py (appended after the drip loop) | 32 kHz mono | M13 phase 5: a thrall bursting / a lurker or the Deepmaw breaking the surface, the keeper's and the Deepmaw's roar through water, the keeper's ring wave / the heart flooding / the basin running dry |
 | assets/world/highlands/{height.r16, path_mask.png, map.png, layout.json} | tools/worldgen/bake.py (from highlands_layout.py; deterministic, asserts the layout rules) | 385x385 samples at 1 m (uint16 LE); mask + map 2 px/m (768x768) | M08 heightmap, trail mask, zone map, POI layout with baked heights |
 | assets/textures/biome/hl_{trail, masonry} | tools/texgen/biome.py | 64 px = 2 m | M08 trodden trails (path mask paving), basalt masonry for ruins |
@@ -247,6 +247,32 @@ EXISTING skeletons so clips, timings and the Godot contract stay as they are.
   prompted in palette colours (the Elementalist's palette has no off-white:
   the linen came out as skin). `ai_view.py raw ... --split --tris N` shows
   the decimated source before a fit.
+- **Downloaded enemy models (2026-11-02, user decision: faster than the free
+  generator quota for creatures that exist ready-made).** CC0 / CC BY only,
+  checked one by one: game rips with a false CC licence (DOOM, Halo, Dota,
+  Assassin's Creed and the like are common on Sketchfab) and models whose
+  texture comes from a photo off the web are refused. Survey with previews:
+  the private artifact "RUNEBOUND Asset-Sichtung". The user signs in to
+  Sketchfab; files go to `%TEMP%unebound_ext\<key>\download\`, never into
+  the repo. `<candidate>/source.json` (key, file, title, author, licence,
+  source_page, optional rotate_deg / exclude / apply_rest) ->
+  `ai_ingest.py -- <candidate>` (`ingest_ext`: drops rigs and animations,
+  merges several textures into one tile grid, the licence record into
+  manifest.json) -> `ai_fit.py -- <name> --src <candidate> --detect`, set the
+  landmarks (`ai_view.py raw`, `zoom ... <frame m>`), promote, build. One
+  source can serve a family and its boss: the registry's `src` names the
+  shared folder, `fit` the boss's own landmarks file (`fit_<boss>.json`),
+  `girth` thickens it. Non-humanoid templates: `bones` builds the legacy
+  quadruped / serpent template (the hare a v3 one from its own joints:
+  `HARE3`), the kits (`imp_kit`, `beetle_kit`, `serpent_kit`, `hare_kit`)
+  add only the glow decals (the beetle's seam snapped from above:
+  `snap(verts, top=True)`; the Broodmother keeps the scripted egg sac).
+  Credits: `CREDITS.md` (repo root), which `tools/dist/licenses.gd` appends
+  to the player build's LICENSES.txt. Built: kiln_imp, cinder_beetle +
+  broodmother, channel_lurker + deepmaw, ash_hare. Refused after download:
+  the hell wolf (its GLB conversion's rest pose is collapsed; the original
+  FBX would be needed), the crow and the vulture (folded wings: the flying
+  clips need spread wings).
 
 Live loop: `tools/modelgen/live.py` rebuilds one builder inside the open
 Blender, exports nothing and leaves `assets/` untouched. Through the MCP's

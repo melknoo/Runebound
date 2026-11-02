@@ -1,0 +1,16 @@
+{
+  "key": "kiln_imp",
+  "file": "download/hand_painted_imp.glb",
+  "title": "Hand painted imp",
+  "author": "Spider-Pig (@ilwsq)",
+  "licence": "CC Attribution",
+  "source_page": "https://sketchfab.com/3d-models/hand-painted-imp-9bba7e791fc546bfb7a4d3a22352808b",
+  "rotate_deg": [
+    0,
+    0,
+    0
+  ],
+  "exclude": [
+    "wing_low"
+  ]
+}
